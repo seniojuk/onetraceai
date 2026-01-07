@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ReactFlow,
@@ -18,7 +18,11 @@ import "@xyflow/react/dist/style.css";
 import { 
   Filter,
   LayoutGrid,
-  Loader2
+  Loader2,
+  GitBranch,
+  X,
+  MousePointer,
+  ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,15 +33,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { useArtifacts, ArtifactType } from "@/hooks/useArtifacts";
-import { useProjectArtifactEdges, EdgeType } from "@/hooks/useArtifactEdges";
+import { useArtifacts, ArtifactType, Artifact } from "@/hooks/useArtifacts";
+import { useProjectArtifactEdges, EdgeType, ArtifactEdge } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
 
 // Custom node component
-function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; shortId: string; status: string } }) {
+function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; shortId: string; status: string; isHighlighted?: boolean; isSelected?: boolean; isDimmed?: boolean } }) {
   const typeColors: Record<ArtifactType, string> = {
     IDEA: "border-l-yellow-500",
     PRD: "border-l-purple-500",
@@ -74,8 +79,12 @@ function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; sho
 
   return (
     <div className={cn(
-      "px-4 py-3 bg-card border-2 rounded-lg shadow-md border-l-4 min-w-[180px] max-w-[250px] cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all",
-      typeColors[data.type]
+      "px-4 py-3 bg-card border-2 rounded-lg shadow-md border-l-4 min-w-[180px] max-w-[250px] cursor-pointer transition-all",
+      typeColors[data.type],
+      data.isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+      data.isHighlighted && "ring-2 ring-amber-500 ring-offset-1 ring-offset-background shadow-lg shadow-amber-500/20",
+      data.isDimmed && "opacity-30",
+      !data.isDimmed && "hover:shadow-lg hover:border-primary/50"
     )}>
       <div className="flex items-center gap-2 mb-1">
         <Badge variant="secondary" className="text-xs">
@@ -110,7 +119,48 @@ const GraphPage = () => {
 
   const isLoading = artifactsLoading || edgesLoading;
 
-  // Generate nodes from artifacts
+  // Impact analysis state
+  const [impactAnalysisMode, setImpactAnalysisMode] = useState(false);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  // Find all downstream artifacts (artifacts that depend on the selected one)
+  const getDownstreamArtifacts = useCallback((nodeId: string, edges: ArtifactEdge[]): Set<string> => {
+    const downstream = new Set<string>();
+    const queue = [nodeId];
+    
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      
+      // Find edges where the current node is the source (from_artifact_id)
+      edges.forEach(edge => {
+        if (edge.from_artifact_id === current && !downstream.has(edge.to_artifact_id)) {
+          downstream.add(edge.to_artifact_id);
+          queue.push(edge.to_artifact_id);
+        }
+      });
+    }
+    
+    return downstream;
+  }, []);
+
+  // Get impacted artifacts for the selected node
+  const impactedArtifactIds = useMemo(() => {
+    if (!selectedNodeId || !artifactEdges) return new Set<string>();
+    return getDownstreamArtifacts(selectedNodeId, artifactEdges);
+  }, [selectedNodeId, artifactEdges, getDownstreamArtifacts]);
+
+  // Get artifact details for impacted nodes
+  const impactedArtifacts = useMemo(() => {
+    if (!artifacts) return [];
+    return artifacts.filter(a => impactedArtifactIds.has(a.id));
+  }, [artifacts, impactedArtifactIds]);
+
+  const selectedArtifact = useMemo(() => {
+    if (!selectedNodeId || !artifacts) return null;
+    return artifacts.find(a => a.id === selectedNodeId);
+  }, [selectedNodeId, artifacts]);
+
+  // Generate nodes from artifacts with impact analysis highlighting
   const initialNodes: Node[] = useMemo(() => {
     if (!artifacts) return [];
     
@@ -130,6 +180,22 @@ const GraphPage = () => {
     const nodes: Node[] = [];
     let yOffset = 0;
 
+    const createNodeData = (artifact: Artifact) => {
+      const isSelected = impactAnalysisMode && selectedNodeId === artifact.id;
+      const isHighlighted = impactAnalysisMode && impactedArtifactIds.has(artifact.id);
+      const isDimmed = impactAnalysisMode && selectedNodeId && !isSelected && !isHighlighted;
+      
+      return {
+        label: artifact.title,
+        type: artifact.type,
+        shortId: artifact.short_id,
+        status: artifact.status,
+        isSelected,
+        isHighlighted,
+        isDimmed,
+      };
+    };
+
     typeOrder.forEach((type) => {
       if (grouped[type]) {
         grouped[type].forEach((artifact, i) => {
@@ -137,12 +203,7 @@ const GraphPage = () => {
             id: artifact.id,
             type: "artifact",
             position: { x: i * 280, y: yOffset },
-            data: {
-              label: artifact.title,
-              type: artifact.type,
-              shortId: artifact.short_id,
-              status: artifact.status,
-            },
+            data: createNodeData(artifact),
           });
         });
         yOffset += 150;
@@ -157,12 +218,7 @@ const GraphPage = () => {
             id: artifact.id,
             type: "artifact",
             position: { x: i * 280, y: yOffset },
-            data: {
-              label: artifact.title,
-              type: artifact.type as ArtifactType,
-              shortId: artifact.short_id,
-              status: artifact.status,
-            },
+            data: createNodeData(artifact),
           });
         });
         yOffset += 150;
@@ -170,7 +226,7 @@ const GraphPage = () => {
     });
 
     return nodes;
-  }, [artifacts, artifactTypeFilter]);
+  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, impactedArtifactIds]);
 
   // Edge type colors for different relationship types
   const edgeTypeStyles: Record<string, { stroke: string; label: string }> = {
@@ -238,10 +294,21 @@ const GraphPage = () => {
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
-      navigate(`/artifacts/${node.id}`);
+      if (impactAnalysisMode) {
+        // In impact analysis mode, toggle selection
+        setSelectedNodeId(prev => prev === node.id ? null : node.id);
+      } else {
+        // In navigation mode, navigate to artifact detail
+        navigate(`/artifacts/${node.id}`);
+      }
     },
-    [navigate]
+    [navigate, impactAnalysisMode]
   );
+
+  const clearImpactAnalysis = useCallback(() => {
+    setSelectedNodeId(null);
+    setImpactAnalysisMode(false);
+  }, []);
 
   // Update nodes when artifacts change
   useMemo(() => {
@@ -323,7 +390,20 @@ const GraphPage = () => {
                   <p className="text-sm text-muted-foreground mb-4">
                     {nodes.length} artifacts • {edges.length} connections
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    {/* Impact Analysis Toggle */}
+                    <Button 
+                      variant={impactAnalysisMode ? "default" : "outline"} 
+                      size="sm"
+                      onClick={() => {
+                        setImpactAnalysisMode(!impactAnalysisMode);
+                        if (impactAnalysisMode) setSelectedNodeId(null);
+                      }}
+                    >
+                      <GitBranch className="w-4 h-4 mr-2" />
+                      Impact
+                    </Button>
+
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm">
@@ -382,6 +462,14 @@ const GraphPage = () => {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
+
+                  {/* Impact Analysis Mode Hint */}
+                  {impactAnalysisMode && !selectedNodeId && (
+                    <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
+                      <MousePointer className="w-3 h-3" />
+                      Click a node to see its downstream impact
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </Panel>
@@ -408,6 +496,63 @@ const GraphPage = () => {
                 </CardContent>
               </Card>
             </Panel>
+
+            {/* Impact Analysis Results Panel */}
+            {impactAnalysisMode && selectedNodeId && selectedArtifact && (
+              <Panel position="top-right" className="m-4">
+                <Card className="shadow-lg w-80">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                        <GitBranch className="w-4 h-4 text-amber-500" />
+                        Impact Analysis
+                      </h3>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={clearImpactAnalysis}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    {/* Selected Node */}
+                    <div className="mb-3 p-2 bg-primary/10 rounded-md border border-primary/20">
+                      <p className="text-xs text-muted-foreground">Selected</p>
+                      <p className="text-sm font-medium text-foreground truncate">{selectedArtifact.title}</p>
+                      <Badge variant="secondary" className="text-xs mt-1">{selectedArtifact.type}</Badge>
+                    </div>
+
+                    {/* Impacted Artifacts */}
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Downstream Impact ({impactedArtifacts.length} artifact{impactedArtifacts.length !== 1 ? 's' : ''})
+                      </p>
+                      {impactedArtifacts.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic">No downstream artifacts</p>
+                      ) : (
+                        <ScrollArea className="h-48">
+                          <div className="space-y-2">
+                            {impactedArtifacts.map(artifact => (
+                              <div 
+                                key={artifact.id}
+                                className="p-2 bg-amber-500/10 rounded-md border border-amber-500/20 cursor-pointer hover:bg-amber-500/20 transition-colors"
+                                onClick={() => navigate(`/artifacts/${artifact.id}`)}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <p className="text-sm font-medium text-foreground truncate flex-1">{artifact.title}</p>
+                                  <ExternalLink className="w-3 h-3 text-muted-foreground ml-2 flex-shrink-0" />
+                                </div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <Badge variant="secondary" className="text-xs">{artifact.type}</Badge>
+                                  <span className="text-xs text-muted-foreground font-mono">{artifact.short_id}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </Panel>
+            )}
           </ReactFlow>
         </div>
       </AppLayout>
