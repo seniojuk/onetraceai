@@ -11,7 +11,9 @@ import {
   GitBranch,
   TestTube2,
   ChevronRight,
-  Plus
+  Plus,
+  Copy,
+  Save
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,11 +37,24 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { useArtifacts } from "@/hooks/useArtifacts";
+import { useArtifacts, useCreateArtifact } from "@/hooks/useArtifacts";
 import { useUIStore } from "@/store/uiStore";
+import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+
+interface GeneratedStory {
+  title: string;
+  description: string;
+  acceptanceCriteria: string[];
+  storyPoints: number;
+  priority: "high" | "medium" | "low";
+  epic?: string;
+}
 
 interface AIRun {
   id: string;
@@ -52,6 +67,7 @@ interface AIRun {
   startedAt: string;
   completedAt?: string;
   error?: string;
+  generatedStories?: GeneratedStory[];
 }
 
 // Mock AI runs
@@ -90,15 +106,22 @@ const mockRuns: AIRun[] = [
 
 const AIRunsPage = () => {
   const navigate = useNavigate();
-  const { currentProjectId } = useUIStore();
+  const { currentProjectId, currentWorkspaceId } = useUIStore();
   const { data: artifacts } = useArtifacts(currentProjectId || undefined);
+  const { data: workspaces } = useWorkspaces();
+  const createArtifact = useCreateArtifact();
   
   const [runs, setRuns] = useState<AIRun[]>(mockRuns);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("");
   const [selectedArtifact, setSelectedArtifact] = useState<string>("");
+  const [prdContent, setPrdContent] = useState("");
   const [customPrompt, setCustomPrompt] = useState("");
   const [isStarting, setIsStarting] = useState(false);
+  const [inputMode, setInputMode] = useState<"artifact" | "manual">("manual");
+  const [selectedRun, setSelectedRun] = useState<AIRun | null>(null);
+  const [isResultsOpen, setIsResultsOpen] = useState(false);
+  const [savingStories, setSavingStories] = useState<Record<number, boolean>>({});
 
   const runTypes = [
     { 
@@ -125,49 +148,152 @@ const AIRunsPage = () => {
   ];
 
   const handleStartRun = async () => {
-    if (!selectedType || !selectedArtifact) return;
+    if (!selectedType) return;
+    if (inputMode === "artifact" && !selectedArtifact) return;
+    if (inputMode === "manual" && !prdContent.trim()) return;
     
     setIsStarting(true);
     
-    // Simulate starting a run
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const selectedArtifactData = artifacts?.find(a => a.id === selectedArtifact);
+    const inputText = inputMode === "manual" 
+      ? prdContent 
+      : selectedArtifactData?.content_markdown || "";
     
-    const artifact = artifacts?.find(a => a.id === selectedArtifact);
     const newRun: AIRun = {
       id: String(Date.now()),
       type: selectedType as AIRun["type"],
       status: "RUNNING",
-      progress: 0,
-      inputArtifactId: selectedArtifact,
-      inputArtifactTitle: artifact?.title,
+      progress: 10,
+      inputArtifactId: inputMode === "artifact" ? selectedArtifact : undefined,
+      inputArtifactTitle: inputMode === "artifact" ? selectedArtifactData?.title : "Manual PRD Input",
       outputCount: 0,
       startedAt: new Date().toISOString(),
     };
     
     setRuns([newRun, ...runs]);
-    setIsStarting(false);
     setIsDialogOpen(false);
-    setSelectedType("");
-    setSelectedArtifact("");
-    setCustomPrompt("");
 
-    // Simulate progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 10;
+    try {
+      // Call the edge function
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-stories`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            prdContent: inputText,
+            projectContext: customPrompt || undefined,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate stories");
+      }
+
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      const stories = data.stories || [];
+      
+      // Update the run with results
       setRuns(current => current.map(r => 
         r.id === newRun.id 
           ? { 
               ...r, 
-              progress: Math.min(progress, 100),
-              status: progress >= 100 ? "COMPLETED" : "RUNNING",
-              outputCount: progress >= 100 ? Math.floor(Math.random() * 5) + 3 : 0,
-              completedAt: progress >= 100 ? new Date().toISOString() : undefined,
+              progress: 100,
+              status: "COMPLETED" as const,
+              outputCount: stories.length,
+              completedAt: new Date().toISOString(),
+              generatedStories: stories,
             }
           : r
       ));
-      if (progress >= 100) clearInterval(interval);
-    }, 500);
+
+      toast.success(`Generated ${stories.length} user stories`);
+      
+      // Show results dialog
+      const completedRun = {
+        ...newRun,
+        progress: 100,
+        status: "COMPLETED" as const,
+        outputCount: stories.length,
+        completedAt: new Date().toISOString(),
+        generatedStories: stories,
+      };
+      setSelectedRun(completedRun);
+      setIsResultsOpen(true);
+
+    } catch (error) {
+      console.error("Error generating stories:", error);
+      
+      setRuns(current => current.map(r => 
+        r.id === newRun.id 
+          ? { 
+              ...r, 
+              progress: 0,
+              status: "FAILED" as const,
+              completedAt: new Date().toISOString(),
+              error: error instanceof Error ? error.message : "Unknown error",
+            }
+          : r
+      ));
+
+      toast.error(error instanceof Error ? error.message : "Failed to generate stories");
+    } finally {
+      setIsStarting(false);
+      setSelectedType("");
+      setSelectedArtifact("");
+      setPrdContent("");
+      setCustomPrompt("");
+    }
+  };
+
+  const handleSaveStory = async (story: GeneratedStory, index: number) => {
+    if (!currentProjectId || !currentWorkspaceId) {
+      toast.error("Please select a project first");
+      return;
+    }
+
+    setSavingStories(prev => ({ ...prev, [index]: true }));
+
+    try {
+      const contentMarkdown = `## Description\n${story.description}\n\n## Acceptance Criteria\n${story.acceptanceCriteria.map(ac => `- ${ac}`).join('\n')}\n\n## Story Points\n${story.storyPoints}\n\n## Priority\n${story.priority}`;
+      
+      await createArtifact.mutateAsync({
+        workspaceId: currentWorkspaceId,
+        projectId: currentProjectId,
+        title: story.title,
+        type: "STORY",
+        contentMarkdown,
+        contentJson: {
+          storyPoints: story.storyPoints,
+          priority: story.priority,
+          acceptanceCriteria: story.acceptanceCriteria,
+        },
+      });
+
+      toast.success(`Saved "${story.title}" as artifact`);
+    } catch (error) {
+      toast.error("Failed to save story");
+    } finally {
+      setSavingStories(prev => ({ ...prev, [index]: false }));
+    }
+  };
+
+  const handleSaveAllStories = async () => {
+    if (!currentProjectId || !selectedRun?.generatedStories) return;
+
+    for (let i = 0; i < selectedRun.generatedStories.length; i++) {
+      await handleSaveStory(selectedRun.generatedStories[i], i);
+    }
   };
 
   const selectedTypeConfig = runTypes.find(t => t.value === selectedType);
@@ -180,6 +306,12 @@ const AIRunsPage = () => {
     RUNNING: "bg-blue-100 text-blue-700",
     COMPLETED: "bg-green-100 text-green-700",
     FAILED: "bg-red-100 text-red-700",
+  };
+
+  const priorityColors = {
+    high: "bg-red-100 text-red-700",
+    medium: "bg-amber-100 text-amber-700",
+    low: "bg-green-100 text-green-700",
   };
 
   const typeIcons = {
@@ -208,11 +340,11 @@ const AIRunsPage = () => {
                   New AI Run
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Start AI Run</DialogTitle>
                   <DialogDescription>
-                    Select a run type and source artifact to generate new artifacts.
+                    Generate user stories from a PRD using AI
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
@@ -238,7 +370,66 @@ const AIRunsPage = () => {
                     )}
                   </div>
 
-                  {selectedType && (
+                  {selectedType === "STORY_GENERATION" && (
+                    <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as "artifact" | "manual")}>
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="manual">Paste PRD</TabsTrigger>
+                        <TabsTrigger value="artifact">Select Artifact</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="manual" className="space-y-2 mt-4">
+                        <Label>PRD Content</Label>
+                        <Textarea
+                          value={prdContent}
+                          onChange={(e) => setPrdContent(e.target.value)}
+                          placeholder="Paste your PRD content here...
+
+Example:
+# User Authentication System
+
+## Overview
+Build a secure authentication system that allows users to sign up, log in, and manage their accounts.
+
+## Requirements
+1. Email/password registration with validation
+2. Social login (Google, GitHub)
+3. Password reset functionality
+4. Session management
+5. Rate limiting for security"
+                          className="min-h-[200px] font-mono text-sm"
+                        />
+                      </TabsContent>
+                      
+                      <TabsContent value="artifact" className="space-y-2 mt-4">
+                        <Label>Source Artifact</Label>
+                        <Select value={selectedArtifact} onValueChange={setSelectedArtifact}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a PRD or Epic..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {eligibleArtifacts.length === 0 ? (
+                              <div className="p-2 text-sm text-muted-foreground text-center">
+                                No PRDs or Epics found. Create one first or paste content manually.
+                              </div>
+                            ) : (
+                              eligibleArtifacts.map(artifact => (
+                                <SelectItem key={artifact.id} value={artifact.id}>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono text-xs text-muted-foreground">
+                                      {artifact.short_id}
+                                    </span>
+                                    <span className="truncate">{artifact.title}</span>
+                                  </div>
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </TabsContent>
+                    </Tabs>
+                  )}
+
+                  {selectedType && selectedType !== "STORY_GENERATION" && (
                     <div className="space-y-2">
                       <Label>Source Artifact</Label>
                       <Select value={selectedArtifact} onValueChange={setSelectedArtifact}>
@@ -268,12 +459,12 @@ const AIRunsPage = () => {
                   )}
 
                   <div className="space-y-2">
-                    <Label>Additional Instructions (optional)</Label>
+                    <Label>Additional Context (optional)</Label>
                     <Textarea
                       value={customPrompt}
                       onChange={(e) => setCustomPrompt(e.target.value)}
-                      placeholder="Add any specific requirements or context..."
-                      className="min-h-[80px]"
+                      placeholder="Add project context, tech stack, or specific requirements..."
+                      className="min-h-[60px]"
                     />
                   </div>
                 </div>
@@ -283,15 +474,21 @@ const AIRunsPage = () => {
                   </Button>
                   <Button 
                     onClick={handleStartRun}
-                    disabled={!selectedType || !selectedArtifact || isStarting}
+                    disabled={
+                      !selectedType || 
+                      isStarting || 
+                      (selectedType === "STORY_GENERATION" && inputMode === "manual" && !prdContent.trim()) ||
+                      (selectedType === "STORY_GENERATION" && inputMode === "artifact" && !selectedArtifact) ||
+                      (selectedType !== "STORY_GENERATION" && !selectedArtifact)
+                    }
                     className="bg-accent hover:bg-accent/90"
                   >
                     {isStarting ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
-                      <Play className="w-4 h-4 mr-2" />
+                      <Sparkles className="w-4 h-4 mr-2" />
                     )}
-                    Start Run
+                    {isStarting ? "Generating..." : "Generate Stories"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -346,7 +543,19 @@ const AIRunsPage = () => {
                   {runs.map(run => {
                     const TypeIcon = typeIcons[run.type];
                     return (
-                      <div key={run.id} className="flex items-center gap-4 p-4 rounded-lg border bg-card">
+                      <div 
+                        key={run.id} 
+                        className={cn(
+                          "flex items-center gap-4 p-4 rounded-lg border bg-card",
+                          run.status === "COMPLETED" && run.generatedStories && "cursor-pointer hover:bg-muted/50"
+                        )}
+                        onClick={() => {
+                          if (run.status === "COMPLETED" && run.generatedStories) {
+                            setSelectedRun(run);
+                            setIsResultsOpen(true);
+                          }
+                        }}
+                      >
                         <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
                           <TypeIcon className="w-5 h-5 text-accent" />
                         </div>
@@ -376,8 +585,8 @@ const AIRunsPage = () => {
                         </div>
                         <div className="text-right">
                           {run.status === "COMPLETED" && (
-                            <p className="text-sm font-medium text-success">
-                              {run.outputCount} artifacts created
+                            <p className="text-sm font-medium text-green-600">
+                              {run.outputCount} stories created
                             </p>
                           )}
                           <p className="text-xs text-muted-foreground">
@@ -393,6 +602,91 @@ const AIRunsPage = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Results Dialog */}
+        <Dialog open={isResultsOpen} onOpenChange={setIsResultsOpen}>
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                Generated Stories
+              </DialogTitle>
+              <DialogDescription>
+                {selectedRun?.outputCount} user stories generated from your PRD
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh] pr-4">
+              <div className="space-y-4">
+                {selectedRun?.generatedStories?.map((story, index) => (
+                  <Card key={index} className="border">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <CardTitle className="text-base">{story.title}</CardTitle>
+                          {story.epic && (
+                            <Badge variant="outline" className="mt-1">
+                              {story.epic}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className={priorityColors[story.priority]}>
+                            {story.priority}
+                          </Badge>
+                          <Badge variant="secondary">
+                            {story.storyPoints} pts
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-sm text-muted-foreground">{story.description}</p>
+                      <div>
+                        <p className="text-xs font-medium text-foreground mb-2">Acceptance Criteria:</p>
+                        <ul className="space-y-1">
+                          {story.acceptanceCriteria.map((ac, acIndex) => (
+                            <li key={acIndex} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+                              <span>{ac}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="flex justify-end pt-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSaveStory(story, index)}
+                          disabled={savingStories[index]}
+                        >
+                          {savingStories[index] ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Save className="w-4 h-4 mr-2" />
+                          )}
+                          Save as Artifact
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </ScrollArea>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setIsResultsOpen(false)}>
+                Close
+              </Button>
+              <Button
+                onClick={handleSaveAllStories}
+                disabled={createArtifact.isPending}
+                className="bg-accent hover:bg-accent/90"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Save All as Artifacts
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </AppLayout>
     </AuthGuard>
   );
