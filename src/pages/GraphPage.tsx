@@ -42,7 +42,7 @@ import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
 
 // Custom node component
-function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; shortId: string; status: string; isHighlighted?: boolean; isSelected?: boolean; isDimmed?: boolean } }) {
+function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; shortId: string; status: string; isHighlighted?: boolean; isUpstream?: boolean; isSelected?: boolean; isDimmed?: boolean } }) {
   const typeColors: Record<ArtifactType, string> = {
     IDEA: "border-l-yellow-500",
     PRD: "border-l-purple-500",
@@ -83,6 +83,7 @@ function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; sho
       typeColors[data.type],
       data.isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
       data.isHighlighted && "ring-2 ring-amber-500 ring-offset-1 ring-offset-background shadow-lg shadow-amber-500/20",
+      data.isUpstream && "ring-2 ring-blue-500 ring-offset-1 ring-offset-background shadow-lg shadow-blue-500/20",
       data.isDimmed && "opacity-30",
       !data.isDimmed && "hover:shadow-lg hover:border-primary/50"
     )}>
@@ -143,17 +144,47 @@ const GraphPage = () => {
     return downstream;
   }, []);
 
+  // Find all upstream artifacts (artifacts that the selected one depends on)
+  const getUpstreamArtifacts = useCallback((nodeId: string, edges: ArtifactEdge[]): Set<string> => {
+    const upstream = new Set<string>();
+    const queue = [nodeId];
+    
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      
+      // Find edges where the current node is the target (to_artifact_id)
+      edges.forEach(edge => {
+        if (edge.to_artifact_id === current && !upstream.has(edge.from_artifact_id)) {
+          upstream.add(edge.from_artifact_id);
+          queue.push(edge.from_artifact_id);
+        }
+      });
+    }
+    
+    return upstream;
+  }, []);
+
   // Get impacted artifacts for the selected node
-  const impactedArtifactIds = useMemo(() => {
+  const downstreamArtifactIds = useMemo(() => {
     if (!selectedNodeId || !artifactEdges) return new Set<string>();
     return getDownstreamArtifacts(selectedNodeId, artifactEdges);
   }, [selectedNodeId, artifactEdges, getDownstreamArtifacts]);
 
+  const upstreamArtifactIds = useMemo(() => {
+    if (!selectedNodeId || !artifactEdges) return new Set<string>();
+    return getUpstreamArtifacts(selectedNodeId, artifactEdges);
+  }, [selectedNodeId, artifactEdges, getUpstreamArtifacts]);
+
   // Get artifact details for impacted nodes
-  const impactedArtifacts = useMemo(() => {
+  const downstreamArtifacts = useMemo(() => {
     if (!artifacts) return [];
-    return artifacts.filter(a => impactedArtifactIds.has(a.id));
-  }, [artifacts, impactedArtifactIds]);
+    return artifacts.filter(a => downstreamArtifactIds.has(a.id));
+  }, [artifacts, downstreamArtifactIds]);
+
+  const upstreamArtifacts = useMemo(() => {
+    if (!artifacts) return [];
+    return artifacts.filter(a => upstreamArtifactIds.has(a.id));
+  }, [artifacts, upstreamArtifactIds]);
 
   const selectedArtifact = useMemo(() => {
     if (!selectedNodeId || !artifacts) return null;
@@ -182,8 +213,9 @@ const GraphPage = () => {
 
     const createNodeData = (artifact: Artifact) => {
       const isSelected = impactAnalysisMode && selectedNodeId === artifact.id;
-      const isHighlighted = impactAnalysisMode && impactedArtifactIds.has(artifact.id);
-      const isDimmed = impactAnalysisMode && selectedNodeId && !isSelected && !isHighlighted;
+      const isHighlighted = impactAnalysisMode && downstreamArtifactIds.has(artifact.id);
+      const isUpstream = impactAnalysisMode && upstreamArtifactIds.has(artifact.id);
+      const isDimmed = impactAnalysisMode && selectedNodeId && !isSelected && !isHighlighted && !isUpstream;
       
       return {
         label: artifact.title,
@@ -192,6 +224,7 @@ const GraphPage = () => {
         status: artifact.status,
         isSelected,
         isHighlighted,
+        isUpstream,
         isDimmed,
       };
     };
@@ -226,7 +259,7 @@ const GraphPage = () => {
     });
 
     return nodes;
-  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, impactedArtifactIds]);
+  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds]);
 
   // Edge type colors for different relationship types
   const edgeTypeStyles: Record<string, { stroke: string; label: string }> = {
@@ -519,17 +552,50 @@ const GraphPage = () => {
                       <Badge variant="secondary" className="text-xs mt-1">{selectedArtifact.type}</Badge>
                     </div>
 
-                    {/* Impacted Artifacts */}
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Downstream Impact ({impactedArtifacts.length} artifact{impactedArtifacts.length !== 1 ? 's' : ''})
+                    {/* Upstream Artifacts */}
+                    <div className="mb-3">
+                      <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-blue-500" />
+                        Upstream Dependencies ({upstreamArtifacts.length})
                       </p>
-                      {impactedArtifacts.length === 0 ? (
+                      {upstreamArtifacts.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic">No upstream artifacts</p>
+                      ) : (
+                        <ScrollArea className="h-32">
+                          <div className="space-y-2">
+                            {upstreamArtifacts.map(artifact => (
+                              <div 
+                                key={artifact.id}
+                                className="p-2 bg-blue-500/10 rounded-md border border-blue-500/20 cursor-pointer hover:bg-blue-500/20 transition-colors"
+                                onClick={() => navigate(`/artifacts/${artifact.id}`)}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <p className="text-sm font-medium text-foreground truncate flex-1">{artifact.title}</p>
+                                  <ExternalLink className="w-3 h-3 text-muted-foreground ml-2 flex-shrink-0" />
+                                </div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <Badge variant="secondary" className="text-xs">{artifact.type}</Badge>
+                                  <span className="text-xs text-muted-foreground font-mono">{artifact.short_id}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      )}
+                    </div>
+
+                    {/* Downstream Artifacts */}
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-amber-500" />
+                        Downstream Impact ({downstreamArtifacts.length})
+                      </p>
+                      {downstreamArtifacts.length === 0 ? (
                         <p className="text-xs text-muted-foreground italic">No downstream artifacts</p>
                       ) : (
-                        <ScrollArea className="h-48">
+                        <ScrollArea className="h-32">
                           <div className="space-y-2">
-                            {impactedArtifacts.map(artifact => (
+                            {downstreamArtifacts.map(artifact => (
                               <div 
                                 key={artifact.id}
                                 className="p-2 bg-amber-500/10 rounded-md border border-amber-500/20 cursor-pointer hover:bg-amber-500/20 transition-colors"
