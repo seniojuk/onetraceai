@@ -2,14 +2,19 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-export type EdgeType =
-  | "DERIVES_FROM"
-  | "IMPLEMENTS"
-  | "TESTS"
-  | "BLOCKS"
-  | "RELATES_TO"
-  | "PARENT_OF"
-  | "CHILD_OF";
+// Use const object for EdgeType to allow runtime usage
+export const EdgeType = {
+  DERIVES_FROM: "DERIVES_FROM",
+  IMPLEMENTS: "IMPLEMENTS",
+  TESTS: "TESTS",
+  BLOCKS: "BLOCKS",
+  RELATES_TO: "RELATES_TO",
+  PARENT_OF: "PARENT_OF",
+  CHILD_OF: "CHILD_OF",
+  DUPLICATES: "DUPLICATES",
+} as const;
+
+export type EdgeType = (typeof EdgeType)[keyof typeof EdgeType];
 
 export interface ArtifactEdge {
   id: string;
@@ -151,6 +156,28 @@ export function useCreateArtifactEdges() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["artifact-edges"] });
+      queryClient.invalidateQueries({ queryKey: ["project-artifact-edges"] });
     },
+  });
+}
+
+// New hook to fetch all edges for a project
+export function useProjectArtifactEdges(projectId: string | undefined) {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["project-artifact-edges", projectId],
+    queryFn: async () => {
+      if (!projectId) return [];
+
+      const { data, error } = await supabase
+        .from("artifact_edges")
+        .select("*")
+        .eq("project_id", projectId);
+
+      if (error) throw error;
+      return data as ArtifactEdge[];
+    },
+    enabled: !!user && !!projectId,
   });
 }

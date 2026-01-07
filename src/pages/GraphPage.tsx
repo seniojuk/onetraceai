@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ReactFlow,
   Node,
@@ -16,9 +16,6 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { 
-  ZoomIn, 
-  ZoomOut, 
-  Maximize2, 
   Filter,
   LayoutGrid,
   Loader2
@@ -35,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useArtifacts, ArtifactType } from "@/hooks/useArtifacts";
+import { useProjectArtifactEdges, EdgeType } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
 
@@ -102,11 +100,15 @@ const nodeTypes = {
 };
 
 const GraphPage = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const focusId = searchParams.get("focus");
   
-  const { currentProjectId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
-  const { data: artifacts, isLoading } = useArtifacts(currentProjectId || undefined);
+  const { currentProjectId, currentWorkspaceId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
+  const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(currentProjectId || undefined);
+  const { data: artifactEdges, isLoading: edgesLoading } = useProjectArtifactEdges(currentProjectId || undefined);
+
+  const isLoading = artifactsLoading || edgesLoading;
 
   // Generate nodes from artifacts
   const initialNodes: Node[] = useMemo(() => {
@@ -170,26 +172,61 @@ const GraphPage = () => {
     return nodes;
   }, [artifacts, artifactTypeFilter]);
 
-  // Generate edges based on parent relationships
+  // Edge type colors for different relationship types
+  const edgeTypeStyles: Record<string, { stroke: string; label: string }> = {
+    [EdgeType.DERIVES_FROM]: { stroke: "#9333ea", label: "derives" },
+    [EdgeType.TESTS]: { stroke: "#22c55e", label: "tests" },
+    [EdgeType.IMPLEMENTS]: { stroke: "#3b82f6", label: "implements" },
+    [EdgeType.BLOCKS]: { stroke: "#ef4444", label: "blocks" },
+    [EdgeType.RELATES_TO]: { stroke: "#6b7280", label: "relates" },
+    [EdgeType.DUPLICATES]: { stroke: "#f59e0b", label: "duplicates" },
+    [EdgeType.PARENT_OF]: { stroke: "#14b8a6", label: "parent" },
+    [EdgeType.CHILD_OF]: { stroke: "#14b8a6", label: "child" },
+  };
+
+  // Generate edges from artifact_edges table
   const initialEdges: Edge[] = useMemo(() => {
-    if (!artifacts) return [];
+    if (!artifactEdges || artifactEdges.length === 0) {
+      // Fallback to parent relationships if no edges exist
+      if (!artifacts) return [];
+      return artifacts
+        .filter(a => a.parent_artifact_id)
+        .map(a => ({
+          id: `parent-${a.parent_artifact_id}-${a.id}`,
+          source: a.parent_artifact_id!,
+          target: a.id,
+          type: "smoothstep",
+          animated: true,
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 15,
+            height: 15,
+          },
+          style: { stroke: "hsl(var(--muted-foreground))", strokeWidth: 2 },
+        }));
+    }
     
-    return artifacts
-      .filter(a => a.parent_artifact_id)
-      .map(a => ({
-        id: `${a.parent_artifact_id}-${a.id}`,
-        source: a.parent_artifact_id!,
-        target: a.id,
+    return artifactEdges.map(edge => {
+      const edgeStyle = edgeTypeStyles[edge.edge_type as EdgeType] || edgeTypeStyles[EdgeType.RELATES_TO];
+      return {
+        id: edge.id,
+        source: edge.from_artifact_id,
+        target: edge.to_artifact_id,
         type: "smoothstep",
-        animated: true,
+        animated: edge.edge_type === EdgeType.BLOCKS,
+        label: edgeStyle.label,
+        labelStyle: { fontSize: 10, fill: edgeStyle.stroke },
+        labelBgStyle: { fill: "hsl(var(--card))", fillOpacity: 0.9 },
         markerEnd: {
           type: MarkerType.ArrowClosed,
           width: 15,
           height: 15,
+          color: edgeStyle.stroke,
         },
-        style: { stroke: "hsl(var(--muted-foreground))", strokeWidth: 2 },
-      }));
-  }, [artifacts]);
+        style: { stroke: edgeStyle.stroke, strokeWidth: 2 },
+      };
+    });
+  }, [artifactEdges, artifacts]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
