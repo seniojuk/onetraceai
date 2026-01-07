@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ReactFlow,
@@ -15,8 +15,11 @@ import {
   Panel,
   useReactFlow,
   ReactFlowProvider,
+  getNodesBounds,
+  getViewportForBounds,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { toPng, toSvg } from "html-to-image";
 import { 
   Filter,
   LayoutGrid,
@@ -25,7 +28,10 @@ import {
   X,
   MousePointer,
   ExternalLink,
-  Search
+  Search,
+  Download,
+  Image,
+  FileCode
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,7 +40,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -44,6 +52,7 @@ import { useArtifacts, ArtifactType, Artifact } from "@/hooks/useArtifacts";
 import { useProjectArtifactEdges, EdgeType, ArtifactEdge } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // Custom node component
 function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; shortId: string; status: string; isHighlighted?: boolean; isUpstream?: boolean; isSelected?: boolean; isDimmed?: boolean; isSearchMatch?: boolean } }) {
@@ -411,6 +420,54 @@ const GraphPageInner = () => {
     setImpactAnalysisMode(false);
   }, []);
 
+  // Export graph as image
+  const exportAsImage = useCallback(async (format: 'png' | 'svg') => {
+    const viewport = document.querySelector('.react-flow__viewport') as HTMLElement;
+    if (!viewport) {
+      toast.error("Could not find graph viewport");
+      return;
+    }
+
+    try {
+      toast.loading("Generating image...", { id: "export" });
+      
+      // Get the bounds of all nodes
+      const nodesBounds = getNodesBounds(nodes);
+      const padding = 50;
+      const width = nodesBounds.width + padding * 2;
+      const height = nodesBounds.height + padding * 2;
+
+      const imageOptions = {
+        backgroundColor: 'hsl(222.2 84% 4.9%)', // dark background
+        width,
+        height,
+        style: {
+          width: `${width}px`,
+          height: `${height}px`,
+          transform: `translate(${-nodesBounds.x + padding}px, ${-nodesBounds.y + padding}px)`,
+        },
+      };
+
+      let dataUrl: string;
+      if (format === 'svg') {
+        dataUrl = await toSvg(viewport, imageOptions);
+      } else {
+        dataUrl = await toPng(viewport, { ...imageOptions, pixelRatio: 2 });
+      }
+
+      // Create download link
+      const link = document.createElement('a');
+      link.download = `artifact-graph.${format}`;
+      link.href = dataUrl;
+      link.click();
+
+      toast.success(`Graph exported as ${format.toUpperCase()}`, { id: "export" });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Failed to export graph", { id: "export" });
+    }
+  }, [nodes]);
+
   // Update nodes when artifacts change
   useMemo(() => {
     setNodes(initialNodes);
@@ -602,6 +659,26 @@ const GraphPageInner = () => {
                         >
                           Radial
                         </DropdownMenuCheckboxItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Export Dropdown */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Download className="w-4 h-4 mr-2" />
+                          Export
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => exportAsImage('png')}>
+                          <Image className="w-4 h-4 mr-2" />
+                          Export as PNG
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => exportAsImage('svg')}>
+                          <FileCode className="w-4 h-4 mr-2" />
+                          Export as SVG
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
