@@ -2,95 +2,137 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* OneTraceAI Design System
+   Built for AI-first startups & agent-native builders
+   Evokes: Trust, Precision, Confidence, Traceability
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core brand colors */
+    --background: 220 20% 98%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 222.2 47.4% 11.2%;
+    /* Primary: Deep Navy - Trust & Authority */
+    --primary: 222 59% 18%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Secondary: Slate - Professionalism */
+    --secondary: 215 25% 94%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted: Subtle backgrounds */
+    --muted: 220 15% 95%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent: Vibrant Teal - Innovation */
+    --accent: 173 80% 40%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Semantic colors */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Coverage states */
+    --coverage-full: 152 76% 42%;
+    --coverage-partial: 45 93% 47%;
+    --coverage-none: 0 72% 51%;
 
-    --radius: 0.5rem;
+    /* Drift / Warning */
+    --drift: 25 95% 53%;
+    --drift-foreground: 0 0% 100%;
 
-    --sidebar-background: 0 0% 98%;
+    /* Success / Validated */
+    --success: 152 76% 42%;
+    --success-foreground: 0 0% 100%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Trace link colors */
+    --trace-implements: 222 59% 50%;
+    --trace-satisfies: 152 76% 42%;
+    --trace-validates: 262 83% 58%;
+    --trace-depends: 215 16% 47%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* UI elements */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 222 59% 18%;
+    --radius: 0.625rem;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    /* Graph canvas */
+    --graph-bg: 220 20% 97%;
+    --graph-grid: 220 15% 90%;
+    --graph-node-bg: 0 0% 100%;
+    --graph-edge: 215 16% 70%;
 
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar */
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 20% 90%;
+    --sidebar-primary: 173 80% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 40% 18%;
+    --sidebar-accent-foreground: 210 20% 90%;
+    --sidebar-border: 222 30% 20%;
+    --sidebar-ring: 173 80% 40%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 222 47% 8%;
+    --foreground: 210 40% 96%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 96%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 96%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 173 80% 45%;
+    --primary-foreground: 222 47% 11%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 222 30% 18%;
+    --secondary-foreground: 210 40% 96%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 222 30% 18%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 173 80% 40%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62% 40%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --coverage-full: 152 76% 50%;
+    --coverage-partial: 45 93% 55%;
+    --coverage-none: 0 72% 55%;
+
+    --drift: 25 95% 60%;
+    --drift-foreground: 0 0% 100%;
+
+    --success: 152 76% 50%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 222 30% 20%;
+    --input: 222 30% 20%;
+    --ring: 173 80% 45%;
+
+    --graph-bg: 222 47% 8%;
+    --graph-grid: 222 30% 15%;
+    --graph-node-bg: 222 47% 13%;
+    --graph-edge: 215 16% 50%;
+
+    --sidebar-background: 222 47% 6%;
+    --sidebar-foreground: 210 20% 85%;
+    --sidebar-primary: 173 80% 45%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 222 40% 12%;
+    --sidebar-accent-foreground: 210 20% 85%;
+    --sidebar-border: 222 30% 15%;
+    --sidebar-ring: 173 80% 45%;
   }
 }
 
@@ -100,6 +142,259 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted/50;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+}
+
+@layer components {
+  /* Hero gradient for landing page */
+  .hero-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(222 59% 25%) 50%,
+      hsl(var(--accent) / 0.8) 100%
+    );
+  }
+
+  /* Subtle mesh gradient background */
+  .mesh-gradient {
+    background: 
+      radial-gradient(at 27% 37%, hsl(var(--accent) / 0.15) 0px, transparent 50%),
+      radial-gradient(at 97% 21%, hsl(var(--primary) / 0.1) 0px, transparent 50%),
+      radial-gradient(at 52% 99%, hsl(var(--accent) / 0.1) 0px, transparent 50%),
+      radial-gradient(at 10% 29%, hsl(var(--primary) / 0.08) 0px, transparent 50%),
+      hsl(var(--background));
+  }
+
+  /* Coverage ring indicator */
+  .coverage-ring {
+    @apply relative inline-flex items-center justify-center;
+  }
+
+  .coverage-ring::before {
+    content: '';
+    @apply absolute inset-0 rounded-full;
+    background: conic-gradient(
+      hsl(var(--coverage-full)) var(--coverage-percent, 0%),
+      hsl(var(--border)) var(--coverage-percent, 0%)
+    );
+  }
+
+  /* Trace line styles */
+  .trace-line {
+    stroke-dasharray: 5;
+    animation: trace-flow 1s linear infinite;
+  }
+
+  @keyframes trace-flow {
+    to {
+      stroke-dashoffset: -10;
+    }
+  }
+
+  /* Glow effect for active states */
+  .glow-accent {
+    box-shadow: 0 0 20px hsl(var(--accent) / 0.3),
+                0 0 40px hsl(var(--accent) / 0.1);
+  }
+
+  .glow-success {
+    box-shadow: 0 0 15px hsl(var(--success) / 0.4);
+  }
+
+  .glow-drift {
+    box-shadow: 0 0 15px hsl(var(--drift) / 0.4);
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+
+  .card-hover:hover {
+    @apply shadow-lg -translate-y-0.5;
+    box-shadow: 0 10px 40px hsl(var(--primary) / 0.08);
+  }
+
+  /* Graph node styles */
+  .graph-node {
+    @apply bg-graph-node-bg border-2 rounded-lg shadow-md;
+    @apply transition-all duration-200;
+  }
+
+  .graph-node:hover {
+    @apply shadow-lg border-accent;
+  }
+
+  .graph-node-prd { @apply border-l-4 border-l-[hsl(262,83%,58%)]; }
+  .graph-node-epic { @apply border-l-4 border-l-[hsl(222,59%,50%)]; }
+  .graph-node-story { @apply border-l-4 border-l-[hsl(173,80%,40%)]; }
+  .graph-node-ac { @apply border-l-4 border-l-[hsl(152,76%,42%)]; }
+  .graph-node-commit { @apply border-l-4 border-l-[hsl(215,16%,47%)]; }
+
+  /* Artifact type badges */
+  .artifact-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full;
+  }
+
+  .artifact-badge-prd { @apply bg-purple-100 text-purple-800; }
+  .artifact-badge-epic { @apply bg-blue-100 text-blue-800; }
+  .artifact-badge-story { @apply bg-teal-100 text-teal-800; }
+  .artifact-badge-ac { @apply bg-green-100 text-green-800; }
+  .artifact-badge-test { @apply bg-amber-100 text-amber-800; }
+  .artifact-badge-commit { @apply bg-slate-100 text-slate-800; }
+
+  /* Status indicators */
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .status-dot-draft { @apply bg-slate-400; }
+  .status-dot-active { @apply bg-blue-500; }
+  .status-dot-in-progress { @apply bg-amber-500 animate-pulse; }
+  .status-dot-blocked { @apply bg-red-500; }
+  .status-dot-done { @apply bg-green-500; }
+
+  /* Feature card for landing */
+  .feature-card {
+    @apply relative overflow-hidden rounded-2xl p-8;
+    @apply bg-card border border-border/50;
+    @apply transition-all duration-300;
+  }
+
+  .feature-card::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--accent) / 0.05) 0%,
+      transparent 100%
+    );
+  }
+
+  .feature-card:hover::before {
+    @apply opacity-100;
+  }
+
+  .feature-card:hover {
+    @apply border-accent/30 shadow-xl;
+    transform: translateY(-2px);
+  }
+
+  /* Integration card */
+  .integration-card {
+    @apply flex items-center gap-4 p-4 rounded-xl;
+    @apply bg-muted/50 border border-transparent;
+    @apply transition-all duration-200;
+  }
+
+  .integration-card:hover {
+    @apply bg-muted border-border;
+  }
+
+  .integration-card.connected {
+    @apply border-success/30 bg-success/5;
+  }
+
+  /* Wizard step indicator */
+  .wizard-step {
+    @apply flex items-center gap-3;
+  }
+
+  .wizard-step-number {
+    @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium;
+    @apply border-2 transition-all duration-300;
+  }
+
+  .wizard-step-pending .wizard-step-number {
+    @apply border-muted-foreground/30 text-muted-foreground;
+  }
+
+  .wizard-step-active .wizard-step-number {
+    @apply border-accent bg-accent text-accent-foreground;
+  }
+
+  .wizard-step-complete .wizard-step-number {
+    @apply border-success bg-success text-success-foreground;
+  }
+}
+
+@layer utilities {
+  /* Text gradient utility */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      135deg,
+      hsl(var(--foreground)) 0%,
+      hsl(var(--accent)) 100%
+    );
+  }
+
+  .text-gradient-brand {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--accent)) 100%
+    );
+  }
+
+  /* Animation utilities */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Delay utilities for staggered animations */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
 }
