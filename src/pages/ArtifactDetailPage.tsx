@@ -1,0 +1,412 @@
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { 
+  ArrowLeft, 
+  Edit2, 
+  Trash2, 
+  GitBranch, 
+  Link2,
+  Clock,
+  User,
+  Save,
+  X,
+  Plus,
+  Loader2,
+  MoreVertical
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Separator } from "@/components/ui/separator";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { AuthGuard } from "@/components/auth/AuthGuard";
+import { useArtifact, useUpdateArtifact, ArtifactStatus } from "@/hooks/useArtifacts";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+const statusOptions: { value: ArtifactStatus; label: string }[] = [
+  { value: "DRAFT", label: "Draft" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "IN_PROGRESS", label: "In Progress" },
+  { value: "BLOCKED", label: "Blocked" },
+  { value: "DONE", label: "Done" },
+  { value: "ARCHIVED", label: "Archived" },
+];
+
+const ArtifactDetailPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const { data: artifact, isLoading } = useArtifact(id);
+  const updateArtifact = useUpdateArtifact();
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState("");
+  const [editedContent, setEditedContent] = useState("");
+  const [editedStatus, setEditedStatus] = useState<ArtifactStatus>("DRAFT");
+
+  const handleEdit = () => {
+    if (artifact) {
+      setEditedTitle(artifact.title);
+      setEditedContent(artifact.content_markdown || "");
+      setEditedStatus(artifact.status);
+      setIsEditing(true);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!artifact) return;
+    
+    try {
+      await updateArtifact.mutateAsync({
+        id: artifact.id,
+        title: editedTitle,
+        status: editedStatus,
+        contentMarkdown: editedContent,
+      });
+      
+      toast({
+        title: "Artifact updated",
+        description: "Your changes have been saved.",
+      });
+      
+      setIsEditing(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save changes. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleArchive = async () => {
+    if (!artifact) return;
+    
+    try {
+      await updateArtifact.mutateAsync({
+        id: artifact.id,
+        status: "ARCHIVED",
+      });
+      
+      toast({
+        title: "Artifact archived",
+        description: "The artifact has been archived.",
+      });
+      
+      navigate("/artifacts");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to archive artifact. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <AuthGuard>
+        <AppLayout>
+          <div className="flex items-center justify-center min-h-screen">
+            <Loader2 className="w-8 h-8 animate-spin text-accent" />
+          </div>
+        </AppLayout>
+      </AuthGuard>
+    );
+  }
+
+  if (!artifact) {
+    return (
+      <AuthGuard>
+        <AppLayout>
+          <div className="flex flex-col items-center justify-center min-h-screen">
+            <h2 className="text-xl font-semibold text-foreground mb-2">Artifact not found</h2>
+            <p className="text-muted-foreground mb-4">The artifact you're looking for doesn't exist.</p>
+            <Button onClick={() => navigate("/artifacts")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Artifacts
+            </Button>
+          </div>
+        </AppLayout>
+      </AuthGuard>
+    );
+  }
+
+  const statusColor = {
+    DRAFT: "bg-slate-100 text-slate-700",
+    ACTIVE: "bg-blue-100 text-blue-700",
+    IN_PROGRESS: "bg-amber-100 text-amber-700",
+    BLOCKED: "bg-red-100 text-red-700",
+    DONE: "bg-green-100 text-green-700",
+    ARCHIVED: "bg-gray-100 text-gray-700",
+  };
+
+  return (
+    <AuthGuard>
+      <AppLayout>
+        <div className="p-8 max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-6">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/artifacts")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <span className="font-mono text-sm text-muted-foreground">{artifact.short_id}</span>
+            <Badge className={cn(statusColor[artifact.status as ArtifactStatus])}>
+              {artifact.status}
+            </Badge>
+          </div>
+
+          {/* Title & Actions */}
+          <div className="flex items-start justify-between mb-8">
+            <div className="flex-1">
+              {isEditing ? (
+                <Input
+                  value={editedTitle}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  className="text-2xl font-bold h-auto py-2"
+                  placeholder="Artifact title"
+                />
+              ) : (
+                <h1 className="text-3xl font-bold text-foreground">{artifact.title}</h1>
+              )}
+              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  Updated {new Date(artifact.updated_at).toLocaleDateString()}
+                </span>
+                {artifact.created_by && (
+                  <span className="flex items-center gap-1">
+                    <User className="w-4 h-4" />
+                    Created by you
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {isEditing ? (
+                <>
+                  <Button variant="outline" onClick={() => setIsEditing(false)}>
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSave} disabled={updateArtifact.isPending} className="bg-accent hover:bg-accent/90">
+                    {updateArtifact.isPending ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    Save
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" onClick={handleEdit}>
+                    <Edit2 className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => navigate(`/graph?focus=${artifact.id}`)}>
+                        <GitBranch className="w-4 h-4 mr-2" />
+                        View in Graph
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Link2 className="w-4 h-4 mr-2" />
+                        Copy Link
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Archive
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Archive artifact?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will archive the artifact. You can restore it later from the archive.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleArchive}>Archive</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Content */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content</CardTitle>
+                  <CardDescription>Artifact description and details</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isEditing ? (
+                    <Textarea
+                      value={editedContent}
+                      onChange={(e) => setEditedContent(e.target.value)}
+                      placeholder="Write your artifact content here... (Markdown supported)"
+                      className="min-h-[300px] font-mono text-sm"
+                    />
+                  ) : artifact.content_markdown ? (
+                    <div className="prose prose-sm max-w-none">
+                      <pre className="whitespace-pre-wrap font-sans">{artifact.content_markdown}</pre>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground italic">No content yet. Click Edit to add content.</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Related Artifacts */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Related Artifacts</CardTitle>
+                    <CardDescription>Connected through the artifact graph</CardDescription>
+                  </div>
+                  <Button variant="outline" size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Link
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm text-center py-8">
+                    No related artifacts yet
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Properties */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Properties</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Status</label>
+                    {isEditing ? (
+                      <Select value={editedStatus} onValueChange={(v) => setEditedStatus(v as ArtifactStatus)}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge className={cn(statusColor[artifact.status as ArtifactStatus])}>
+                        {artifact.status}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Type</label>
+                    <p className="text-foreground">{artifact.type}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">ID</label>
+                    <p className="font-mono text-sm text-foreground">{artifact.short_id}</p>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Created</label>
+                    <p className="text-sm text-foreground">{new Date(artifact.created_at).toLocaleString()}</p>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Last Updated</label>
+                    <p className="text-sm text-foreground">{new Date(artifact.updated_at).toLocaleString()}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Tags */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle>Tags</CardTitle>
+                  <Button variant="ghost" size="sm">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {artifact.tags && artifact.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {artifact.tags.map((tag, i) => (
+                        <Badge key={i} variant="secondary">{tag}</Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">No tags</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    </AuthGuard>
+  );
+};
+
+export default ArtifactDetailPage;
