@@ -13,6 +13,8 @@ import {
   Connection,
   MarkerType,
   Panel,
+  useReactFlow,
+  ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { 
@@ -22,8 +24,10 @@ import {
   GitBranch,
   X,
   MousePointer,
-  ExternalLink
+  ExternalLink,
+  Search
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -42,7 +46,7 @@ import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
 
 // Custom node component
-function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; shortId: string; status: string; isHighlighted?: boolean; isUpstream?: boolean; isSelected?: boolean; isDimmed?: boolean } }) {
+function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; shortId: string; status: string; isHighlighted?: boolean; isUpstream?: boolean; isSelected?: boolean; isDimmed?: boolean; isSearchMatch?: boolean } }) {
   const typeColors: Record<ArtifactType, string> = {
     IDEA: "border-l-yellow-500",
     PRD: "border-l-purple-500",
@@ -84,6 +88,7 @@ function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; sho
       data.isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
       data.isHighlighted && "ring-2 ring-amber-500 ring-offset-1 ring-offset-background shadow-lg shadow-amber-500/20",
       data.isUpstream && "ring-2 ring-blue-500 ring-offset-1 ring-offset-background shadow-lg shadow-blue-500/20",
+      data.isSearchMatch && "ring-2 ring-green-500 ring-offset-1 ring-offset-background shadow-lg shadow-green-500/20",
       data.isDimmed && "opacity-30",
       !data.isDimmed && "hover:shadow-lg hover:border-primary/50"
     )}>
@@ -109,10 +114,11 @@ const nodeTypes = {
   artifact: ArtifactNode,
 };
 
-const GraphPage = () => {
+const GraphPageInner = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const focusId = searchParams.get("focus");
+  const { fitView, setCenter } = useReactFlow();
   
   const { currentProjectId, currentWorkspaceId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
   const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(currentProjectId || undefined);
@@ -123,6 +129,67 @@ const GraphPage = () => {
   // Impact analysis state
   const [impactAnalysisMode, setImpactAnalysisMode] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Artifact[]>([]);
+  const [focusedSearchIndex, setFocusedSearchIndex] = useState(0);
+
+  // Search artifacts
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+    if (!query.trim() || !artifacts) {
+      setSearchResults([]);
+      setFocusedSearchIndex(0);
+      return;
+    }
+    
+    const lowerQuery = query.toLowerCase();
+    const results = artifacts.filter(a => 
+      a.title.toLowerCase().includes(lowerQuery) ||
+      a.short_id.toLowerCase().includes(lowerQuery) ||
+      a.type.toLowerCase().includes(lowerQuery)
+    );
+    setSearchResults(results);
+    setFocusedSearchIndex(0);
+  }, [artifacts]);
+
+  // Focus on a specific node
+  const focusOnNode = useCallback((nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (node) {
+      setCenter(node.position.x + 125, node.position.y + 50, { zoom: 1.5, duration: 500 });
+    }
+  }, [setCenter]);
+
+  // Navigate search results
+  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (searchResults.length === 0) return;
+    
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setFocusedSearchIndex(prev => (prev + 1) % searchResults.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setFocusedSearchIndex(prev => (prev - 1 + searchResults.length) % searchResults.length);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const artifact = searchResults[focusedSearchIndex];
+      if (artifact) {
+        focusOnNode(artifact.id);
+        setSearchQuery("");
+        setSearchResults([]);
+      }
+    } else if (e.key === "Escape") {
+      setSearchQuery("");
+      setSearchResults([]);
+    }
+  }, [searchResults, focusedSearchIndex, focusOnNode]);
+
+  // Get search match IDs for highlighting
+  const searchMatchIds = useMemo(() => {
+    return new Set(searchResults.map(a => a.id));
+  }, [searchResults]);
 
   // Find all downstream artifacts (artifacts that depend on the selected one)
   const getDownstreamArtifacts = useCallback((nodeId: string, edges: ArtifactEdge[]): Set<string> => {
@@ -215,8 +282,8 @@ const GraphPage = () => {
       const isSelected = impactAnalysisMode && selectedNodeId === artifact.id;
       const isHighlighted = impactAnalysisMode && downstreamArtifactIds.has(artifact.id);
       const isUpstream = impactAnalysisMode && upstreamArtifactIds.has(artifact.id);
+      const isSearchMatch = searchMatchIds.has(artifact.id);
       const isDimmed = impactAnalysisMode && selectedNodeId && !isSelected && !isHighlighted && !isUpstream;
-      
       return {
         label: artifact.title,
         type: artifact.type,
@@ -225,6 +292,7 @@ const GraphPage = () => {
         isSelected,
         isHighlighted,
         isUpstream,
+        isSearchMatch,
         isDimmed,
       };
     };
@@ -259,7 +327,7 @@ const GraphPage = () => {
     });
 
     return nodes;
-  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds]);
+  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds, searchMatchIds]);
 
   // Edge type colors for different relationship types
   const edgeTypeStyles: Record<string, { stroke: string; label: string }> = {
@@ -420,9 +488,51 @@ const GraphPage = () => {
               <Card className="shadow-lg">
                 <CardContent className="p-4">
                   <h2 className="text-lg font-semibold text-foreground mb-2">Artifact Graph</h2>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-sm text-muted-foreground mb-3">
                     {nodes.length} artifacts • {edges.length} connections
                   </p>
+
+                  {/* Search */}
+                  <div className="relative mb-3">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search artifacts..."
+                      value={searchQuery}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      onKeyDown={handleSearchKeyDown}
+                      className="pl-9 h-9"
+                    />
+                    {searchResults.length > 0 && (
+                      <Card className="absolute top-full left-0 right-0 mt-1 z-50 shadow-lg">
+                        <ScrollArea className="max-h-48">
+                          <div className="p-1">
+                            {searchResults.map((artifact, index) => (
+                              <div
+                                key={artifact.id}
+                                className={cn(
+                                  "px-3 py-2 rounded cursor-pointer flex items-center justify-between",
+                                  index === focusedSearchIndex ? "bg-accent" : "hover:bg-accent/50"
+                                )}
+                                onClick={() => {
+                                  focusOnNode(artifact.id);
+                                  setSearchQuery("");
+                                  setSearchResults([]);
+                                }}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">{artifact.title}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <Badge variant="secondary" className="text-xs">{artifact.type}</Badge>
+                                    <span className="text-xs text-muted-foreground font-mono">{artifact.short_id}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </Card>
+                    )}
+                  </div>
                   <div className="flex gap-2 flex-wrap">
                     {/* Impact Analysis Toggle */}
                     <Button 
@@ -623,6 +733,15 @@ const GraphPage = () => {
         </div>
       </AppLayout>
     </AuthGuard>
+  );
+};
+
+// Wrapper component to provide ReactFlow context
+const GraphPage = () => {
+  return (
+    <ReactFlowProvider>
+      <GraphPageInner />
+    </ReactFlowProvider>
   );
 };
 
