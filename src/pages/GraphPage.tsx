@@ -74,7 +74,7 @@ function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; sho
 
   return (
     <div className={cn(
-      "px-4 py-3 bg-card border-2 rounded-lg shadow-md border-l-4 min-w-[180px] max-w-[250px]",
+      "px-4 py-3 bg-card border-2 rounded-lg shadow-md border-l-4 min-w-[180px] max-w-[250px] cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all",
       typeColors[data.type]
     )}>
       <div className="flex items-center gap-2 mb-1">
@@ -236,6 +236,13 @@ const GraphPage = () => {
     [setEdges]
   );
 
+  const onNodeClick = useCallback(
+    (_: React.MouseEvent, node: Node) => {
+      navigate(`/artifacts/${node.id}`);
+    },
+    [navigate]
+  );
+
   // Update nodes when artifacts change
   useMemo(() => {
     setNodes(initialNodes);
@@ -273,6 +280,7 @@ const GraphPage = () => {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
             fitView
             className="bg-graph-bg"
