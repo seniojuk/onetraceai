@@ -14,13 +14,489 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      artifact_edges: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          created_by: string | null
+          edge_type: string
+          from_artifact_id: string
+          id: string
+          metadata: Json | null
+          project_id: string
+          source: string
+          source_ref: string | null
+          to_artifact_id: string
+          workspace_id: string
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          edge_type: string
+          from_artifact_id: string
+          id?: string
+          metadata?: Json | null
+          project_id: string
+          source: string
+          source_ref?: string | null
+          to_artifact_id: string
+          workspace_id: string
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          edge_type?: string
+          from_artifact_id?: string
+          id?: string
+          metadata?: Json | null
+          project_id?: string
+          source?: string
+          source_ref?: string | null
+          to_artifact_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artifact_edges_from_artifact_id_fkey"
+            columns: ["from_artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artifact_edges_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artifact_edges_to_artifact_id_fkey"
+            columns: ["to_artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artifact_edges_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artifacts: {
+        Row: {
+          content_json: Json | null
+          content_markdown: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          labels: Json | null
+          parent_artifact_id: string | null
+          project_id: string
+          short_id: string
+          status: string | null
+          tags: string[] | null
+          title: string
+          type: string
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          content_json?: Json | null
+          content_markdown?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          labels?: Json | null
+          parent_artifact_id?: string | null
+          project_id: string
+          short_id: string
+          status?: string | null
+          tags?: string[] | null
+          title: string
+          type: string
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          content_json?: Json | null
+          content_markdown?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          labels?: Json | null
+          parent_artifact_id?: string | null
+          project_id?: string
+          short_id?: string
+          status?: string | null
+          tags?: string[] | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artifacts_parent_artifact_id_fkey"
+            columns: ["parent_artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artifacts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artifacts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coverage_snapshots: {
+        Row: {
+          artifact_id: string
+          computed_at: string | null
+          coverage_ratio: number | null
+          id: string
+          metadata: Json | null
+          missing: Json | null
+          project_id: string
+          satisfied_acs: number | null
+          tested_acs: number | null
+          total_acs: number | null
+          workspace_id: string
+        }
+        Insert: {
+          artifact_id: string
+          computed_at?: string | null
+          coverage_ratio?: number | null
+          id?: string
+          metadata?: Json | null
+          missing?: Json | null
+          project_id: string
+          satisfied_acs?: number | null
+          tested_acs?: number | null
+          total_acs?: number | null
+          workspace_id: string
+        }
+        Update: {
+          artifact_id?: string
+          computed_at?: string | null
+          coverage_ratio?: number | null
+          id?: string
+          metadata?: Json | null
+          missing?: Json | null
+          project_id?: string
+          satisfied_acs?: number | null
+          tested_acs?: number | null
+          total_acs?: number | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coverage_snapshots_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coverage_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coverage_snapshots_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drift_findings: {
+        Row: {
+          created_by: string | null
+          description: string | null
+          detected_at: string | null
+          evidence: Json | null
+          id: string
+          primary_artifact_id: string | null
+          project_id: string
+          related_artifact_ids: string[] | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: number | null
+          status: string | null
+          title: string
+          type: string
+          workspace_id: string
+        }
+        Insert: {
+          created_by?: string | null
+          description?: string | null
+          detected_at?: string | null
+          evidence?: Json | null
+          id?: string
+          primary_artifact_id?: string | null
+          project_id: string
+          related_artifact_ids?: string[] | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: number | null
+          status?: string | null
+          title: string
+          type: string
+          workspace_id: string
+        }
+        Update: {
+          created_by?: string | null
+          description?: string | null
+          detected_at?: string | null
+          evidence?: Json | null
+          id?: string
+          primary_artifact_id?: string | null
+          project_id?: string
+          related_artifact_ids?: string[] | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: number | null
+          status?: string | null
+          title?: string
+          type?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drift_findings_primary_artifact_id_fkey"
+            columns: ["primary_artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drift_findings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drift_findings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_progress: {
+        Row: {
+          completed_steps: string[] | null
+          created_at: string | null
+          current_step: string
+          id: string
+          metadata: Json | null
+          project_id: string | null
+          updated_at: string | null
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          completed_steps?: string[] | null
+          created_at?: string | null
+          current_step?: string
+          id?: string
+          metadata?: Json | null
+          project_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          completed_steps?: string[] | null
+          created_at?: string | null
+          current_step?: string
+          id?: string
+          metadata?: Json | null
+          project_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_progress_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_progress_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          project_key: string
+          status: string | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          project_key: string
+          status?: string | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          project_key?: string
+          status?: string | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_members: {
+        Row: {
+          accepted_at: string | null
+          invited_at: string | null
+          invited_by: string | null
+          role: string
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          invited_at?: string | null
+          invited_by?: string | null
+          role: string
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          invited_at?: string | null
+          invited_by?: string | null
+          role?: string
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspaces: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          name: string
+          slug: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name: string
+          slug?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          name?: string
+          slug?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_workspace_member: {
+        Args: { workspace_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
