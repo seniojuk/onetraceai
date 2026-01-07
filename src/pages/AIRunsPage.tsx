@@ -44,7 +44,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { useArtifacts, useCreateArtifact } from "@/hooks/useArtifacts";
+import { useArtifacts, useCreateArtifact, Artifact } from "@/hooks/useArtifacts";
+import { useCreateArtifactEdge } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { cn } from "@/lib/utils";
@@ -130,6 +131,7 @@ interface AIRun {
   acCoverage?: ACCoverage;
   generatedTestCases?: GeneratedTestCase[];
   testCaseSummary?: TestCaseSummary;
+  sourceArtifactId?: string; // Track source for linking
 }
 
 // Mock AI runs
@@ -152,6 +154,7 @@ const AIRunsPage = () => {
   const { data: artifacts } = useArtifacts(currentProjectId || undefined);
   const { data: workspaces } = useWorkspaces();
   const createArtifact = useCreateArtifact();
+  const createEdge = useCreateArtifactEdge();
   
   const [runs, setRuns] = useState<AIRun[]>(mockRuns);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -221,9 +224,10 @@ const AIRunsPage = () => {
       status: "RUNNING",
       progress: 10,
       inputArtifactId: inputMode === "artifact" ? selectedArtifact : undefined,
-      inputArtifactTitle: inputMode === "artifact" ? selectedArtifactData?.title : (isStoryGen ? "Manual PRD Input" : "Manual Story Input"),
+      inputArtifactTitle: inputMode === "artifact" ? selectedArtifactData?.title : (isStoryGen ? "Manual PRD Input" : isACGen ? "Manual Story Input" : "Manual AC Input"),
       outputCount: 0,
       startedAt: new Date().toISOString(),
+      sourceArtifactId: inputMode === "artifact" ? selectedArtifact : undefined,
     };
     
     setRuns([newRun, ...runs]);
@@ -457,7 +461,7 @@ const AIRunsPage = () => {
     try {
       const contentMarkdown = `## Description\n${story.description}\n\n## Acceptance Criteria\n${story.acceptanceCriteria.map(ac => `- ${ac}`).join('\n')}\n\n## Story Points\n${story.storyPoints}\n\n## Priority\n${story.priority}`;
       
-      await createArtifact.mutateAsync({
+      const savedArtifact = await createArtifact.mutateAsync({
         workspaceId: currentWorkspaceId,
         projectId: currentProjectId,
         title: story.title,
@@ -469,6 +473,20 @@ const AIRunsPage = () => {
           acceptanceCriteria: story.acceptanceCriteria,
         },
       });
+
+      // Create edge if we have a source artifact
+      if (selectedRun?.sourceArtifactId && savedArtifact) {
+        await createEdge.mutateAsync({
+          workspaceId: currentWorkspaceId,
+          projectId: currentProjectId,
+          fromArtifactId: selectedRun.sourceArtifactId,
+          toArtifactId: savedArtifact.id,
+          edgeType: "DERIVES_FROM",
+          source: "AI_GENERATED",
+          sourceRef: `run:${selectedRun.id}`,
+          metadata: { runType: "STORY_GENERATION" },
+        });
+      }
 
       toast.success(`Saved "${story.title}" as artifact`);
     } catch (error) {
@@ -489,7 +507,7 @@ const AIRunsPage = () => {
     try {
       const contentMarkdown = `## Scenario\n${ac.scenario}\n\n## Type\n${ac.type}\n\n## Priority\n${ac.priority}\n\n## Testable\n${ac.testable ? 'Yes' : 'No'}`;
       
-      await createArtifact.mutateAsync({
+      const savedArtifact = await createArtifact.mutateAsync({
         workspaceId: currentWorkspaceId,
         projectId: currentProjectId,
         title: ac.title,
@@ -502,6 +520,20 @@ const AIRunsPage = () => {
           testable: ac.testable,
         },
       });
+
+      // Create edge if we have a source artifact (story -> AC)
+      if (selectedRun?.sourceArtifactId && savedArtifact) {
+        await createEdge.mutateAsync({
+          workspaceId: currentWorkspaceId,
+          projectId: currentProjectId,
+          fromArtifactId: selectedRun.sourceArtifactId,
+          toArtifactId: savedArtifact.id,
+          edgeType: "DERIVES_FROM",
+          source: "AI_GENERATED",
+          sourceRef: `run:${selectedRun.id}`,
+          metadata: { runType: "AC_GENERATION" },
+        });
+      }
 
       toast.success(`Saved "${ac.title}" as artifact`);
     } catch (error) {
@@ -539,7 +571,7 @@ ${stepsMarkdown}
 
 ${tc.testData ? `### Test Data\n${tc.testData}` : ''}`;
       
-      await createArtifact.mutateAsync({
+      const savedArtifact = await createArtifact.mutateAsync({
         workspaceId: currentWorkspaceId,
         projectId: currentProjectId,
         title: tc.title,
@@ -556,6 +588,20 @@ ${tc.testData ? `### Test Data\n${tc.testData}` : ''}`;
           tags: tc.tags,
         },
       });
+
+      // Create edge if we have a source artifact (AC -> Test Case)
+      if (selectedRun?.sourceArtifactId && savedArtifact) {
+        await createEdge.mutateAsync({
+          workspaceId: currentWorkspaceId,
+          projectId: currentProjectId,
+          fromArtifactId: selectedRun.sourceArtifactId,
+          toArtifactId: savedArtifact.id,
+          edgeType: "TESTS",
+          source: "AI_GENERATED",
+          sourceRef: `run:${selectedRun.id}`,
+          metadata: { runType: "TEST_GENERATION" },
+        });
+      }
 
       toast.success(`Saved "${tc.title}" as artifact`);
     } catch (error) {
