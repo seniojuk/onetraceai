@@ -280,11 +280,113 @@ export function AppLayout({ children }: AppLayoutProps) {
       {/* Main Content */}
       <main 
         className={cn(
-          "flex-1 transition-all duration-300",
+          "flex-1 transition-all duration-300 flex flex-col",
           sidebarCollapsed ? "ml-16" : "ml-64"
         )}
       >
-        {children}
+        {/* Top Header with Switcher */}
+        <header className="h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30 flex items-center justify-between px-6">
+          <div className="flex items-center gap-4">
+            {/* Workspace/Project Switcher in Header */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <div className="w-5 h-5 rounded bg-accent/20 flex items-center justify-center text-xs font-bold text-accent">
+                    {currentWorkspace?.name?.charAt(0) || "W"}
+                  </div>
+                  <span className="hidden sm:inline font-medium">
+                    {currentWorkspace?.name || "Select Workspace"}
+                  </span>
+                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 bg-popover">
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Workspaces
+                </div>
+                {loadingWorkspaces ? (
+                  <div className="px-2 py-4 text-sm text-muted-foreground text-center">Loading...</div>
+                ) : (
+                  workspaces?.map(ws => (
+                    <DropdownMenuItem 
+                      key={ws.id} 
+                      onClick={() => setCurrentWorkspace(ws.id)}
+                      className={cn(
+                        "cursor-pointer",
+                        ws.id === currentWorkspaceId && "bg-accent/10 text-accent"
+                      )}
+                    >
+                      <div className="w-6 h-6 rounded bg-accent/20 flex items-center justify-center text-xs font-bold text-accent mr-2">
+                        {ws.name?.charAt(0) || "W"}
+                      </div>
+                      {ws.name}
+                    </DropdownMenuItem>
+                  ))
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/onboarding")} className="cursor-pointer">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Workspace
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <span className="text-muted-foreground">/</span>
+
+            {/* Project Switcher */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <span className="text-xs text-muted-foreground">{currentProject?.project_key || ""}</span>
+                  <span className="font-medium">{currentProject?.name || "Select Project"}</span>
+                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 bg-popover">
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Projects in {currentWorkspace?.name || "Workspace"}
+                </div>
+                {loadingProjects ? (
+                  <div className="px-2 py-4 text-sm text-muted-foreground text-center">Loading...</div>
+                ) : projects && projects.length > 0 ? (
+                  projects.map(proj => (
+                    <DropdownMenuItem 
+                      key={proj.id} 
+                      onClick={() => setCurrentProject(proj.id)}
+                      className={cn(
+                        "cursor-pointer",
+                        proj.id === currentProjectId && "bg-accent/10 text-accent"
+                      )}
+                    >
+                      <span className="text-xs text-muted-foreground w-16 flex-shrink-0">{proj.project_key}</span>
+                      <span className="truncate">{proj.name}</span>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <div className="px-2 py-4 text-sm text-muted-foreground text-center">No projects yet</div>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/onboarding?step=create-project")} className="cursor-pointer">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Project
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Right side - can add notifications, search, etc. later */}
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => navigate("/artifacts/new")}>
+              <Plus className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">New Artifact</span>
+            </Button>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <div className="flex-1">
+          {children}
+        </div>
       </main>
     </div>
   );
