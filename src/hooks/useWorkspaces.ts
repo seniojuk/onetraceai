@@ -60,16 +60,22 @@ export function useWorkspace(workspaceId: string | undefined) {
 
 export function useCreateWorkspace() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({ name, slug }: { name: string; slug?: string }) => {
+      // Get the current user from the session to ensure we have the correct user id
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        throw new Error("You must be logged in to create a workspace");
+      }
+
       const { data, error } = await supabase
         .from("workspaces")
         .insert({
           name,
           slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
-          created_by: user?.id,
+          created_by: user.id,
         })
         .select()
         .single();
