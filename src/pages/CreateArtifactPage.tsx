@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { useCreateArtifact, ArtifactType } from "@/hooks/useArtifacts";
+import { useCreateArtifact, useArtifact, ArtifactType } from "@/hooks/useArtifacts";
 import { useUIStore } from "@/store/uiStore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -45,6 +45,10 @@ const CreateArtifactPage = () => {
   const createArtifact = useCreateArtifact();
 
   const preselectedType = searchParams.get("type") as ArtifactType | null;
+  const fromIdeaId = searchParams.get("fromIdea");
+  
+  // Fetch the source idea artifact if we have a fromIdea parameter
+  const { data: sourceIdeaArtifact } = useArtifact(fromIdeaId || undefined);
   
   const [type, setType] = useState<ArtifactType>(preselectedType || "STORY");
   const [title, setTitle] = useState("");
@@ -189,7 +193,11 @@ const CreateArtifactPage = () => {
 
             {/* AI Generator for PRD */}
             {type === "PRD" && creationMode === "ai" && (
-              <PRDGenerator onComplete={(id) => navigate(`/artifacts/${id}`)} />
+              <PRDGenerator 
+                onComplete={(id) => navigate(`/artifacts/${id}`)}
+                sourceArtifact={sourceIdeaArtifact}
+                initialIdea={sourceIdeaArtifact ? `${sourceIdeaArtifact.title}\n\n${sourceIdeaArtifact.content_markdown || ""}` : undefined}
+              />
             )}
 
             {/* Manual Form */}
