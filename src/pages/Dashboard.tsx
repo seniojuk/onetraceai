@@ -26,18 +26,24 @@ import { useUIStore } from "@/store/uiStore";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { currentWorkspaceId, currentProjectId, setShowOnboarding } = useUIStore();
+  const { currentWorkspaceId, currentProjectId, setShowOnboarding, setCurrentWorkspace } = useUIStore();
   const { data: workspaces, isLoading: loadingWorkspaces } = useWorkspaces();
   const { data: projects, isLoading: loadingProjects } = useProjects(currentWorkspaceId || undefined);
   const { data: artifacts, isLoading: loadingArtifacts } = useArtifacts(currentProjectId || undefined);
 
-  // Show onboarding if no workspaces
+  // Show onboarding only if no workspaces exist (first time user)
   useEffect(() => {
-    if (!loadingWorkspaces && (!workspaces || workspaces.length === 0)) {
-      setShowOnboarding(true);
-      navigate("/onboarding");
+    if (!loadingWorkspaces && workspaces) {
+      if (workspaces.length === 0) {
+        // No workspaces - show onboarding
+        setShowOnboarding(true);
+        navigate("/onboarding");
+      } else if (!currentWorkspaceId) {
+        // Has workspaces but none selected - auto-select first one
+        setCurrentWorkspace(workspaces[0].id);
+      }
     }
-  }, [workspaces, loadingWorkspaces, setShowOnboarding, navigate]);
+  }, [workspaces, loadingWorkspaces, currentWorkspaceId, setShowOnboarding, setCurrentWorkspace, navigate]);
 
   if (loadingWorkspaces || loadingProjects) {
     return (
