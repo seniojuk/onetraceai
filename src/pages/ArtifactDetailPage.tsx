@@ -17,7 +17,9 @@ import {
   ArrowDownRight,
   FileText,
   TestTube2,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles,
+  Lightbulb
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -215,12 +217,15 @@ const ArtifactDetailPage = () => {
   };
 
   const typeIcons: Record<string, typeof FileText> = {
+    IDEA: Lightbulb,
     PRD: FileText,
     EPIC: FileText,
     STORY: FileText,
     ACCEPTANCE_CRITERION: CheckCircle2,
     TEST_CASE: TestTube2,
   };
+
+  const canGeneratePRD = artifact.type === "IDEA";
 
   const edgeTypeLabels: Record<string, string> = {
     DERIVES_FROM: "Derived from",
@@ -295,6 +300,15 @@ const ArtifactDetailPage = () => {
                 </>
               ) : (
                 <>
+                  {canGeneratePRD && (
+                    <Button 
+                      onClick={() => navigate(`/artifacts/new?type=PRD&fromIdea=${artifact.id}`)}
+                      className="bg-accent hover:bg-accent/90"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate PRD
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={handleEdit}>
                     <Edit2 className="w-4 h-4 mr-2" />
                     Edit
@@ -306,6 +320,15 @@ const ArtifactDetailPage = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      {canGeneratePRD && (
+                        <>
+                          <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=PRD&fromIdea=${artifact.id}`)}>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Generate PRD from Idea
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
                       <DropdownMenuItem onClick={() => navigate(`/graph?focus=${artifact.id}`)}>
                         <GitBranch className="w-4 h-4 mr-2" />
                         View in Graph

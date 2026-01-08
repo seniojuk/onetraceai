@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Sparkles,
@@ -9,14 +9,22 @@ import {
   CheckCircle2,
   ArrowRight,
   RefreshCw,
+  Lightbulb,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useCreateArtifact } from "@/hooks/useArtifacts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCreateArtifact, useArtifacts, Artifact } from "@/hooks/useArtifacts";
+import { useCreateArtifactEdge } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -70,21 +78,46 @@ interface PRDData {
 
 interface PRDGeneratorProps {
   onComplete?: (artifactId: string) => void;
+  initialIdea?: string;
+  sourceArtifact?: Artifact;
 }
 
-export const PRDGenerator = ({ onComplete }: PRDGeneratorProps) => {
+export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGeneratorProps) => {
   const navigate = useNavigate();
   const { currentWorkspaceId, currentProjectId } = useUIStore();
   const createArtifact = useCreateArtifact();
+  const createEdge = useCreateArtifactEdge();
+  const { data: artifacts } = useArtifacts(currentProjectId || undefined, "IDEA");
 
   const [phase, setPhase] = useState<"idea" | "questions" | "complete">("idea");
-  const [idea, setIdea] = useState("");
+  const [ideaSource, setIdeaSource] = useState<"new" | "existing">(sourceArtifact ? "existing" : "new");
+  const [selectedIdeaId, setSelectedIdeaId] = useState<string>(sourceArtifact?.id || "");
+  const [idea, setIdea] = useState(initialIdea || "");
   const [isLoading, setIsLoading] = useState(false);
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [generatedPRD, setGeneratedPRD] = useState<PRDData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [sourceIdeaArtifact, setSourceIdeaArtifact] = useState<Artifact | undefined>(sourceArtifact);
+
+  // Get idea text from selected artifact
+  const getIdeaText = (): string => {
+    if (ideaSource === "new") {
+      return idea.trim();
+    }
+    const selectedArtifact = artifacts?.find(a => a.id === selectedIdeaId);
+    if (selectedArtifact) {
+      setSourceIdeaArtifact(selectedArtifact);
+      // Combine title and content for richer context
+      const parts = [selectedArtifact.title];
+      if (selectedArtifact.content_markdown) {
+        parts.push(selectedArtifact.content_markdown);
+      }
+      return parts.join("\n\n");
+    }
+    return "";
+  };
 
   const callPRDGenerator = async (
     ideaText: string | null,
@@ -119,18 +152,22 @@ export const PRDGenerator = ({ onComplete }: PRDGeneratorProps) => {
   };
 
   const handleSubmitIdea = async () => {
-    if (!idea.trim()) return;
+    const ideaText = getIdeaText();
+    if (!ideaText) {
+      toast.error("Please enter an idea or select an existing one");
+      return;
+    }
 
     setIsLoading(true);
     try {
-      const data = await callPRDGenerator(idea.trim(), []);
+      const data = await callPRDGenerator(ideaText, []);
 
       if (data.phase === "questions" && data.questions) {
         setCurrentQuestions(data.questions);
         setConversation([
           {
             role: "user",
-            content: idea.trim(),
+            content: ideaText,
           },
           {
             role: "assistant",
@@ -342,6 +379,20 @@ export const PRDGenerator = ({ onComplete }: PRDGeneratorProps) => {
         contentJson: generatedPRD,
       });
 
+      // Create edge to source idea if we have one
+      if (sourceIdeaArtifact && artifact) {
+        await createEdge.mutateAsync({
+          workspaceId: currentWorkspaceId,
+          projectId: currentProjectId,
+          fromArtifactId: sourceIdeaArtifact.id,
+          toArtifactId: artifact.id,
+          edgeType: "DERIVES_FROM",
+          source: "AI_GENERATED",
+          sourceRef: "prd-generator",
+          metadata: { generatedFrom: "idea" },
+        });
+      }
+
       toast.success(`PRD "${generatedPRD.title}" created successfully`);
 
       if (onComplete) {
@@ -358,12 +409,19 @@ export const PRDGenerator = ({ onComplete }: PRDGeneratorProps) => {
 
   const handleReset = () => {
     setPhase("idea");
-    setIdea("");
+    setIdea(initialIdea || "");
+    setSelectedIdeaId(sourceArtifact?.id || "");
+    setIdeaSource(sourceArtifact ? "existing" : "new");
     setConversation([]);
     setCurrentQuestions([]);
     setAnswers({});
     setGeneratedPRD(null);
+    setSourceIdeaArtifact(sourceArtifact);
   };
+
+  const ideaArtifacts = artifacts || [];
+  const hasExistingIdeas = ideaArtifacts.length > 0;
+  const canSubmitIdea = ideaSource === "new" ? idea.trim().length > 0 : selectedIdeaId.length > 0;
 
   return (
     <div className="space-y-6">
@@ -410,24 +468,108 @@ export const PRDGenerator = ({ onComplete }: PRDGeneratorProps) => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-accent" />
-              Describe Your Product Idea
+              {sourceArtifact ? `Generate PRD from "${sourceArtifact.title}"` : "Describe Your Product Idea"}
             </CardTitle>
             <CardDescription>
-              Share your product concept and the AI will help you develop it into a comprehensive
-              PRD by asking clarifying questions.
+              {sourceArtifact 
+                ? "The AI will analyze your idea and ask clarifying questions to create a comprehensive PRD."
+                : "Share your product concept or select an existing idea. The AI will help you develop it into a PRD."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Textarea
-              value={idea}
-              onChange={(e) => setIdea(e.target.value)}
-              placeholder="Describe your product idea... What problem does it solve? Who is it for? What are the key features?"
-              className="min-h-[200px]"
-            />
+            {/* Idea Source Toggle (only show if not coming from a source artifact and has existing ideas) */}
+            {!sourceArtifact && hasExistingIdeas && (
+              <div className="flex items-center gap-2 p-1 bg-muted rounded-lg w-fit">
+                <button
+                  type="button"
+                  onClick={() => setIdeaSource("new")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                    ideaSource === "new"
+                      ? "bg-background shadow text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  New Idea
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIdeaSource("existing")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1.5",
+                    ideaSource === "existing"
+                      ? "bg-background shadow text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Lightbulb className="w-4 h-4" />
+                  From Existing Idea
+                </button>
+              </div>
+            )}
+
+            {/* New Idea Input */}
+            {ideaSource === "new" && !sourceArtifact && (
+              <Textarea
+                value={idea}
+                onChange={(e) => setIdea(e.target.value)}
+                placeholder="Describe your product idea... What problem does it solve? Who is it for? What are the key features?"
+                className="min-h-[200px]"
+              />
+            )}
+
+            {/* Existing Idea Selector */}
+            {ideaSource === "existing" && !sourceArtifact && (
+              <div className="space-y-3">
+                <Select value={selectedIdeaId} onValueChange={setSelectedIdeaId}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select an existing idea..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ideaArtifacts.map((artifact) => (
+                      <SelectItem key={artifact.id} value={artifact.id}>
+                        <div className="flex items-center gap-2">
+                          <Lightbulb className="w-4 h-4 text-accent" />
+                          <span>{artifact.title}</span>
+                          <span className="text-xs text-muted-foreground font-mono">
+                            {artifact.short_id}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedIdeaId && (
+                  <div className="p-3 bg-muted/50 rounded-lg border">
+                    <p className="text-sm text-muted-foreground">
+                      {ideaArtifacts.find(a => a.id === selectedIdeaId)?.content_markdown || 
+                       "No description available for this idea."}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Source Artifact Preview */}
+            {sourceArtifact && (
+              <div className="p-4 bg-muted/50 rounded-lg border">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lightbulb className="w-4 h-4 text-accent" />
+                  <span className="font-medium">{sourceArtifact.title}</span>
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {sourceArtifact.short_id}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {sourceArtifact.content_markdown || "No description available."}
+                </p>
+              </div>
+            )}
+
             <div className="flex justify-end">
               <Button
                 onClick={handleSubmitIdea}
-                disabled={!idea.trim() || isLoading}
+                disabled={!canSubmitIdea || isLoading}
                 className="bg-accent hover:bg-accent/90"
               >
                 {isLoading ? (
