@@ -415,6 +415,20 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
     }
   };
 
+  const handleDeleteStory = (index: number) => {
+    setGeneratedStories(prev => prev.filter((_, i) => i !== index));
+    // Adjust saved indices after deletion
+    setSavedStoryIndices(prev => {
+      const newSet = new Set<number>();
+      prev.forEach(i => {
+        if (i < index) newSet.add(i);
+        else if (i > index) newSet.add(i - 1);
+      });
+      return newSet;
+    });
+    toast.success("Story removed");
+  };
+
   const handleReset = () => {
     setPhase("prd");
     setPrdContent(initialPRD || "");
@@ -858,6 +872,16 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
                             </>
                           ) : (
                             <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteStory(idx)}
+                                disabled={isSaved}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-3 h-3 mr-1" />
+                                Remove
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
