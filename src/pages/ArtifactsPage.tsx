@@ -14,7 +14,9 @@ import {
   TestTube2,
   Loader2,
   MoreVertical,
-  ArrowUpDown
+  ArrowUpDown,
+  Download,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,11 +38,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { useArtifacts, ArtifactType, ArtifactStatus } from "@/hooks/useArtifacts";
+import { useArtifacts, ArtifactType, ArtifactStatus, Artifact } from "@/hooks/useArtifacts";
 import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
+import { downloadExport, ExportFormat } from "@/utils/artifactExport";
+import { toast } from "sonner";
 
 const artifactTypeConfig: Record<ArtifactType, { icon: React.ElementType; color: string; label: string }> = {
   IDEA: { icon: Lightbulb, color: "bg-yellow-100 text-yellow-800", label: "Idea" },
@@ -80,6 +85,7 @@ const ArtifactsPage = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [sortBy, setSortBy] = useState<"created_at" | "updated_at" | "title">("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [selectedArtifacts, setSelectedArtifacts] = useState<Set<string>>(new Set());
 
   // Filter and sort artifacts
   const filteredArtifacts = artifacts?.filter(artifact => {
@@ -108,6 +114,38 @@ const ArtifactsPage = () => {
     const params = type ? `?type=${type}` : "";
     navigate(`/artifacts/new${params}`);
   };
+
+  const handleToggleSelect = (artifactId: string) => {
+    setSelectedArtifacts((prev) => {
+      const next = new Set(prev);
+      if (next.has(artifactId)) {
+        next.delete(artifactId);
+      } else {
+        next.add(artifactId);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    setSelectedArtifacts(new Set(filteredArtifacts.map((a) => a.id)));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedArtifacts(new Set());
+  };
+
+  const handleExport = (format: ExportFormat) => {
+    const artifactsToExport = filteredArtifacts.filter((a) => selectedArtifacts.has(a.id));
+    if (artifactsToExport.length === 0) {
+      toast.error("No artifacts selected for export");
+      return;
+    }
+    downloadExport(artifactsToExport, format, `onetraceai-artifacts-${new Date().toISOString().split("T")[0]}`);
+    toast.success(`Exported ${artifactsToExport.length} artifact(s) as ${format.toUpperCase()}`);
+  };
+
+  const selectedCount = selectedArtifacts.size;
 
   return (
     <AuthGuard>
@@ -291,6 +329,44 @@ const ArtifactsPage = () => {
             </div>
           </div>
 
+          {/* Selection Bar */}
+          {selectedCount > 0 && (
+            <div className="flex items-center justify-between bg-accent/10 border border-accent/20 rounded-lg px-4 py-3 mb-6">
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium">{selectedCount} selected</span>
+                <Button variant="ghost" size="sm" onClick={handleSelectAll}>
+                  Select all ({filteredArtifacts.length})
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleDeselectAll}>
+                  <X className="w-4 h-4 mr-1" />
+                  Clear
+                </Button>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="w-4 h-4 mr-2" />
+                    Export Selected
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleExport("csv")}>
+                    Export as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("json")}>
+                    Export as JSON
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("markdown")}>
+                    Export as Markdown
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport("pdf")}>
+                    Export as PDF
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+
           {/* Content */}
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
@@ -317,6 +393,12 @@ const ArtifactsPage = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={filteredArtifacts.length > 0 && filteredArtifacts.every((a) => selectedArtifacts.has(a.id))}
+                        onCheckedChange={(checked) => checked ? handleSelectAll() : handleDeselectAll()}
+                      />
+                    </TableHead>
                     <TableHead className="w-24">ID</TableHead>
                     <TableHead className="w-24">Type</TableHead>
                     <TableHead>Title</TableHead>
@@ -329,12 +411,18 @@ const ArtifactsPage = () => {
                   {filteredArtifacts.map((artifact) => {
                     const typeConfig = artifactTypeConfig[artifact.type as ArtifactType];
                     const status = statusConfig[artifact.status as ArtifactStatus];
-                    return (
+                      return (
                       <TableRow 
                         key={artifact.id} 
-                        className="cursor-pointer hover:bg-muted/50"
+                        className={cn("cursor-pointer hover:bg-muted/50", selectedArtifacts.has(artifact.id) && "bg-accent/5")}
                         onClick={() => navigate(`/artifacts/${artifact.id}`)}
                       >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedArtifacts.has(artifact.id)}
+                            onCheckedChange={() => handleToggleSelect(artifact.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">
                           {artifact.short_id}
                         </TableCell>
@@ -388,10 +476,19 @@ const ArtifactsPage = () => {
                 return (
                   <Card 
                     key={artifact.id}
-                    className="cursor-pointer card-hover"
+                    className={cn("cursor-pointer card-hover relative", selectedArtifacts.has(artifact.id) && "ring-2 ring-accent")}
                     onClick={() => navigate(`/artifacts/${artifact.id}`)}
                   >
-                    <CardContent className="p-4">
+                    <div 
+                      className="absolute top-3 left-3 z-10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Checkbox
+                        checked={selectedArtifacts.has(artifact.id)}
+                        onCheckedChange={() => handleToggleSelect(artifact.id)}
+                      />
+                    </div>
+                    <CardContent className="p-4 pl-10">
                       <div className="flex items-start justify-between mb-3">
                         <Badge className={cn("gap-1", typeConfig?.color)}>
                           {typeConfig?.icon && <typeConfig.icon className="w-3 h-3" />}
