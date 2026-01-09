@@ -282,7 +282,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             fromArtifactId: sourcePrdArtifact.id,
             toArtifactId: artifact.id,
             edgeType: "DERIVES_FROM",
-            source: "AI_GENERATED",
+            source: "AI_INFERRED",
             sourceRef: "story-generator",
             metadata: { generatedFrom: "prd" },
           });
