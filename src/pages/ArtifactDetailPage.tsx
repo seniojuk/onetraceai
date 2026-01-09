@@ -19,7 +19,8 @@ import {
   TestTube2,
   CheckCircle2,
   Sparkles,
-  Lightbulb
+  Lightbulb,
+  Wand2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +60,8 @@ import { useArtifact, useUpdateArtifact, useArtifacts, ArtifactStatus, Artifact 
 import { useArtifactEdges } from "@/hooks/useArtifactEdges";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { PRDEnhancer } from "@/components/prd/PRDEnhancer";
+import { PRDVersionHistory } from "@/components/prd/PRDVersionHistory";
 
 const statusOptions: { value: ArtifactStatus; label: string }[] = [
   { value: "DRAFT", label: "Draft" },
@@ -80,6 +83,7 @@ const ArtifactDetailPage = () => {
   const { data: allArtifacts } = useArtifacts(artifact?.project_id);
   
   const [isEditing, setIsEditing] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedContent, setEditedContent] = useState("");
   const [editedStatus, setEditedStatus] = useState<ArtifactStatus>("DRAFT");
@@ -227,6 +231,7 @@ const ArtifactDetailPage = () => {
 
   const canGeneratePRD = artifact.type === "IDEA";
   const canGenerateStories = artifact.type === "PRD";
+  const canEnhancePRD = artifact.type === "PRD";
 
   const edgeTypeLabels: Record<string, string> = {
     DERIVES_FROM: "Derived from",
@@ -319,6 +324,15 @@ const ArtifactDetailPage = () => {
                       Generate Stories
                     </Button>
                   )}
+                  {canEnhancePRD && (
+                    <Button 
+                      onClick={() => setIsEnhancing(true)}
+                      variant="outline"
+                    >
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      Enhance PRD
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={handleEdit}>
                     <Edit2 className="w-4 h-4 mr-2" />
                     Edit
@@ -344,6 +358,10 @@ const ArtifactDetailPage = () => {
                           <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=STORY&fromPRD=${artifact.id}`)}>
                             <Sparkles className="w-4 h-4 mr-2" />
                             Generate Stories from PRD
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setIsEnhancing(true)}>
+                            <Wand2 className="w-4 h-4 mr-2" />
+                            Enhance PRD
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                         </>
@@ -387,6 +405,14 @@ const ArtifactDetailPage = () => {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
+              {/* PRD Enhancer */}
+              {isEnhancing && artifact.type === "PRD" && (
+                <PRDEnhancer
+                  artifact={artifact}
+                  onComplete={() => setIsEnhancing(false)}
+                  onCancel={() => setIsEnhancing(false)}
+                />
+              )}
               {/* Content */}
               <Card>
                 <CardHeader>
@@ -515,6 +541,10 @@ const ArtifactDetailPage = () => {
                   )}
                 </CardContent>
               </Card>
+              {/* PRD Version History */}
+              {artifact.type === "PRD" && (
+                <PRDVersionHistory artifactId={artifact.id} />
+              )}
             </div>
 
             {/* Sidebar */}

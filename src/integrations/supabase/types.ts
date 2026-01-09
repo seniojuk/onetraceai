@@ -88,6 +88,70 @@ export type Database = {
           },
         ]
       }
+      artifact_versions: {
+        Row: {
+          artifact_id: string
+          content_json: Json | null
+          content_markdown: string | null
+          created_at: string
+          created_by: string | null
+          enhancement_details: string | null
+          id: string
+          project_id: string
+          title: string
+          version_number: number
+          workspace_id: string
+        }
+        Insert: {
+          artifact_id: string
+          content_json?: Json | null
+          content_markdown?: string | null
+          created_at?: string
+          created_by?: string | null
+          enhancement_details?: string | null
+          id?: string
+          project_id: string
+          title: string
+          version_number?: number
+          workspace_id: string
+        }
+        Update: {
+          artifact_id?: string
+          content_json?: Json | null
+          content_markdown?: string | null
+          created_at?: string
+          created_by?: string | null
+          enhancement_details?: string | null
+          id?: string
+          project_id?: string
+          title?: string
+          version_number?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artifact_versions_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artifact_versions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artifact_versions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artifacts: {
         Row: {
           content_json: Json | null
