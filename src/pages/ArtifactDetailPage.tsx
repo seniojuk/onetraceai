@@ -226,6 +226,7 @@ const ArtifactDetailPage = () => {
   };
 
   const canGeneratePRD = artifact.type === "IDEA";
+  const canGenerateStories = artifact.type === "PRD";
 
   const edgeTypeLabels: Record<string, string> = {
     DERIVES_FROM: "Derived from",
@@ -309,6 +310,15 @@ const ArtifactDetailPage = () => {
                       Generate PRD
                     </Button>
                   )}
+                  {canGenerateStories && (
+                    <Button 
+                      onClick={() => navigate(`/artifacts/new?type=STORY&fromPRD=${artifact.id}`)}
+                      className="bg-accent hover:bg-accent/90"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate Stories
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={handleEdit}>
                     <Edit2 className="w-4 h-4 mr-2" />
                     Edit
@@ -325,6 +335,15 @@ const ArtifactDetailPage = () => {
                           <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=PRD&fromIdea=${artifact.id}`)}>
                             <Sparkles className="w-4 h-4 mr-2" />
                             Generate PRD from Idea
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
+                      {canGenerateStories && (
+                        <>
+                          <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=STORY&fromPRD=${artifact.id}`)}>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Generate Stories from PRD
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                         </>

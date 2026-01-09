@@ -11,6 +11,7 @@ import {
   Bug,
   TestTube2,
   Sparkles,
+  ListChecks,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,12 +26,13 @@ import { useUIStore } from "@/store/uiStore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { PRDGenerator } from "@/components/prd/PRDGenerator";
+import { StoryGenerator } from "@/components/story/StoryGenerator";
 
 const artifactTypes: { value: ArtifactType; label: string; icon: React.ElementType; description: string; hasAI?: boolean }[] = [
   { value: "IDEA", label: "Idea", icon: Lightbulb, description: "Capture initial concepts and thoughts" },
   { value: "PRD", label: "PRD", icon: FileText, description: "Product Requirements Document", hasAI: true },
   { value: "EPIC", label: "Epic", icon: GitBranch, description: "Large body of work with multiple stories" },
-  { value: "STORY", label: "Story", icon: FileText, description: "User story with acceptance criteria" },
+  { value: "STORY", label: "Story", icon: ListChecks, description: "User story with acceptance criteria", hasAI: true },
   { value: "ACCEPTANCE_CRITERION", label: "Acceptance Criterion", icon: CheckCircle2, description: "Specific testable requirement" },
   { value: "TEST_CASE", label: "Test Case", icon: TestTube2, description: "Test to validate an AC" },
   { value: "BUG", label: "Bug", icon: Bug, description: "Issue or defect to track" },
@@ -46,15 +48,17 @@ const CreateArtifactPage = () => {
 
   const preselectedType = searchParams.get("type") as ArtifactType | null;
   const fromIdeaId = searchParams.get("fromIdea");
+  const fromPrdId = searchParams.get("fromPRD");
   
-  // Fetch the source idea artifact if we have a fromIdea parameter
+  // Fetch the source artifacts if we have fromIdea or fromPRD parameters
   const { data: sourceIdeaArtifact } = useArtifact(fromIdeaId || undefined);
+  const { data: sourcePrdArtifact } = useArtifact(fromPrdId || undefined);
   
   const [type, setType] = useState<ArtifactType>(preselectedType || "STORY");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [creationMode, setCreationMode] = useState<"manual" | "ai">(
-    preselectedType === "PRD" ? "ai" : "manual"
+    preselectedType === "PRD" || preselectedType === "STORY" ? "ai" : "manual"
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -197,6 +201,15 @@ const CreateArtifactPage = () => {
                 onComplete={(id) => navigate(`/artifacts/${id}`)}
                 sourceArtifact={sourceIdeaArtifact}
                 initialIdea={sourceIdeaArtifact ? `${sourceIdeaArtifact.title}\n\n${sourceIdeaArtifact.content_markdown || ""}` : undefined}
+              />
+            )}
+
+            {/* AI Generator for Stories */}
+            {type === "STORY" && creationMode === "ai" && (
+              <StoryGenerator 
+                onComplete={() => navigate("/artifacts")}
+                sourceArtifact={sourcePrdArtifact}
+                initialPRD={sourcePrdArtifact ? `${sourcePrdArtifact.title}\n\n${sourcePrdArtifact.content_markdown || ""}` : undefined}
               />
             )}
 
