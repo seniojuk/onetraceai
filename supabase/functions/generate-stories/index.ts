@@ -5,7 +5,30 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const systemPrompt = `You are an expert product manager and agile coach. Your task is to decompose Product Requirements Documents (PRDs) into well-structured user stories with clear acceptance criteria.
+const questionSystemPrompt = `You are an expert product manager and agile coach. You help break down Product Requirements Documents (PRDs) into well-structured user stories.
+
+When given a PRD, analyze it and ask 3-5 targeted clarifying questions to ensure the stories you generate are comprehensive and actionable. Focus on:
+1. Technical constraints or dependencies
+2. Priority and scope clarification
+3. User experience expectations
+4. Integration requirements
+5. Edge cases and error handling
+
+Return your response as valid JSON in this exact format:
+{
+  "phase": "questions",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Your question here?",
+      "category": "Category name",
+      "options": ["Option 1", "Option 2"] // Optional suggested answers
+    }
+  ],
+  "summary": "Brief summary of what you understood and why you're asking these questions"
+}`;
+
+const generateSystemPrompt = `You are an expert product manager and agile coach. Your task is to generate well-structured user stories with clear acceptance criteria based on a PRD and clarifying Q&A.
 
 For each user story, follow this format:
 - Title: A concise, action-oriented title
@@ -22,8 +45,9 @@ Guidelines:
 5. Include both happy path and error scenarios in AC
 6. Group related stories under epics when appropriate
 
-Return the stories as a valid JSON array with this structure:
+Return the stories as valid JSON in this exact format:
 {
+  "phase": "complete",
   "stories": [
     {
       "title": "string",
@@ -37,20 +61,18 @@ Return the stories as a valid JSON array with this structure:
   "summary": "Brief summary of what was generated"
 }`;
 
+interface ConversationMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { prdContent, projectContext } = await req.json();
-    
-    if (!prdContent) {
-      return new Response(
-        JSON.stringify({ error: 'PRD content is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const { prdContent, conversationHistory, action } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -61,14 +83,50 @@ serve(async (req) => {
       );
     }
 
-    const userPrompt = `Please analyze the following PRD and generate user stories with acceptance criteria.
+    // Determine if we should ask questions or generate stories
+    const isFirstMessage = !conversationHistory || conversationHistory.length === 0;
+    const shouldGenerate = action === "generate" || 
+      (conversationHistory && conversationHistory.length >= 2);
 
-${projectContext ? `Project Context: ${projectContext}\n\n` : ''}PRD Content:
-${prdContent}
+    let systemPrompt: string;
+    let userPrompt: string;
+    
+    if (isFirstMessage && prdContent) {
+      // First message: analyze PRD and ask questions
+      systemPrompt = questionSystemPrompt;
+      userPrompt = `Please analyze this PRD and ask clarifying questions to help generate comprehensive user stories:\n\n${prdContent}`;
+    } else if (shouldGenerate) {
+      // Generate stories based on conversation
+      systemPrompt = generateSystemPrompt;
+      userPrompt = "Based on our conversation, please generate the user stories now.";
+    } else {
+      // Continue asking questions or process answers
+      systemPrompt = questionSystemPrompt;
+      userPrompt = "Based on the answers provided, either ask follow-up questions if needed or indicate you're ready to generate stories.";
+    }
 
-Generate comprehensive user stories that cover all the requirements in this PRD. Ensure each story is independent and testable.`;
+    // Build messages array
+    const messages: Array<{ role: string; content: string }> = [
+      { role: 'system', content: systemPrompt },
+    ];
 
-    console.log('Calling Lovable AI for story generation...');
+    // Add conversation history
+    if (conversationHistory && conversationHistory.length > 0) {
+      for (const msg of conversationHistory) {
+        messages.push({ role: msg.role, content: msg.content });
+      }
+    }
+
+    // Add the current prompt if it's the first message or we're generating
+    if (isFirstMessage || shouldGenerate) {
+      messages.push({ role: 'user', content: userPrompt });
+    }
+
+    console.log('Calling Lovable AI for story generation...', { 
+      isFirstMessage, 
+      shouldGenerate, 
+      historyLength: conversationHistory?.length || 0 
+    });
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -78,10 +136,7 @@ Generate comprehensive user stories that cover all the requirements in this PRD.
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
+        messages,
         temperature: 0.7,
       }),
     });
@@ -121,19 +176,33 @@ Generate comprehensive user stories that cover all the requirements in this PRD.
     }
 
     // Parse the JSON response from the AI
-    let parsedStories;
+    let parsedResponse;
     try {
       // Extract JSON from the response (handle markdown code blocks)
       const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, content];
       const jsonStr = jsonMatch[1].trim();
-      parsedStories = JSON.parse(jsonStr);
+      parsedResponse = JSON.parse(jsonStr);
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError);
       console.log('Raw content:', content);
-      // Return the raw content if parsing fails
+      
+      // Try to determine phase from content
+      if (content.includes('"stories"') || content.includes('stories:')) {
+        return new Response(
+          JSON.stringify({ 
+            phase: 'complete',
+            stories: [],
+            rawContent: content,
+            error: 'Failed to parse structured response'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       return new Response(
         JSON.stringify({ 
-          stories: [],
+          phase: 'questions',
+          questions: [],
           rawContent: content,
           error: 'Failed to parse structured response'
         }),
@@ -141,10 +210,10 @@ Generate comprehensive user stories that cover all the requirements in this PRD.
       );
     }
 
-    console.log(`Generated ${parsedStories.stories?.length || 0} stories`);
+    console.log(`Response phase: ${parsedResponse.phase}, stories: ${parsedResponse.stories?.length || 0}`);
 
     return new Response(
-      JSON.stringify(parsedStories),
+      JSON.stringify(parsedResponse),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
