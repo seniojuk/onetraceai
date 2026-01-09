@@ -232,9 +232,11 @@ const OnboardingPage = () => {
             {currentStep === "create-project" && (
               <>
                 <CardHeader>
-                  <CardTitle>Create your first project</CardTitle>
+                  <CardTitle>{isAddingProjectOnly ? "Create a new project" : "Create your first project"}</CardTitle>
                   <CardDescription>
-                    Projects contain your PRDs, stories, and traceability data.
+                    {isAddingProjectOnly 
+                      ? "Add another project to your workspace."
+                      : "Projects contain your PRDs, stories, and traceability data."}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
