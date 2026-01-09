@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -100,6 +101,9 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const [savingStoryIndex, setSavingStoryIndex] = useState<number | null>(null);
   const [newAcInput, setNewAcInput] = useState("");
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
+  const [selectedStories, setSelectedStories] = useState<Set<number>>(new Set());
+  const [isBulkSaving, setIsBulkSaving] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
   // Get PRD text from selected artifact
   const getPrdText = (): string => {
@@ -441,6 +445,100 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
     toast.success("Story removed");
   };
 
+  const handleToggleSelect = (index: number) => {
+    setSelectedStories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    const unsavedIndices = generatedStories
+      .map((_, idx) => idx)
+      .filter(idx => !savedStoryIndices.has(idx));
+    setSelectedStories(new Set(unsavedIndices));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedStories(new Set());
+  };
+
+  const handleBulkSave = async () => {
+    if (!currentWorkspaceId || !currentProjectId || selectedStories.size === 0) return;
+
+    setIsBulkSaving(true);
+    const indicesToSave = Array.from(selectedStories).filter(idx => !savedStoryIndices.has(idx));
+    let savedCount = 0;
+
+    try {
+      for (const idx of indicesToSave) {
+        const story = generatedStories[idx];
+        const markdown = convertStoryToMarkdown(story);
+
+        const artifact = await createArtifact.mutateAsync({
+          workspaceId: currentWorkspaceId,
+          projectId: currentProjectId,
+          type: "STORY",
+          title: story.title,
+          contentMarkdown: markdown,
+          contentJson: story,
+        });
+
+        if (sourcePrdArtifact && artifact) {
+          await createEdge.mutateAsync({
+            workspaceId: currentWorkspaceId,
+            projectId: currentProjectId,
+            fromArtifactId: sourcePrdArtifact.id,
+            toArtifactId: artifact.id,
+            edgeType: "DERIVES_FROM",
+            source: "AI_INFERRED",
+            sourceRef: "story-generator",
+            metadata: { generatedFrom: "prd" },
+          });
+        }
+
+        setSavedStoryIndices(prev => new Set(prev).add(idx));
+        savedCount++;
+      }
+
+      toast.success(`Saved ${savedCount} stories`);
+      setSelectedStories(new Set());
+    } catch (error) {
+      toast.error("Failed to save some stories");
+    } finally {
+      setIsBulkSaving(false);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    const indicesToDelete = Array.from(selectedStories).sort((a, b) => b - a); // Sort descending
+    
+    let newStories = [...generatedStories];
+    let newSavedIndices = new Set(savedStoryIndices);
+    
+    for (const idx of indicesToDelete) {
+      newStories = newStories.filter((_, i) => i !== idx);
+      // Adjust saved indices
+      const adjustedSaved = new Set<number>();
+      newSavedIndices.forEach(i => {
+        if (i < idx) adjustedSaved.add(i);
+        else if (i > idx) adjustedSaved.add(i - 1);
+      });
+      newSavedIndices = adjustedSaved;
+    }
+
+    setGeneratedStories(newStories);
+    setSavedStoryIndices(newSavedIndices);
+    setSelectedStories(new Set());
+    setShowBulkDeleteConfirm(false);
+    toast.success(`Removed ${indicesToDelete.length} stories`);
+  };
+
   const handleReset = () => {
     setPhase("prd");
     setPrdContent(initialPRD || "");
@@ -454,6 +552,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
     setSavedStoryIndices(new Set());
     setEditingStoryIndex(null);
     setEditedStory(null);
+    setSelectedStories(new Set());
   };
 
   const prdArtifacts = artifacts || [];
@@ -716,25 +815,79 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[500px] pr-4">
+              {/* Bulk Selection Bar */}
+              <div className="flex items-center justify-between mb-4 pb-3 border-b">
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    checked={selectedStories.size > 0 && selectedStories.size === generatedStories.filter((_, i) => !savedStoryIndices.has(i)).length}
+                    onCheckedChange={(checked) => checked ? handleSelectAll() : handleDeselectAll()}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {selectedStories.size > 0 
+                      ? `${selectedStories.size} selected`
+                      : "Select stories"}
+                  </span>
+                  {selectedStories.size > 0 && (
+                    <Button variant="ghost" size="sm" onClick={handleDeselectAll}>
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                {selectedStories.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowBulkDeleteConfirm(true)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Remove ({selectedStories.size})
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleBulkSave}
+                      disabled={isBulkSaving}
+                    >
+                      {isBulkSaving ? (
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      ) : (
+                        <Save className="w-3 h-3 mr-1" />
+                      )}
+                      Save ({Array.from(selectedStories).filter(i => !savedStoryIndices.has(i)).length})
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <ScrollArea className="h-[450px] pr-4">
                 <div className="space-y-4">
                   {generatedStories.map((story, idx) => {
                     const isEditing = editingStoryIndex === idx;
                     const isSaved = savedStoryIndices.has(idx);
                     const isSavingThis = savingStoryIndex === idx;
                     const storyToShow = isEditing && editedStory ? editedStory : story;
+                    const isSelected = selectedStories.has(idx);
 
                     return (
                       <div
                         key={idx}
                         className={cn(
                           "p-4 rounded-lg border bg-card",
-                          isSaved && "border-green-500/50 bg-green-50/30 dark:bg-green-950/10"
+                          isSaved && "border-green-500/50 bg-green-50/30 dark:bg-green-950/10",
+                          isSelected && !isSaved && "border-primary/50 bg-primary/5"
                         )}
                       >
                         {/* Header */}
                         <div className="flex items-start justify-between gap-4 mb-2">
                           <div className="flex items-center gap-2 flex-1">
+                            {!isSaved && (
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => handleToggleSelect(idx)}
+                                className="mr-1"
+                              />
+                            )}
                             <span className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                               {idx + 1}/{generatedStories.length}
                             </span>
@@ -976,6 +1129,28 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={showBulkDeleteConfirm} onOpenChange={setShowBulkDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {selectedStories.size} Stories?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {selectedStories.size} selected stories? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove All
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
