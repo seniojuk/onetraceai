@@ -29,6 +29,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useCreateArtifact, useArtifacts, Artifact } from "@/hooks/useArtifacts";
 import { useCreateArtifactEdge } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
@@ -89,6 +99,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const [savedStoryIndices, setSavedStoryIndices] = useState<Set<number>>(new Set());
   const [savingStoryIndex, setSavingStoryIndex] = useState<number | null>(null);
   const [newAcInput, setNewAcInput] = useState("");
+  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
 
   // Get PRD text from selected artifact
   const getPrdText = (): string => {
@@ -426,6 +437,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
       });
       return newSet;
     });
+    setDeleteConfirmIndex(null);
     toast.success("Story removed");
   };
 
@@ -875,7 +887,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleDeleteStory(idx)}
+                                onClick={() => setDeleteConfirmIndex(idx)}
                                 disabled={isSaved}
                                 className="text-destructive hover:text-destructive hover:bg-destructive/10"
                               >
@@ -946,6 +958,28 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmIndex !== null} onOpenChange={(open) => !open && setDeleteConfirmIndex(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Story?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove "{deleteConfirmIndex !== null ? generatedStories[deleteConfirmIndex]?.title : ''}"? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteConfirmIndex !== null && handleDeleteStory(deleteConfirmIndex)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
