@@ -563,22 +563,27 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-green-600" />
-                Generated Stories
+                Generated Stories ({generatedStories.length})
               </CardTitle>
               <CardDescription>
-                {generatedStories.length} stories generated. Review and save them.
+                Review all stories and their acceptance criteria before saving.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="max-h-[400px]">
+              <ScrollArea className="h-[500px] pr-4">
                 <div className="space-y-4">
                   {generatedStories.map((story, idx) => (
                     <div
                       key={idx}
-                      className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                      className="p-4 rounded-lg border bg-card"
                     >
                       <div className="flex items-start justify-between gap-4 mb-2">
-                        <h4 className="font-medium text-foreground">{story.title}</h4>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                            {idx + 1}/{generatedStories.length}
+                          </span>
+                          <h4 className="font-medium text-foreground">{story.title}</h4>
+                        </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <Badge className={cn("text-xs", priorityColors[story.priority])}>
                             {story.priority}
@@ -591,18 +596,21 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
                       <p className="text-sm text-muted-foreground mb-3">{story.description}</p>
                       {story.epic && (
                         <div className="text-xs text-muted-foreground mb-2">
-                          Epic: {story.epic}
+                          <span className="font-medium">Epic:</span> {story.epic}
                         </div>
                       )}
-                      <div className="text-xs">
-                        <span className="font-medium">Acceptance Criteria:</span>
-                        <ul className="list-disc list-inside mt-1 text-muted-foreground">
-                          {story.acceptanceCriteria.slice(0, 3).map((ac, i) => (
-                            <li key={i}>{ac}</li>
+                      <div className="mt-3 pt-3 border-t">
+                        <div className="text-xs font-medium mb-2 flex items-center gap-1">
+                          <ListChecks className="w-3 h-3" />
+                          Acceptance Criteria ({story.acceptanceCriteria.length})
+                        </div>
+                        <ul className="space-y-1.5">
+                          {story.acceptanceCriteria.map((ac, i) => (
+                            <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+                              <CheckCircle2 className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
+                              <span>{ac}</span>
+                            </li>
                           ))}
-                          {story.acceptanceCriteria.length > 3 && (
-                            <li className="text-accent">+{story.acceptanceCriteria.length - 3} more</li>
-                          )}
                         </ul>
                       </div>
                     </div>
