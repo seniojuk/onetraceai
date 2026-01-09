@@ -10,10 +10,16 @@ import {
   ArrowRight,
   RefreshCw,
   ListChecks,
+  Pencil,
+  Save,
+  X,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -76,6 +82,13 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const [generatedStories, setGeneratedStories] = useState<StoryData[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [sourcePrdArtifact, setSourcePrdArtifact] = useState<Artifact | undefined>(sourceArtifact);
+  
+  // New state for editing and individual saving
+  const [editingStoryIndex, setEditingStoryIndex] = useState<number | null>(null);
+  const [editedStory, setEditedStory] = useState<StoryData | null>(null);
+  const [savedStoryIndices, setSavedStoryIndices] = useState<Set<number>>(new Set());
+  const [savingStoryIndex, setSavingStoryIndex] = useState<number | null>(null);
+  const [newAcInput, setNewAcInput] = useState("");
 
   // Get PRD text from selected artifact
   const getPrdText = (): string => {
@@ -260,7 +273,10 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
     const createdIds: string[] = [];
     
     try {
-      for (const story of generatedStories) {
+      for (let i = 0; i < generatedStories.length; i++) {
+        if (savedStoryIndices.has(i)) continue; // Skip already saved
+        
+        const story = generatedStories[i];
         const markdown = convertStoryToMarkdown(story);
 
         const artifact = await createArtifact.mutateAsync({
@@ -273,6 +289,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
         });
 
         createdIds.push(artifact.id);
+        setSavedStoryIndices(prev => new Set(prev).add(i));
 
         // Create edge to source PRD if we have one
         if (sourcePrdArtifact && artifact) {
@@ -289,7 +306,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
         }
       }
 
-      toast.success(`Created ${createdIds.length} stories successfully`);
+      toast.success(`Saved ${createdIds.length} stories successfully`);
 
       if (onComplete) {
         onComplete(createdIds);
@@ -303,6 +320,101 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
     }
   };
 
+  const handleSaveSingleStory = async (index: number) => {
+    if (!currentWorkspaceId || !currentProjectId) {
+      toast.error("Please select a project first");
+      return;
+    }
+
+    setSavingStoryIndex(index);
+    const story = generatedStories[index];
+    
+    try {
+      const markdown = convertStoryToMarkdown(story);
+
+      const artifact = await createArtifact.mutateAsync({
+        workspaceId: currentWorkspaceId,
+        projectId: currentProjectId,
+        type: "STORY",
+        title: story.title,
+        contentMarkdown: markdown,
+        contentJson: story,
+      });
+
+      // Create edge to source PRD if we have one
+      if (sourcePrdArtifact && artifact) {
+        await createEdge.mutateAsync({
+          workspaceId: currentWorkspaceId,
+          projectId: currentProjectId,
+          fromArtifactId: sourcePrdArtifact.id,
+          toArtifactId: artifact.id,
+          edgeType: "DERIVES_FROM",
+          source: "AI_INFERRED",
+          sourceRef: "story-generator",
+          metadata: { generatedFrom: "prd" },
+        });
+      }
+
+      setSavedStoryIndices(prev => new Set(prev).add(index));
+      toast.success(`Saved "${story.title}"`);
+    } catch (error) {
+      toast.error("Failed to save story");
+    } finally {
+      setSavingStoryIndex(null);
+    }
+  };
+
+  const handleStartEdit = (index: number) => {
+    setEditingStoryIndex(index);
+    setEditedStory({ ...generatedStories[index] });
+    setNewAcInput("");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingStoryIndex(null);
+    setEditedStory(null);
+    setNewAcInput("");
+  };
+
+  const handleSaveEdit = () => {
+    if (editingStoryIndex !== null && editedStory) {
+      const updated = [...generatedStories];
+      updated[editingStoryIndex] = editedStory;
+      setGeneratedStories(updated);
+      setEditingStoryIndex(null);
+      setEditedStory(null);
+      setNewAcInput("");
+      toast.success("Story updated");
+    }
+  };
+
+  const handleAddAc = () => {
+    if (editedStory && newAcInput.trim()) {
+      setEditedStory({
+        ...editedStory,
+        acceptanceCriteria: [...editedStory.acceptanceCriteria, newAcInput.trim()],
+      });
+      setNewAcInput("");
+    }
+  };
+
+  const handleRemoveAc = (acIndex: number) => {
+    if (editedStory) {
+      setEditedStory({
+        ...editedStory,
+        acceptanceCriteria: editedStory.acceptanceCriteria.filter((_, i) => i !== acIndex),
+      });
+    }
+  };
+
+  const handleUpdateAc = (acIndex: number, value: string) => {
+    if (editedStory) {
+      const updated = [...editedStory.acceptanceCriteria];
+      updated[acIndex] = value;
+      setEditedStory({ ...editedStory, acceptanceCriteria: updated });
+    }
+  };
+
   const handleReset = () => {
     setPhase("prd");
     setPrdContent(initialPRD || "");
@@ -313,6 +425,9 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
     setAnswers({});
     setGeneratedStories([]);
     setSourcePrdArtifact(sourceArtifact);
+    setSavedStoryIndices(new Set());
+    setEditingStoryIndex(null);
+    setEditedStory(null);
   };
 
   const prdArtifacts = artifacts || [];
@@ -564,57 +679,213 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-green-600" />
                 Generated Stories ({generatedStories.length})
+                {savedStoryIndices.size > 0 && (
+                  <Badge variant="outline" className="ml-2 text-green-600">
+                    {savedStoryIndices.size} saved
+                  </Badge>
+                )}
               </CardTitle>
               <CardDescription>
-                Review all stories and their acceptance criteria before saving.
+                Review, edit, and save stories individually or all at once.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[500px] pr-4">
                 <div className="space-y-4">
-                  {generatedStories.map((story, idx) => (
-                    <div
-                      key={idx}
-                      className="p-4 rounded-lg border bg-card"
-                    >
-                      <div className="flex items-start justify-between gap-4 mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                            {idx + 1}/{generatedStories.length}
-                          </span>
-                          <h4 className="font-medium text-foreground">{story.title}</h4>
+                  {generatedStories.map((story, idx) => {
+                    const isEditing = editingStoryIndex === idx;
+                    const isSaved = savedStoryIndices.has(idx);
+                    const isSavingThis = savingStoryIndex === idx;
+                    const storyToShow = isEditing && editedStory ? editedStory : story;
+
+                    return (
+                      <div
+                        key={idx}
+                        className={cn(
+                          "p-4 rounded-lg border bg-card",
+                          isSaved && "border-green-500/50 bg-green-50/30 dark:bg-green-950/10"
+                        )}
+                      >
+                        {/* Header */}
+                        <div className="flex items-start justify-between gap-4 mb-2">
+                          <div className="flex items-center gap-2 flex-1">
+                            <span className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                              {idx + 1}/{generatedStories.length}
+                            </span>
+                            {isEditing ? (
+                              <Input
+                                value={editedStory?.title || ""}
+                                onChange={(e) => setEditedStory(prev => prev ? { ...prev, title: e.target.value } : null)}
+                                className="font-medium h-8"
+                              />
+                            ) : (
+                              <h4 className="font-medium text-foreground">{story.title}</h4>
+                            )}
+                            {isSaved && (
+                              <Badge variant="outline" className="text-green-600 border-green-500">
+                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                Saved
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {isEditing ? (
+                              <Select
+                                value={editedStory?.priority || "medium"}
+                                onValueChange={(v) => setEditedStory(prev => prev ? { ...prev, priority: v as "high" | "medium" | "low" } : null)}
+                              >
+                                <SelectTrigger className="h-7 w-24 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="high">High</SelectItem>
+                                  <SelectItem value="medium">Medium</SelectItem>
+                                  <SelectItem value="low">Low</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Badge className={cn("text-xs", priorityColors[story.priority])}>
+                                {story.priority}
+                              </Badge>
+                            )}
+                            {isEditing ? (
+                              <Select
+                                value={String(editedStory?.storyPoints || 3)}
+                                onValueChange={(v) => setEditedStory(prev => prev ? { ...prev, storyPoints: parseInt(v) } : null)}
+                              >
+                                <SelectTrigger className="h-7 w-20 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {[1, 2, 3, 5, 8, 13].map(p => (
+                                    <SelectItem key={p} value={String(p)}>{p} pts</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">
+                                {story.storyPoints} pts
+                              </Badge>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Badge className={cn("text-xs", priorityColors[story.priority])}>
-                            {story.priority}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {story.storyPoints} pts
-                          </Badge>
+
+                        {/* Description */}
+                        {isEditing ? (
+                          <Textarea
+                            value={editedStory?.description || ""}
+                            onChange={(e) => setEditedStory(prev => prev ? { ...prev, description: e.target.value } : null)}
+                            className="text-sm mb-3 min-h-[60px]"
+                          />
+                        ) : (
+                          <p className="text-sm text-muted-foreground mb-3">{story.description}</p>
+                        )}
+
+                        {storyToShow.epic && !isEditing && (
+                          <div className="text-xs text-muted-foreground mb-2">
+                            <span className="font-medium">Epic:</span> {storyToShow.epic}
+                          </div>
+                        )}
+
+                        {/* Acceptance Criteria */}
+                        <div className="mt-3 pt-3 border-t">
+                          <div className="text-xs font-medium mb-2 flex items-center gap-1">
+                            <ListChecks className="w-3 h-3" />
+                            Acceptance Criteria ({storyToShow.acceptanceCriteria.length})
+                          </div>
+                          <ul className="space-y-1.5">
+                            {storyToShow.acceptanceCriteria.map((ac, i) => (
+                              <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
+                                {isEditing ? (
+                                  <>
+                                    <Input
+                                      value={ac}
+                                      onChange={(e) => handleUpdateAc(i, e.target.value)}
+                                      className="h-7 text-xs flex-1"
+                                    />
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-7 w-7 text-destructive hover:text-destructive"
+                                      onClick={() => handleRemoveAc(i)}
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle2 className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
+                                    <span>{ac}</span>
+                                  </>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                          {isEditing && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <Input
+                                value={newAcInput}
+                                onChange={(e) => setNewAcInput(e.target.value)}
+                                placeholder="Add acceptance criteria..."
+                                className="h-7 text-xs flex-1"
+                                onKeyDown={(e) => e.key === "Enter" && handleAddAc()}
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7"
+                                onClick={handleAddAc}
+                              >
+                                <Plus className="w-3 h-3 mr-1" />
+                                Add
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Story Actions */}
+                        <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t">
+                          {isEditing ? (
+                            <>
+                              <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
+                                <X className="w-3 h-3 mr-1" />
+                                Cancel
+                              </Button>
+                              <Button size="sm" onClick={handleSaveEdit}>
+                                <CheckCircle2 className="w-3 h-3 mr-1" />
+                                Apply Changes
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleStartEdit(idx)}
+                                disabled={isSaved}
+                              >
+                                <Pencil className="w-3 h-3 mr-1" />
+                                Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleSaveSingleStory(idx)}
+                                disabled={isSaved || isSavingThis}
+                                className={isSaved ? "bg-green-600" : ""}
+                              >
+                                {isSavingThis ? (
+                                  <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                ) : (
+                                  <Save className="w-3 h-3 mr-1" />
+                                )}
+                                {isSaved ? "Saved" : "Save Story"}
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-3">{story.description}</p>
-                      {story.epic && (
-                        <div className="text-xs text-muted-foreground mb-2">
-                          <span className="font-medium">Epic:</span> {story.epic}
-                        </div>
-                      )}
-                      <div className="mt-3 pt-3 border-t">
-                        <div className="text-xs font-medium mb-2 flex items-center gap-1">
-                          <ListChecks className="w-3 h-3" />
-                          Acceptance Criteria ({story.acceptanceCriteria.length})
-                        </div>
-                        <ul className="space-y-1.5">
-                          {story.acceptanceCriteria.map((ac, i) => (
-                            <li key={i} className="text-xs text-muted-foreground flex items-start gap-2">
-                              <CheckCircle2 className="w-3 h-3 mt-0.5 text-green-500 flex-shrink-0" />
-                              <span>{ac}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </ScrollArea>
             </CardContent>
@@ -628,7 +899,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             </Button>
             <Button
               onClick={handleSaveStories}
-              disabled={isSaving}
+              disabled={isSaving || savedStoryIndices.size === generatedStories.length}
               className="bg-accent hover:bg-accent/90"
             >
               {isSaving ? (
@@ -636,10 +907,15 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Saving...
                 </>
+              ) : savedStoryIndices.size === generatedStories.length ? (
+                <>
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  All Saved
+                </>
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Save All Stories ({generatedStories.length})
+                  Save Remaining ({generatedStories.length - savedStoryIndices.size})
                 </>
               )}
             </Button>
