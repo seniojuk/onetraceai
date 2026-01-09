@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { 
   Network, 
   ArrowRight, 
@@ -24,18 +24,37 @@ type Step = "welcome" | "create-workspace" | "create-project" | "success";
 
 const OnboardingPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const [currentStep, setCurrentStep] = useState<Step>("welcome");
+  
+  // Check if we're adding a project to existing workspace
+  const stepParam = searchParams.get("step");
+  const isAddingProjectOnly = stepParam === "create-project";
+  
+  const { currentWorkspaceId, setCurrentWorkspace, setCurrentProject, setShowOnboarding } = useUIStore();
+  
+  const [currentStep, setCurrentStep] = useState<Step>(
+    isAddingProjectOnly && currentWorkspaceId ? "create-project" : "welcome"
+  );
   const [workspaceName, setWorkspaceName] = useState("");
   const [projectName, setProjectName] = useState("");
   const [projectKey, setProjectKey] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
   
-  const { setCurrentWorkspace, setCurrentProject, setShowOnboarding } = useUIStore();
   const createWorkspace = useCreateWorkspace();
   const createProject = useCreateProject();
 
-  const [createdWorkspaceId, setCreatedWorkspaceId] = useState<string | null>(null);
+  // Use existing workspace if adding project only, otherwise use newly created one
+  const [createdWorkspaceId, setCreatedWorkspaceId] = useState<string | null>(
+    isAddingProjectOnly ? currentWorkspaceId : null
+  );
+  
+  // Sync workspace ID if it changes
+  useEffect(() => {
+    if (isAddingProjectOnly && currentWorkspaceId) {
+      setCreatedWorkspaceId(currentWorkspaceId);
+    }
+  }, [isAddingProjectOnly, currentWorkspaceId]);
 
   const handleCreateWorkspace = async () => {
     if (!workspaceName.trim()) {
@@ -80,12 +99,18 @@ const OnboardingPage = () => {
     navigate("/dashboard");
   };
 
-  const steps = [
-    { id: "welcome", label: "Welcome" },
-    { id: "create-workspace", label: "Workspace" },
-    { id: "create-project", label: "Project" },
-    { id: "success", label: "Complete" },
-  ];
+  // Simplified steps when adding project only
+  const steps = isAddingProjectOnly 
+    ? [
+        { id: "create-project", label: "New Project" },
+        { id: "success", label: "Complete" },
+      ]
+    : [
+        { id: "welcome", label: "Welcome" },
+        { id: "create-workspace", label: "Workspace" },
+        { id: "create-project", label: "Project" },
+        { id: "success", label: "Complete" },
+      ];
 
   const currentStepIndex = steps.findIndex(s => s.id === currentStep);
 
@@ -244,10 +269,17 @@ const OnboardingPage = () => {
                     />
                   </div>
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => setCurrentStep("create-workspace")}>
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Back
-                    </Button>
+                    {isAddingProjectOnly ? (
+                      <Button variant="outline" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Cancel
+                      </Button>
+                    ) : (
+                      <Button variant="outline" onClick={() => setCurrentStep("create-workspace")}>
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back
+                      </Button>
+                    )}
                     <Button 
                       className="flex-1" 
                       onClick={handleCreateProject}
