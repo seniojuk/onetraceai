@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { File, Download, X, Plus, Loader2, Paperclip } from "lucide-react";
+import { File, Download, X, Plus, Loader2, Paperclip, Eye, Image as ImageIcon, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -22,6 +22,7 @@ import {
   FileArtifact,
 } from "@/hooks/useFileArtifacts";
 import { FileUploader } from "./FileUploader";
+import { FilePreview, isPreviewable } from "./FilePreview";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -253,49 +254,83 @@ export function AttachedFiles({
       <CardContent>
         {attachedFiles && attachedFiles.length > 0 ? (
           <div className="space-y-2">
-            {attachedFiles.map((file) => (
-              <div
-                key={file.id}
-                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg group"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <File className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {file.content_json.file_name}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-muted-foreground">
-                        {formatFileSize(file.content_json.file_size)}
-                      </p>
-                      <Badge variant="secondary" className="text-xs">
-                        {file.content_json.file_type.split("/")[1]?.toUpperCase() || "FILE"}
-                      </Badge>
+            {attachedFiles.map((file) => {
+              const fileType = file.content_json.file_type;
+              const canPreview = isPreviewable(fileType);
+              const isImage = fileType.startsWith("image/");
+              const isPdf = fileType === "application/pdf";
+
+              return (
+                <div
+                  key={file.id}
+                  className="flex items-center justify-between p-3 bg-muted/50 rounded-lg group hover:bg-muted/70 transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    {isImage ? (
+                      <ImageIcon className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                    ) : isPdf ? (
+                      <FileText className="w-5 h-5 text-red-500 flex-shrink-0" />
+                    ) : (
+                      <File className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      {canPreview ? (
+                        <FilePreview
+                          file={file}
+                          trigger={
+                            <p className="text-sm font-medium text-foreground truncate hover:text-accent cursor-pointer">
+                              {file.content_json.file_name}
+                            </p>
+                          }
+                        />
+                      ) : (
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {file.content_json.file_name}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-muted-foreground">
+                          {formatFileSize(file.content_json.file_size)}
+                        </p>
+                        <Badge variant="secondary" className="text-xs">
+                          {file.content_json.file_type.split("/")[1]?.toUpperCase() || "FILE"}
+                        </Badge>
+                        {canPreview && (
+                          <Badge variant="outline" className="text-xs text-accent border-accent/30">
+                            Preview
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleDownload(file)}
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
-                  {isEditing && (
+                  <div className="flex items-center gap-1">
+                    {canPreview && (
+                      <FilePreview file={file} />
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => handleRemoveFile(file.id)}
+                      className="h-8 w-8"
+                      onClick={() => handleDownload(file)}
+                      title="Download"
                     >
-                      <X className="w-4 h-4" />
+                      <Download className="w-4 h-4" />
                     </Button>
-                  )}
+                    {isEditing && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => handleRemoveFile(file.id)}
+                        title="Remove"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground text-center py-8">
