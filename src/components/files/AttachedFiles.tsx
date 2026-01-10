@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { File, Download, X, Plus, Loader2, Paperclip, Eye, Image as ImageIcon, FileText } from "lucide-react";
+import { File, Download, X, Plus, Loader2, Paperclip, Eye, Image as ImageIcon, FileText, FileCode, FileJson } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -256,9 +256,10 @@ export function AttachedFiles({
           <div className="space-y-2">
             {attachedFiles.map((file) => {
               const fileType = file.content_json.file_type;
-              const canPreview = isPreviewable(fileType);
+              const canPreview = isPreviewable(fileType, file.content_json.file_name);
               const isImage = fileType.startsWith("image/");
               const isPdf = fileType === "application/pdf";
+              const isText = fileType.startsWith("text/") || file.content_json.file_name.match(/\.(md|json|txt|yaml|yml)$/i);
 
               return (
                 <div
@@ -270,6 +271,10 @@ export function AttachedFiles({
                       <ImageIcon className="w-5 h-5 text-blue-500 flex-shrink-0" />
                     ) : isPdf ? (
                       <FileText className="w-5 h-5 text-red-500 flex-shrink-0" />
+                    ) : file.content_json.file_name.endsWith('.json') ? (
+                      <FileJson className="w-5 h-5 text-yellow-500 flex-shrink-0" />
+                    ) : isText ? (
+                      <FileCode className="w-5 h-5 text-green-500 flex-shrink-0" />
                     ) : (
                       <File className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                     )}

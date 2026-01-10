@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Eye, X, Download, Maximize2, Loader2, FileText, Image as ImageIcon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Eye, Download, Maximize2, Loader2, FileText, Image as ImageIcon, FileCode, FileJson } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -7,7 +7,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileArtifact, getFileDownloadUrl, downloadFile } from "@/hooks/useFileArtifacts";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -27,28 +29,65 @@ const PREVIEWABLE_IMAGE_TYPES = [
 
 const PREVIEWABLE_PDF_TYPES = ["application/pdf"];
 
-function isPreviewable(fileType: string): boolean {
+const PREVIEWABLE_TEXT_TYPES = [
+  "text/plain",
+  "text/markdown",
+  "text/x-markdown",
+  "application/json",
+  "text/json",
+  "text/css",
+  "text/html",
+  "text/xml",
+  "application/xml",
+];
+
+// File extensions that indicate text files (for cases where MIME type isn't accurate)
+const TEXT_FILE_EXTENSIONS = [".md", ".markdown", ".txt", ".json", ".css", ".html", ".xml", ".yaml", ".yml", ".log"];
+
+function isTextFile(fileType: string, fileName: string): boolean {
+  if (PREVIEWABLE_TEXT_TYPES.includes(fileType)) return true;
+  const lowerName = fileName.toLowerCase();
+  return TEXT_FILE_EXTENSIONS.some(ext => lowerName.endsWith(ext));
+}
+
+function isPreviewable(fileType: string, fileName?: string): boolean {
   return (
     PREVIEWABLE_IMAGE_TYPES.includes(fileType) ||
-    PREVIEWABLE_PDF_TYPES.includes(fileType)
+    PREVIEWABLE_PDF_TYPES.includes(fileType) ||
+    isTextFile(fileType, fileName || "")
   );
 }
 
-function getPreviewType(fileType: string): "image" | "pdf" | "none" {
+function getPreviewType(fileType: string, fileName?: string): "image" | "pdf" | "text" | "none" {
   if (PREVIEWABLE_IMAGE_TYPES.includes(fileType)) return "image";
   if (PREVIEWABLE_PDF_TYPES.includes(fileType)) return "pdf";
+  if (isTextFile(fileType, fileName || "")) return "text";
   return "none";
+}
+
+function getTextLanguage(fileType: string, fileName: string): string {
+  const lowerName = fileName.toLowerCase();
+  if (lowerName.endsWith(".json") || fileType.includes("json")) return "json";
+  if (lowerName.endsWith(".md") || lowerName.endsWith(".markdown") || fileType.includes("markdown")) return "markdown";
+  if (lowerName.endsWith(".css")) return "css";
+  if (lowerName.endsWith(".html") || lowerName.endsWith(".htm")) return "html";
+  if (lowerName.endsWith(".xml") || fileType.includes("xml")) return "xml";
+  if (lowerName.endsWith(".yaml") || lowerName.endsWith(".yml")) return "yaml";
+  return "plaintext";
 }
 
 export function FilePreview({ file, trigger }: FilePreviewProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [textContent, setTextContent] = useState<string | null>(null);
 
   const fileType = file.content_json.file_type;
-  const previewType = getPreviewType(fileType);
+  const fileName = file.content_json.file_name;
+  const previewType = getPreviewType(fileType, fileName);
   const canPreview = previewType !== "none";
   const fileUrl = getFileDownloadUrl(file.content_json.storage_path);
+  const textLanguage = previewType === "text" ? getTextLanguage(fileType, fileName) : null;
 
   const handleDownload = async () => {
     try {
@@ -69,17 +108,84 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
     setError("Failed to load preview");
   };
 
+  const loadTextContent = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const { data, error: downloadError } = await supabase.storage
+        .from("artifact-files")
+        .download(file.content_json.storage_path);
+      
+      if (downloadError) throw downloadError;
+      
+      const text = await data.text();
+      setTextContent(text);
+      setIsLoading(false);
+    } catch (err) {
+      setError("Failed to load file content");
+      setIsLoading(false);
+    }
+  };
+
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open) {
       setIsLoading(true);
       setError(null);
+      setTextContent(null);
+      
+      if (previewType === "text") {
+        loadTextContent();
+      }
     }
   };
 
   if (!canPreview) {
     return null;
   }
+
+  const getFileIcon = () => {
+    if (textLanguage === "json") return <FileJson className="w-4 h-4 text-muted-foreground" />;
+    if (textLanguage === "markdown") return <FileText className="w-4 h-4 text-muted-foreground" />;
+    if (previewType === "text") return <FileCode className="w-4 h-4 text-muted-foreground" />;
+    if (previewType === "image") return <ImageIcon className="w-4 h-4 text-muted-foreground" />;
+    return <FileText className="w-4 h-4 text-muted-foreground" />;
+  };
+
+  const renderTextContent = () => {
+    if (!textContent) return null;
+
+    if (textLanguage === "json") {
+      try {
+        const parsed = JSON.parse(textContent);
+        const formatted = JSON.stringify(parsed, null, 2);
+        return (
+          <pre className="text-sm font-mono p-4 whitespace-pre-wrap break-words text-foreground">
+            {formatted}
+          </pre>
+        );
+      } catch {
+        // If JSON parsing fails, render as plain text
+      }
+    }
+
+    if (textLanguage === "markdown") {
+      return (
+        <div className="p-4 prose prose-sm dark:prose-invert max-w-none">
+          <pre className="text-sm font-mono whitespace-pre-wrap break-words bg-transparent p-0 text-foreground">
+            {textContent}
+          </pre>
+        </div>
+      );
+    }
+
+    return (
+      <pre className="text-sm font-mono p-4 whitespace-pre-wrap break-words text-foreground">
+        {textContent}
+      </pre>
+    );
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -102,12 +208,13 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
         <DialogHeader className="p-4 pb-2 border-b">
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2 text-base font-medium">
-              {previewType === "image" ? (
-                <ImageIcon className="w-4 h-4 text-muted-foreground" />
-              ) : (
-                <FileText className="w-4 h-4 text-muted-foreground" />
-              )}
+              {getFileIcon()}
               {file.content_json.file_name}
+              {textLanguage && (
+                <span className="text-xs text-muted-foreground uppercase bg-muted px-2 py-0.5 rounded">
+                  {textLanguage}
+                </span>
+              )}
             </DialogTitle>
             <div className="flex items-center gap-1">
               <Button
@@ -119,15 +226,17 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
               >
                 <Download className="w-4 h-4" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => window.open(fileUrl, "_blank")}
-                title="Open in new tab"
-              >
-                <Maximize2 className="w-4 h-4" />
-              </Button>
+              {previewType !== "text" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => window.open(fileUrl, "_blank")}
+                  title="Open in new tab"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
         </DialogHeader>
@@ -172,6 +281,11 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
               onLoad={handleLoad}
               onError={handleError}
             />
+          )}
+          {previewType === "text" && !isLoading && !error && (
+            <ScrollArea className="h-[calc(90vh-80px)]">
+              {renderTextContent()}
+            </ScrollArea>
           )}
         </div>
       </DialogContent>
