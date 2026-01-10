@@ -16,7 +16,8 @@ export type ArtifactType =
   | "BUG"
   | "DECISION"
   | "RELEASE"
-  | "DEPLOYMENT";
+  | "DEPLOYMENT"
+  | "FILE";
 
 export type ArtifactStatus =
   | "DRAFT"
@@ -208,6 +209,7 @@ function getArtifactPrefix(type: ArtifactType): string {
     DECISION: "DEC",
     RELEASE: "REL",
     DEPLOYMENT: "DEPLOY",
+    FILE: "FILE",
   };
   return prefixes[type];
 }

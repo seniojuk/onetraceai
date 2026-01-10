@@ -88,6 +88,36 @@ export type Database = {
           },
         ]
       }
+      artifact_file_associations: {
+        Row: {
+          associated_artifact_id: string
+          created_at: string
+          created_by: string | null
+          file_artifact_id: string
+          id: string
+          project_id: string
+          workspace_id: string
+        }
+        Insert: {
+          associated_artifact_id: string
+          created_at?: string
+          created_by?: string | null
+          file_artifact_id: string
+          id?: string
+          project_id: string
+          workspace_id: string
+        }
+        Update: {
+          associated_artifact_id?: string
+          created_at?: string
+          created_by?: string | null
+          file_artifact_id?: string
+          id?: string
+          project_id?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       artifact_versions: {
         Row: {
           artifact_id: string

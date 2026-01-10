@@ -71,6 +71,7 @@ function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; sho
     DECISION: "border-l-cyan-500",
     RELEASE: "border-l-emerald-500",
     DEPLOYMENT: "border-l-violet-500",
+    FILE: "border-l-stone-500",
   };
 
   const typeLabels: Record<ArtifactType, string> = {
@@ -88,6 +89,7 @@ function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; sho
     DECISION: "Decision",
     RELEASE: "Release",
     DEPLOYMENT: "Deploy",
+    FILE: "File",
   };
 
   return (
@@ -534,6 +536,7 @@ const GraphPageInner = () => {
                   DECISION: "#06b6d4",
                   RELEASE: "#10b981",
                   DEPLOYMENT: "#8b5cf6",
+                  FILE: "#78716c",
                 };
                 return colors[type] || "#64748b";
               }}

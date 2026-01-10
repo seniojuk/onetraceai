@@ -16,7 +16,8 @@ import {
   MoreVertical,
   ArrowUpDown,
   Download,
-  X
+  X,
+  Paperclip
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,9 @@ import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
 import { downloadExport, ExportFormat } from "@/utils/artifactExport";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FilesSection } from "@/components/files/FilesSection";
+import { toast } from "sonner";
 
 const artifactTypeConfig: Record<ArtifactType, { icon: React.ElementType; color: string; label: string }> = {
   IDEA: { icon: Lightbulb, color: "bg-yellow-100 text-yellow-800", label: "Idea" },
@@ -62,6 +66,7 @@ const artifactTypeConfig: Record<ArtifactType, { icon: React.ElementType; color:
   DECISION: { icon: FileText, color: "bg-cyan-100 text-cyan-800", label: "Decision" },
   RELEASE: { icon: GitBranch, color: "bg-emerald-100 text-emerald-800", label: "Release" },
   DEPLOYMENT: { icon: GitBranch, color: "bg-violet-100 text-violet-800", label: "Deploy" },
+  FILE: { icon: FileText, color: "bg-stone-100 text-stone-800", label: "File" },
 };
 
 const statusConfig: Record<ArtifactStatus, { color: string; label: string }> = {
@@ -75,10 +80,11 @@ const statusConfig: Record<ArtifactStatus, { color: string; label: string }> = {
 
 const ArtifactsPage = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const typeFilter = searchParams.get("type") as ArtifactType | null;
+  const activeTab = searchParams.get("tab") || "artifacts";
   
-  const { currentProjectId, artifactTypeFilter, setArtifactTypeFilter, statusFilter, setStatusFilter } = useUIStore();
+  const { currentProjectId, currentWorkspaceId, artifactTypeFilter, setArtifactTypeFilter, statusFilter, setStatusFilter } = useUIStore();
   const { data: artifacts, isLoading } = useArtifacts(currentProjectId || undefined);
   
   const [search, setSearch] = useState("");
@@ -87,8 +93,11 @@ const ArtifactsPage = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedArtifacts, setSelectedArtifacts] = useState<Set<string>>(new Set());
 
-  // Filter and sort artifacts
+  // Filter out FILE type from main artifacts list and apply filters
   const filteredArtifacts = artifacts?.filter(artifact => {
+    // Exclude FILE artifacts from the main list
+    if (artifact.type === "FILE") return false;
+    
     const matchesSearch = search === "" || 
       artifact.title.toLowerCase().includes(search.toLowerCase()) ||
       artifact.short_id.toLowerCase().includes(search.toLowerCase());
@@ -151,14 +160,33 @@ const ArtifactsPage = () => {
     <AuthGuard>
       <AppLayout>
         <div className="p-8">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">Artifacts</h1>
-              <p className="text-muted-foreground">
-                {filteredArtifacts.length} artifacts in this project
-              </p>
+          {/* Tabs for Artifacts and Files */}
+          <Tabs value={activeTab} onValueChange={(value) => setSearchParams({ tab: value })} className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Artifacts</h1>
+                <p className="text-muted-foreground">
+                  Manage your project artifacts and files
+                </p>
+              </div>
+              <TabsList>
+                <TabsTrigger value="artifacts" className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Artifacts
+                </TabsTrigger>
+                <TabsTrigger value="files" className="flex items-center gap-2">
+                  <Paperclip className="w-4 h-4" />
+                  Files
+                </TabsTrigger>
+              </TabsList>
             </div>
+
+            <TabsContent value="artifacts" className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <p className="text-muted-foreground">
+              {filteredArtifacts.length} artifacts in this project
+            </p>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button className="bg-accent hover:bg-accent/90">
