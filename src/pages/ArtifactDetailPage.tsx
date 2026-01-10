@@ -62,6 +62,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { PRDEnhancer } from "@/components/prd/PRDEnhancer";
 import { PRDVersionHistory } from "@/components/prd/PRDVersionHistory";
+import { AttachedFiles } from "@/components/files/AttachedFiles";
 
 const statusOptions: { value: ArtifactStatus; label: string }[] = [
   { value: "DRAFT", label: "Draft" },
@@ -436,6 +437,14 @@ const ArtifactDetailPage = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Attached Files */}
+              <AttachedFiles
+                artifactId={artifact.id}
+                projectId={artifact.project_id}
+                workspaceId={artifact.workspace_id}
+                isEditing={isEditing}
+              />
 
               {/* Related Artifacts */}
               <Card>

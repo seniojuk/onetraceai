@@ -12,6 +12,9 @@ import {
   TestTube2,
   Sparkles,
   ListChecks,
+  Paperclip,
+  X,
+  File,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,9 +22,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useCreateArtifact, useArtifact, ArtifactType } from "@/hooks/useArtifacts";
+import { useUploadFile, useAssociateFile, FileArtifact } from "@/hooks/useFileArtifacts";
+import { FileUploader } from "@/components/files/FileUploader";
 import { useUIStore } from "@/store/uiStore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -60,6 +66,24 @@ const CreateArtifactPage = () => {
   const [creationMode, setCreationMode] = useState<"manual" | "ai">(
     preselectedType === "PRD" || preselectedType === "STORY" ? "ai" : "manual"
   );
+  const [uploadedFiles, setUploadedFiles] = useState<FileArtifact[]>([]);
+  
+  const uploadFile = useUploadFile();
+  const associateFile = useAssociateFile();
+
+  const handleFilesUploaded = (files: FileArtifact[]) => {
+    setUploadedFiles((prev) => [...prev, ...files]);
+  };
+
+  const handleRemoveUploadedFile = (fileId: string) => {
+    setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,9 +115,19 @@ const CreateArtifactPage = () => {
         contentMarkdown: content.trim() || undefined,
       });
 
+      // Associate uploaded files with the created artifact
+      for (const file of uploadedFiles) {
+        await associateFile.mutateAsync({
+          fileArtifactId: file.id,
+          associatedArtifactId: artifact.id,
+          projectId: currentProjectId,
+          workspaceId: currentWorkspaceId,
+        });
+      }
+
       toast({
         title: "Artifact created",
-        description: `${type} "${title}" has been created.`,
+        description: `${type} "${title}" has been created${uploadedFiles.length > 0 ? ` with ${uploadedFiles.length} attached file(s)` : ''}.`,
       });
 
       navigate(`/artifacts/${artifact.id}`);
@@ -246,6 +280,60 @@ const CreateArtifactPage = () => {
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Supporting Files - Show for IDEA type */}
+                  {type === "IDEA" && currentWorkspaceId && currentProjectId && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Paperclip className="w-5 h-5" />
+                          Supporting Files
+                        </CardTitle>
+                        <CardDescription>
+                          Attach documents that provide context for your idea (optional)
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <FileUploader
+                          projectId={currentProjectId}
+                          workspaceId={currentWorkspaceId}
+                          onUploadComplete={handleFilesUploaded}
+                        />
+                        
+                        {uploadedFiles.length > 0 && (
+                          <div className="space-y-2">
+                            <Label>Attached Files ({uploadedFiles.length})</Label>
+                            <div className="space-y-2">
+                              {uploadedFiles.map((file) => (
+                                <div
+                                  key={file.id}
+                                  className="flex items-center justify-between p-3 border rounded-lg bg-muted/30"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <File className="w-5 h-5 text-muted-foreground" />
+                                    <div>
+                                      <p className="text-sm font-medium">{file.content_json.file_name}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {formatFileSize(file.content_json.file_size)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleRemoveUploadedFile(file.id)}
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Actions */}
                   <div className="flex items-center justify-end gap-4">

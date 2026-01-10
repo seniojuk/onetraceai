@@ -49,11 +49,7 @@ import { FileUploader } from "./FileUploader";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Artifact } from "@/hooks/useArtifacts";
-
-interface FilesSectionProps {
-  projectId: string;
-  workspaceId: string;
-}
+import { useUIStore } from "@/store/uiStore";
 
 function FileAssociations({ fileArtifactId }: { fileArtifactId: string }) {
   const { data: artifacts, isLoading } = useArtifactsForFile(fileArtifactId);
@@ -128,7 +124,10 @@ function FileAssociationsDialog({ file, artifacts }: { file: FileArtifact; artif
   );
 }
 
-export function FilesSection({ projectId, workspaceId }: FilesSectionProps) {
+export function FilesSection() {
+  const { currentProjectId, currentWorkspaceId } = useUIStore();
+  const projectId = currentProjectId || "";
+  const workspaceId = currentWorkspaceId || "";
   const [search, setSearch] = useState("");
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   

@@ -3,14 +3,14 @@ import { Upload, File, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useUploadFile } from "@/hooks/useFileArtifacts";
+import { useUploadFile, FileArtifact } from "@/hooks/useFileArtifacts";
 import { toast } from "sonner";
 
 interface FileUploaderProps {
   workspaceId: string;
   projectId: string;
   associatedArtifactId?: string;
-  onUploadComplete?: () => void;
+  onUploadComplete?: (uploadedFiles: FileArtifact[]) => void;
   className?: string;
 }
 
@@ -64,18 +64,21 @@ export function FileUploader({
     if (selectedFiles.length === 0) return;
 
     try {
+      const uploadedArtifacts: FileArtifact[] = [];
+      
       for (const file of selectedFiles) {
-        await uploadFile.mutateAsync({
+        const result = await uploadFile.mutateAsync({
           file,
           workspaceId,
           projectId,
           associatedArtifactId,
         });
+        uploadedArtifacts.push(result);
       }
       
       toast.success(`${selectedFiles.length} file(s) uploaded successfully`);
       setSelectedFiles([]);
-      onUploadComplete?.();
+      onUploadComplete?.(uploadedArtifacts);
     } catch (error) {
       toast.error("Failed to upload files");
       console.error("Upload error:", error);

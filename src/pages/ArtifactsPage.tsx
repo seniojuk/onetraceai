@@ -49,7 +49,6 @@ import { downloadExport, ExportFormat } from "@/utils/artifactExport";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FilesSection } from "@/components/files/FilesSection";
-import { toast } from "sonner";
 
 const artifactTypeConfig: Record<ArtifactType, { icon: React.ElementType; color: string; label: string }> = {
   IDEA: { icon: Lightbulb, color: "bg-yellow-100 text-yellow-800", label: "Idea" },
@@ -539,6 +538,13 @@ const ArtifactsPage = () => {
               })}
             </div>
           )}
+            </TabsContent>
+
+            {/* Files Tab */}
+            <TabsContent value="files" className="space-y-6">
+              <FilesSection />
+            </TabsContent>
+          </Tabs>
         </div>
       </AppLayout>
     </AuthGuard>
