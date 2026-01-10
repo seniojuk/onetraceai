@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { File, Download, X, Plus, Loader2, Paperclip, Eye, Image as ImageIcon, FileText, FileCode, FileJson } from "lucide-react";
+import { File, Download, X, Plus, Loader2, Paperclip, Eye, Image as ImageIcon, FileText, FileCode, FileJson, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -259,6 +259,8 @@ export function AttachedFiles({
               const canPreview = isPreviewable(fileType, file.content_json.file_name);
               const isImage = fileType.startsWith("image/");
               const isPdf = fileType === "application/pdf";
+              const isDocx = fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" || 
+                             file.content_json.file_name.toLowerCase().endsWith('.docx');
               const isText = fileType.startsWith("text/") || file.content_json.file_name.match(/\.(md|json|txt|yaml|yml)$/i);
 
               return (
@@ -271,6 +273,8 @@ export function AttachedFiles({
                       <ImageIcon className="w-5 h-5 text-blue-500 flex-shrink-0" />
                     ) : isPdf ? (
                       <FileText className="w-5 h-5 text-red-500 flex-shrink-0" />
+                    ) : isDocx ? (
+                      <FileSpreadsheet className="w-5 h-5 text-blue-600 flex-shrink-0" />
                     ) : file.content_json.file_name.endsWith('.json') ? (
                       <FileJson className="w-5 h-5 text-yellow-500 flex-shrink-0" />
                     ) : isText ? (
