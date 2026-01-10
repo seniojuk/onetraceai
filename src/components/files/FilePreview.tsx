@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Eye, Download, Maximize2, Loader2, FileText, Image as ImageIcon, FileCode, FileJson } from "lucide-react";
+import { useState } from "react";
+import { Eye, Download, Maximize2, Loader2, FileText, Image as ImageIcon, FileCode, FileJson, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,6 +12,7 @@ import { FileArtifact, getFileDownloadUrl, downloadFile } from "@/hooks/useFileA
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import mammoth from "mammoth";
 
 interface FilePreviewProps {
   file: FileArtifact;
@@ -41,8 +42,13 @@ const PREVIEWABLE_TEXT_TYPES = [
   "application/xml",
 ];
 
+const PREVIEWABLE_DOCX_TYPES = [
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
+
 // File extensions that indicate text files (for cases where MIME type isn't accurate)
 const TEXT_FILE_EXTENSIONS = [".md", ".markdown", ".txt", ".json", ".css", ".html", ".xml", ".yaml", ".yml", ".log"];
+const DOCX_FILE_EXTENSIONS = [".docx"];
 
 function isTextFile(fileType: string, fileName: string): boolean {
   if (PREVIEWABLE_TEXT_TYPES.includes(fileType)) return true;
@@ -50,17 +56,25 @@ function isTextFile(fileType: string, fileName: string): boolean {
   return TEXT_FILE_EXTENSIONS.some(ext => lowerName.endsWith(ext));
 }
 
+function isDocxFile(fileType: string, fileName: string): boolean {
+  if (PREVIEWABLE_DOCX_TYPES.includes(fileType)) return true;
+  const lowerName = fileName.toLowerCase();
+  return DOCX_FILE_EXTENSIONS.some(ext => lowerName.endsWith(ext));
+}
+
 function isPreviewable(fileType: string, fileName?: string): boolean {
   return (
     PREVIEWABLE_IMAGE_TYPES.includes(fileType) ||
     PREVIEWABLE_PDF_TYPES.includes(fileType) ||
-    isTextFile(fileType, fileName || "")
+    isTextFile(fileType, fileName || "") ||
+    isDocxFile(fileType, fileName || "")
   );
 }
 
-function getPreviewType(fileType: string, fileName?: string): "image" | "pdf" | "text" | "none" {
+function getPreviewType(fileType: string, fileName?: string): "image" | "pdf" | "text" | "docx" | "none" {
   if (PREVIEWABLE_IMAGE_TYPES.includes(fileType)) return "image";
   if (PREVIEWABLE_PDF_TYPES.includes(fileType)) return "pdf";
+  if (isDocxFile(fileType, fileName || "")) return "docx";
   if (isTextFile(fileType, fileName || "")) return "text";
   return "none";
 }
@@ -81,6 +95,7 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
+  const [docxHtml, setDocxHtml] = useState<string | null>(null);
 
   const fileType = file.content_json.file_type;
   const fileName = file.content_json.file_name;
@@ -128,15 +143,42 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
     }
   };
 
+  const loadDocxContent = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const { data, error: downloadError } = await supabase.storage
+        .from("artifact-files")
+        .download(file.content_json.storage_path);
+      
+      if (downloadError) throw downloadError;
+      
+      // Convert blob to ArrayBuffer for mammoth
+      const arrayBuffer = await data.arrayBuffer();
+      
+      const result = await mammoth.convertToHtml({ arrayBuffer });
+      setDocxHtml(result.value);
+      setIsLoading(false);
+    } catch (err) {
+      console.error("Error loading docx:", err);
+      setError("Failed to load Word document");
+      setIsLoading(false);
+    }
+  };
+
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
     if (open) {
       setIsLoading(true);
       setError(null);
       setTextContent(null);
+      setDocxHtml(null);
       
       if (previewType === "text") {
         loadTextContent();
+      } else if (previewType === "docx") {
+        loadDocxContent();
       }
     }
   };
@@ -146,11 +188,17 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
   }
 
   const getFileIcon = () => {
+    if (previewType === "docx") return <FileSpreadsheet className="w-4 h-4 text-muted-foreground" />;
     if (textLanguage === "json") return <FileJson className="w-4 h-4 text-muted-foreground" />;
     if (textLanguage === "markdown") return <FileText className="w-4 h-4 text-muted-foreground" />;
     if (previewType === "text") return <FileCode className="w-4 h-4 text-muted-foreground" />;
     if (previewType === "image") return <ImageIcon className="w-4 h-4 text-muted-foreground" />;
     return <FileText className="w-4 h-4 text-muted-foreground" />;
+  };
+
+  const getFileTypeLabel = () => {
+    if (previewType === "docx") return "DOCX";
+    return textLanguage;
   };
 
   const renderTextContent = () => {
@@ -187,6 +235,21 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
     );
   };
 
+  const renderDocxContent = () => {
+    if (!docxHtml) return null;
+
+    return (
+      <div 
+        className="p-6 prose prose-sm dark:prose-invert max-w-none docx-preview"
+        dangerouslySetInnerHTML={{ __html: docxHtml }}
+        style={{
+          // Basic styling for Word document elements
+          lineHeight: 1.6,
+        }}
+      />
+    );
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       {trigger ? (
@@ -210,9 +273,9 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
             <DialogTitle className="flex items-center gap-2 text-base font-medium">
               {getFileIcon()}
               {file.content_json.file_name}
-              {textLanguage && (
+              {getFileTypeLabel() && (
                 <span className="text-xs text-muted-foreground uppercase bg-muted px-2 py-0.5 rounded">
-                  {textLanguage}
+                  {getFileTypeLabel()}
                 </span>
               )}
             </DialogTitle>
@@ -226,7 +289,7 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
               >
                 <Download className="w-4 h-4" />
               </Button>
-              {previewType !== "text" && (
+              {previewType !== "text" && previewType !== "docx" && (
                 <Button
                   variant="ghost"
                   size="icon"
@@ -285,6 +348,11 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
           {previewType === "text" && !isLoading && !error && (
             <ScrollArea className="h-[calc(90vh-80px)]">
               {renderTextContent()}
+            </ScrollArea>
+          )}
+          {previewType === "docx" && !isLoading && !error && (
+            <ScrollArea className="h-[calc(90vh-80px)] bg-background">
+              {renderDocxContent()}
             </ScrollArea>
           )}
         </div>
