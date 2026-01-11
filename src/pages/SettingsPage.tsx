@@ -8,7 +8,8 @@ import {
   Palette,
   Save,
   Loader2,
-  Check
+  Check,
+  FolderCog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,11 +30,17 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { ProjectManagement } from "@/components/settings/ProjectManagement";
+import { WorkspaceManagement } from "@/components/settings/WorkspaceManagement";
+import { useUIStore } from "@/store/uiStore";
+import { useCurrentUserRole } from "@/hooks/useWorkspaces";
 
 const SettingsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { currentWorkspaceId } = useUIStore();
+  const userRole = useCurrentUserRole(currentWorkspaceId || undefined);
   
   const [isSaving, setIsSaving] = useState(false);
   const [displayName, setDisplayName] = useState(user?.user_metadata?.full_name || "");
@@ -82,6 +89,10 @@ const SettingsPage = () => {
               <TabsTrigger value="profile" className="gap-2">
                 <User className="w-4 h-4" />
                 Profile
+              </TabsTrigger>
+              <TabsTrigger value="manage" className="gap-2">
+                <FolderCog className="w-4 h-4" />
+                Manage
               </TabsTrigger>
               <TabsTrigger value="notifications" className="gap-2">
                 <Bell className="w-4 h-4" />
@@ -158,6 +169,17 @@ const SettingsPage = () => {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Manage Tab */}
+            <TabsContent value="manage" className="space-y-6">
+              <WorkspaceManagement />
+              {currentWorkspaceId && (
+                <ProjectManagement 
+                  workspaceId={currentWorkspaceId} 
+                  userRole={userRole as "OWNER" | "ADMIN" | "MEMBER" | "VIEWER" | null}
+                />
+              )}
             </TabsContent>
 
             {/* Notifications Tab */}
