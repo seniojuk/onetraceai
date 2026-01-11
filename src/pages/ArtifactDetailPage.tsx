@@ -58,6 +58,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useArtifact, useUpdateArtifact, useArtifacts, ArtifactStatus, Artifact } from "@/hooks/useArtifacts";
 import { useArtifactEdges } from "@/hooks/useArtifactEdges";
+import { usePipelineRunForArtifact } from "@/hooks/useArtifactLineage";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { PRDEnhancer } from "@/components/prd/PRDEnhancer";
@@ -82,6 +83,7 @@ const ArtifactDetailPage = () => {
   const updateArtifact = useUpdateArtifact();
   const { data: edges, isLoading: edgesLoading } = useArtifactEdges(id);
   const { data: allArtifacts } = useArtifacts(artifact?.project_id);
+  const { data: pipelineRun } = usePipelineRunForArtifact(id);
   
   const [isEditing, setIsEditing] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -609,6 +611,33 @@ const ArtifactDetailPage = () => {
                     <label className="text-sm font-medium text-muted-foreground mb-1 block">Last Updated</label>
                     <p className="text-sm text-foreground">{new Date(artifact.updated_at).toLocaleString()}</p>
                   </div>
+
+                  {/* Pipeline Source */}
+                  {pipelineRun && (
+                    <>
+                      <Separator />
+                      <div className="p-3 rounded-lg bg-accent/10 border border-accent/20">
+                        <div className="flex items-center gap-2 text-sm font-medium text-accent mb-2">
+                          <GitBranch className="w-4 h-4" />
+                          Pipeline Generated
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-1">
+                          <span className="font-medium">Pipeline:</span> {pipelineRun.pipeline?.name || "Unknown"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          <span className="font-medium">Run:</span> {new Date(pipelineRun.created_at).toLocaleString()}
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full text-xs"
+                          onClick={() => navigate("/lineage")}
+                        >
+                          View Lineage
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
