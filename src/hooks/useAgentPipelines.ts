@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import type { AgentConfig } from "./useAgentConfigs";
 
 export interface PipelineStep {
@@ -134,7 +135,7 @@ export function useCreatePipeline() {
           project_id: input.projectId || null,
           name: input.name,
           description: input.description || null,
-          steps: input.steps as unknown as Record<string, unknown>[],
+          steps: input.steps as unknown as Json,
           created_by: user?.id || null,
         }])
         .select()
@@ -161,7 +162,7 @@ export function useUpdatePipeline() {
       
       if (updates.name !== undefined) updatePayload.name = updates.name;
       if (updates.description !== undefined) updatePayload.description = updates.description;
-      if (updates.steps !== undefined) updatePayload.steps = updates.steps as unknown as Record<string, unknown>[];
+      if (updates.steps !== undefined) updatePayload.steps = updates.steps as unknown as Json;
       if (updates.is_active !== undefined) updatePayload.is_active = updates.is_active;
 
       const { data, error } = await supabase
@@ -249,7 +250,7 @@ export function useUpdatePipelineRun() {
       
       if (updates.status !== undefined) updatePayload.status = updates.status;
       if (updates.current_step !== undefined) updatePayload.current_step = updates.current_step;
-      if (updates.step_results !== undefined) updatePayload.step_results = updates.step_results as unknown as Record<string, unknown>[];
+      if (updates.step_results !== undefined) updatePayload.step_results = updates.step_results as unknown as Json;
       if (updates.final_output !== undefined) updatePayload.final_output = updates.final_output;
       if (updates.error_message !== undefined) updatePayload.error_message = updates.error_message;
       if (updates.started_at !== undefined) updatePayload.started_at = updates.started_at;
