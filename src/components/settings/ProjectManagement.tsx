@@ -7,6 +7,8 @@ import {
   RotateCcw,
   Loader2,
   AlertTriangle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +47,8 @@ interface ProjectManagementProps {
 }
 
 export function ProjectManagement({ workspaceId, userRole }: ProjectManagementProps) {
-  const { data: projects, isLoading } = useProjects(workspaceId);
+  const [showArchived, setShowArchived] = useState(false);
+  const { data: projects, isLoading } = useProjects(workspaceId, showArchived);
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
 
@@ -54,6 +57,9 @@ export function ProjectManagement({ workspaceId, userRole }: ProjectManagementPr
   const [editForm, setEditForm] = useState({ name: "", description: "" });
 
   const canManage = userRole === "OWNER" || userRole === "ADMIN";
+  
+  const activeProjects = projects?.filter(p => p.status === "ACTIVE") || [];
+  const archivedProjects = projects?.filter(p => p.status === "ARCHIVED") || [];
 
   const handleEdit = (project: Project) => {
     setEditForm({
@@ -90,6 +96,18 @@ export function ProjectManagement({ workspaceId, userRole }: ProjectManagementPr
       toast.success("Project archived");
     } catch (error) {
       toast.error("Failed to archive project");
+    }
+  };
+
+  const handleRestore = async (project: Project) => {
+    try {
+      await updateProject.mutateAsync({
+        projectId: project.id,
+        status: "ACTIVE",
+      });
+      toast.success("Project restored");
+    } catch (error) {
+      toast.error("Failed to restore project");
     }
   };
 
@@ -136,80 +154,116 @@ export function ProjectManagement({ workspaceId, userRole }: ProjectManagementPr
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Folder className="w-5 h-5 text-accent" />
-            Projects
-          </CardTitle>
-          <CardDescription>
-            {canManage
-              ? "Manage, edit, or delete projects in this workspace"
-              : "View projects in this workspace"}
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Folder className="w-5 h-5 text-accent" />
+                Projects
+              </CardTitle>
+              <CardDescription>
+                {canManage
+                  ? "Manage, edit, or delete projects in this workspace"
+                  : "View projects in this workspace"}
+              </CardDescription>
+            </div>
+            {canManage && (
+              <div className="flex items-center gap-2">
+                <Label htmlFor="show-archived" className="text-sm text-muted-foreground">
+                  Show archived
+                </Label>
+                <Switch 
+                  id="show-archived"
+                  checked={showArchived}
+                  onCheckedChange={setShowArchived}
+                />
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {!projects?.length ? (
             <div className="text-center py-8 text-muted-foreground">
               <Folder className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No projects in this workspace</p>
+              <p>{showArchived ? "No projects in this workspace" : "No active projects in this workspace"}</p>
             </div>
           ) : (
             <ScrollArea className="max-h-[400px]">
               <div className="space-y-2">
-                {projects.map((project) => (
-                  <div
-                    key={project.id}
-                    className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="p-2 rounded-lg bg-accent/10">
-                      <Folder className="w-5 h-5 text-accent" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium truncate">{project.name}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {project.project_key}
-                        </Badge>
+                {projects.map((project) => {
+                  const isArchived = project.status === "ARCHIVED";
+                  return (
+                    <div
+                      key={project.id}
+                      className={`flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/30 transition-colors ${isArchived ? "opacity-60" : ""}`}
+                    >
+                      <div className="p-2 rounded-lg bg-accent/10">
+                        <Folder className="w-5 h-5 text-accent" />
                       </div>
-                      {project.description && (
-                        <p className="text-sm text-muted-foreground truncate">
-                          {project.description}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium truncate">{project.name}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {project.project_key}
+                          </Badge>
+                          {isArchived && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Archive className="w-3 h-3 mr-1" />
+                              Archived
+                            </Badge>
+                          )}
+                        </div>
+                        {project.description && (
+                          <p className="text-sm text-muted-foreground truncate">
+                            {project.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Created {formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}
                         </p>
-                      )}
-                      <p className="text-xs text-muted-foreground">
-                        Created {formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}
-                      </p>
-                    </div>
-
-                    {canManage && (
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(project)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleArchive(project)}
-                          title="Archive project"
-                        >
-                          <Archive className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => setDeleteProjectConfirm(project)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
                       </div>
-                    )}
-                  </div>
-                ))}
+
+                      {canManage && (
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(project)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          {isArchived ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRestore(project)}
+                              title="Restore project"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleArchive(project)}
+                              title="Archive project"
+                            >
+                              <Archive className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setDeleteProjectConfirm(project)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </ScrollArea>
           )}
