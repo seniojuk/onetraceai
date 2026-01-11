@@ -14,6 +14,192 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_configs: {
+        Row: {
+          agent_type: string
+          autonomous_enabled: boolean | null
+          created_at: string | null
+          created_by: string | null
+          default_model_id: string | null
+          description: string | null
+          enabled: boolean | null
+          fallback_model_ids: string[] | null
+          guardrails: Json | null
+          id: string
+          invocation_triggers: Json | null
+          max_tokens: number | null
+          name: string
+          persona: string | null
+          project_id: string | null
+          routing_mode: string | null
+          system_prompt: string | null
+          temperature: number | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          agent_type: string
+          autonomous_enabled?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          default_model_id?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          fallback_model_ids?: string[] | null
+          guardrails?: Json | null
+          id?: string
+          invocation_triggers?: Json | null
+          max_tokens?: number | null
+          name: string
+          persona?: string | null
+          project_id?: string | null
+          routing_mode?: string | null
+          system_prompt?: string | null
+          temperature?: number | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          agent_type?: string
+          autonomous_enabled?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          default_model_id?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          fallback_model_ids?: string[] | null
+          guardrails?: Json | null
+          id?: string
+          invocation_triggers?: Json | null
+          max_tokens?: number | null
+          name?: string
+          persona?: string | null
+          project_id?: string | null
+          routing_mode?: string | null
+          system_prompt?: string | null
+          temperature?: number | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_configs_default_model_id_fkey"
+            columns: ["default_model_id"]
+            isOneToOne: false
+            referencedRelation: "llm_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_configs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_configs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_runs: {
+        Row: {
+          agent_config_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          input_context: Json | null
+          input_tokens: number | null
+          metadata: Json | null
+          model_id: string | null
+          output_artifacts: Json | null
+          output_tokens: number | null
+          project_id: string | null
+          run_type: string
+          started_at: string | null
+          status: string
+          total_cost: number | null
+          workspace_id: string
+        }
+        Insert: {
+          agent_config_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          input_context?: Json | null
+          input_tokens?: number | null
+          metadata?: Json | null
+          model_id?: string | null
+          output_artifacts?: Json | null
+          output_tokens?: number | null
+          project_id?: string | null
+          run_type: string
+          started_at?: string | null
+          status?: string
+          total_cost?: number | null
+          workspace_id: string
+        }
+        Update: {
+          agent_config_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          input_context?: Json | null
+          input_tokens?: number | null
+          metadata?: Json | null
+          model_id?: string | null
+          output_artifacts?: Json | null
+          output_tokens?: number | null
+          project_id?: string | null
+          run_type?: string
+          started_at?: string | null
+          status?: string
+          total_cost?: number | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_runs_agent_config_id_fkey"
+            columns: ["agent_config_id"]
+            isOneToOne: false
+            referencedRelation: "agent_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_runs_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "llm_models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artifact_edges: {
         Row: {
           confidence: number | null
@@ -394,6 +580,94 @@ export type Database = {
           },
           {
             foreignKeyName: "drift_findings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      llm_models: {
+        Row: {
+          capabilities: Json | null
+          cost_per_1k_input_tokens: number | null
+          cost_per_1k_output_tokens: number | null
+          created_at: string | null
+          display_name: string
+          enabled: boolean | null
+          id: string
+          model_name: string
+          provider_id: string
+        }
+        Insert: {
+          capabilities?: Json | null
+          cost_per_1k_input_tokens?: number | null
+          cost_per_1k_output_tokens?: number | null
+          created_at?: string | null
+          display_name: string
+          enabled?: boolean | null
+          id?: string
+          model_name: string
+          provider_id: string
+        }
+        Update: {
+          capabilities?: Json | null
+          cost_per_1k_input_tokens?: number | null
+          cost_per_1k_output_tokens?: number | null
+          created_at?: string | null
+          display_name?: string
+          enabled?: boolean | null
+          id?: string
+          model_name?: string
+          provider_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "llm_models_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "llm_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      llm_providers: {
+        Row: {
+          api_base_url: string | null
+          created_at: string | null
+          display_name: string
+          enabled: boolean | null
+          id: string
+          is_global: boolean | null
+          provider_name: string
+          updated_at: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          api_base_url?: string | null
+          created_at?: string | null
+          display_name: string
+          enabled?: boolean | null
+          id?: string
+          is_global?: boolean | null
+          provider_name: string
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          api_base_url?: string | null
+          created_at?: string | null
+          display_name?: string
+          enabled?: boolean | null
+          id?: string
+          is_global?: boolean | null
+          provider_name?: string
+          updated_at?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "llm_providers_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
