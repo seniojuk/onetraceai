@@ -14,6 +14,7 @@ import {
   ArrowRight,
   Search,
   Filter,
+  Save,
 } from "lucide-react";
 import {
   Dialog,
@@ -41,11 +42,13 @@ import {
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
 import { usePipelineRuns, type PipelineRun, type PipelineStepResult } from "@/hooks/useAgentPipelines";
+import { SaveAsArtifactDialog } from "./SaveAsArtifactDialog";
 
 interface PipelineRunHistoryProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
+  projectId?: string;
   pipelineId?: string;
   pipelineName?: string;
 }
@@ -54,6 +57,7 @@ export function PipelineRunHistory({
   open,
   onOpenChange,
   workspaceId,
+  projectId,
   pipelineId,
   pipelineName,
 }: PipelineRunHistoryProps) {
@@ -61,6 +65,8 @@ export function PipelineRunHistory({
   const [expandedRuns, setExpandedRuns] = useState<Set<string>>(new Set());
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [selectedRunForSave, setSelectedRunForSave] = useState<PipelineRun | null>(null);
 
   const toggleRun = (runId: string) => {
     setExpandedRuns(prev => {
@@ -77,6 +83,11 @@ export function PipelineRunHistory({
   const copyContent = (content: string, label: string) => {
     navigator.clipboard.writeText(content);
     toast.success(`${label} copied to clipboard`);
+  };
+
+  const openSaveDialog = (run: PipelineRun) => {
+    setSelectedRunForSave(run);
+    setSaveDialogOpen(true);
   };
 
   const filteredRuns = runs?.filter(run => {
@@ -385,14 +396,25 @@ export function PipelineRunHistory({
                                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                                   Final Output
                                 </span>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  className="h-6 px-2"
-                                  onClick={() => copyContent(run.final_output!, "Final output")}
-                                >
-                                  <Copy className="w-3 h-3" />
-                                </Button>
+                                <div className="flex items-center gap-1">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    className="h-6 px-2"
+                                    onClick={() => openSaveDialog(run)}
+                                  >
+                                    <Save className="w-3 h-3 mr-1" />
+                                    Save
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    className="h-6 px-2"
+                                    onClick={() => copyContent(run.final_output!, "Final output")}
+                                  >
+                                    <Copy className="w-3 h-3" />
+                                  </Button>
+                                </div>
                               </div>
                               <div className="bg-background rounded border p-3 text-sm font-mono max-h-64 overflow-auto">
                                 {run.final_output}
@@ -420,6 +442,20 @@ export function PipelineRunHistory({
             )}
           </div>
         </ScrollArea>
+
+        {/* Save as Artifact Dialog */}
+        {selectedRunForSave && (
+          <SaveAsArtifactDialog
+            open={saveDialogOpen}
+            onOpenChange={setSaveDialogOpen}
+            content={selectedRunForSave.final_output || ""}
+            workspaceId={workspaceId}
+            projectId={projectId}
+            pipelineRunId={selectedRunForSave.id}
+            pipelineName={selectedRunForSave.pipeline?.name}
+            suggestedTitle={`${selectedRunForSave.pipeline?.name || "Pipeline"} Output - ${format(new Date(selectedRunForSave.created_at), "MMM d, yyyy")}`}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
