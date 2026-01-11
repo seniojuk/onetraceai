@@ -13,7 +13,7 @@ import CreateArtifactPage from "./pages/CreateArtifactPage";
 import GraphPage from "./pages/GraphPage";
 import CoveragePage from "./pages/CoveragePage";
 import DriftPage from "./pages/DriftPage";
-import AIRunsPage from "./pages/AIRunsPage";
+import AIAgentsPage from "./pages/AIAgentsPage";
 import IntegrationsPage from "./pages/IntegrationsPage";
 import TeamPage from "./pages/TeamPage";
 import BillingPage from "./pages/BillingPage";
@@ -39,7 +39,7 @@ const App = () => (
           <Route path="/graph" element={<GraphPage />} />
           <Route path="/coverage" element={<CoveragePage />} />
           <Route path="/drift" element={<DriftPage />} />
-          <Route path="/ai-runs" element={<AIRunsPage />} />
+          <Route path="/ai-agents" element={<AIAgentsPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/team" element={<TeamPage />} />
           <Route path="/billing" element={<BillingPage />} />

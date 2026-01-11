@@ -45,7 +45,7 @@ const navItems = [
   { icon: GitBranch, label: "Graph", path: "/graph" },
   { icon: BarChart3, label: "Coverage", path: "/coverage" },
   { icon: AlertTriangle, label: "Drift", path: "/drift" },
-  { icon: Sparkles, label: "AI Runs", path: "/ai-runs" },
+  { icon: Sparkles, label: "AI Agents", path: "/ai-agents" },
 ];
 
 const settingsItems = [
