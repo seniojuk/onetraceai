@@ -7,7 +7,8 @@ import {
   List,
   Search,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Store,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ import { AgentCard } from "@/components/agents/AgentCard";
 import { AgentConfigDialog } from "@/components/agents/AgentConfigDialog";
 import { AgentRunHistory } from "@/components/agents/AgentRunHistory";
 import { InvokeAgentDialog } from "@/components/agents/InvokeAgentDialog";
+import { AgentMarketplace, type AgentTemplate } from "@/components/agents/AgentMarketplace";
 import { 
   useAgentConfigs, 
   useCreateAgentConfig, 
@@ -264,6 +266,30 @@ const AIAgentsPage = () => {
     }
   };
 
+  const handleCloneTemplate = async (template: AgentTemplate) => {
+    if (!currentWorkspaceId) {
+      toast.error("No workspace selected");
+      return;
+    }
+
+    try {
+      await createAgent.mutateAsync({
+        workspaceId: currentWorkspaceId,
+        projectId: currentProjectId || undefined,
+        name: template.name,
+        agentType: template.agentType,
+        description: template.description,
+        persona: template.persona,
+        systemPrompt: template.systemPrompt,
+        guardrails: template.guardrails,
+      });
+      toast.success(`${template.name} added to your agents`);
+      refetchAgents();
+    } catch (error) {
+      toast.error("Failed to clone agent template");
+    }
+  };
+
   const agentTypes = [
     { value: "all", label: "All Types" },
     { value: "PRODUCT_AGENT", label: "Product" },
@@ -322,6 +348,10 @@ const AIAgentsPage = () => {
               <TabsTrigger value="agents" className="gap-2">
                 <Bot className="w-4 h-4" />
                 Agents
+              </TabsTrigger>
+              <TabsTrigger value="marketplace" className="gap-2">
+                <Store className="w-4 h-4" />
+                Marketplace
               </TabsTrigger>
               <TabsTrigger value="runs" className="gap-2">
                 <Sparkles className="w-4 h-4" />
@@ -418,6 +448,14 @@ const AIAgentsPage = () => {
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="marketplace">
+              <AgentMarketplace
+                onCloneTemplate={handleCloneTemplate}
+                existingAgentTypes={agents?.map(a => a.agent_type) || []}
+                isLoading={createAgent.isPending}
+              />
             </TabsContent>
 
             <TabsContent value="runs">
