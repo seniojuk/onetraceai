@@ -32,14 +32,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { ProjectManagement } from "@/components/settings/ProjectManagement";
 import { WorkspaceManagement } from "@/components/settings/WorkspaceManagement";
+import { MemberManagement } from "@/components/settings/MemberManagement";
 import { useUIStore } from "@/store/uiStore";
-import { useCurrentUserRole } from "@/hooks/useWorkspaces";
+import { useCurrentUserRole, useWorkspace } from "@/hooks/useWorkspaces";
 
 const SettingsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { currentWorkspaceId } = useUIStore();
+  const { data: currentWorkspace } = useWorkspace(currentWorkspaceId || undefined);
   const userRole = useCurrentUserRole(currentWorkspaceId || undefined);
   
   const [isSaving, setIsSaving] = useState(false);
@@ -175,10 +177,17 @@ const SettingsPage = () => {
             <TabsContent value="manage" className="space-y-6">
               <WorkspaceManagement />
               {currentWorkspaceId && (
-                <ProjectManagement 
-                  workspaceId={currentWorkspaceId} 
-                  userRole={userRole as "OWNER" | "ADMIN" | "MEMBER" | "VIEWER" | null}
-                />
+                <>
+                  <MemberManagement 
+                    workspaceId={currentWorkspaceId}
+                    workspaceName={currentWorkspace?.name || "Workspace"}
+                    userRole={userRole as "OWNER" | "ADMIN" | "MEMBER" | "VIEWER" | null}
+                  />
+                  <ProjectManagement 
+                    workspaceId={currentWorkspaceId} 
+                    userRole={userRole as "OWNER" | "ADMIN" | "MEMBER" | "VIEWER" | null}
+                  />
+                </>
               )}
             </TabsContent>
 

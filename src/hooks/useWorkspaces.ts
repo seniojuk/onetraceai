@@ -135,13 +135,29 @@ export function useWorkspaceMembers(workspaceId: string | undefined) {
     queryFn: async () => {
       if (!workspaceId) return [];
 
-      const { data, error } = await supabase
+      // Get members
+      const { data: members, error } = await supabase
         .from("workspace_members")
         .select("*")
         .eq("workspace_id", workspaceId);
 
       if (error) throw error;
-      return data as WorkspaceMember[];
+      if (!members || members.length === 0) return [];
+
+      // Get profiles for all member user_ids
+      const userIds = members.map(m => m.user_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .in("id", userIds);
+
+      // Combine members with profiles
+      return members.map(member => ({
+        ...member,
+        profile: profiles?.find(p => p.id === member.user_id) || null,
+      })) as (WorkspaceMember & {
+        profile: { id: string; display_name: string | null; avatar_url: string | null } | null;
+      })[];
     },
     enabled: !!user && !!workspaceId,
   });
@@ -155,4 +171,92 @@ export function useCurrentUserRole(workspaceId: string | undefined) {
   
   const member = members.find(m => m.user_id === user.id);
   return member?.role || null;
+}
+
+export function useUpdateMemberRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      workspaceId, 
+      userId, 
+      role 
+    }: { 
+      workspaceId: string; 
+      userId: string; 
+      role: "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
+    }) => {
+      const { error } = await supabase
+        .from("workspace_members")
+        .update({ role })
+        .eq("workspace_id", workspaceId)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+      return { workspaceId, userId, role };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["workspace-members", variables.workspaceId] });
+    },
+  });
+}
+
+export function useRemoveMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ workspaceId, userId }: { workspaceId: string; userId: string }) => {
+      const { error } = await supabase
+        .from("workspace_members")
+        .delete()
+        .eq("workspace_id", workspaceId)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+      return { workspaceId, userId };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["workspace-members", variables.workspaceId] });
+    },
+  });
+}
+
+export function useInviteMember() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ 
+      workspaceId, 
+      email, 
+      role 
+    }: { 
+      workspaceId: string; 
+      email: string; 
+      role: "ADMIN" | "MEMBER" | "VIEWER";
+    }) => {
+      // Call edge function to handle invite
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/workspace-invite`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ workspaceId, email, role }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to invite member");
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["workspace-members", variables.workspaceId] });
+    },
+  });
 }
