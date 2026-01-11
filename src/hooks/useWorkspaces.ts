@@ -260,3 +260,40 @@ export function useInviteMember() {
     },
   });
 }
+
+export function useTransferOwnership() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      workspaceId, 
+      newOwnerId 
+    }: { 
+      workspaceId: string; 
+      newOwnerId: string;
+    }) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transfer-ownership`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ workspaceId, newOwnerId }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to transfer ownership");
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["workspace-members", variables.workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+    },
+  });
+}

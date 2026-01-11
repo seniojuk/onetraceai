@@ -10,6 +10,7 @@ import {
   Loader2,
   Mail,
   AlertTriangle,
+  ArrowRightLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +51,7 @@ import {
   useUpdateMemberRole, 
   useRemoveMember,
   useInviteMember,
+  useTransferOwnership,
   type WorkspaceMember,
 } from "@/hooks/useWorkspaces";
 import { useAuth } from "@/hooks/useAuth";
@@ -92,14 +94,20 @@ export function MemberManagement({ workspaceId, workspaceName, userRole }: Membe
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
   const inviteMember = useInviteMember();
+  const transferOwnership = useTransferOwnership();
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"ADMIN" | "MEMBER" | "VIEWER">("MEMBER");
   const [removeMemberConfirm, setRemoveMemberConfirm] = useState<MemberWithProfile | null>(null);
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [selectedNewOwner, setSelectedNewOwner] = useState<string>("");
 
   const canManageMembers = userRole === "OWNER" || userRole === "ADMIN";
   const isOwner = userRole === "OWNER";
+
+  // Get eligible members for ownership transfer (all non-owners)
+  const eligibleForTransfer = members?.filter(m => m.user_id !== user?.id) || [];
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return "?";
@@ -163,6 +171,29 @@ export function MemberManagement({ workspaceId, workspaceName, userRole }: Membe
     }
   };
 
+  const handleTransferOwnership = async () => {
+    if (!selectedNewOwner) {
+      toast.error("Please select a new owner");
+      return;
+    }
+
+    try {
+      await transferOwnership.mutateAsync({
+        workspaceId,
+        newOwnerId: selectedNewOwner,
+      });
+      toast.success("Ownership transferred successfully", {
+        description: "You are now an Admin of this workspace",
+      });
+      setTransferDialogOpen(false);
+      setSelectedNewOwner("");
+    } catch (error) {
+      toast.error("Failed to transfer ownership", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -202,12 +233,24 @@ export function MemberManagement({ workspaceId, workspaceName, userRole }: Membe
                   : "View members of this workspace"}
               </CardDescription>
             </div>
-            {canManageMembers && (
-              <Button onClick={() => setInviteDialogOpen(true)} className="gap-2">
-                <UserPlus className="w-4 h-4" />
-                Invite Member
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {isOwner && eligibleForTransfer.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setTransferDialogOpen(true)} 
+                  className="gap-2"
+                >
+                  <ArrowRightLeft className="w-4 h-4" />
+                  Transfer Ownership
+                </Button>
+              )}
+              {canManageMembers && (
+                <Button onClick={() => setInviteDialogOpen(true)} className="gap-2">
+                  <UserPlus className="w-4 h-4" />
+                  Invite Member
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -442,6 +485,81 @@ export function MemberManagement({ workspaceId, workspaceName, userRole }: Membe
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Transfer Ownership Dialog */}
+      <Dialog open={transferDialogOpen} onOpenChange={setTransferDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowRightLeft className="w-5 h-5 text-accent" />
+              Transfer Workspace Ownership
+            </DialogTitle>
+            <DialogDescription>
+              Transfer ownership of <strong>{workspaceName}</strong> to another member.
+              You will be demoted to Admin role.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Select New Owner</Label>
+              <Select value={selectedNewOwner} onValueChange={setSelectedNewOwner}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a member..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {eligibleForTransfer.map((member) => (
+                    <SelectItem key={member.user_id} value={member.user_id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-6 h-6">
+                          <AvatarImage src={member.profile?.avatar_url || undefined} />
+                          <AvatarFallback className="text-xs">
+                            {getInitials(member.profile?.display_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{member.profile?.display_name || "Unknown User"}</span>
+                        <Badge variant="outline" className="text-xs">
+                          {member.role}
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-amber-600 dark:text-amber-400">
+                    This action cannot be undone
+                  </p>
+                  <p className="text-muted-foreground mt-1">
+                    Once you transfer ownership, only the new owner can transfer it back to you
+                    or give you back the Owner role.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTransferDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleTransferOwnership} 
+              disabled={transferOwnership.isPending || !selectedNewOwner}
+              className="gap-2"
+            >
+              {transferOwnership.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+              <Crown className="w-4 h-4" />
+              Transfer Ownership
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
