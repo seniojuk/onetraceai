@@ -11,6 +11,7 @@ import ArtifactsPage from "./pages/ArtifactsPage";
 import ArtifactDetailPage from "./pages/ArtifactDetailPage";
 import CreateArtifactPage from "./pages/CreateArtifactPage";
 import GraphPage from "./pages/GraphPage";
+import LineagePage from "./pages/LineagePage";
 import CoveragePage from "./pages/CoveragePage";
 import DriftPage from "./pages/DriftPage";
 import AIAgentsPage from "./pages/AIAgentsPage";
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/artifacts/new" element={<CreateArtifactPage />} />
           <Route path="/artifacts/:id" element={<ArtifactDetailPage />} />
           <Route path="/graph" element={<GraphPage />} />
+          <Route path="/lineage" element={<LineagePage />} />
           <Route path="/coverage" element={<CoveragePage />} />
           <Route path="/drift" element={<DriftPage />} />
           <Route path="/ai-agents" element={<AIAgentsPage />} />
