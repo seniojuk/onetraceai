@@ -11,6 +11,7 @@ import {
   Zap,
   Copy,
   RotateCcw,
+  Save,
 } from "lucide-react";
 import {
   Dialog,
@@ -28,6 +29,7 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import type { AgentPipeline, PipelineStep, PipelineStepResult } from "@/hooks/useAgentPipelines";
+import { SaveAsArtifactDialog } from "./SaveAsArtifactDialog";
 
 interface PipelineRunnerProps {
   open: boolean;
@@ -59,6 +61,8 @@ export function PipelineRunner({
     stepResults: [],
     finalOutput: "",
   });
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [pipelineRunId, setPipelineRunId] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const outputRef = useRef<HTMLDivElement>(null);
 
@@ -72,6 +76,7 @@ export function PipelineRunner({
         finalOutput: "",
       });
       setInputContent("");
+      setPipelineRunId(null);
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -227,6 +232,11 @@ export function PipelineRunner({
       stepResults: [],
       finalOutput: "",
     });
+    setPipelineRunId(null);
+  };
+
+  const openSaveDialog = () => {
+    setIsSaveDialogOpen(true);
   };
 
   const copyOutput = () => {
@@ -433,10 +443,16 @@ export function PipelineRunner({
 
         <DialogFooter className="gap-2 sm:gap-0">
           {runState.status === "completed" && (
-            <Button variant="outline" onClick={resetPipeline} className="mr-auto">
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Run Again
-            </Button>
+            <div className="flex gap-2 mr-auto">
+              <Button variant="outline" onClick={resetPipeline}>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Run Again
+              </Button>
+              <Button variant="outline" onClick={openSaveDialog}>
+                <Save className="w-4 h-4 mr-2" />
+                Save as Artifact
+              </Button>
+            </div>
           )}
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {runState.status === "completed" ? "Close" : "Cancel"}
@@ -457,6 +473,18 @@ export function PipelineRunner({
             </Button>
           )}
         </DialogFooter>
+
+        {/* Save as Artifact Dialog */}
+        <SaveAsArtifactDialog
+          open={isSaveDialogOpen}
+          onOpenChange={setIsSaveDialogOpen}
+          content={runState.finalOutput}
+          workspaceId={workspaceId}
+          projectId={projectId}
+          pipelineRunId={pipelineRunId || undefined}
+          pipelineName={pipeline.name}
+          suggestedTitle={`${pipeline.name} Output`}
+        />
       </DialogContent>
     </Dialog>
   );

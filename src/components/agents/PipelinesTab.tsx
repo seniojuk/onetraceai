@@ -257,6 +257,7 @@ export function PipelinesTab({ workspaceId, projectId, agents }: PipelinesTabPro
         open={isHistoryOpen}
         onOpenChange={setIsHistoryOpen}
         workspaceId={workspaceId}
+        projectId={projectId}
         pipelineId={selectedPipeline?.id}
         pipelineName={selectedPipeline?.name}
       />
