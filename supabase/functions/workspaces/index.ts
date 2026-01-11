@@ -215,13 +215,92 @@ serve(async (req) => {
         });
       }
 
-      // Delete all workspace members first
+      // Delete all dependent data in correct order (respecting foreign key constraints)
+      // 1. Delete pipeline runs (depends on agent_pipelines)
+      await supabaseAdmin
+        .from("pipeline_runs")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 2. Delete agent pipelines
+      await supabaseAdmin
+        .from("agent_pipelines")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 3. Delete AI runs (depends on agent_configs)
+      await supabaseAdmin
+        .from("ai_runs")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 4. Delete agent configs
+      await supabaseAdmin
+        .from("agent_configs")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 5. Delete coverage snapshots (depends on artifacts)
+      await supabaseAdmin
+        .from("coverage_snapshots")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 6. Delete drift findings
+      await supabaseAdmin
+        .from("drift_findings")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 7. Delete artifact edges (depends on artifacts)
+      await supabaseAdmin
+        .from("artifact_edges")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 8. Delete artifact versions (depends on artifacts)
+      await supabaseAdmin
+        .from("artifact_versions")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 9. Delete artifact file associations
+      await supabaseAdmin
+        .from("artifact_file_associations")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 10. Delete artifacts
+      await supabaseAdmin
+        .from("artifacts")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 11. Delete onboarding progress
+      await supabaseAdmin
+        .from("onboarding_progress")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 12. Delete LLM providers
+      await supabaseAdmin
+        .from("llm_providers")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 13. Delete projects
+      await supabaseAdmin
+        .from("projects")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // 14. Delete workspace members
       await supabaseAdmin
         .from("workspace_members")
         .delete()
         .eq("workspace_id", workspaceId);
 
-      // Delete the workspace
+      // 15. Finally delete the workspace
       const { error } = await supabaseAdmin
         .from("workspaces")
         .delete()
