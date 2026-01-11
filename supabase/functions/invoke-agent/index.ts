@@ -34,12 +34,6 @@ interface AgentConfig {
   } | null;
 }
 
-interface LLMModel {
-  id: string;
-  model_name: string;
-  display_name: string;
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -54,6 +48,7 @@ serve(async (req) => {
       additionalContext,
       workspaceId,
       projectId,
+      stream = false,
     } = await req.json();
     
     if (!agentId) {
@@ -181,10 +176,155 @@ serve(async (req) => {
     console.log(`Invoking agent: ${agentConfig.name} (${agentConfig.agent_type})`);
     console.log(`Using model: ${modelName}`);
     console.log(`Temperature: ${agentConfig.temperature ?? 0.7}`);
+    console.log(`Streaming: ${stream}`);
 
     const startTime = Date.now();
 
-    // Call Lovable AI
+    // If streaming is requested, use SSE
+    if (stream) {
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages,
+          temperature: agentConfig.temperature ?? 0.7,
+          max_tokens: guardrails?.max_tokens_per_run || agentConfig.max_tokens || 4096,
+          stream: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Lovable AI error:', response.status, errorText);
+        
+        return new Response(
+          JSON.stringify({ error: 'AI service error' }),
+          { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Create a ReadableStream for SSE
+      const encoder = new TextEncoder();
+      let fullContent = '';
+      let inputTokens = 0;
+      let outputTokens = 0;
+
+      const sseStream = new ReadableStream({
+        async start(controller) {
+          // Send initial event
+          controller.enqueue(encoder.encode(`event: start\ndata: ${JSON.stringify({
+            agentId: agentConfig.id,
+            agentName: agentConfig.name,
+            agentType: agentConfig.agent_type,
+            model: modelName,
+          })}\n\n`));
+
+          const reader = response.body?.getReader();
+          if (!reader) {
+            controller.close();
+            return;
+          }
+
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6);
+                  
+                  if (data === '[DONE]') {
+                    continue;
+                  }
+
+                  try {
+                    const parsed = JSON.parse(data);
+                    const delta = parsed.choices?.[0]?.delta?.content;
+                    
+                    if (delta) {
+                      fullContent += delta;
+                      controller.enqueue(encoder.encode(`event: token\ndata: ${JSON.stringify({ token: delta })}\n\n`));
+                    }
+
+                    // Capture usage if present
+                    if (parsed.usage) {
+                      inputTokens = parsed.usage.prompt_tokens || 0;
+                      outputTokens = parsed.usage.completion_tokens || 0;
+                    }
+                  } catch {
+                    // Skip invalid JSON
+                  }
+                }
+              }
+            }
+
+            const durationMs = Date.now() - startTime;
+            const estimatedCost = (inputTokens * 0.0001 + outputTokens * 0.0003) / 1000;
+
+            // Try to parse structured output
+            let parsedOutput = null;
+            try {
+              const jsonMatch = fullContent.match(/```(?:json)?\s*([\s\S]*?)```/);
+              if (jsonMatch) {
+                parsedOutput = JSON.parse(jsonMatch[1].trim());
+              } else if (fullContent.trim().startsWith('{') || fullContent.trim().startsWith('[')) {
+                parsedOutput = JSON.parse(fullContent.trim());
+              }
+            } catch {
+              // Not JSON
+            }
+
+            // Send completion event
+            controller.enqueue(encoder.encode(`event: complete\ndata: ${JSON.stringify({
+              content: fullContent,
+              parsedOutput,
+              usage: {
+                inputTokens,
+                outputTokens,
+                totalTokens: inputTokens + outputTokens,
+                estimatedCost,
+              },
+              metadata: {
+                durationMs,
+                temperature: agentConfig.temperature ?? 0.7,
+                requiresApproval: guardrails?.require_approval ?? false,
+              },
+            })}\n\n`));
+
+            controller.close();
+          } catch (error) {
+            console.error('Streaming error:', error);
+            controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ 
+              error: error instanceof Error ? error.message : 'Streaming failed' 
+            })}\n\n`));
+            controller.close();
+          }
+        },
+      });
+
+      return new Response(sseStream, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
+
+    // Non-streaming response (original behavior)
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
