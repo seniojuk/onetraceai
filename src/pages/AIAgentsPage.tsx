@@ -1,36 +1,17 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { 
-  Sparkles, 
-  Play, 
-  Clock,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  FileText,
-  GitBranch,
-  TestTube2,
-  ChevronRight,
-  Plus,
-  Copy,
-  Save,
-  Shield,
-  Zap,
-  AlertTriangle
+  Bot, 
+  Plus, 
+  Sparkles,
+  Grid3X3,
+  List,
+  Search,
+  Filter,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -38,659 +19,274 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { useArtifacts, useCreateArtifact, Artifact } from "@/hooks/useArtifacts";
-import { useCreateArtifactEdge } from "@/hooks/useArtifactEdges";
+import { AgentCard } from "@/components/agents/AgentCard";
+import { AgentConfigDialog } from "@/components/agents/AgentConfigDialog";
+import { AgentRunHistory } from "@/components/agents/AgentRunHistory";
+import { InvokeAgentDialog } from "@/components/agents/InvokeAgentDialog";
+import { 
+  useAgentConfigs, 
+  useCreateAgentConfig, 
+  useUpdateAgentConfig, 
+  useDeleteAgentConfig,
+  DEFAULT_AGENT_TEMPLATES,
+  type AgentConfig,
+  type CreateAgentConfigInput
+} from "@/hooks/useAgentConfigs";
+import { useAIRuns, useCreateAIRun, useUpdateAIRun } from "@/hooks/useAIRuns";
+import { useArtifacts } from "@/hooks/useArtifacts";
 import { useUIStore } from "@/store/uiStore";
-import { useWorkspaces } from "@/hooks/useWorkspaces";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
-interface GeneratedStory {
-  title: string;
-  description: string;
-  acceptanceCriteria: string[];
-  storyPoints: number;
-  priority: "high" | "medium" | "low";
-  epic?: string;
-}
-
-interface GeneratedAC {
-  id: string;
-  title: string;
-  scenario: string;
-  type: "functional" | "edge_case" | "error" | "accessibility" | "performance" | "security";
-  priority: "must_have" | "should_have" | "nice_to_have";
-  testable: boolean;
-}
-
-interface ACCoverage {
-  functional: number;
-  edge_cases: number;
-  error_handling: number;
-  accessibility: number;
-  performance: number;
-  security: number;
-}
-
-interface TestCaseStep {
-  step: number;
-  action: string;
-  expectedResult: string;
-}
-
-interface GeneratedTestCase {
-  title: string;
-  type: "functional" | "integration" | "e2e" | "performance" | "security" | "accessibility";
-  priority: "critical" | "high" | "medium" | "low";
-  relatedAC: string;
-  preconditions: string[];
-  steps: TestCaseStep[];
-  testData?: string;
-  automatable: boolean;
-  tags: string[];
-}
-
-interface TestCaseSummary {
-  total: number;
-  byType: {
-    functional: number;
-    integration: number;
-    e2e: number;
-    performance: number;
-    security: number;
-    accessibility: number;
-  };
-  byPriority: {
-    critical: number;
-    high: number;
-    medium: number;
-    low: number;
-  };
-  automatable: number;
-}
-
-interface AIRun {
-  id: string;
-  type: "STORY_GENERATION" | "AC_GENERATION" | "TEST_GENERATION" | "COVERAGE_ANALYSIS";
-  status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
-  progress: number;
-  inputArtifactId?: string;
-  inputArtifactTitle?: string;
-  outputCount: number;
-  startedAt: string;
-  completedAt?: string;
-  error?: string;
-  generatedStories?: GeneratedStory[];
-  generatedACs?: GeneratedAC[];
-  acCoverage?: ACCoverage;
-  generatedTestCases?: GeneratedTestCase[];
-  testCaseSummary?: TestCaseSummary;
-  sourceArtifactId?: string; // Track source for linking
-}
-
-// Mock AI runs
-const mockRuns: AIRun[] = [
-  {
-    id: "1",
-    type: "STORY_GENERATION",
-    status: "COMPLETED",
-    progress: 100,
-    inputArtifactTitle: "User Authentication PRD",
-    outputCount: 5,
-    startedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    completedAt: new Date(Date.now() - 1000 * 60 * 28).toISOString(),
-  },
-];
-
-const AIRunsPage = () => {
-  const navigate = useNavigate();
+const AIAgentsPage = () => {
   const { currentProjectId, currentWorkspaceId } = useUIStore();
-  const { data: artifacts } = useArtifacts(currentProjectId || undefined);
-  const { data: workspaces } = useWorkspaces();
-  const createArtifact = useCreateArtifact();
-  const createEdge = useCreateArtifactEdge();
   
-  const [runs, setRuns] = useState<AIRun[]>(mockRuns);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedType, setSelectedType] = useState<string>("");
-  const [selectedArtifact, setSelectedArtifact] = useState<string>("");
-  const [prdContent, setPrdContent] = useState("");
-  const [storyContent, setStoryContent] = useState("");
-  const [acContent, setAcContent] = useState("");
-  const [customPrompt, setCustomPrompt] = useState("");
-  const [isStarting, setIsStarting] = useState(false);
-  const [inputMode, setInputMode] = useState<"artifact" | "manual">("manual");
-  const [selectedRun, setSelectedRun] = useState<AIRun | null>(null);
-  const [isResultsOpen, setIsResultsOpen] = useState(false);
-  const [savingItems, setSavingItems] = useState<Record<number, boolean>>({});
+  // Data hooks
+  const { data: agents, isLoading: agentsLoading, refetch: refetchAgents } = useAgentConfigs(
+    currentWorkspaceId || undefined, 
+    currentProjectId || undefined
+  );
+  const { data: runs, isLoading: runsLoading } = useAIRuns(
+    currentWorkspaceId || undefined,
+    currentProjectId || undefined
+  );
+  const { data: artifacts } = useArtifacts(currentProjectId || undefined);
+  
+  // Mutations
+  const createAgent = useCreateAgentConfig();
+  const updateAgent = useUpdateAgentConfig();
+  const deleteAgent = useDeleteAgentConfig();
+  const createRun = useCreateAIRun();
+  const updateRun = useUpdateAIRun();
 
-  const runTypes = [
-    { 
-      value: "STORY_GENERATION", 
-      label: "Generate Stories", 
-      description: "Create user stories from a PRD or Epic",
-      icon: FileText,
-      inputTypes: ["PRD", "EPIC"],
-    },
-    { 
-      value: "AC_GENERATION", 
-      label: "Generate Acceptance Criteria", 
-      description: "Create ACs from user stories",
-      icon: GitBranch,
-      inputTypes: ["STORY"],
-    },
-    { 
-      value: "TEST_GENERATION", 
-      label: "Generate Test Cases", 
-      description: "Create test cases from ACs",
-      icon: TestTube2,
-      inputTypes: ["ACCEPTANCE_CRITERION"],
-    },
-  ];
+  // State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
+  const [isInvokeDialogOpen, setIsInvokeDialogOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<AgentConfig | null>(null);
+  const [isSeeding, setIsSeeding] = useState(false);
 
-  const handleStartRun = async () => {
-    if (!selectedType) return;
-    
-    const isStoryGen = selectedType === "STORY_GENERATION";
-    const isACGen = selectedType === "AC_GENERATION";
-    const isTestGen = selectedType === "TEST_GENERATION";
-    
-    if (isStoryGen) {
-      if (inputMode === "artifact" && !selectedArtifact) return;
-      if (inputMode === "manual" && !prdContent.trim()) return;
-    } else if (isACGen) {
-      if (inputMode === "artifact" && !selectedArtifact) return;
-      if (inputMode === "manual" && !storyContent.trim()) return;
-    } else if (isTestGen) {
-      if (inputMode === "artifact" && !selectedArtifact) return;
-      if (inputMode === "manual" && !acContent.trim()) return;
-    } else {
-      if (!selectedArtifact) return;
+  // Filtered agents
+  const filteredAgents = agents?.filter(agent => {
+    const matchesSearch = agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      agent.description?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter === "all" || agent.agent_type === typeFilter;
+    return matchesSearch && matchesType;
+  }) || [];
+
+  // Handlers
+  const handleCreateAgent = () => {
+    setSelectedAgent(null);
+    setIsConfigDialogOpen(true);
+  };
+
+  const handleConfigureAgent = (agent: AgentConfig) => {
+    setSelectedAgent(agent);
+    setIsConfigDialogOpen(true);
+  };
+
+  const handleInvokeAgent = (agent: AgentConfig) => {
+    setSelectedAgent(agent);
+    setIsInvokeDialogOpen(true);
+  };
+
+  const handleToggleAgent = async (agent: AgentConfig, enabled: boolean) => {
+    try {
+      await updateAgent.mutateAsync({
+        id: agent.id,
+        workspace_id: agent.workspace_id,
+        enabled,
+      });
+      toast.success(`Agent ${enabled ? "enabled" : "disabled"}`);
+    } catch (error) {
+      toast.error("Failed to update agent");
     }
+  };
+
+  const handleDeleteAgent = async (agent: AgentConfig) => {
+    if (!confirm(`Delete "${agent.name}"? This cannot be undone.`)) return;
     
-    setIsStarting(true);
-    
-    const selectedArtifactData = artifacts?.find(a => a.id === selectedArtifact);
-    
-    const newRun: AIRun = {
-      id: String(Date.now()),
-      type: selectedType as AIRun["type"],
+    try {
+      await deleteAgent.mutateAsync({
+        id: agent.id,
+        workspaceId: agent.workspace_id,
+      });
+      toast.success("Agent deleted");
+    } catch (error) {
+      toast.error("Failed to delete agent");
+    }
+  };
+
+  const handleSaveAgent = async (data: CreateAgentConfigInput) => {
+    if (selectedAgent) {
+      // Update existing
+      await updateAgent.mutateAsync({
+        id: selectedAgent.id,
+        workspace_id: selectedAgent.workspace_id,
+        name: data.name,
+        description: data.description || null,
+        agent_type: data.agentType,
+        persona: data.persona || null,
+        system_prompt: data.systemPrompt || null,
+        default_model_id: data.defaultModelId || null,
+        routing_mode: data.routingMode || null,
+        temperature: data.temperature ?? 0.7,
+        max_tokens: data.maxTokens || null,
+        autonomous_enabled: data.autonomousEnabled ?? false,
+        guardrails: data.guardrails || null,
+      });
+      toast.success("Agent updated");
+    } else {
+      // Create new
+      await createAgent.mutateAsync(data);
+      toast.success("Agent created");
+    }
+  };
+
+  const handleRunAgent = async (params: {
+    agentId: string;
+    modelId?: string;
+    inputContent: string;
+    inputArtifactId?: string;
+  }) => {
+    if (!currentWorkspaceId) {
+      toast.error("No workspace selected");
+      return;
+    }
+
+    const agent = agents?.find(a => a.id === params.agentId);
+    if (!agent) {
+      toast.error("Agent not found");
+      return;
+    }
+
+    // Create the run record
+    const run = await createRun.mutateAsync({
+      workspaceId: currentWorkspaceId,
+      projectId: currentProjectId || undefined,
+      agentConfigId: params.agentId,
+      modelId: params.modelId || agent.default_model_id || undefined,
+      runType: "INVOKED",
+      inputContext: {
+        content: params.inputContent,
+        artifactId: params.inputArtifactId,
+      },
+    });
+
+    // Update to running
+    await updateRun.mutateAsync({
+      id: run.id,
+      workspace_id: currentWorkspaceId,
       status: "RUNNING",
-      progress: 10,
-      inputArtifactId: inputMode === "artifact" ? selectedArtifact : undefined,
-      inputArtifactTitle: inputMode === "artifact" ? selectedArtifactData?.title : (isStoryGen ? "Manual PRD Input" : isACGen ? "Manual Story Input" : "Manual AC Input"),
-      outputCount: 0,
-      startedAt: new Date().toISOString(),
-      sourceArtifactId: inputMode === "artifact" ? selectedArtifact : undefined,
-    };
-    
-    setRuns([newRun, ...runs]);
-    setIsDialogOpen(false);
+    });
 
+    setIsInvokeDialogOpen(false);
+    toast.success("Agent run started");
+
+    // Here you would typically call the actual AI endpoint
+    // For now, we'll simulate a completion after a delay
     try {
-      if (isStoryGen) {
-        await handleStoryGeneration(newRun, selectedArtifactData);
-      } else if (isACGen) {
-        await handleACGeneration(newRun, selectedArtifactData);
-      } else if (isTestGen) {
-        await handleTestCaseGeneration(newRun, selectedArtifactData);
+      // Call appropriate edge function based on agent type
+      let endpoint = "";
+      let body: Record<string, unknown> = {};
+
+      switch (agent.agent_type) {
+        case "PRODUCT_AGENT":
+          endpoint = "generate-prd";
+          body = { projectDescription: params.inputContent };
+          break;
+        case "STORY_AGENT":
+          endpoint = "generate-stories";
+          body = { prdContent: params.inputContent };
+          break;
+        case "QA_AGENT":
+          endpoint = "generate-test-cases";
+          body = { acceptanceCriteria: [params.inputContent] };
+          break;
+        default:
+          // For other agents, use a generic approach
+          endpoint = "generate-prd";
+          body = { projectDescription: params.inputContent };
       }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${endpoint}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Agent execution failed");
+      }
+
+      const result = await response.json();
+
+      await updateRun.mutateAsync({
+        id: run.id,
+        workspace_id: currentWorkspaceId,
+        status: "COMPLETED",
+        output_artifacts: [result],
+        completed_at: new Date().toISOString(),
+      });
+
+      toast.success("Agent run completed!");
     } catch (error) {
-      console.error("Error in AI run:", error);
-      
-      setRuns(current => current.map(r => 
-        r.id === newRun.id 
-          ? { 
-              ...r, 
-              progress: 0,
-              status: "FAILED" as const,
-              completedAt: new Date().toISOString(),
-              error: error instanceof Error ? error.message : "Unknown error",
-            }
-          : r
-      ));
-
-      toast.error(error instanceof Error ? error.message : "Failed to generate");
-    } finally {
-      setIsStarting(false);
-      setSelectedType("");
-      setSelectedArtifact("");
-      setPrdContent("");
-      setStoryContent("");
-      setAcContent("");
-      setCustomPrompt("");
+      await updateRun.mutateAsync({
+        id: run.id,
+        workspace_id: currentWorkspaceId,
+        status: "FAILED",
+        error_message: error instanceof Error ? error.message : "Unknown error",
+        completed_at: new Date().toISOString(),
+      });
+      toast.error("Agent run failed");
     }
   };
 
-  const handleStoryGeneration = async (newRun: AIRun, selectedArtifactData: any) => {
-    const inputText = inputMode === "manual" 
-      ? prdContent 
-      : selectedArtifactData?.content_markdown || "";
-
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-stories`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          prdContent: inputText,
-          projectContext: customPrompt || undefined,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to generate stories");
-    }
-
-    const data = await response.json();
-    
-    if (data.error) {
-      throw new Error(data.error);
-    }
-
-    const stories = data.stories || [];
-    
-    const completedRun = {
-      ...newRun,
-      progress: 100,
-      status: "COMPLETED" as const,
-      outputCount: stories.length,
-      completedAt: new Date().toISOString(),
-      generatedStories: stories,
-    };
-
-    setRuns(current => current.map(r => 
-      r.id === newRun.id ? completedRun : r
-    ));
-
-    toast.success(`Generated ${stories.length} user stories`);
-    setSelectedRun(completedRun);
-    setIsResultsOpen(true);
-  };
-
-  const handleACGeneration = async (newRun: AIRun, selectedArtifactData: any) => {
-    const storyTitle = inputMode === "manual" 
-      ? "User Story" 
-      : selectedArtifactData?.title || "User Story";
-    
-    const storyDescription = inputMode === "manual" 
-      ? storyContent 
-      : selectedArtifactData?.content_markdown || "";
-
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-acceptance-criteria`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          storyTitle,
-          storyDescription,
-          storyContext: customPrompt || undefined,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to generate acceptance criteria");
-    }
-
-    const data = await response.json();
-    
-    if (data.error) {
-      throw new Error(data.error);
-    }
-
-    const acs = data.acceptanceCriteria || [];
-    const coverage = data.coverage || {};
-    
-    const completedRun = {
-      ...newRun,
-      progress: 100,
-      status: "COMPLETED" as const,
-      outputCount: acs.length,
-      completedAt: new Date().toISOString(),
-      generatedACs: acs,
-      acCoverage: coverage,
-    };
-
-    setRuns(current => current.map(r => 
-      r.id === newRun.id ? completedRun : r
-    ));
-
-    toast.success(`Generated ${acs.length} acceptance criteria`);
-    setSelectedRun(completedRun);
-    setIsResultsOpen(true);
-  };
-
-  const handleTestCaseGeneration = async (newRun: AIRun, selectedArtifactData: any) => {
-    // Build acceptance criteria list from input
-    let acceptanceCriteria: string[];
-    let storyContext = customPrompt || undefined;
-
-    if (inputMode === "manual") {
-      // Parse the manual AC content - split by newlines and filter empty
-      acceptanceCriteria = acContent
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
-    } else {
-      // From artifact - try to parse content_json for structured ACs
-      const contentJson = selectedArtifactData?.content_json;
-      if (contentJson?.scenario) {
-        acceptanceCriteria = [contentJson.scenario];
-        storyContext = selectedArtifactData?.title || storyContext;
-      } else if (contentJson?.acceptanceCriteria) {
-        acceptanceCriteria = contentJson.acceptanceCriteria;
-      } else {
-        // Fallback to markdown content
-        acceptanceCriteria = [selectedArtifactData?.content_markdown || ""];
-      }
-    }
-
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-test-cases`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          acceptanceCriteria,
-          storyContext,
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to generate test cases");
-    }
-
-    const data = await response.json();
-    
-    if (data.error) {
-      throw new Error(data.error);
-    }
-
-    const testCases = data.testCases || [];
-    const summary = data.summary || {};
-    
-    const completedRun = {
-      ...newRun,
-      progress: 100,
-      status: "COMPLETED" as const,
-      outputCount: testCases.length,
-      completedAt: new Date().toISOString(),
-      generatedTestCases: testCases,
-      testCaseSummary: summary,
-    };
-
-    setRuns(current => current.map(r => 
-      r.id === newRun.id ? completedRun : r
-    ));
-
-    toast.success(`Generated ${testCases.length} test cases`);
-    setSelectedRun(completedRun);
-    setIsResultsOpen(true);
-  };
-
-  const handleSaveStory = async (story: GeneratedStory, index: number) => {
-    if (!currentProjectId || !currentWorkspaceId) {
-      toast.error("Please select a project first");
+  const handleSeedDefaultAgents = async () => {
+    if (!currentWorkspaceId) {
+      toast.error("No workspace selected");
       return;
     }
 
-    setSavingItems(prev => ({ ...prev, [index]: true }));
-
+    setIsSeeding(true);
     try {
-      const contentMarkdown = `## Description\n${story.description}\n\n## Acceptance Criteria\n${story.acceptanceCriteria.map(ac => `- ${ac}`).join('\n')}\n\n## Story Points\n${story.storyPoints}\n\n## Priority\n${story.priority}`;
-      
-      const savedArtifact = await createArtifact.mutateAsync({
-        workspaceId: currentWorkspaceId,
-        projectId: currentProjectId,
-        title: story.title,
-        type: "STORY",
-        contentMarkdown,
-        contentJson: {
-          storyPoints: story.storyPoints,
-          priority: story.priority,
-          acceptanceCriteria: story.acceptanceCriteria,
-        },
-      });
-
-      // Create edge if we have a source artifact
-      if (selectedRun?.sourceArtifactId && savedArtifact) {
-        await createEdge.mutateAsync({
+      for (const template of DEFAULT_AGENT_TEMPLATES) {
+        await createAgent.mutateAsync({
           workspaceId: currentWorkspaceId,
-          projectId: currentProjectId,
-          fromArtifactId: selectedRun.sourceArtifactId,
-          toArtifactId: savedArtifact.id,
-          edgeType: "DERIVES_FROM",
-          source: "AI_GENERATED",
-          sourceRef: `run:${selectedRun.id}`,
-          metadata: { runType: "STORY_GENERATION" },
+          projectId: currentProjectId || undefined,
+          ...template,
         });
       }
-
-      toast.success(`Saved "${story.title}" as artifact`);
+      toast.success(`Created ${DEFAULT_AGENT_TEMPLATES.length} default agents`);
+      refetchAgents();
     } catch (error) {
-      toast.error("Failed to save story");
+      toast.error("Failed to create default agents");
     } finally {
-      setSavingItems(prev => ({ ...prev, [index]: false }));
+      setIsSeeding(false);
     }
   };
 
-  const handleSaveAC = async (ac: GeneratedAC, index: number) => {
-    if (!currentProjectId || !currentWorkspaceId) {
-      toast.error("Please select a project first");
-      return;
-    }
-
-    setSavingItems(prev => ({ ...prev, [index]: true }));
-
-    try {
-      const contentMarkdown = `## Scenario\n${ac.scenario}\n\n## Type\n${ac.type}\n\n## Priority\n${ac.priority}\n\n## Testable\n${ac.testable ? 'Yes' : 'No'}`;
-      
-      const savedArtifact = await createArtifact.mutateAsync({
-        workspaceId: currentWorkspaceId,
-        projectId: currentProjectId,
-        title: ac.title,
-        type: "ACCEPTANCE_CRITERION",
-        contentMarkdown,
-        contentJson: {
-          scenario: ac.scenario,
-          acType: ac.type,
-          priority: ac.priority,
-          testable: ac.testable,
-        },
-      });
-
-      // Create edge if we have a source artifact (story -> AC)
-      if (selectedRun?.sourceArtifactId && savedArtifact) {
-        await createEdge.mutateAsync({
-          workspaceId: currentWorkspaceId,
-          projectId: currentProjectId,
-          fromArtifactId: selectedRun.sourceArtifactId,
-          toArtifactId: savedArtifact.id,
-          edgeType: "DERIVES_FROM",
-          source: "AI_GENERATED",
-          sourceRef: `run:${selectedRun.id}`,
-          metadata: { runType: "AC_GENERATION" },
-        });
-      }
-
-      toast.success(`Saved "${ac.title}" as artifact`);
-    } catch (error) {
-      toast.error("Failed to save AC");
-    } finally {
-      setSavingItems(prev => ({ ...prev, [index]: false }));
-    }
-  };
-
-  const handleSaveTestCase = async (tc: GeneratedTestCase, index: number) => {
-    if (!currentProjectId || !currentWorkspaceId) {
-      toast.error("Please select a project first");
-      return;
-    }
-
-    setSavingItems(prev => ({ ...prev, [index]: true }));
-
-    try {
-      const stepsMarkdown = tc.steps.map(s => `${s.step}. **${s.action}**\n   - Expected: ${s.expectedResult}`).join('\n');
-      const contentMarkdown = `## Test Case: ${tc.title}
-
-**Type:** ${tc.type}
-**Priority:** ${tc.priority}
-**Automatable:** ${tc.automatable ? 'Yes' : 'No'}
-**Tags:** ${tc.tags.join(', ')}
-
-### Related AC
-${tc.relatedAC}
-
-### Preconditions
-${tc.preconditions.map(p => `- ${p}`).join('\n')}
-
-### Test Steps
-${stepsMarkdown}
-
-${tc.testData ? `### Test Data\n${tc.testData}` : ''}`;
-      
-      const savedArtifact = await createArtifact.mutateAsync({
-        workspaceId: currentWorkspaceId,
-        projectId: currentProjectId,
-        title: tc.title,
-        type: "TEST_CASE",
-        contentMarkdown,
-        contentJson: {
-          testType: tc.type,
-          priority: tc.priority,
-          relatedAC: tc.relatedAC,
-          preconditions: tc.preconditions,
-          steps: tc.steps,
-          testData: tc.testData,
-          automatable: tc.automatable,
-          tags: tc.tags,
-        },
-      });
-
-      // Create edge if we have a source artifact (AC -> Test Case)
-      if (selectedRun?.sourceArtifactId && savedArtifact) {
-        await createEdge.mutateAsync({
-          workspaceId: currentWorkspaceId,
-          projectId: currentProjectId,
-          fromArtifactId: selectedRun.sourceArtifactId,
-          toArtifactId: savedArtifact.id,
-          edgeType: "TESTS",
-          source: "AI_GENERATED",
-          sourceRef: `run:${selectedRun.id}`,
-          metadata: { runType: "TEST_GENERATION" },
-        });
-      }
-
-      toast.success(`Saved "${tc.title}" as artifact`);
-    } catch (error) {
-      toast.error("Failed to save test case");
-    } finally {
-      setSavingItems(prev => ({ ...prev, [index]: false }));
-    }
-  };
-
-  const handleSaveAll = async () => {
-    if (!currentProjectId || !selectedRun) return;
-
-    if (selectedRun.generatedStories) {
-      for (let i = 0; i < selectedRun.generatedStories.length; i++) {
-        await handleSaveStory(selectedRun.generatedStories[i], i);
-      }
-    } else if (selectedRun.generatedACs) {
-      for (let i = 0; i < selectedRun.generatedACs.length; i++) {
-        await handleSaveAC(selectedRun.generatedACs[i], i);
-      }
-    } else if (selectedRun.generatedTestCases) {
-      for (let i = 0; i < selectedRun.generatedTestCases.length; i++) {
-        await handleSaveTestCase(selectedRun.generatedTestCases[i], i);
-      }
-    }
-  };
-
-  const selectedTypeConfig = runTypes.find(t => t.value === selectedType);
-  const eligibleArtifacts = artifacts?.filter(a => 
-    selectedTypeConfig?.inputTypes.includes(a.type)
-  ) || [];
-
-  const statusColors = {
-    PENDING: "bg-slate-100 text-slate-700",
-    RUNNING: "bg-blue-100 text-blue-700",
-    COMPLETED: "bg-green-100 text-green-700",
-    FAILED: "bg-red-100 text-red-700",
-  };
-
-  const priorityColors = {
-    high: "bg-red-100 text-red-700",
-    medium: "bg-amber-100 text-amber-700",
-    low: "bg-green-100 text-green-700",
-  };
-
-  const acPriorityColors = {
-    must_have: "bg-red-100 text-red-700",
-    should_have: "bg-amber-100 text-amber-700",
-    nice_to_have: "bg-green-100 text-green-700",
-  };
-
-  const acTypeIcons = {
-    functional: CheckCircle2,
-    edge_case: AlertTriangle,
-    error: XCircle,
-    accessibility: Zap,
-    performance: Zap,
-    security: Shield,
-  };
-
-  const typeIcons = {
-    STORY_GENERATION: FileText,
-    AC_GENERATION: GitBranch,
-    TEST_GENERATION: TestTube2,
-    COVERAGE_ANALYSIS: Sparkles,
-  };
-
-  const getRunOutputLabel = (run: AIRun) => {
-    if (run.type === "STORY_GENERATION") return `${run.outputCount} stories`;
-    if (run.type === "AC_GENERATION") return `${run.outputCount} ACs`;
-    if (run.type === "TEST_GENERATION") return `${run.outputCount} test cases`;
-    return `${run.outputCount} items`;
-  };
-
-  const tcPriorityColors = {
-    critical: "bg-purple-100 text-purple-700",
-    high: "bg-red-100 text-red-700",
-    medium: "bg-amber-100 text-amber-700",
-    low: "bg-green-100 text-green-700",
-  };
-
-  const tcTypeColors = {
-    functional: "bg-blue-100 text-blue-700",
-    integration: "bg-cyan-100 text-cyan-700",
-    e2e: "bg-indigo-100 text-indigo-700",
-    performance: "bg-orange-100 text-orange-700",
-    security: "bg-red-100 text-red-700",
-    accessibility: "bg-green-100 text-green-700",
-  };
+  const agentTypes = [
+    { value: "all", label: "All Types" },
+    { value: "PRODUCT_AGENT", label: "Product" },
+    { value: "STORY_AGENT", label: "Story" },
+    { value: "QA_AGENT", label: "QA" },
+    { value: "ARCHITECTURE_AGENT", label: "Architecture" },
+    { value: "UX_AGENT", label: "UX" },
+    { value: "SECURITY_AGENT", label: "Security" },
+    { value: "DOCS_AGENT", label: "Documentation" },
+    { value: "CUSTOM_AGENT", label: "Custom" },
+  ];
 
   return (
     <AuthGuard>
@@ -699,676 +295,174 @@ ${tc.testData ? `### Test Data\n${tc.testData}` : ''}`;
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">AI Runs</h1>
+              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+                <Bot className="w-8 h-8 text-accent" />
+                AI Agents
+              </h1>
               <p className="text-muted-foreground">
-                Generate artifacts using AI-powered decomposition
+                Configure and run AI agents for artifact generation
               </p>
             </div>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-accent hover:bg-accent/90">
-                  <Plus className="w-4 h-4 mr-2" />
-                  New AI Run
+            <div className="flex items-center gap-2">
+              {agents?.length === 0 && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleSeedDefaultAgents}
+                  disabled={isSeeding}
+                >
+                  {isSeeding ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 mr-2" />
+                  )}
+                  Add Default Agents
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Start AI Run</DialogTitle>
-                  <DialogDescription>
-                    {selectedType === "AC_GENERATION" 
-                      ? "Generate acceptance criteria from a user story" 
-                      : "Generate artifacts using AI"}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label>Run Type</Label>
-                    <Select value={selectedType} onValueChange={(v) => {
-                      setSelectedType(v);
-                      setInputMode("manual");
-                      setSelectedArtifact("");
-                    }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select run type..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {runTypes.map(type => (
-                          <SelectItem key={type.value} value={type.value}>
-                            <div className="flex items-center gap-2">
-                              <type.icon className="w-4 h-4" />
-                              <span>{type.label}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {selectedTypeConfig && (
-                      <p className="text-xs text-muted-foreground">{selectedTypeConfig.description}</p>
-                    )}
-                  </div>
-
-                  {/* Story Generation Input */}
-                  {selectedType === "STORY_GENERATION" && (
-                    <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as "artifact" | "manual")}>
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="manual">Paste PRD</TabsTrigger>
-                        <TabsTrigger value="artifact">Select Artifact</TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="manual" className="space-y-2 mt-4">
-                        <Label>PRD Content</Label>
-                        <Textarea
-                          value={prdContent}
-                          onChange={(e) => setPrdContent(e.target.value)}
-                          placeholder="Paste your PRD content here..."
-                          className="min-h-[200px] font-mono text-sm"
-                        />
-                      </TabsContent>
-                      
-                      <TabsContent value="artifact" className="space-y-2 mt-4">
-                        <Label>Source Artifact</Label>
-                        <Select value={selectedArtifact} onValueChange={setSelectedArtifact}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a PRD or Epic..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {eligibleArtifacts.length === 0 ? (
-                              <div className="p-2 text-sm text-muted-foreground text-center">
-                                No PRDs or Epics found.
-                              </div>
-                            ) : (
-                              eligibleArtifacts.map(artifact => (
-                                <SelectItem key={artifact.id} value={artifact.id}>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-mono text-xs text-muted-foreground">
-                                      {artifact.short_id}
-                                    </span>
-                                    <span className="truncate">{artifact.title}</span>
-                                  </div>
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </TabsContent>
-                    </Tabs>
-                  )}
-
-                  {/* AC Generation Input */}
-                  {selectedType === "AC_GENERATION" && (
-                    <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as "artifact" | "manual")}>
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="manual">Paste Story</TabsTrigger>
-                        <TabsTrigger value="artifact">Select Story</TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="manual" className="space-y-2 mt-4">
-                        <Label>User Story</Label>
-                        <Textarea
-                          value={storyContent}
-                          onChange={(e) => setStoryContent(e.target.value)}
-                          placeholder="Paste your user story here...
-
-Example:
-As a user, I want to be able to reset my password so that I can regain access to my account if I forget my credentials.
-
-The user should receive an email with a reset link that expires after 24 hours. They should be able to set a new password that meets security requirements."
-                          className="min-h-[200px] font-mono text-sm"
-                        />
-                      </TabsContent>
-                      
-                      <TabsContent value="artifact" className="space-y-2 mt-4">
-                        <Label>Source Story</Label>
-                        <Select value={selectedArtifact} onValueChange={setSelectedArtifact}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a user story..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {eligibleArtifacts.length === 0 ? (
-                              <div className="p-2 text-sm text-muted-foreground text-center">
-                                No stories found. Create one first or paste content manually.
-                              </div>
-                            ) : (
-                              eligibleArtifacts.map(artifact => (
-                                <SelectItem key={artifact.id} value={artifact.id}>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-mono text-xs text-muted-foreground">
-                                      {artifact.short_id}
-                                    </span>
-                                    <span className="truncate">{artifact.title}</span>
-                                  </div>
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </TabsContent>
-                    </Tabs>
-                  )}
-
-                  {/* Test Case Generation Input */}
-                  {selectedType === "TEST_GENERATION" && (
-                    <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as "artifact" | "manual")}>
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="manual">Paste ACs</TabsTrigger>
-                        <TabsTrigger value="artifact">Select AC</TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="manual" className="space-y-2 mt-4">
-                        <Label>Acceptance Criteria</Label>
-                        <Textarea
-                          value={acContent}
-                          onChange={(e) => setAcContent(e.target.value)}
-                          placeholder="Paste your acceptance criteria here (one per line)...
-
-Example:
-Given a user is on the login page
-When they enter valid credentials and click login
-Then they should be redirected to the dashboard
-
-Given a user enters an invalid password
-When they click login
-Then they should see an error message"
-                          className="min-h-[200px] font-mono text-sm"
-                        />
-                      </TabsContent>
-                      
-                      <TabsContent value="artifact" className="space-y-2 mt-4">
-                        <Label>Source AC</Label>
-                        <Select value={selectedArtifact} onValueChange={setSelectedArtifact}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select an acceptance criterion..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {eligibleArtifacts.length === 0 ? (
-                              <div className="p-2 text-sm text-muted-foreground text-center">
-                                No ACs found. Create one first or paste content manually.
-                              </div>
-                            ) : (
-                              eligibleArtifacts.map(artifact => (
-                                <SelectItem key={artifact.id} value={artifact.id}>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-mono text-xs text-muted-foreground">
-                                      {artifact.short_id}
-                                    </span>
-                                    <span className="truncate">{artifact.title}</span>
-                                  </div>
-                                </SelectItem>
-                              ))
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </TabsContent>
-                    </Tabs>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label>Additional Context (optional)</Label>
-                    <Textarea
-                      value={customPrompt}
-                      onChange={(e) => setCustomPrompt(e.target.value)}
-                      placeholder="Add project context, tech stack, or specific requirements..."
-                      className="min-h-[60px]"
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleStartRun}
-                    disabled={
-                      !selectedType || 
-                      isStarting || 
-                      (selectedType === "STORY_GENERATION" && inputMode === "manual" && !prdContent.trim()) ||
-                      (selectedType === "STORY_GENERATION" && inputMode === "artifact" && !selectedArtifact) ||
-                      (selectedType === "AC_GENERATION" && inputMode === "manual" && !storyContent.trim()) ||
-                      (selectedType === "AC_GENERATION" && inputMode === "artifact" && !selectedArtifact) ||
-                      (selectedType === "TEST_GENERATION" && inputMode === "manual" && !acContent.trim()) ||
-                      (selectedType === "TEST_GENERATION" && inputMode === "artifact" && !selectedArtifact)
-                    }
-                    className="bg-accent hover:bg-accent/90"
-                  >
-                    {isStarting ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4 mr-2" />
-                    )}
-                    {isStarting ? "Generating..." : "Generate"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="grid sm:grid-cols-3 gap-4 mb-8">
-            {runTypes.map(type => (
-              <Card 
-                key={type.value}
-                className="cursor-pointer card-hover"
-                onClick={() => {
-                  setSelectedType(type.value);
-                  setInputMode("manual");
-                  setIsDialogOpen(true);
-                }}
+              )}
+              <Button 
+                className="bg-accent hover:bg-accent/90"
+                onClick={handleCreateAgent}
               >
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-                      <type.icon className="w-6 h-6 text-accent" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium text-foreground mb-1">{type.label}</h3>
-                      <p className="text-sm text-muted-foreground">{type.description}</p>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                <Plus className="w-4 h-4 mr-2" />
+                New Agent
+              </Button>
+            </div>
           </div>
 
-          {/* Run History */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Run History</CardTitle>
-              <CardDescription>Recent AI generation runs</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {runs.length === 0 ? (
-                <div className="text-center py-12">
-                  <Sparkles className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">No AI runs yet</p>
-                  <Button onClick={() => setIsDialogOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Start First Run
+          {/* Main content tabs */}
+          <Tabs defaultValue="agents" className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="agents" className="gap-2">
+                <Bot className="w-4 h-4" />
+                Agents
+              </TabsTrigger>
+              <TabsTrigger value="runs" className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                Run History
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="agents" className="space-y-6">
+              {/* Filters */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search agents..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-48">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {agentTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex border rounded-md">
+                  <Button
+                    variant={viewMode === "grid" ? "secondary" : "ghost"}
+                    size="icon"
+                    onClick={() => setViewMode("grid")}
+                  >
+                    <Grid3X3 className="w-4 h-4" />
                   </Button>
+                  <Button
+                    variant={viewMode === "list" ? "secondary" : "ghost"}
+                    size="icon"
+                    onClick={() => setViewMode("list")}
+                  >
+                    <List className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Agent grid/list */}
+              {agentsLoading ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-64 rounded-lg bg-muted animate-pulse" />
+                  ))}
+                </div>
+              ) : filteredAgents.length === 0 ? (
+                <div className="text-center py-16 border rounded-lg bg-muted/30">
+                  <Bot className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No agents found</h3>
+                  <p className="text-muted-foreground mb-4">
+                    {searchQuery || typeFilter !== "all" 
+                      ? "Try adjusting your filters"
+                      : "Create your first agent to get started"}
+                  </p>
+                  {!searchQuery && typeFilter === "all" && (
+                    <div className="flex gap-2 justify-center">
+                      <Button variant="outline" onClick={handleSeedDefaultAgents}>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Add Default Agents
+                      </Button>
+                      <Button onClick={handleCreateAgent}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Agent
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {runs.map(run => {
-                    const TypeIcon = typeIcons[run.type];
-                    const hasResults = run.status === "COMPLETED" && (run.generatedStories || run.generatedACs || run.generatedTestCases);
-                    return (
-                      <div 
-                        key={run.id} 
-                        className={cn(
-                          "flex items-center gap-4 p-4 rounded-lg border bg-card",
-                          hasResults && "cursor-pointer hover:bg-muted/50"
-                        )}
-                        onClick={() => {
-                          if (hasResults) {
-                            setSelectedRun(run);
-                            setIsResultsOpen(true);
-                          }
-                        }}
-                      >
-                        <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                          <TypeIcon className="w-5 h-5 text-accent" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge className={cn(statusColors[run.status])}>
-                              {run.status === "RUNNING" && (
-                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                              )}
-                              {run.status}
-                            </Badge>
-                            <span className="text-sm font-medium text-foreground">
-                              {runTypes.find(t => t.value === run.type)?.label}
-                            </span>
-                          </div>
-                          {run.inputArtifactTitle && (
-                            <p className="text-sm text-muted-foreground truncate">
-                              From: {run.inputArtifactTitle}
-                            </p>
-                          )}
-                          {run.status === "RUNNING" && (
-                            <Progress value={run.progress} className="mt-2 h-1 [&>div]:bg-accent" />
-                          )}
-                          {run.error && (
-                            <p className="text-sm text-destructive mt-1">{run.error}</p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          {run.status === "COMPLETED" && (
-                            <p className="text-sm font-medium text-green-600">
-                              {getRunOutputLabel(run)}
-                            </p>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            <Clock className="w-3 h-3 inline mr-1" />
-                            {new Date(run.startedAt).toLocaleTimeString()}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className={viewMode === "grid" 
+                  ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" 
+                  : "space-y-4"
+                }>
+                  {filteredAgents.map((agent) => (
+                    <AgentCard
+                      key={agent.id}
+                      agent={agent}
+                      onConfigure={handleConfigureAgent}
+                      onInvoke={handleInvokeAgent}
+                      onToggle={handleToggleAgent}
+                      onDelete={handleDeleteAgent}
+                    />
+                  ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </TabsContent>
+
+            <TabsContent value="runs">
+              <AgentRunHistory 
+                runs={runs || []} 
+                isLoading={runsLoading}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
 
-        {/* Results Dialog */}
-        <Dialog open={isResultsOpen} onOpenChange={setIsResultsOpen}>
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh]">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
-                {selectedRun?.type === "STORY_GENERATION" 
-                  ? "Generated Stories" 
-                  : selectedRun?.type === "AC_GENERATION"
-                  ? "Generated Acceptance Criteria"
-                  : "Generated Test Cases"}
-              </DialogTitle>
-              <DialogDescription>
-                {selectedRun?.outputCount} {
-                  selectedRun?.type === "STORY_GENERATION" 
-                    ? "user stories" 
-                    : selectedRun?.type === "AC_GENERATION"
-                    ? "acceptance criteria"
-                    : "test cases"
-                } generated
-              </DialogDescription>
-            </DialogHeader>
+        {/* Dialogs */}
+        <AgentConfigDialog
+          open={isConfigDialogOpen}
+          onOpenChange={setIsConfigDialogOpen}
+          agent={selectedAgent}
+          workspaceId={currentWorkspaceId || ""}
+          projectId={currentProjectId || undefined}
+          onSave={handleSaveAgent}
+          isLoading={createAgent.isPending || updateAgent.isPending}
+        />
 
-            {/* Coverage Summary for ACs */}
-            {selectedRun?.acCoverage && (
-              <div className="grid grid-cols-3 gap-2 p-3 bg-muted/50 rounded-lg">
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Functional</p>
-                  <p className="font-semibold">{selectedRun.acCoverage.functional}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Edge Cases</p>
-                  <p className="font-semibold">{selectedRun.acCoverage.edge_cases}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Error Handling</p>
-                  <p className="font-semibold">{selectedRun.acCoverage.error_handling}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Accessibility</p>
-                  <p className="font-semibold">{selectedRun.acCoverage.accessibility}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Performance</p>
-                  <p className="font-semibold">{selectedRun.acCoverage.performance}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Security</p>
-                  <p className="font-semibold">{selectedRun.acCoverage.security}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Test Case Summary */}
-            {selectedRun?.testCaseSummary && (
-              <div className="grid grid-cols-4 gap-2 p-3 bg-muted/50 rounded-lg">
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Total</p>
-                  <p className="font-semibold">{selectedRun.testCaseSummary.total}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Critical</p>
-                  <p className="font-semibold text-purple-600">{selectedRun.testCaseSummary.byPriority?.critical || 0}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">Automatable</p>
-                  <p className="font-semibold text-blue-600">{selectedRun.testCaseSummary.automatable}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-xs text-muted-foreground">E2E</p>
-                  <p className="font-semibold">{selectedRun.testCaseSummary.byType?.e2e || 0}</p>
-                </div>
-              </div>
-            )}
-
-            <ScrollArea className="max-h-[55vh] pr-4">
-              <div className="space-y-4">
-                {/* Story Results */}
-                {selectedRun?.generatedStories?.map((story, index) => (
-                  <Card key={index} className="border">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <CardTitle className="text-base">{story.title}</CardTitle>
-                          {story.epic && (
-                            <Badge variant="outline" className="mt-1">
-                              {story.epic}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className={priorityColors[story.priority]}>
-                            {story.priority}
-                          </Badge>
-                          <Badge variant="secondary">
-                            {story.storyPoints} pts
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <p className="text-sm text-muted-foreground">{story.description}</p>
-                      <div>
-                        <p className="text-xs font-medium text-foreground mb-2">Acceptance Criteria:</p>
-                        <ul className="space-y-1">
-                          {story.acceptanceCriteria.map((ac, acIndex) => (
-                            <li key={acIndex} className="text-sm text-muted-foreground flex items-start gap-2">
-                              <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
-                              <span>{ac}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      <div className="flex justify-end pt-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSaveStory(story, index);
-                          }}
-                          disabled={savingItems[index]}
-                        >
-                          {savingItems[index] ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            <Save className="w-4 h-4 mr-2" />
-                          )}
-                          Save as Artifact
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-
-                {/* AC Results */}
-                {selectedRun?.generatedACs?.map((ac, index) => {
-                  const TypeIcon = acTypeIcons[ac.type] || CheckCircle2;
-                  return (
-                    <Card key={index} className="border">
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 flex items-start gap-2">
-                            <TypeIcon className="w-5 h-5 text-accent mt-0.5 shrink-0" />
-                            <div>
-                              <CardTitle className="text-base">{ac.title}</CardTitle>
-                              <Badge variant="outline" className="mt-1 text-xs">
-                                {ac.id}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={acPriorityColors[ac.priority]}>
-                              {ac.priority.replace("_", " ")}
-                            </Badge>
-                            <Badge variant="secondary">
-                              {ac.type.replace("_", " ")}
-                            </Badge>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="bg-muted/50 p-3 rounded-md">
-                          <pre className="text-sm text-muted-foreground whitespace-pre-wrap font-mono">
-                            {ac.scenario}
-                          </pre>
-                        </div>
-                        <div className="flex items-center justify-between pt-2">
-                          <div className="flex items-center gap-2">
-                            {ac.testable && (
-                              <Badge variant="outline" className="text-green-600 border-green-200">
-                                <CheckCircle2 className="w-3 h-3 mr-1" />
-                                Testable
-                              </Badge>
-                            )}
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSaveAC(ac, index);
-                            }}
-                            disabled={savingItems[index]}
-                          >
-                            {savingItems[index] ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
-                              <Save className="w-4 h-4 mr-2" />
-                            )}
-                            Save as Artifact
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-
-                {/* Test Case Results */}
-                {selectedRun?.generatedTestCases?.map((tc, index) => (
-                  <Card key={index} className="border">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 flex items-start gap-2">
-                          <TestTube2 className="w-5 h-5 text-accent mt-0.5 shrink-0" />
-                          <div>
-                            <CardTitle className="text-base">{tc.title}</CardTitle>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {tc.tags.slice(0, 3).map((tag, tagIndex) => (
-                                <Badge key={tagIndex} variant="outline" className="text-xs">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className={tcPriorityColors[tc.priority]}>
-                            {tc.priority}
-                          </Badge>
-                          <Badge className={tcTypeColors[tc.type]}>
-                            {tc.type}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="text-xs text-muted-foreground">
-                        <span className="font-medium">Related AC:</span> {tc.relatedAC}
-                      </div>
-                      
-                      {tc.preconditions.length > 0 && (
-                        <div>
-                          <p className="text-xs font-medium text-foreground mb-1">Preconditions:</p>
-                          <ul className="text-sm text-muted-foreground list-disc list-inside">
-                            {tc.preconditions.map((pre, preIndex) => (
-                              <li key={preIndex}>{pre}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      
-                      <div>
-                        <p className="text-xs font-medium text-foreground mb-1">Test Steps:</p>
-                        <div className="bg-muted/50 p-3 rounded-md space-y-2">
-                          {tc.steps.map((step) => (
-                            <div key={step.step} className="text-sm">
-                              <div className="flex gap-2">
-                                <span className="font-medium text-foreground shrink-0">{step.step}.</span>
-                                <div>
-                                  <p className="text-foreground">{step.action}</p>
-                                  <p className="text-muted-foreground text-xs mt-0.5">
-                                    → Expected: {step.expectedResult}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {tc.testData && (
-                        <div className="text-xs">
-                          <span className="font-medium text-foreground">Test Data:</span>{" "}
-                          <span className="text-muted-foreground">{tc.testData}</span>
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center justify-between pt-2">
-                        <div className="flex items-center gap-2">
-                          {tc.automatable && (
-                            <Badge variant="outline" className="text-blue-600 border-blue-200">
-                              <Zap className="w-3 h-3 mr-1" />
-                              Automatable
-                            </Badge>
-                          )}
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSaveTestCase(tc, index);
-                          }}
-                          disabled={savingItems[index]}
-                        >
-                          {savingItems[index] ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            <Save className="w-4 h-4 mr-2" />
-                          )}
-                          Save as Artifact
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </ScrollArea>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={() => setIsResultsOpen(false)}>
-                Close
-              </Button>
-              <Button
-                onClick={handleSaveAll}
-                disabled={createArtifact.isPending}
-                className="bg-accent hover:bg-accent/90"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save All as Artifacts
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <InvokeAgentDialog
+          open={isInvokeDialogOpen}
+          onOpenChange={setIsInvokeDialogOpen}
+          agent={selectedAgent}
+          artifacts={artifacts}
+          onInvoke={handleRunAgent}
+          isLoading={createRun.isPending}
+        />
       </AppLayout>
     </AuthGuard>
   );
 };
 
-export default AIRunsPage;
+export default AIAgentsPage;
