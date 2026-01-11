@@ -191,6 +191,49 @@ serve(async (req) => {
       });
     }
 
+    // DELETE - Delete workspace
+    if (req.method === "DELETE") {
+      if (!workspaceId) {
+        return new Response(JSON.stringify({ error: "Workspace ID required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check if user is OWNER
+      const { data: membership } = await supabaseAdmin
+        .from("workspace_members")
+        .select("role")
+        .eq("workspace_id", workspaceId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!membership || membership.role !== "OWNER") {
+        return new Response(JSON.stringify({ error: "Only workspace owners can delete workspaces" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Delete all workspace members first
+      await supabaseAdmin
+        .from("workspace_members")
+        .delete()
+        .eq("workspace_id", workspaceId);
+
+      // Delete the workspace
+      const { error } = await supabaseAdmin
+        .from("workspaces")
+        .delete()
+        .eq("id", workspaceId);
+
+      if (error) throw error;
+      
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

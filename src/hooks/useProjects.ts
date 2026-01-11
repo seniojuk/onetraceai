@@ -93,3 +93,60 @@ export function useCreateProject() {
     },
   });
 }
+
+export function useUpdateProject() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      name,
+      description,
+      status,
+    }: {
+      projectId: string;
+      name?: string;
+      description?: string;
+      status?: "ACTIVE" | "ARCHIVED";
+    }) => {
+      const updates: Record<string, unknown> = {};
+      if (name !== undefined) updates.name = name;
+      if (description !== undefined) updates.description = description;
+      if (status !== undefined) updates.status = status;
+      updates.updated_at = new Date().toISOString();
+
+      const { data, error } = await supabase
+        .from("projects")
+        .update(updates)
+        .eq("id", projectId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Project;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["projects", data.workspace_id] });
+      queryClient.invalidateQueries({ queryKey: ["project", data.id] });
+    },
+  });
+}
+
+export function useDeleteProject() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ projectId, workspaceId }: { projectId: string; workspaceId: string }) => {
+      const { error } = await supabase
+        .from("projects")
+        .delete()
+        .eq("id", projectId);
+
+      if (error) throw error;
+      return { projectId, workspaceId };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["projects", variables.workspaceId] });
+    },
+  });
+}
