@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Zap, Search, RefreshCw, Sparkles, Workflow } from "lucide-react";
+import { Plus, Zap, Search, RefreshCw, Sparkles, Workflow, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PipelineCard } from "./PipelineCard";
 import { PipelineBuilder } from "./PipelineBuilder";
 import { PipelineRunner } from "./PipelineRunner";
+import { PipelineRunHistory } from "./PipelineRunHistory";
 import { 
   useAgentPipelines, 
   useCreatePipeline, 
@@ -35,6 +36,7 @@ export function PipelinesTab({ workspaceId, projectId, agents }: PipelinesTabPro
   const [searchQuery, setSearchQuery] = useState("");
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [isRunnerOpen, setIsRunnerOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [selectedPipeline, setSelectedPipeline] = useState<AgentPipeline | null>(null);
 
   const filteredPipelines = pipelines?.filter(p => 
@@ -56,6 +58,11 @@ export function PipelinesTab({ workspaceId, projectId, agents }: PipelinesTabPro
   const handleEditPipeline = (pipeline: AgentPipeline) => {
     setSelectedPipeline(pipeline);
     setIsBuilderOpen(true);
+  };
+
+  const handleViewHistory = (pipeline?: AgentPipeline) => {
+    setSelectedPipeline(pipeline || null);
+    setIsHistoryOpen(true);
   };
 
   const handleTogglePipeline = async (pipeline: AgentPipeline, active: boolean) => {
@@ -123,6 +130,13 @@ export function PipelinesTab({ workspaceId, projectId, agents }: PipelinesTabPro
             className="pl-10"
           />
         </div>
+        <Button 
+          variant="outline"
+          onClick={() => handleViewHistory()}
+        >
+          <History className="w-4 h-4 mr-2" />
+          Run History
+        </Button>
         <Button 
           className="bg-accent hover:bg-accent/90"
           onClick={() => {
@@ -237,6 +251,14 @@ export function PipelinesTab({ workspaceId, projectId, agents }: PipelinesTabPro
         pipeline={selectedPipeline}
         workspaceId={workspaceId}
         projectId={projectId}
+      />
+
+      <PipelineRunHistory
+        open={isHistoryOpen}
+        onOpenChange={setIsHistoryOpen}
+        workspaceId={workspaceId}
+        pipelineId={selectedPipeline?.id}
+        pipelineName={selectedPipeline?.name}
       />
     </div>
   );
