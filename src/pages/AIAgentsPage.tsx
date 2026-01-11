@@ -38,7 +38,7 @@ import { useAIRuns, useCreateAIRun, useUpdateAIRun } from "@/hooks/useAIRuns";
 import { useArtifacts } from "@/hooks/useArtifacts";
 import { useUIStore } from "@/store/uiStore";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+
 
 const AIAgentsPage = () => {
   const { currentProjectId, currentWorkspaceId } = useUIStore();
@@ -187,46 +187,30 @@ const AIAgentsPage = () => {
     setIsInvokeDialogOpen(false);
     toast.success("Agent run started");
 
-    // Here you would typically call the actual AI endpoint
-    // For now, we'll simulate a completion after a delay
     try {
-      // Call appropriate edge function based on agent type
-      let endpoint = "";
-      let body: Record<string, unknown> = {};
-
-      switch (agent.agent_type) {
-        case "PRODUCT_AGENT":
-          endpoint = "generate-prd";
-          body = { projectDescription: params.inputContent };
-          break;
-        case "STORY_AGENT":
-          endpoint = "generate-stories";
-          body = { prdContent: params.inputContent };
-          break;
-        case "QA_AGENT":
-          endpoint = "generate-test-cases";
-          body = { acceptanceCriteria: [params.inputContent] };
-          break;
-        default:
-          // For other agents, use a generic approach
-          endpoint = "generate-prd";
-          body = { projectDescription: params.inputContent };
-      }
-
+      // Call the unified invoke-agent edge function
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${endpoint}`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invoke-agent`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify(body),
+          body: JSON.stringify({
+            agentId: params.agentId,
+            modelId: params.modelId,
+            inputContent: params.inputContent,
+            inputArtifactId: params.inputArtifactId,
+            workspaceId: currentWorkspaceId,
+            projectId: currentProjectId,
+          }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Agent execution failed");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Agent execution failed");
       }
 
       const result = await response.json();
@@ -235,11 +219,15 @@ const AIAgentsPage = () => {
         id: run.id,
         workspace_id: currentWorkspaceId,
         status: "COMPLETED",
-        output_artifacts: [result],
+        output_artifacts: [result.parsedOutput || result.content],
+        input_tokens: result.usage?.inputTokens || 0,
+        output_tokens: result.usage?.outputTokens || 0,
+        total_cost: result.usage?.estimatedCost || 0,
+        duration_ms: result.metadata?.durationMs || 0,
         completed_at: new Date().toISOString(),
       });
 
-      toast.success("Agent run completed!");
+      toast.success(`${result.agentName} completed successfully!`);
     } catch (error) {
       await updateRun.mutateAsync({
         id: run.id,
@@ -248,7 +236,7 @@ const AIAgentsPage = () => {
         error_message: error instanceof Error ? error.message : "Unknown error",
         completed_at: new Date().toISOString(),
       });
-      toast.error("Agent run failed");
+      toast.error(error instanceof Error ? error.message : "Agent run failed");
     }
   };
 
