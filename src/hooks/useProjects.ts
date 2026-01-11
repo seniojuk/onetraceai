@@ -14,20 +14,25 @@ export interface Project {
   updated_at: string;
 }
 
-export function useProjects(workspaceId: string | undefined) {
+export function useProjects(workspaceId: string | undefined, includeArchived: boolean = false) {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["projects", workspaceId],
+    queryKey: ["projects", workspaceId, includeArchived],
     queryFn: async () => {
       if (!workspaceId) return [];
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("projects")
         .select("*")
         .eq("workspace_id", workspaceId)
-        .eq("status", "ACTIVE")
         .order("created_at", { ascending: false });
+
+      if (!includeArchived) {
+        query = query.eq("status", "ACTIVE");
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as Project[];
