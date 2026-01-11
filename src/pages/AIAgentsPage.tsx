@@ -476,6 +476,8 @@ const AIAgentsPage = () => {
               <AgentRunHistory 
                 runs={runs || []} 
                 isLoading={runsLoading}
+                workspaceId={currentWorkspaceId || ""}
+                projectId={currentProjectId || undefined}
               />
             </TabsContent>
           </Tabs>

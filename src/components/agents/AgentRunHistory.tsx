@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { 
   Clock, 
@@ -12,11 +13,11 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AIRun, AIRunStatus } from "@/hooks/useAIRuns";
 import { cn } from "@/lib/utils";
+import { AgentRunResultsDialog } from "./AgentRunResultsDialog";
 
 interface AgentRunHistoryProps {
   runs: (AIRun & { 
@@ -25,6 +26,8 @@ interface AgentRunHistoryProps {
   })[];
   isLoading?: boolean;
   onViewRun?: (run: AIRun) => void;
+  workspaceId: string;
+  projectId?: string;
 }
 
 const statusConfig: Record<AIRunStatus, { icon: React.ElementType; color: string; bgColor: string }> = {
@@ -35,7 +38,15 @@ const statusConfig: Record<AIRunStatus, { icon: React.ElementType; color: string
   CANCELLED: { icon: XCircle, color: "text-amber-600", bgColor: "bg-amber-100" },
 };
 
-export function AgentRunHistory({ runs, isLoading, onViewRun }: AgentRunHistoryProps) {
+export function AgentRunHistory({ runs, isLoading, onViewRun, workspaceId, projectId }: AgentRunHistoryProps) {
+  const [selectedRun, setSelectedRun] = useState<typeof runs[number] | null>(null);
+  const [resultsDialogOpen, setResultsDialogOpen] = useState(false);
+
+  const handleViewRun = (run: typeof runs[number]) => {
+    setSelectedRun(run);
+    setResultsDialogOpen(true);
+    onViewRun?.(run);
+  };
   if (isLoading) {
     return (
       <Card>
@@ -93,7 +104,7 @@ export function AgentRunHistory({ runs, isLoading, onViewRun }: AgentRunHistoryP
                 <div 
                   key={run.id} 
                   className="group flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
-                  onClick={() => onViewRun?.(run)}
+                  onClick={() => handleViewRun(run)}
                 >
                   <div className={cn("p-2 rounded-lg", status.bgColor)}>
                     <StatusIcon className={cn(
@@ -163,6 +174,14 @@ export function AgentRunHistory({ runs, isLoading, onViewRun }: AgentRunHistoryP
           </div>
         </ScrollArea>
       </CardContent>
+
+      <AgentRunResultsDialog
+        open={resultsDialogOpen}
+        onOpenChange={setResultsDialogOpen}
+        run={selectedRun}
+        workspaceId={workspaceId}
+        projectId={projectId}
+      />
     </Card>
   );
 }
