@@ -116,8 +116,13 @@ serve(async (req) => {
         .single();
 
       if (model) {
-        // Map to Lovable AI gateway format
-        modelName = modelMapping[model.model_name] || `google/${model.model_name}`;
+        // Map to Lovable AI gateway format if needed, otherwise use as-is
+        // Check if already has provider prefix (contains /)
+        if (model.model_name.includes('/')) {
+          modelName = model.model_name;
+        } else {
+          modelName = modelMapping[model.model_name] || `google/${model.model_name}`;
+        }
       }
     }
 
