@@ -9,6 +9,7 @@ import {
   Filter,
   RefreshCw,
   Store,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ import { AgentConfigDialog } from "@/components/agents/AgentConfigDialog";
 import { AgentRunHistory } from "@/components/agents/AgentRunHistory";
 import { InvokeAgentDialog } from "@/components/agents/InvokeAgentDialog";
 import { AgentMarketplace, type AgentTemplate } from "@/components/agents/AgentMarketplace";
+import { PipelinesTab } from "@/components/agents/PipelinesTab";
 import { 
   useAgentConfigs, 
   useCreateAgentConfig, 
@@ -349,6 +351,10 @@ const AIAgentsPage = () => {
                 <Bot className="w-4 h-4" />
                 Agents
               </TabsTrigger>
+              <TabsTrigger value="pipelines" className="gap-2">
+                <Zap className="w-4 h-4" />
+                Pipelines
+              </TabsTrigger>
               <TabsTrigger value="marketplace" className="gap-2">
                 <Store className="w-4 h-4" />
                 Marketplace
@@ -448,6 +454,14 @@ const AIAgentsPage = () => {
                   ))}
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="pipelines">
+              <PipelinesTab
+                workspaceId={currentWorkspaceId || ""}
+                projectId={currentProjectId || undefined}
+                agents={agents || []}
+              />
             </TabsContent>
 
             <TabsContent value="marketplace">
