@@ -64,6 +64,7 @@ import { cn } from "@/lib/utils";
 import { PRDEnhancer } from "@/components/prd/PRDEnhancer";
 import { PRDVersionHistory } from "@/components/prd/PRDVersionHistory";
 import { AttachedFiles } from "@/components/files/AttachedFiles";
+import { IdeaEnhancer } from "@/components/idea/IdeaEnhancer";
 
 const statusOptions: { value: ArtifactStatus; label: string }[] = [
   { value: "DRAFT", label: "Draft" },
@@ -235,6 +236,7 @@ const ArtifactDetailPage = () => {
   const canGeneratePRD = artifact.type === "IDEA";
   const canGenerateStories = artifact.type === "PRD";
   const canEnhancePRD = artifact.type === "PRD";
+  const canEnhanceIdea = artifact.type === "IDEA";
 
   const edgeTypeLabels: Record<string, string> = {
     DERIVES_FROM: "Derived from",
@@ -318,6 +320,15 @@ const ArtifactDetailPage = () => {
                       Generate PRD
                     </Button>
                   )}
+                  {canEnhanceIdea && (
+                    <Button 
+                      onClick={() => setIsEnhancing(true)}
+                      variant="outline"
+                    >
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      Enhance Idea
+                    </Button>
+                  )}
                   {canGenerateStories && (
                     <Button 
                       onClick={() => navigate(`/artifacts/new?type=STORY&fromPRD=${artifact.id}`)}
@@ -352,6 +363,10 @@ const ArtifactDetailPage = () => {
                           <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=PRD&fromIdea=${artifact.id}`)}>
                             <Sparkles className="w-4 h-4 mr-2" />
                             Generate PRD from Idea
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setIsEnhancing(true)}>
+                            <Wand2 className="w-4 h-4 mr-2" />
+                            Enhance Idea
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                         </>
@@ -411,6 +426,14 @@ const ArtifactDetailPage = () => {
               {/* PRD Enhancer */}
               {isEnhancing && artifact.type === "PRD" && (
                 <PRDEnhancer
+                  artifact={artifact}
+                  onComplete={() => setIsEnhancing(false)}
+                  onCancel={() => setIsEnhancing(false)}
+                />
+              )}
+              {/* Idea Enhancer */}
+              {isEnhancing && artifact.type === "IDEA" && (
+                <IdeaEnhancer
                   artifact={artifact}
                   onComplete={() => setIsEnhancing(false)}
                   onCancel={() => setIsEnhancing(false)}
