@@ -33,11 +33,12 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { PRDGenerator } from "@/components/prd/PRDGenerator";
 import { StoryGenerator } from "@/components/story/StoryGenerator";
+import { EpicGenerator } from "@/components/epic/EpicGenerator";
 
 const artifactTypes: { value: ArtifactType; label: string; icon: React.ElementType; description: string; hasAI?: boolean }[] = [
   { value: "IDEA", label: "Idea", icon: Lightbulb, description: "Capture initial concepts and thoughts" },
   { value: "PRD", label: "PRD", icon: FileText, description: "Product Requirements Document", hasAI: true },
-  { value: "EPIC", label: "Epic", icon: GitBranch, description: "Large body of work with multiple stories" },
+  { value: "EPIC", label: "Epic", icon: GitBranch, description: "Large body of work with multiple stories", hasAI: true },
   { value: "STORY", label: "Story", icon: ListChecks, description: "User story with acceptance criteria", hasAI: true },
   { value: "ACCEPTANCE_CRITERION", label: "Acceptance Criterion", icon: CheckCircle2, description: "Specific testable requirement" },
   { value: "TEST_CASE", label: "Test Case", icon: TestTube2, description: "Test to validate an AC" },
@@ -235,6 +236,15 @@ const CreateArtifactPage = () => {
                 onComplete={(id) => navigate(`/artifacts/${id}`)}
                 sourceArtifact={sourceIdeaArtifact}
                 initialIdea={sourceIdeaArtifact ? `${sourceIdeaArtifact.title}\n\n${sourceIdeaArtifact.content_markdown || ""}` : undefined}
+              />
+            )}
+
+            {/* AI Generator for Epics */}
+            {type === "EPIC" && creationMode === "ai" && (
+              <EpicGenerator 
+                onComplete={() => navigate("/artifacts")}
+                sourceArtifact={sourcePrdArtifact}
+                initialPRD={sourcePrdArtifact ? `${sourcePrdArtifact.title}\n\n${sourcePrdArtifact.content_markdown || ""}` : undefined}
               />
             )}
 
