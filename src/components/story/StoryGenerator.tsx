@@ -44,6 +44,7 @@ import { useCreateArtifact, useArtifacts, Artifact } from "@/hooks/useArtifacts"
 import { useCreateArtifactEdge } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
 import { toast } from "sonner";
+import { GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Question {
@@ -80,7 +81,8 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const { currentWorkspaceId, currentProjectId } = useUIStore();
   const createArtifact = useCreateArtifact();
   const createEdge = useCreateArtifactEdge();
-  const { data: artifacts } = useArtifacts(currentProjectId || undefined, "PRD");
+  const { data: prdArtifacts } = useArtifacts(currentProjectId || undefined, "PRD");
+  const { data: epicArtifacts } = useArtifacts(currentProjectId || undefined, "EPIC");
 
   const [phase, setPhase] = useState<"prd" | "questions" | "complete">("prd");
   const [prdSource, setPrdSource] = useState<"new" | "existing">(sourceArtifact ? "existing" : "new");
@@ -93,6 +95,10 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const [generatedStories, setGeneratedStories] = useState<StoryData[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [sourcePrdArtifact, setSourcePrdArtifact] = useState<Artifact | undefined>(sourceArtifact);
+  
+  // Epic linking state
+  const [selectedEpicId, setSelectedEpicId] = useState<string>("");
+  const [storyEpicAssignments, setStoryEpicAssignments] = useState<Record<number, string>>({});
   
   // New state for editing and individual saving
   const [editingStoryIndex, setEditingStoryIndex] = useState<number | null>(null);
@@ -110,7 +116,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
     if (prdSource === "new") {
       return prdContent.trim();
     }
-    const selectedArtifact = artifacts?.find(a => a.id === selectedPrdId);
+    const selectedArtifact = prdArtifacts?.find(a => a.id === selectedPrdId);
     if (selectedArtifact) {
       setSourcePrdArtifact(selectedArtifact);
       const parts = [selectedArtifact.title];
@@ -120,6 +126,41 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
       return parts.join("\n\n");
     }
     return "";
+  };
+  
+  // Get Epic artifact by ID
+  const getEpicArtifact = (epicId: string): Artifact | undefined => {
+    return epicArtifacts?.find(e => e.id === epicId);
+  };
+
+  // Assign epic to all selected stories
+  const handleAssignEpicToSelected = () => {
+    if (!selectedEpicId || selectedStories.size === 0) return;
+    const newAssignments = { ...storyEpicAssignments };
+    selectedStories.forEach(idx => {
+      if (!savedStoryIndices.has(idx)) {
+        newAssignments[idx] = selectedEpicId;
+      }
+    });
+    setStoryEpicAssignments(newAssignments);
+    toast.success(`Assigned epic to ${selectedStories.size} stories`);
+  };
+
+  // Assign epic to individual story
+  const handleAssignEpicToStory = (storyIndex: number, epicId: string) => {
+    setStoryEpicAssignments(prev => ({
+      ...prev,
+      [storyIndex]: epicId,
+    }));
+  };
+
+  // Remove epic assignment
+  const handleRemoveEpicAssignment = (storyIndex: number) => {
+    setStoryEpicAssignments(prev => {
+      const updated = { ...prev };
+      delete updated[storyIndex];
+      return updated;
+    });
   };
 
   const callStoryGenerator = async (
@@ -555,8 +596,10 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
     setSelectedStories(new Set());
   };
 
-  const prdArtifacts = artifacts || [];
-  const hasExistingPrds = prdArtifacts.length > 0;
+  const availablePrds = prdArtifacts || [];
+  const hasExistingPrds = availablePrds.length > 0;
+  const availableEpics = epicArtifacts || [];
+  const hasExistingEpics = availableEpics.length > 0;
   const canSubmitPrd = prdSource === "new" ? prdContent.trim().length > 0 : selectedPrdId.length > 0;
 
   const priorityColors = {
@@ -662,7 +705,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
                   <SelectValue placeholder="Select a PRD..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {prdArtifacts.map((prd) => (
+                  {availablePrds.map((prd) => (
                     <SelectItem key={prd.id} value={prd.id}>
                       <div className="flex items-center gap-2">
                         <FileText className="w-4 h-4" />
