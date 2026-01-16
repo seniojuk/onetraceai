@@ -360,6 +360,21 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             metadata: { generatedFrom: "prd" },
           });
         }
+
+        // Create edge to Epic if assigned
+        const epicId = storyEpicAssignments[i];
+        if (epicId && artifact) {
+          await createEdge.mutateAsync({
+            workspaceId: currentWorkspaceId,
+            projectId: currentProjectId,
+            fromArtifactId: epicId,
+            toArtifactId: artifact.id,
+            edgeType: "PARENT_OF",
+            source: "USER_ASSIGNED",
+            sourceRef: "story-generator",
+            metadata: { linkedVia: "epic-selector" },
+          });
+        }
       }
 
       toast.success(`Saved ${createdIds.length} stories successfully`);
@@ -397,22 +412,37 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
         contentJson: story,
       });
 
-      // Create edge to source PRD if we have one
-      if (sourcePrdArtifact && artifact) {
-        await createEdge.mutateAsync({
-          workspaceId: currentWorkspaceId,
-          projectId: currentProjectId,
-          fromArtifactId: sourcePrdArtifact.id,
-          toArtifactId: artifact.id,
-          edgeType: "DERIVES_FROM",
-          source: "AI_INFERRED",
-          sourceRef: "story-generator",
-          metadata: { generatedFrom: "prd" },
-        });
-      }
+        // Create edge to source PRD if we have one
+        if (sourcePrdArtifact && artifact) {
+          await createEdge.mutateAsync({
+            workspaceId: currentWorkspaceId,
+            projectId: currentProjectId,
+            fromArtifactId: sourcePrdArtifact.id,
+            toArtifactId: artifact.id,
+            edgeType: "DERIVES_FROM",
+            source: "AI_INFERRED",
+            sourceRef: "story-generator",
+            metadata: { generatedFrom: "prd" },
+          });
+        }
 
-      setSavedStoryIndices(prev => new Set(prev).add(index));
-      toast.success(`Saved "${story.title}"`);
+        // Create edge to Epic if assigned
+        const epicId = storyEpicAssignments[index];
+        if (epicId && artifact) {
+          await createEdge.mutateAsync({
+            workspaceId: currentWorkspaceId,
+            projectId: currentProjectId,
+            fromArtifactId: epicId,
+            toArtifactId: artifact.id,
+            edgeType: "PARENT_OF",
+            source: "USER_ASSIGNED",
+            sourceRef: "story-generator",
+            metadata: { linkedVia: "epic-selector" },
+          });
+        }
+
+        setSavedStoryIndices(prev => new Set(prev).add(index));
+        toast.success(`Saved "${story.title}"`);
     } catch (error) {
       toast.error("Failed to save story");
     } finally {
@@ -540,6 +570,21 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             source: "AI_INFERRED",
             sourceRef: "story-generator",
             metadata: { generatedFrom: "prd" },
+          });
+        }
+
+        // Create edge to Epic if assigned
+        const epicId = storyEpicAssignments[idx];
+        if (epicId && artifact) {
+          await createEdge.mutateAsync({
+            workspaceId: currentWorkspaceId,
+            projectId: currentProjectId,
+            fromArtifactId: epicId,
+            toArtifactId: artifact.id,
+            edgeType: "PARENT_OF",
+            source: "USER_ASSIGNED",
+            sourceRef: "story-generator",
+            metadata: { linkedVia: "epic-selector" },
           });
         }
 
@@ -876,31 +921,63 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
                     </Button>
                   )}
                 </div>
-                {selectedStories.size > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowBulkDeleteConfirm(true)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-3 h-3 mr-1" />
-                      Remove ({selectedStories.size})
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleBulkSave}
-                      disabled={isBulkSaving}
-                    >
-                      {isBulkSaving ? (
-                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                      ) : (
-                        <Save className="w-3 h-3 mr-1" />
-                      )}
-                      Save ({Array.from(selectedStories).filter(i => !savedStoryIndices.has(i)).length})
-                    </Button>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {/* Bulk Epic Assignment */}
+                  {selectedStories.size > 0 && hasExistingEpics && (
+                    <>
+                      <Select value={selectedEpicId} onValueChange={setSelectedEpicId}>
+                        <SelectTrigger className="h-8 w-[180px] text-xs">
+                          <SelectValue placeholder="Assign Epic..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableEpics.map((epic) => (
+                            <SelectItem key={epic.id} value={epic.id}>
+                              <div className="flex items-center gap-2">
+                                <GitBranch className="w-3 h-3" />
+                                <span className="truncate max-w-[120px]">{epic.title}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAssignEpicToSelected}
+                        disabled={!selectedEpicId}
+                        className="text-xs"
+                      >
+                        <GitBranch className="w-3 h-3 mr-1" />
+                        Assign
+                      </Button>
+                    </>
+                  )}
+                  {selectedStories.size > 0 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowBulkDeleteConfirm(true)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" />
+                        Remove ({selectedStories.size})
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleBulkSave}
+                        disabled={isBulkSaving}
+                      >
+                        {isBulkSaving ? (
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        ) : (
+                          <Save className="w-3 h-3 mr-1" />
+                        )}
+                        Save ({Array.from(selectedStories).filter(i => !savedStoryIndices.has(i)).length})
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
 
               <ScrollArea className="h-[450px] pr-4">
@@ -1003,9 +1080,50 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
                           <p className="text-sm text-muted-foreground mb-3">{story.description}</p>
                         )}
 
-                        {storyToShow.epic && !isEditing && (
+                        {/* Epic Assignment */}
+                        {!isSaved && hasExistingEpics && (
+                          <div className="flex items-center gap-2 mb-3">
+                            <GitBranch className="w-3 h-3 text-muted-foreground" />
+                            <Select
+                              value={storyEpicAssignments[idx] || ""}
+                              onValueChange={(val) => handleAssignEpicToStory(idx, val)}
+                            >
+                              <SelectTrigger className="h-7 w-[200px] text-xs">
+                                <SelectValue placeholder="Link to Epic..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {availableEpics.map((epic) => (
+                                  <SelectItem key={epic.id} value={epic.id}>
+                                    <div className="flex items-center gap-2">
+                                      <span className="truncate max-w-[150px]">{epic.title}</span>
+                                      <span className="text-xs text-muted-foreground">{epic.short_id}</span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {storyEpicAssignments[idx] && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => handleRemoveEpicAssignment(idx)}
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            )}
+                          </div>
+                        )}
+                        {isSaved && storyEpicAssignments[idx] && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
+                            <GitBranch className="w-3 h-3" />
+                            <span className="font-medium">Epic:</span>
+                            <span>{getEpicArtifact(storyEpicAssignments[idx])?.title || storyEpicAssignments[idx]}</span>
+                          </div>
+                        )}
+                        {storyToShow.epic && !storyEpicAssignments[idx] && (
                           <div className="text-xs text-muted-foreground mb-2">
-                            <span className="font-medium">Epic:</span> {storyToShow.epic}
+                            <span className="font-medium">Epic (from AI):</span> {storyToShow.epic}
                           </div>
                         )}
 
