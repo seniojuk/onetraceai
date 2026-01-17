@@ -56,10 +56,12 @@ const CreateArtifactPage = () => {
   const preselectedType = searchParams.get("type") as ArtifactType | null;
   const fromIdeaId = searchParams.get("fromIdea");
   const fromPrdId = searchParams.get("fromPRD");
+  const fromEpicId = searchParams.get("fromEpic");
   
-  // Fetch the source artifacts if we have fromIdea or fromPRD parameters
+  // Fetch the source artifacts if we have fromIdea, fromPRD, or fromEpic parameters
   const { data: sourceIdeaArtifact } = useArtifact(fromIdeaId || undefined);
   const { data: sourcePrdArtifact } = useArtifact(fromPrdId || undefined);
+  const { data: sourceEpicArtifact } = useArtifact(fromEpicId || undefined);
   
   const [type, setType] = useState<ArtifactType>(preselectedType || "STORY");
   const [title, setTitle] = useState("");
@@ -252,7 +254,7 @@ const CreateArtifactPage = () => {
             {type === "STORY" && creationMode === "ai" && (
               <StoryGenerator 
                 onComplete={() => navigate("/artifacts")}
-                sourceArtifact={sourcePrdArtifact}
+                sourceArtifact={sourceEpicArtifact || sourcePrdArtifact}
                 initialPRD={sourcePrdArtifact ? `${sourcePrdArtifact.title}\n\n${sourcePrdArtifact.content_markdown || ""}` : undefined}
               />
             )}

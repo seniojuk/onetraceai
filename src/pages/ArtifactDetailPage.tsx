@@ -236,6 +236,7 @@ const ArtifactDetailPage = () => {
   const canGeneratePRD = artifact.type === "IDEA";
   const canGenerateEpics = artifact.type === "PRD";
   const canGenerateStories = artifact.type === "PRD";
+  const canGenerateStoriesFromEpic = artifact.type === "EPIC";
   const canEnhancePRD = artifact.type === "PRD";
   const canEnhanceIdea = artifact.type === "IDEA";
 
@@ -357,6 +358,15 @@ const ArtifactDetailPage = () => {
                       Enhance PRD
                     </Button>
                   )}
+                  {canGenerateStoriesFromEpic && (
+                    <Button 
+                      onClick={() => navigate(`/artifacts/new?type=STORY&fromEpic=${artifact.id}`)}
+                      className="bg-accent hover:bg-accent/90"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate Stories
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={handleEdit}>
                     <Edit2 className="w-4 h-4 mr-2" />
                     Edit
@@ -394,6 +404,15 @@ const ArtifactDetailPage = () => {
                           <DropdownMenuItem onClick={() => setIsEnhancing(true)}>
                             <Wand2 className="w-4 h-4 mr-2" />
                             Enhance PRD
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
+                      {canGenerateStoriesFromEpic && (
+                        <>
+                          <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=STORY&fromEpic=${artifact.id}`)}>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Generate Stories from Epic
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                         </>
