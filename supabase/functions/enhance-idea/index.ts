@@ -5,18 +5,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface AttachedFile {
+  fileName: string;
+  fileType: string;
+  content: string;
+}
+
 const systemPrompt = `You are an expert product strategist helping enhance and refine product ideas.
 
 Your task depends on the conversation phase:
 
 ## PHASE 1: Asking Clarifying Questions
-When given an existing idea and enhancement details, analyze both and ask 3-5 focused clarifying questions to refine the idea toward the user's goals. Questions should cover:
+When given an existing idea and enhancement details, analyze both (including any attached supporting documents) and ask 3-5 focused clarifying questions to refine the idea toward the user's goals. Questions should cover:
 - Target audience and market clarity
 - Problem validation and pain points
 - Value proposition refinement
 - Competitive differentiation
 - Feasibility and scope considerations
 - Success metrics and outcomes
+
+When attached files are provided, incorporate insights from those documents into your analysis and questions. Reference specific information from the files when relevant.
 
 Return as JSON:
 {
@@ -29,11 +37,11 @@ Return as JSON:
       "options": ["Option 1", "Option 2", "Option 3"] // optional suggested answers
     }
   ],
-  "summary": "Brief summary of what you understand about the enhancement request"
+  "summary": "Brief summary of what you understand about the enhancement request, including insights from attached files if any"
 }
 
 ## PHASE 2: Generating the Enhanced Idea
-When you have enough context (after questions are answered), generate an improved and refined idea that incorporates the enhancements.
+When you have enough context (after questions are answered), generate an improved and refined idea that incorporates the enhancements and insights from any attached documents.
 
 Return as JSON:
 {
@@ -70,7 +78,8 @@ IMPORTANT:
 - Clearly integrate the requested enhancements
 - Be thorough but concise
 - Focus on making the idea more compelling and actionable
-- Ask questions when the enhancement request needs clarification`;
+- Ask questions when the enhancement request needs clarification
+- When attached files are provided, leverage their content to inform your analysis and enhancements`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -78,7 +87,7 @@ serve(async (req) => {
   }
 
   try {
-    const { existingIdea, enhancementDetails, conversationHistory, action } = await req.json();
+    const { existingIdea, enhancementDetails, attachedFiles, conversationHistory, action } = await req.json();
     
     if (!existingIdea) {
       return new Response(
@@ -94,6 +103,19 @@ serve(async (req) => {
         JSON.stringify({ error: 'AI service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Format attached files content for the prompt
+    let attachedFilesContext = '';
+    if (attachedFiles && Array.isArray(attachedFiles) && attachedFiles.length > 0) {
+      const fileContents = (attachedFiles as AttachedFile[])
+        .map((file, index) => {
+          return `### Attached Document ${index + 1}: ${file.fileName}\nType: ${file.fileType}\n\n${file.content}`;
+        })
+        .join('\n\n---\n\n');
+      
+      attachedFilesContext = `\n\n## Supporting Documents\nThe following documents have been attached to provide additional context:\n\n${fileContents}`;
+      console.log(`Including ${attachedFiles.length} attached file(s) in context`);
     }
 
     // Build messages from conversation history
@@ -116,9 +138,11 @@ serve(async (req) => {
       }
     } else {
       // Initial enhancement request - ask clarifying questions
+      const userContent = `I want to enhance and refine an existing product idea. Here's the current idea:\n\n${existingIdea}${attachedFilesContext}\n\n---\n\nHere are the enhancement details I want to incorporate:\n\n${enhancementDetails || 'Please help me refine this idea to make it more compelling and actionable.'}\n\nPlease analyze the existing idea${attachedFiles?.length ? ', the attached supporting documents,' : ''} and enhancement request, then ask me clarifying questions to help create an improved version. Return your questions in the "questions" phase JSON format.`;
+      
       messages.push({
         role: 'user',
-        content: `I want to enhance and refine an existing product idea. Here's the current idea:\n\n${existingIdea}\n\n---\n\nHere are the enhancement details I want to incorporate:\n\n${enhancementDetails || 'Please help me refine this idea to make it more compelling and actionable.'}\n\nPlease analyze the existing idea and enhancement request, then ask me clarifying questions to help create an improved version. Return your questions in the "questions" phase JSON format.`
+        content: userContent
       });
     }
 

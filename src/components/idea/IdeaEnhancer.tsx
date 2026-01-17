@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Sparkles,
@@ -10,6 +10,8 @@ import {
   ArrowRight,
   RefreshCw,
   Wand2,
+  Paperclip,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUpdateArtifact, Artifact } from "@/hooks/useArtifacts";
 import { useCreateArtifactVersion } from "@/hooks/useArtifactVersions";
+import { useFilesForArtifact, FileArtifact } from "@/hooks/useFileArtifacts";
+import { supabase } from "@/integrations/supabase/client";
 import { useUIStore } from "@/store/uiStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -56,6 +60,12 @@ interface IdeaData {
   nextSteps: string[];
 }
 
+interface AttachedFileContent {
+  fileName: string;
+  fileType: string;
+  content: string;
+}
+
 interface IdeaEnhancerProps {
   artifact: Artifact;
   onComplete?: () => void;
@@ -77,6 +87,78 @@ export const IdeaEnhancer = ({ artifact, onComplete, onCancel }: IdeaEnhancerPro
   const [enhancedIdea, setEnhancedIdea] = useState<IdeaData | null>(null);
   const [changesSummary, setChangesSummary] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
+  const [attachedFileContents, setAttachedFileContents] = useState<AttachedFileContent[]>([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+
+  // Fetch attached files for this artifact
+  const { data: attachedFiles } = useFilesForArtifact(artifact.id, artifact.project_id);
+
+  // Check if file type is text-extractable
+  const isTextExtractable = (fileType: string, fileName: string): boolean => {
+    const textMimeTypes = [
+      'text/plain',
+      'text/markdown',
+      'text/csv',
+      'text/html',
+      'text/xml',
+      'application/json',
+      'application/xml',
+    ];
+    const textExtensions = ['.txt', '.md', '.markdown', '.csv', '.json', '.xml', '.html', '.htm', '.log', '.yaml', '.yml'];
+    
+    if (textMimeTypes.includes(fileType)) return true;
+    const lowerName = fileName.toLowerCase();
+    return textExtensions.some(ext => lowerName.endsWith(ext));
+  };
+
+  // Extract text content from attached files
+  useEffect(() => {
+    const extractFileContents = async () => {
+      if (!attachedFiles || attachedFiles.length === 0) {
+        setAttachedFileContents([]);
+        return;
+      }
+
+      setIsLoadingFiles(true);
+      const contents: AttachedFileContent[] = [];
+
+      for (const file of attachedFiles) {
+        const { file_name, file_type, storage_path } = file.content_json;
+        
+        if (isTextExtractable(file_type, file_name)) {
+          try {
+            const { data, error } = await supabase.storage
+              .from('artifact-files')
+              .download(storage_path);
+            
+            if (error) {
+              console.error(`Failed to download file ${file_name}:`, error);
+              continue;
+            }
+
+            const text = await data.text();
+            // Limit content to prevent token overflow (max ~10k chars per file)
+            const truncatedContent = text.length > 10000 
+              ? text.substring(0, 10000) + '\n\n[... content truncated ...]'
+              : text;
+
+            contents.push({
+              fileName: file_name,
+              fileType: file_type,
+              content: truncatedContent,
+            });
+          } catch (err) {
+            console.error(`Error extracting content from ${file_name}:`, err);
+          }
+        }
+      }
+
+      setAttachedFileContents(contents);
+      setIsLoadingFiles(false);
+    };
+
+    extractFileContents();
+  }, [attachedFiles]);
 
   const callIdeaEnhancer = async (
     conversationHistory: ConversationMessage[],
@@ -93,6 +175,7 @@ export const IdeaEnhancer = ({ artifact, onComplete, onCancel }: IdeaEnhancerPro
         body: JSON.stringify({
           existingIdea: artifact.content_markdown || artifact.title,
           enhancementDetails: enhancementDetails,
+          attachedFiles: attachedFileContents,
           conversationHistory: conversationHistory.map((m) => ({
             role: m.role,
             content: m.content,
@@ -396,6 +479,44 @@ export const IdeaEnhancer = ({ artifact, onComplete, onCancel }: IdeaEnhancerPro
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Show attached files info */}
+            {attachedFiles && attachedFiles.length > 0 && (
+              <div className="p-3 bg-muted/50 rounded-lg border">
+                <div className="flex items-center gap-2 mb-2">
+                  <Paperclip className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    {attachedFiles.length} attached file{attachedFiles.length > 1 ? 's' : ''} will be included
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  {attachedFiles.map((file) => {
+                    const isExtractable = isTextExtractable(file.content_json.file_type, file.content_json.file_name);
+                    return (
+                      <div key={file.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <FileText className="w-3 h-3" />
+                        <span className="truncate">{file.content_json.file_name}</span>
+                        {isExtractable ? (
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            Text included
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            Metadata only
+                          </Badge>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                {isLoadingFiles && (
+                  <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Extracting file contents...</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div>
               <label className="text-sm font-medium mb-2 block">
                 What would you like to enhance or refine?
@@ -411,7 +532,7 @@ export const IdeaEnhancer = ({ artifact, onComplete, onCancel }: IdeaEnhancerPro
             <div className="flex items-center gap-3">
               <Button
                 onClick={handleSubmitEnhancement}
-                disabled={isLoading || !enhancementDetails.trim()}
+                disabled={isLoading || isLoadingFiles || !enhancementDetails.trim()}
                 className="bg-accent hover:bg-accent/90"
               >
                 {isLoading ? (
