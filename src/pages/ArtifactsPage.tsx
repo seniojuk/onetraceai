@@ -17,7 +17,8 @@ import {
   ArrowUpDown,
   Download,
   X,
-  Paperclip
+  Paperclip,
+  Layers
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,7 @@ import { downloadExport, ExportFormat } from "@/utils/artifactExport";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FilesSection } from "@/components/files/FilesSection";
+import { EpicHierarchyView } from "@/components/epic/EpicHierarchyView";
 
 const artifactTypeConfig: Record<ArtifactType, { icon: React.ElementType; color: string; label: string }> = {
   IDEA: { icon: Lightbulb, color: "bg-yellow-100 text-yellow-800", label: "Idea" },
@@ -172,6 +174,10 @@ const ArtifactsPage = () => {
                 <TabsTrigger value="artifacts" className="flex items-center gap-2">
                   <FileText className="w-4 h-4" />
                   Artifacts
+                </TabsTrigger>
+                <TabsTrigger value="hierarchy" className="flex items-center gap-2">
+                  <Layers className="w-4 h-4" />
+                  Epic Hierarchy
                 </TabsTrigger>
                 <TabsTrigger value="files" className="flex items-center gap-2">
                   <Paperclip className="w-4 h-4" />
@@ -538,6 +544,11 @@ const ArtifactsPage = () => {
               })}
             </div>
           )}
+            </TabsContent>
+
+            {/* Epic Hierarchy Tab */}
+            <TabsContent value="hierarchy" className="space-y-6">
+              <EpicHierarchyView projectId={currentProjectId || undefined} />
             </TabsContent>
 
             {/* Files Tab */}
