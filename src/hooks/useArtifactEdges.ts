@@ -4,14 +4,15 @@ import { useAuth } from "./useAuth";
 
 // Use const object for EdgeType to allow runtime usage
 export const EdgeType = {
+  CONTAINS: "CONTAINS",
   DERIVES_FROM: "DERIVES_FROM",
   IMPLEMENTS: "IMPLEMENTS",
-  TESTS: "TESTS",
+  SATISFIES: "SATISFIES",
+  VALIDATES: "VALIDATES",
+  DEPENDS_ON: "DEPENDS_ON",
   BLOCKS: "BLOCKS",
-  RELATES_TO: "RELATES_TO",
-  PARENT_OF: "PARENT_OF",
-  CHILD_OF: "CHILD_OF",
-  DUPLICATES: "DUPLICATES",
+  SUPERSEDES: "SUPERSEDES",
+  RELATED: "RELATED",
 } as const;
 
 export type EdgeType = (typeof EdgeType)[keyof typeof EdgeType];
