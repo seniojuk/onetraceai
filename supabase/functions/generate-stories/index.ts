@@ -28,6 +28,31 @@ Return your response as valid JSON in this exact format:
   "summary": "Brief summary of what you understood and why you're asking these questions"
 }`;
 
+const epicQuestionSystemPrompt = `You are an expert product manager and agile coach. You help break down Epics into well-structured user stories.
+
+You are being given an Epic along with its parent PRD for full context. The Epic contains a high-level feature description and potentially suggested stories. Your job is to ask clarifying questions to generate detailed, implementable user stories.
+
+When analyzing the Epic and its context, ask 3-5 targeted clarifying questions focusing on:
+1. Implementation details and technical approach for each suggested story
+2. Priority and sequencing of stories
+3. Acceptance criteria specifics
+4. Edge cases and error handling
+5. Dependencies between stories
+
+Return your response as valid JSON in this exact format:
+{
+  "phase": "questions",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Your question here?",
+      "category": "Category name",
+      "options": ["Option 1", "Option 2"] // Optional suggested answers
+    }
+  ],
+  "summary": "Brief summary of the Epic scope and why you're asking these questions"
+}`;
+
 const generateSystemPrompt = `You are an expert product manager and agile coach. Your task is to generate well-structured user stories with clear acceptance criteria based on a PRD and clarifying Q&A.
 
 For each user story, follow this format:
@@ -61,6 +86,44 @@ Return the stories as valid JSON in this exact format:
   "summary": "Brief summary of what was generated"
 }`;
 
+const epicGenerateSystemPrompt = `You are an expert product manager and agile coach. Your task is to generate well-structured user stories for a specific Epic, using the full context from the parent PRD.
+
+You are being given:
+1. An Epic with its description and suggested stories
+2. The parent PRD that provides business context and requirements
+3. Any attached supporting documents from the PRD
+
+For each user story, follow this format:
+- Title: A concise, action-oriented title
+- Description: As a [user type], I want [goal] so that [benefit]
+- Acceptance Criteria: A list of specific, testable conditions that must be met (5-10 criteria per story)
+- Story Points: Estimate complexity (1, 2, 3, 5, 8, 13)
+- Priority: High, Medium, or Low
+
+Guidelines:
+1. Generate detailed stories that expand on the Epic's suggested stories
+2. Ensure stories align with the PRD's overall vision and requirements
+3. Each story should be completable in one sprint
+4. Acceptance criteria should be specific, measurable, and derived from both Epic and PRD context
+5. Consider edge cases and error handling from the PRD requirements
+6. Include both happy path and error scenarios in AC
+7. Reference specific requirements from the PRD in your acceptance criteria
+
+Return the stories as valid JSON in this exact format:
+{
+  "phase": "complete",
+  "stories": [
+    {
+      "title": "string",
+      "description": "string",
+      "acceptanceCriteria": ["string"],
+      "storyPoints": number,
+      "priority": "high" | "medium" | "low"
+    }
+  ],
+  "summary": "Brief summary of what was generated and how it relates to the Epic"
+}`;
+
 interface ConversationMessage {
   role: "user" | "assistant";
   content: string;
@@ -72,7 +135,18 @@ serve(async (req) => {
   }
 
   try {
-    const { prdContent, conversationHistory, action, attachedFiles } = await req.json();
+    const { 
+      prdContent, 
+      conversationHistory, 
+      action, 
+      attachedFiles,
+      // Epic-specific fields
+      epicContent,
+      epicTitle,
+      parentPrdContent,
+      parentPrdTitle,
+      parentPrdFiles
+    } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -83,13 +157,26 @@ serve(async (req) => {
       );
     }
 
-    // Build attached files context
+    // Determine if we're generating from an Epic
+    const isEpicBased = !!epicContent;
+
+    // Build attached files context (use parentPrdFiles for Epic-based generation)
+    const filesToUse = isEpicBased ? (parentPrdFiles || []) : (attachedFiles || []);
     let attachedFilesContext = '';
-    if (attachedFiles && Array.isArray(attachedFiles) && attachedFiles.length > 0) {
-      const fileContents = attachedFiles.map((f: { name: string; type: string; content: string }) => 
+    if (filesToUse && Array.isArray(filesToUse) && filesToUse.length > 0) {
+      const fileContents = filesToUse.map((f: { name: string; type: string; content: string }) => 
         `### ${f.name} (${f.type})\n\`\`\`\n${f.content}\n\`\`\``
       ).join('\n\n');
       attachedFilesContext = `\n\n## Supporting Documents\nThe following documents have been attached to provide additional context:\n\n${fileContents}`;
+    }
+
+    // Build Epic context if generating from Epic
+    let epicContext = '';
+    if (isEpicBased) {
+      epicContext = `\n\n## Epic: ${epicTitle}\n${epicContent}`;
+      if (parentPrdContent) {
+        epicContext += `\n\n## Parent PRD: ${parentPrdTitle || 'PRD'}\nThis Epic was derived from the following PRD. Use this for full business context:\n\n${parentPrdContent}`;
+      }
     }
 
     // Determine if we should ask questions or generate stories
@@ -100,17 +187,33 @@ serve(async (req) => {
     let systemPrompt: string;
     let userPrompt: string;
     
-    if (isFirstMessage && prdContent) {
-      // First message: analyze PRD and ask questions
-      systemPrompt = questionSystemPrompt;
-      userPrompt = `Please analyze this PRD and ask clarifying questions to help generate comprehensive user stories:\n\n${prdContent}${attachedFilesContext}${attachedFiles?.length ? '\n\nPlease also consider the attached supporting documents in your analysis.' : ''}`;
+    if (isFirstMessage) {
+      if (isEpicBased) {
+        // Epic-based: analyze Epic with PRD context
+        systemPrompt = epicQuestionSystemPrompt;
+        userPrompt = `Please analyze this Epic and its parent PRD context, then ask clarifying questions to help generate comprehensive user stories:${epicContext}${attachedFilesContext}${filesToUse.length ? '\n\nPlease also consider the attached supporting documents in your analysis.' : ''}`;
+      } else if (prdContent) {
+        // PRD-based: analyze PRD and ask questions
+        systemPrompt = questionSystemPrompt;
+        userPrompt = `Please analyze this PRD and ask clarifying questions to help generate comprehensive user stories:\n\n${prdContent}${attachedFilesContext}${attachedFiles?.length ? '\n\nPlease also consider the attached supporting documents in your analysis.' : ''}`;
+      } else {
+        return new Response(
+          JSON.stringify({ error: 'No content provided' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     } else if (shouldGenerate) {
       // Generate stories based on conversation
-      systemPrompt = generateSystemPrompt;
-      userPrompt = "Based on our conversation, please generate the user stories now.";
+      systemPrompt = isEpicBased ? epicGenerateSystemPrompt : generateSystemPrompt;
+      
+      if (isEpicBased) {
+        userPrompt = `Based on our conversation about the Epic "${epicTitle}", please generate the detailed user stories now. Remember to leverage the full context from the parent PRD and attached documents.${epicContext}${attachedFilesContext}`;
+      } else {
+        userPrompt = "Based on our conversation, please generate the user stories now.";
+      }
     } else {
       // Continue asking questions or process answers
-      systemPrompt = questionSystemPrompt;
+      systemPrompt = isEpicBased ? epicQuestionSystemPrompt : questionSystemPrompt;
       userPrompt = "Based on the answers provided, either ask follow-up questions if needed or indicate you're ready to generate stories.";
     }
 
@@ -134,7 +237,11 @@ serve(async (req) => {
     console.log('Calling Lovable AI for story generation...', { 
       isFirstMessage, 
       shouldGenerate, 
-      historyLength: conversationHistory?.length || 0 
+      historyLength: conversationHistory?.length || 0,
+      isEpicBased,
+      epicTitle: epicTitle || null,
+      hasParentPrd: !!parentPrdContent,
+      attachedFilesCount: filesToUse.length
     });
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
