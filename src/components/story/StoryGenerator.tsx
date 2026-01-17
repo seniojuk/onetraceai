@@ -101,8 +101,15 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const { data: prdArtifacts } = useArtifacts(currentProjectId || undefined, "PRD");
   const { data: epicArtifacts } = useArtifacts(currentProjectId || undefined, "EPIC");
 
-  // Get the effective PRD artifact ID for file fetching
-  const effectivePrdId = sourceArtifact?.id || "";
+  // Detect if source is an Epic
+  const isSourceEpic = sourceArtifact?.type === "EPIC";
+  
+  // State for parent PRD when source is Epic
+  const [parentPrdArtifact, setParentPrdArtifact] = useState<Artifact | null>(null);
+  const [parentPrdFileContents, setParentPrdFileContents] = useState<Array<{ name: string; type: string; content: string }>>([]);
+  
+  // Get the effective PRD artifact ID for file fetching (use parent PRD if source is Epic)
+  const effectivePrdId = isSourceEpic ? parentPrdArtifact?.id : sourceArtifact?.id;
   const { data: attachedFiles } = useFilesForArtifact(effectivePrdId || undefined, currentProjectId || undefined);
 
   const [phase, setPhase] = useState<"prd" | "questions" | "complete">("prd");
@@ -118,8 +125,8 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const [sourcePrdArtifact, setSourcePrdArtifact] = useState<Artifact | undefined>(sourceArtifact);
   const [attachedFileContents, setAttachedFileContents] = useState<Array<{ name: string; type: string; content: string }>>([]);
   
-  // Epic linking state
-  const [selectedEpicId, setSelectedEpicId] = useState<string>("");
+  // Epic linking state - auto-assign the source epic if generating from Epic
+  const [selectedEpicId, setSelectedEpicId] = useState<string>(isSourceEpic && sourceArtifact?.id ? sourceArtifact.id : "");
   const [storyEpicAssignments, setStoryEpicAssignments] = useState<Record<number, string>>({});
   
   // New state for editing and individual saving
@@ -133,11 +140,55 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const [isBulkSaving, setIsBulkSaving] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
-  // Extract text content from attached files
+  // Fetch parent PRD when source is an Epic
+  useEffect(() => {
+    const fetchParentPrd = async () => {
+      if (!isSourceEpic || !sourceArtifact?.id || !currentProjectId) {
+        setParentPrdArtifact(null);
+        return;
+      }
+
+      try {
+        // Find edges where this Epic is the target (derives from PRD)
+        const { data: edges, error: edgesError } = await supabase
+          .from("artifact_edges")
+          .select("from_artifact_id")
+          .eq("to_artifact_id", sourceArtifact.id)
+          .eq("project_id", currentProjectId)
+          .in("edge_type", ["DERIVES_FROM", "CONTAINS"]);
+
+        if (edgesError || !edges?.length) {
+          console.log("No parent PRD found for epic");
+          return;
+        }
+
+        // Fetch the parent artifact (should be a PRD)
+        const { data: parentArtifact, error: artifactError } = await supabase
+          .from("artifacts")
+          .select("*")
+          .eq("id", edges[0].from_artifact_id)
+          .eq("type", "PRD")
+          .single();
+
+        if (!artifactError && parentArtifact) {
+          setParentPrdArtifact(parentArtifact as Artifact);
+          // Also set as source PRD artifact for edge creation
+          setSourcePrdArtifact(parentArtifact as Artifact);
+        }
+      } catch (err) {
+        console.error("Failed to fetch parent PRD:", err);
+      }
+    };
+
+    fetchParentPrd();
+  }, [isSourceEpic, sourceArtifact?.id, currentProjectId]);
+
+  // Extract text content from attached files (works for both direct PRD and parent PRD of Epic)
   useEffect(() => {
     const extractFileContents = async () => {
       if (!attachedFiles || attachedFiles.length === 0) {
         setAttachedFileContents([]);
+        if (isSourceEpic) setParentPrdFileContents([]);
         return;
       }
 
@@ -167,11 +218,14 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
         }
       }
 
+      if (isSourceEpic) {
+        setParentPrdFileContents(contents);
+      }
       setAttachedFileContents(contents);
     };
 
     extractFileContents();
-  }, [attachedFiles]);
+  }, [attachedFiles, isSourceEpic]);
 
   // Get PRD text from selected artifact
   const getPrdText = (): string => {
@@ -225,11 +279,51 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
     });
   };
 
+  // Get Epic content for the API call
+  const getEpicContent = (): string | null => {
+    if (!isSourceEpic || !sourceArtifact) return null;
+    const parts = [sourceArtifact.title];
+    if (sourceArtifact.content_markdown) {
+      parts.push(sourceArtifact.content_markdown);
+    }
+    return parts.join("\n\n");
+  };
+
+  // Get parent PRD content when generating from Epic
+  const getParentPrdContent = (): string | null => {
+    if (!parentPrdArtifact) return null;
+    const parts = [parentPrdArtifact.title];
+    if (parentPrdArtifact.content_markdown) {
+      parts.push(parentPrdArtifact.content_markdown);
+    }
+    return parts.join("\n\n");
+  };
+
   const callStoryGenerator = async (
     prd: string | null,
     conversationHistory: ConversationMessage[],
     action?: string
   ) => {
+    // Build the request body with Epic context if applicable
+    const requestBody: Record<string, unknown> = {
+      prdContent: prd,
+      conversationHistory: conversationHistory.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+      action,
+      attachedFiles: attachedFileContents,
+    };
+
+    // Add Epic-specific context if generating from an Epic
+    if (isSourceEpic && sourceArtifact) {
+      requestBody.epicContent = getEpicContent();
+      requestBody.epicTitle = sourceArtifact.title;
+      requestBody.parentPrdContent = getParentPrdContent();
+      requestBody.parentPrdTitle = parentPrdArtifact?.title || null;
+      requestBody.parentPrdFiles = parentPrdFileContents;
+    }
+
     const response = await fetch(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-stories`,
       {
@@ -238,15 +332,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
           "Content-Type": "application/json",
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
-        body: JSON.stringify({
-          prdContent: prd,
-          conversationHistory: conversationHistory.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          action,
-          attachedFiles: attachedFileContents,
-        }),
+        body: JSON.stringify(requestBody),
       }
     );
 
@@ -259,20 +345,25 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   };
 
   const handleSubmitPrd = async () => {
-    const prd = getPrdText();
-    if (!prd) {
-      toast.error("Please enter PRD content or select an existing PRD");
+    // When generating from Epic, use Epic content as primary source
+    const contentToProcess = isSourceEpic ? getEpicContent() : getPrdText();
+    
+    if (!contentToProcess) {
+      toast.error(isSourceEpic 
+        ? "Epic content not available" 
+        : "Please enter PRD content or select an existing PRD"
+      );
       return;
     }
 
     setIsLoading(true);
     try {
-      const data = await callStoryGenerator(prd, []);
+      const data = await callStoryGenerator(isSourceEpic ? null : contentToProcess, []);
 
       if (data.phase === "questions" && data.questions) {
         setCurrentQuestions(data.questions);
         setConversation([
-          { role: "user", content: prd },
+          { role: "user", content: contentToProcess },
           {
             role: "assistant",
             content: data.summary || "I have some questions to help create comprehensive stories.",
@@ -283,6 +374,14 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
         setPhase("questions");
       } else if (data.phase === "complete" && data.stories) {
         setGeneratedStories(data.stories);
+        // Auto-assign all stories to the source Epic when generating from Epic
+        if (isSourceEpic && sourceArtifact?.id) {
+          const assignments: Record<number, string> = {};
+          data.stories.forEach((_: StoryData, idx: number) => {
+            assignments[idx] = sourceArtifact.id;
+          });
+          setStoryEpicAssignments(assignments);
+        }
         setPhase("complete");
       }
     } catch (error) {
@@ -326,6 +425,14 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
         ]);
       } else if (data.phase === "complete" && data.stories) {
         setGeneratedStories(data.stories);
+        // Auto-assign all stories to the source Epic when generating from Epic
+        if (isSourceEpic && sourceArtifact?.id) {
+          const assignments: Record<number, string> = {};
+          data.stories.forEach((_: StoryData, idx: number) => {
+            assignments[idx] = sourceArtifact.id;
+          });
+          setStoryEpicAssignments(assignments);
+        }
         setConversation([
           ...newConversation,
           {
@@ -358,6 +465,14 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
 
       if (data.phase === "complete" && data.stories) {
         setGeneratedStories(data.stories);
+        // Auto-assign all stories to the source Epic when generating from Epic
+        if (isSourceEpic && sourceArtifact?.id) {
+          const assignments: Record<number, string> = {};
+          data.stories.forEach((_: StoryData, idx: number) => {
+            assignments[idx] = sourceArtifact.id;
+          });
+          setStoryEpicAssignments(assignments);
+        }
         setPhase("complete");
       }
     } catch (error) {
