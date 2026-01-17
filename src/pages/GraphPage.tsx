@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useRef } from "react";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ReactFlow,
@@ -479,8 +479,8 @@ const GraphPageInner = () => {
     }
   }, [nodes]);
 
-  // Update nodes when artifacts change
-  useMemo(() => {
+  // Update nodes and edges when data changes
+  useEffect(() => {
     setNodes(initialNodes);
     setEdges(initialEdges);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
