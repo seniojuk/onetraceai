@@ -65,7 +65,7 @@ const CreateArtifactPage = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [creationMode, setCreationMode] = useState<"manual" | "ai">(
-    preselectedType === "PRD" || preselectedType === "STORY" ? "ai" : "manual"
+    preselectedType === "PRD" || preselectedType === "EPIC" || preselectedType === "STORY" ? "ai" : "manual"
   );
   const [uploadedFiles, setUploadedFiles] = useState<FileArtifact[]>([]);
   
