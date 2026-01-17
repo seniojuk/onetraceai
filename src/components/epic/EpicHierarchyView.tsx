@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useArtifacts, Artifact } from "@/hooks/useArtifacts";
-import { useProjectArtifactEdges, ArtifactEdge, useCreateArtifactEdge, EdgeType } from "@/hooks/useArtifactEdges";
+import { useProjectArtifactEdges, ArtifactEdge, useCreateArtifactEdge, useDeleteArtifactEdge, EdgeType } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { cn } from "@/lib/utils";
@@ -69,12 +69,15 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
   const { data: allArtifacts, isLoading: artifactsLoading } = useArtifacts(effectiveProjectId || undefined);
   const { data: edges, isLoading: edgesLoading } = useProjectArtifactEdges(effectiveProjectId || undefined);
   const createEdge = useCreateArtifactEdge();
+  const deleteEdge = useDeleteArtifactEdge();
 
   const [expandedEpics, setExpandedEpics] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [dragOverEpicId, setDragOverEpicId] = useState<string | null>(null);
+  const [dragOverUnlinked, setDragOverUnlinked] = useState(false);
   const [draggingStoryId, setDraggingStoryId] = useState<string | null>(null);
+  const [draggingFromEpicId, setDraggingFromEpicId] = useState<string | null>(null);
 
   // Build epic hierarchy from edges
   const epicHierarchy = useMemo((): EpicWithStories[] => {
@@ -189,34 +192,75 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
   };
 
   // Drag and drop handlers
-  const handleDragStart = (e: DragEvent<HTMLDivElement>, storyId: string) => {
+  const handleDragStart = (e: DragEvent<HTMLDivElement>, storyId: string, fromEpicId?: string) => {
     e.dataTransfer.setData("storyId", storyId);
+    if (fromEpicId) {
+      e.dataTransfer.setData("fromEpicId", fromEpicId);
+    }
     e.dataTransfer.effectAllowed = "move";
     setDraggingStoryId(storyId);
+    setDraggingFromEpicId(fromEpicId || null);
   };
 
   const handleDragEnd = () => {
     setDraggingStoryId(null);
+    setDraggingFromEpicId(null);
     setDragOverEpicId(null);
+    setDragOverUnlinked(false);
   };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>, epicId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     setDragOverEpicId(epicId);
+    setDragOverUnlinked(false);
   };
 
   const handleDragLeave = () => {
     setDragOverEpicId(null);
   };
 
+  const handleUnlinkedDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverUnlinked(true);
+    setDragOverEpicId(null);
+  };
+
+  const handleUnlinkedDragLeave = () => {
+    setDragOverUnlinked(false);
+  };
+
   const handleDrop = async (e: DragEvent<HTMLDivElement>, epicId: string) => {
     e.preventDefault();
     setDragOverEpicId(null);
     setDraggingStoryId(null);
+    setDraggingFromEpicId(null);
 
     const storyId = e.dataTransfer.getData("storyId");
+    const fromEpicId = e.dataTransfer.getData("fromEpicId");
+    
     if (!storyId || !currentWorkspaceId || !effectiveProjectId) return;
+
+    // If moving from one epic to another
+    if (fromEpicId && fromEpicId !== epicId) {
+      // First delete the old edge
+      const oldEdge = edges?.find(
+        e => e.from_artifact_id === fromEpicId && 
+             e.to_artifact_id === storyId && 
+             e.edge_type === "CONTAINS"
+      );
+      if (oldEdge) {
+        try {
+          await deleteEdge.mutateAsync({
+            edgeId: oldEdge.id,
+            projectId: effectiveProjectId,
+          });
+        } catch (error) {
+          console.error("Failed to unlink story from old epic:", error);
+        }
+      }
+    }
 
     try {
       await createEdge.mutateAsync({
@@ -231,6 +275,41 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
     } catch (error) {
       console.error("Failed to link story:", error);
       toast.error("Failed to link story to epic");
+    }
+  };
+
+  const handleUnlinkedDrop = async (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setDragOverUnlinked(false);
+    setDraggingStoryId(null);
+    setDraggingFromEpicId(null);
+
+    const storyId = e.dataTransfer.getData("storyId");
+    const fromEpicId = e.dataTransfer.getData("fromEpicId");
+    
+    if (!storyId || !fromEpicId || !effectiveProjectId) return;
+
+    // Find the edge to delete
+    const edgeToDelete = edges?.find(
+      e => e.from_artifact_id === fromEpicId && 
+           e.to_artifact_id === storyId && 
+           e.edge_type === "CONTAINS"
+    );
+
+    if (!edgeToDelete) {
+      toast.error("Could not find link to remove");
+      return;
+    }
+
+    try {
+      await deleteEdge.mutateAsync({
+        edgeId: edgeToDelete.id,
+        projectId: effectiveProjectId,
+      });
+      toast.success("Story unlinked from epic");
+    } catch (error) {
+      console.error("Failed to unlink story:", error);
+      toast.error("Failed to unlink story from epic");
     }
   };
 
@@ -432,12 +511,23 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                               return (
                                 <div
                                   key={story.id}
+                                  draggable
+                                  onDragStart={(e) => {
+                                    e.stopPropagation();
+                                    handleDragStart(e, story.id, epic.id);
+                                  }}
+                                  onDragEnd={handleDragEnd}
                                   className={cn(
-                                    "flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors",
-                                    "hover:bg-accent/50"
+                                    "flex items-center gap-3 p-2 rounded-md cursor-grab transition-all",
+                                    "hover:bg-accent/50",
+                                    draggingStoryId === story.id && "opacity-50 ring-2 ring-primary"
                                   )}
                                   onClick={() => navigate(`/artifacts/${story.id}`)}
                                 >
+                                  <div className="p-1 rounded text-muted-foreground hover:text-foreground cursor-grab">
+                                    <GripVertical className="h-3.5 w-3.5" />
+                                  </div>
+
                                   <div className="p-1.5 rounded bg-blue-100 dark:bg-blue-900/30">
                                     <FileText className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                                   </div>
@@ -475,22 +565,26 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                   );
                 })}
 
-                {/* Unlinked Stories Section */}
-                {unlinkedStories.length > 0 && (
+                {/* Unlinked Stories Section - Always show when there's a story being dragged from an epic */}
+                {(unlinkedStories.length > 0 || draggingFromEpicId) && (
                   <Collapsible
-                    open={expandedEpics.has("unlinked")}
+                    open={expandedEpics.has("unlinked") || !!draggingFromEpicId}
                     onOpenChange={() => toggleEpic("unlinked")}
                   >
                     <CollapsibleTrigger asChild>
                       <div
                         className={cn(
-                          "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors border-dashed",
+                          "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all border-dashed",
                           "hover:bg-accent/50",
-                          expandedEpics.has("unlinked") && "bg-muted/50"
+                          expandedEpics.has("unlinked") && "bg-muted/50",
+                          dragOverUnlinked && "ring-2 ring-destructive bg-destructive/10 border-destructive"
                         )}
+                        onDragOver={handleUnlinkedDragOver}
+                        onDragLeave={handleUnlinkedDragLeave}
+                        onDrop={handleUnlinkedDrop}
                       >
                         <div className="text-muted-foreground">
-                          {expandedEpics.has("unlinked") ? (
+                          {expandedEpics.has("unlinked") || draggingFromEpicId ? (
                             <ChevronDown className="h-5 w-5" />
                           ) : (
                             <ChevronRight className="h-5 w-5" />
@@ -504,11 +598,13 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-muted-foreground">
-                              Unlinked Stories
+                              {dragOverUnlinked ? "Drop here to unlink" : "Unlinked Stories"}
                             </span>
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            Drag stories onto epics to link them
+                            {draggingFromEpicId 
+                              ? "Drop here to unlink from epic" 
+                              : "Drag stories onto epics to link them"}
                           </div>
                         </div>
 

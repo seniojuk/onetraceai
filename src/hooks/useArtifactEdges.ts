@@ -183,3 +183,30 @@ export function useProjectArtifactEdges(projectId: string | undefined) {
     enabled: !!user && !!projectId,
   });
 }
+
+// Hook to delete an artifact edge
+export function useDeleteArtifactEdge() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      edgeId,
+      projectId,
+    }: {
+      edgeId: string;
+      projectId: string;
+    }) => {
+      const { error } = await supabase
+        .from("artifact_edges")
+        .delete()
+        .eq("id", edgeId);
+
+      if (error) throw error;
+      return { edgeId, projectId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["artifact-edges"] });
+      queryClient.invalidateQueries({ queryKey: ["project-artifact-edges", data.projectId] });
+    },
+  });
+}
