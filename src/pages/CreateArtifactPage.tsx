@@ -142,7 +142,7 @@ const CreateArtifactPage = () => {
   };
 
   const selectedType = artifactTypes.find(t => t.value === type);
-  const showAIOption = selectedType?.hasAI;
+  const showAIOption = type === "PRD" || type === "EPIC" || type === "STORY";
 
   return (
     <AuthGuard>
