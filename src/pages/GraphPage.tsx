@@ -343,13 +343,14 @@ const GraphPageInner = () => {
   // Edge type colors for different relationship types
   const edgeTypeStyles: Record<string, { stroke: string; label: string }> = {
     [EdgeType.DERIVES_FROM]: { stroke: "#9333ea", label: "derives" },
-    [EdgeType.TESTS]: { stroke: "#22c55e", label: "tests" },
+    [EdgeType.VALIDATES]: { stroke: "#22c55e", label: "validates" },
     [EdgeType.IMPLEMENTS]: { stroke: "#3b82f6", label: "implements" },
     [EdgeType.BLOCKS]: { stroke: "#ef4444", label: "blocks" },
-    [EdgeType.RELATES_TO]: { stroke: "#6b7280", label: "relates" },
-    [EdgeType.DUPLICATES]: { stroke: "#f59e0b", label: "duplicates" },
-    [EdgeType.PARENT_OF]: { stroke: "#14b8a6", label: "parent" },
-    [EdgeType.CHILD_OF]: { stroke: "#14b8a6", label: "child" },
+    [EdgeType.RELATED]: { stroke: "#6b7280", label: "relates" },
+    [EdgeType.SUPERSEDES]: { stroke: "#f59e0b", label: "supersedes" },
+    [EdgeType.CONTAINS]: { stroke: "#14b8a6", label: "contains" },
+    [EdgeType.SATISFIES]: { stroke: "#8b5cf6", label: "satisfies" },
+    [EdgeType.DEPENDS_ON]: { stroke: "#f97316", label: "depends" },
   };
 
   // Generate edges from artifact_edges table
@@ -375,7 +376,7 @@ const GraphPageInner = () => {
     }
     
     return artifactEdges.map(edge => {
-      const edgeStyle = edgeTypeStyles[edge.edge_type as EdgeType] || edgeTypeStyles[EdgeType.RELATES_TO];
+      const edgeStyle = edgeTypeStyles[edge.edge_type as EdgeType] || edgeTypeStyles[EdgeType.RELATED];
       return {
         id: edge.id,
         source: edge.from_artifact_id,

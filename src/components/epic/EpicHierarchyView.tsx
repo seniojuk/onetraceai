@@ -86,8 +86,8 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
     const storyMap = new Map(stories.map(s => [s.id, s]));
     const prdMap = new Map(prds.map(p => [p.id, p]));
 
-    // Find Epic → Story edges (PARENT_OF)
-    const epicStoryEdges = edges.filter(e => e.edge_type === "PARENT_OF");
+    // Find Epic → Story edges (CONTAINS)
+    const epicStoryEdges = edges.filter(e => e.edge_type === "CONTAINS");
     const epicToStoriesMap = new Map<string, string[]>();
 
     epicStoryEdges.forEach(edge => {
@@ -162,7 +162,7 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
 
     const stories = allArtifacts.filter(a => a.type === "STORY" && a.status !== "ARCHIVED");
     const linkedStoryIds = new Set(
-      edges.filter(e => e.edge_type === "PARENT_OF").map(e => e.to_artifact_id)
+      edges.filter(e => e.edge_type === "CONTAINS").map(e => e.to_artifact_id)
     );
 
     return stories.filter(s => !linkedStoryIds.has(s.id));
@@ -224,7 +224,7 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
         projectId: effectiveProjectId,
         fromArtifactId: epicId,
         toArtifactId: storyId,
-        edgeType: EdgeType.PARENT_OF,
+        edgeType: EdgeType.CONTAINS,
         source: "MANUAL",
       });
       toast.success("Story linked to epic");
