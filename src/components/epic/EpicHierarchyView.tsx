@@ -38,6 +38,7 @@ interface EpicWithStories {
   epic: Artifact;
   stories: Artifact[];
   storyCount: number;
+  sourcePrd?: Artifact;
 }
 
 interface EpicHierarchyViewProps {
@@ -75,7 +76,9 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
 
     const epics = allArtifacts.filter(a => a.type === "EPIC" && a.status !== "ARCHIVED");
     const stories = allArtifacts.filter(a => a.type === "STORY" && a.status !== "ARCHIVED");
+    const prds = allArtifacts.filter(a => a.type === "PRD");
     const storyMap = new Map(stories.map(s => [s.id, s]));
+    const prdMap = new Map(prds.map(p => [p.id, p]));
 
     // Find Epic → Story edges (PARENT_OF)
     const epicStoryEdges = edges.filter(e => e.edge_type === "PARENT_OF");
@@ -90,16 +93,34 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
       epicToStoriesMap.get(epicId)!.push(storyId);
     });
 
+    // Find PRD → Epic edges (DERIVES_FROM where to_artifact is Epic)
+    const prdToEpicEdges = edges.filter(e => e.edge_type === "DERIVES_FROM");
+    const epicToPrdMap = new Map<string, string>();
+    
+    prdToEpicEdges.forEach(edge => {
+      // DERIVES_FROM: from = source (PRD), to = target (Epic)
+      const epicId = edge.to_artifact_id;
+      const prdId = edge.from_artifact_id;
+      // Only map if the target is an Epic
+      if (epics.some(e => e.id === epicId) && prds.some(p => p.id === prdId)) {
+        epicToPrdMap.set(epicId, prdId);
+      }
+    });
+
     return epics.map(epic => {
       const storyIds = epicToStoriesMap.get(epic.id) || [];
       const linkedStories = storyIds
         .map(id => storyMap.get(id))
         .filter((s): s is Artifact => !!s);
 
+      const sourcePrdId = epicToPrdMap.get(epic.id);
+      const sourcePrd = sourcePrdId ? prdMap.get(sourcePrdId) : undefined;
+
       return {
         epic,
         stories: linkedStories,
         storyCount: linkedStories.length,
+        sourcePrd,
       };
     }).sort((a, b) => {
       // Sort by story count descending, then by title
@@ -255,7 +276,7 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
               </div>
             ) : (
               <>
-                {filteredHierarchy.map(({ epic, stories, storyCount }) => {
+                {filteredHierarchy.map(({ epic, stories, storyCount, sourcePrd }) => {
                   const isExpanded = expandedEpics.has(epic.id);
                   const epicData = epic.content_json as any;
                   const priority = epicData?.priority?.toLowerCase() || "medium";
@@ -295,8 +316,25 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                                 {epic.short_id}
                               </Badge>
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              {storyCount} {storyCount === 1 ? "story" : "stories"}
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <span>{storyCount} {storyCount === 1 ? "story" : "stories"}</span>
+                              {sourcePrd && (
+                                <>
+                                  <span className="text-muted-foreground/50">•</span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigate(`/artifacts/${sourcePrd.id}`);
+                                    }}
+                                    className="inline-flex items-center gap-1 text-primary hover:underline focus:outline-none"
+                                  >
+                                    <FileText className="h-3 w-3" />
+                                    <span className="truncate max-w-[150px]">
+                                      {sourcePrd.short_id}
+                                    </span>
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </div>
 
