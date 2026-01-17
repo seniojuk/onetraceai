@@ -405,8 +405,8 @@ const GraphPageInner = () => {
       });
   }, [artifactEdges, artifacts, visibleNodeIds]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
@@ -479,10 +479,14 @@ const GraphPageInner = () => {
     }
   }, [nodes]);
 
-  // Update nodes and edges when data changes
+  // Update nodes first, then edges after a brief delay to ensure nodes are registered
   useEffect(() => {
     setNodes(initialNodes);
-    setEdges(initialEdges);
+    // Set edges after nodes are registered with React Flow
+    const timer = setTimeout(() => {
+      setEdges(initialEdges);
+    }, 50);
+    return () => clearTimeout(timer);
   }, [initialNodes, initialEdges, setNodes, setEdges]);
 
   const artifactTypes: { value: ArtifactType; label: string }[] = [
