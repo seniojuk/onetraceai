@@ -17,6 +17,8 @@ import {
   ReactFlowProvider,
   getNodesBounds,
   getViewportForBounds,
+  Handle,
+  Position,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { toPng, toSvg } from "html-to-image";
@@ -49,7 +51,23 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useArtifacts, ArtifactType, Artifact } from "@/hooks/useArtifacts";
-import { useProjectArtifactEdges, EdgeType, ArtifactEdge } from "@/hooks/useArtifactEdges";
+import { useProjectArtifactEdges, useCreateArtifactEdge, EdgeType, ArtifactEdge } from "@/hooks/useArtifactEdges";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -94,7 +112,7 @@ function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; sho
 
   return (
     <div className={cn(
-      "px-4 py-3 bg-card border-2 rounded-lg shadow-md border-l-4 min-w-[180px] max-w-[250px] cursor-pointer transition-all",
+      "px-4 py-3 bg-card border-2 rounded-lg shadow-md border-l-4 min-w-[180px] max-w-[250px] cursor-pointer transition-all relative",
       typeColors[data.type],
       data.isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
       data.isHighlighted && "ring-2 ring-amber-500 ring-offset-1 ring-offset-background shadow-lg shadow-amber-500/20",
@@ -103,6 +121,18 @@ function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; sho
       data.isDimmed && "opacity-30",
       !data.isDimmed && "hover:shadow-lg hover:border-primary/50"
     )}>
+      {/* Source handle (right side) - drag from here to create connections */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!bg-primary/80 transition-colors"
+      />
+      {/* Target handle (left side) - drop connections here */}
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!w-3 !h-3 !bg-muted-foreground !border-2 !border-background hover:!bg-primary transition-colors"
+      />
       <div className="flex items-center gap-2 mb-1">
         <Badge variant="secondary" className="text-xs">
           {typeLabels[data.type]}
@@ -134,12 +164,18 @@ const GraphPageInner = () => {
   const { currentProjectId, currentWorkspaceId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
   const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(currentProjectId || undefined);
   const { data: artifactEdges, isLoading: edgesLoading } = useProjectArtifactEdges(currentProjectId || undefined);
+  const createEdge = useCreateArtifactEdge();
 
   const isLoading = artifactsLoading || edgesLoading;
 
   // Impact analysis state
   const [impactAnalysisMode, setImpactAnalysisMode] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+  // Edge creation dialog state
+  const [pendingConnection, setPendingConnection] = useState<Connection | null>(null);
+  const [selectedEdgeType, setSelectedEdgeType] = useState<EdgeType>(EdgeType.RELATED);
+  const [isCreatingEdge, setIsCreatingEdge] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -409,9 +445,55 @@ const GraphPageInner = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
   const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
-    [setEdges]
+    (connection: Connection) => {
+      // Instead of immediately adding the edge, show a dialog to select edge type
+      setPendingConnection(connection);
+      setSelectedEdgeType(EdgeType.RELATED);
+    },
+    []
   );
+
+  // Get artifact names for the pending connection
+  const sourceArtifact = useMemo(() => {
+    if (!pendingConnection?.source || !artifacts) return null;
+    return artifacts.find(a => a.id === pendingConnection.source);
+  }, [pendingConnection, artifacts]);
+
+  const targetArtifact = useMemo(() => {
+    if (!pendingConnection?.target || !artifacts) return null;
+    return artifacts.find(a => a.id === pendingConnection.target);
+  }, [pendingConnection, artifacts]);
+
+  // Handle edge creation confirmation
+  const handleCreateEdge = useCallback(async () => {
+    if (!pendingConnection?.source || !pendingConnection?.target || !currentWorkspaceId || !currentProjectId) {
+      toast.error("Missing connection details");
+      return;
+    }
+
+    setIsCreatingEdge(true);
+    try {
+      await createEdge.mutateAsync({
+        workspaceId: currentWorkspaceId,
+        projectId: currentProjectId,
+        fromArtifactId: pendingConnection.source,
+        toArtifactId: pendingConnection.target,
+        edgeType: selectedEdgeType,
+        source: "MANUAL",
+      });
+      toast.success("Connection created successfully");
+      setPendingConnection(null);
+    } catch (error) {
+      console.error("Failed to create edge:", error);
+      toast.error("Failed to create connection");
+    } finally {
+      setIsCreatingEdge(false);
+    }
+  }, [pendingConnection, currentWorkspaceId, currentProjectId, selectedEdgeType, createEdge]);
+
+  const handleCancelConnection = useCallback(() => {
+    setPendingConnection(null);
+  }, []);
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -823,6 +905,68 @@ const GraphPageInner = () => {
               </Panel>
             )}
           </ReactFlow>
+
+          {/* Edge Type Selection Dialog */}
+          <Dialog open={!!pendingConnection} onOpenChange={(open) => !open && handleCancelConnection()}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Create Connection</DialogTitle>
+                <DialogDescription>
+                  Choose the relationship type between these artifacts.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">From</Label>
+                  <div className="p-2 bg-muted rounded-md">
+                    <p className="text-sm font-medium">{sourceArtifact?.title}</p>
+                    <p className="text-xs text-muted-foreground">{sourceArtifact?.type} • {sourceArtifact?.short_id}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground">To</Label>
+                  <div className="p-2 bg-muted rounded-md">
+                    <p className="text-sm font-medium">{targetArtifact?.title}</p>
+                    <p className="text-xs text-muted-foreground">{targetArtifact?.type} • {targetArtifact?.short_id}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edge-type">Relationship Type</Label>
+                  <Select value={selectedEdgeType} onValueChange={(value) => setSelectedEdgeType(value as EdgeType)}>
+                    <SelectTrigger id="edge-type">
+                      <SelectValue placeholder="Select relationship type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={EdgeType.CONTAINS}>Contains</SelectItem>
+                      <SelectItem value={EdgeType.DERIVES_FROM}>Derives From</SelectItem>
+                      <SelectItem value={EdgeType.IMPLEMENTS}>Implements</SelectItem>
+                      <SelectItem value={EdgeType.SATISFIES}>Satisfies</SelectItem>
+                      <SelectItem value={EdgeType.VALIDATES}>Validates</SelectItem>
+                      <SelectItem value={EdgeType.DEPENDS_ON}>Depends On</SelectItem>
+                      <SelectItem value={EdgeType.BLOCKS}>Blocks</SelectItem>
+                      <SelectItem value={EdgeType.SUPERSEDES}>Supersedes</SelectItem>
+                      <SelectItem value={EdgeType.RELATED}>Related To</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={handleCancelConnection}>
+                  Cancel
+                </Button>
+                <Button onClick={handleCreateEdge} disabled={isCreatingEdge}>
+                  {isCreatingEdge ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create Connection"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </AppLayout>
     </AuthGuard>
