@@ -72,7 +72,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prdContent, conversationHistory, action } = await req.json();
+    const { prdContent, conversationHistory, action, attachedFiles } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -81,6 +81,15 @@ serve(async (req) => {
         JSON.stringify({ error: 'AI service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Build attached files context
+    let attachedFilesContext = '';
+    if (attachedFiles && Array.isArray(attachedFiles) && attachedFiles.length > 0) {
+      const fileContents = attachedFiles.map((f: { name: string; type: string; content: string }) => 
+        `### ${f.name} (${f.type})\n\`\`\`\n${f.content}\n\`\`\``
+      ).join('\n\n');
+      attachedFilesContext = `\n\n## Supporting Documents\nThe following documents have been attached to provide additional context:\n\n${fileContents}`;
     }
 
     // Determine if we should ask questions or generate stories
@@ -94,7 +103,7 @@ serve(async (req) => {
     if (isFirstMessage && prdContent) {
       // First message: analyze PRD and ask questions
       systemPrompt = questionSystemPrompt;
-      userPrompt = `Please analyze this PRD and ask clarifying questions to help generate comprehensive user stories:\n\n${prdContent}`;
+      userPrompt = `Please analyze this PRD and ask clarifying questions to help generate comprehensive user stories:\n\n${prdContent}${attachedFilesContext}${attachedFiles?.length ? '\n\nPlease also consider the attached supporting documents in your analysis.' : ''}`;
     } else if (shouldGenerate) {
       // Generate stories based on conversation
       systemPrompt = generateSystemPrompt;
