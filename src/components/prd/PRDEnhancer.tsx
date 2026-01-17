@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Sparkles,
@@ -10,6 +10,7 @@ import {
   ArrowRight,
   RefreshCw,
   Wand2,
+  Paperclip,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUpdateArtifact, Artifact } from "@/hooks/useArtifacts";
 import { useCreateArtifactVersion } from "@/hooks/useArtifactVersions";
 import { useUIStore } from "@/store/uiStore";
+import { useFilesForArtifact, FileArtifact } from "@/hooks/useFileArtifacts";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -75,11 +78,28 @@ interface PRDEnhancerProps {
   onCancel?: () => void;
 }
 
+// Check if file type is text-extractable
+const isTextExtractable = (fileType: string, fileName: string): boolean => {
+  const textTypes = [
+    'text/plain', 'text/markdown', 'text/csv', 'text/html', 'text/css',
+    'application/json', 'application/xml', 'text/xml',
+    'application/javascript', 'text/javascript'
+  ];
+  const textExtensions = ['.txt', '.md', '.markdown', '.json', '.csv', '.xml', '.html', '.css', '.js', '.ts', '.yaml', '.yml'];
+  
+  if (textTypes.includes(fileType)) return true;
+  const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+  return textExtensions.includes(ext);
+};
+
 export const PRDEnhancer = ({ artifact, onComplete, onCancel }: PRDEnhancerProps) => {
   const navigate = useNavigate();
   const { currentWorkspaceId, currentProjectId } = useUIStore();
   const updateArtifact = useUpdateArtifact();
   const createVersion = useCreateArtifactVersion();
+
+  // Fetch attached files
+  const { data: attachedFiles } = useFilesForArtifact(artifact.id, currentProjectId || undefined);
 
   const [phase, setPhase] = useState<"enhancement" | "questions" | "complete">("enhancement");
   const [enhancementDetails, setEnhancementDetails] = useState("");
@@ -90,6 +110,48 @@ export const PRDEnhancer = ({ artifact, onComplete, onCancel }: PRDEnhancerProps
   const [enhancedPRD, setEnhancedPRD] = useState<PRDData | null>(null);
   const [changesSummary, setChangesSummary] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
+  const [attachedFileContents, setAttachedFileContents] = useState<Array<{ name: string; type: string; content: string }>>([]);
+
+  // Extract text content from attached files
+  useEffect(() => {
+    const extractFileContents = async () => {
+      if (!attachedFiles || attachedFiles.length === 0) {
+        setAttachedFileContents([]);
+        return;
+      }
+
+      const contents: Array<{ name: string; type: string; content: string }> = [];
+      
+      for (const file of attachedFiles) {
+        const fileInfo = file.content_json;
+        if (!fileInfo || !isTextExtractable(fileInfo.file_type, fileInfo.file_name)) continue;
+
+        try {
+          const { data, error } = await supabase.storage
+            .from("artifact-files")
+            .download(fileInfo.storage_path);
+
+          if (error || !data) continue;
+
+          const text = await data.text();
+          // Limit content to prevent token overflow
+          const truncatedContent = text.length > 10000 ? text.substring(0, 10000) + "\n...[content truncated]" : text;
+          
+          contents.push({
+            name: fileInfo.file_name,
+            type: fileInfo.file_type,
+            content: truncatedContent
+          });
+        } catch (err) {
+          console.error(`Failed to extract content from ${fileInfo.file_name}:`, err);
+        }
+      }
+
+      setAttachedFileContents(contents);
+    };
+
+    extractFileContents();
+  }, [attachedFiles]);
 
   const callPRDEnhancer = async (
     conversationHistory: ConversationMessage[],
@@ -111,6 +173,7 @@ export const PRDEnhancer = ({ artifact, onComplete, onCancel }: PRDEnhancerProps
             content: m.content,
           })),
           action,
+          attachedFiles: attachedFileContents,
         }),
       }
     );

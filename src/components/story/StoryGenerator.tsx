@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Sparkles,
@@ -15,6 +15,7 @@ import {
   X,
   Plus,
   Trash2,
+  Paperclip,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,9 +44,25 @@ import {
 import { useCreateArtifact, useArtifacts, Artifact } from "@/hooks/useArtifacts";
 import { useCreateArtifactEdge } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
+import { useFilesForArtifact } from "@/hooks/useFileArtifacts";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// Check if file type is text-extractable
+const isTextExtractable = (fileType: string, fileName: string): boolean => {
+  const textTypes = [
+    'text/plain', 'text/markdown', 'text/csv', 'text/html', 'text/css',
+    'application/json', 'application/xml', 'text/xml',
+    'application/javascript', 'text/javascript'
+  ];
+  const textExtensions = ['.txt', '.md', '.markdown', '.json', '.csv', '.xml', '.html', '.css', '.js', '.ts', '.yaml', '.yml'];
+  
+  if (textTypes.includes(fileType)) return true;
+  const ext = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+  return textExtensions.includes(ext);
+};
 
 interface Question {
   id: string;
@@ -84,6 +101,10 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const { data: prdArtifacts } = useArtifacts(currentProjectId || undefined, "PRD");
   const { data: epicArtifacts } = useArtifacts(currentProjectId || undefined, "EPIC");
 
+  // Get the effective PRD artifact ID for file fetching
+  const effectivePrdId = sourceArtifact?.id || "";
+  const { data: attachedFiles } = useFilesForArtifact(effectivePrdId || undefined, currentProjectId || undefined);
+
   const [phase, setPhase] = useState<"prd" | "questions" | "complete">("prd");
   const [prdSource, setPrdSource] = useState<"new" | "existing">(sourceArtifact ? "existing" : "new");
   const [selectedPrdId, setSelectedPrdId] = useState<string>(sourceArtifact?.id || "");
@@ -95,6 +116,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const [generatedStories, setGeneratedStories] = useState<StoryData[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [sourcePrdArtifact, setSourcePrdArtifact] = useState<Artifact | undefined>(sourceArtifact);
+  const [attachedFileContents, setAttachedFileContents] = useState<Array<{ name: string; type: string; content: string }>>([]);
   
   // Epic linking state
   const [selectedEpicId, setSelectedEpicId] = useState<string>("");
@@ -110,6 +132,46 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const [selectedStories, setSelectedStories] = useState<Set<number>>(new Set());
   const [isBulkSaving, setIsBulkSaving] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+
+  // Extract text content from attached files
+  useEffect(() => {
+    const extractFileContents = async () => {
+      if (!attachedFiles || attachedFiles.length === 0) {
+        setAttachedFileContents([]);
+        return;
+      }
+
+      const contents: Array<{ name: string; type: string; content: string }> = [];
+      
+      for (const file of attachedFiles) {
+        const fileInfo = file.content_json;
+        if (!fileInfo || !isTextExtractable(fileInfo.file_type, fileInfo.file_name)) continue;
+
+        try {
+          const { data, error } = await supabase.storage
+            .from("artifact-files")
+            .download(fileInfo.storage_path);
+
+          if (error || !data) continue;
+
+          const text = await data.text();
+          const truncatedContent = text.length > 10000 ? text.substring(0, 10000) + "\n...[content truncated]" : text;
+          
+          contents.push({
+            name: fileInfo.file_name,
+            type: fileInfo.file_type,
+            content: truncatedContent
+          });
+        } catch (err) {
+          console.error(`Failed to extract content from ${fileInfo.file_name}:`, err);
+        }
+      }
+
+      setAttachedFileContents(contents);
+    };
+
+    extractFileContents();
+  }, [attachedFiles]);
 
   // Get PRD text from selected artifact
   const getPrdText = (): string => {
@@ -183,6 +245,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             content: m.content,
           })),
           action,
+          attachedFiles: attachedFileContents,
         }),
       }
     );

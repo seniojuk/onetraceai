@@ -92,7 +92,7 @@ serve(async (req) => {
   }
 
   try {
-    const { existingPrd, enhancementDetails, conversationHistory, action } = await req.json();
+    const { existingPrd, enhancementDetails, conversationHistory, action, attachedFiles } = await req.json();
     
     if (!existingPrd) {
       return new Response(
@@ -108,6 +108,15 @@ serve(async (req) => {
         JSON.stringify({ error: 'AI service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Build attached files context
+    let attachedFilesContext = '';
+    if (attachedFiles && Array.isArray(attachedFiles) && attachedFiles.length > 0) {
+      const fileContents = attachedFiles.map((f: { name: string; type: string; content: string }) => 
+        `### ${f.name} (${f.type})\n\`\`\`\n${f.content}\n\`\`\``
+      ).join('\n\n');
+      attachedFilesContext = `\n\n## Supporting Documents\nThe following documents have been attached to provide additional context:\n\n${fileContents}`;
     }
 
     // Build messages from conversation history
@@ -132,7 +141,7 @@ serve(async (req) => {
       // Initial enhancement request - ask clarifying questions
       messages.push({
         role: 'user',
-        content: `I want to enhance an existing PRD. Here's the current PRD:\n\n${existingPrd}\n\n---\n\nHere are the enhancement details I want to incorporate:\n\n${enhancementDetails || 'Please improve this PRD to be more comprehensive and aligned with best practices.'}\n\nPlease analyze the existing PRD and enhancement request, then ask me clarifying questions to help create an improved version. Return your questions in the "questions" phase JSON format.`
+        content: `I want to enhance an existing PRD. Here's the current PRD:\n\n${existingPrd}${attachedFilesContext}\n\n---\n\nHere are the enhancement details I want to incorporate:\n\n${enhancementDetails || 'Please improve this PRD to be more comprehensive and aligned with best practices.'}\n\nPlease analyze the existing PRD${attachedFiles?.length ? ', the attached supporting documents,' : ''} and enhancement request, then ask me clarifying questions to help create an improved version. Return your questions in the "questions" phase JSON format.`
       });
     }
 
