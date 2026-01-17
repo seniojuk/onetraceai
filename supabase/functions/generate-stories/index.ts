@@ -124,6 +124,33 @@ Return the stories as valid JSON in this exact format:
   "summary": "Brief summary of what was generated and how it relates to the Epic"
 }`;
 
+const refineSystemPrompt = `You are an expert product manager and agile coach. Your task is to refine an existing user story based on user feedback.
+
+You will receive:
+1. The current story with its title, description, acceptance criteria, story points, and priority
+2. User feedback describing how they want the story refined
+3. Context from the Epic and/or PRD the story was generated from
+
+Guidelines for refining:
+1. Preserve the core intent of the story while addressing the feedback
+2. Improve acceptance criteria to be more specific and testable
+3. Adjust story points if the scope changes significantly
+4. Maintain consistency with the Epic/PRD context
+5. Add edge cases and error handling scenarios if requested
+6. Keep the story independently deliverable
+
+Return the refined story as valid JSON in this exact format:
+{
+  "refinedStory": {
+    "title": "string",
+    "description": "string",
+    "acceptanceCriteria": ["string"],
+    "storyPoints": number,
+    "priority": "high" | "medium" | "low"
+  },
+  "changes": "Brief summary of what was changed based on the feedback"
+}`;
+
 interface ConversationMessage {
   role: "user" | "assistant";
   content: string;
@@ -145,7 +172,10 @@ serve(async (req) => {
       epicTitle,
       parentPrdContent,
       parentPrdTitle,
-      parentPrdFiles
+      parentPrdFiles,
+      // Refine-specific fields
+      storyToRefine,
+      refineFeedback
     } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -155,6 +185,102 @@ serve(async (req) => {
         JSON.stringify({ error: 'AI service not configured' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Handle refine action
+    if (action === "refine" && storyToRefine && refineFeedback) {
+      console.log('Refining story with AI...', { storyTitle: storyToRefine.title });
+      
+      // Build context for refinement
+      let contextInfo = '';
+      if (epicContent) {
+        contextInfo += `\n\n## Epic Context: ${epicTitle}\n${epicContent}`;
+        if (parentPrdContent) {
+          contextInfo += `\n\n## Parent PRD Context: ${parentPrdTitle || 'PRD'}\n${parentPrdContent}`;
+        }
+      } else if (prdContent) {
+        contextInfo += `\n\n## PRD Context\n${prdContent}`;
+      }
+
+      // Add attached files context
+      const filesToUse = parentPrdFiles || attachedFiles || [];
+      if (filesToUse.length > 0) {
+        const fileContents = filesToUse.map((f: { name: string; type: string; content: string }) => 
+          `### ${f.name}\n${f.content.substring(0, 2000)}${f.content.length > 2000 ? '...[truncated]' : ''}`
+        ).join('\n\n');
+        contextInfo += `\n\n## Supporting Documents\n${fileContents}`;
+      }
+
+      const refineUserPrompt = `Please refine the following user story based on the feedback provided.
+
+## Current Story
+Title: ${storyToRefine.title}
+Description: ${storyToRefine.description}
+Priority: ${storyToRefine.priority}
+Story Points: ${storyToRefine.storyPoints}
+Acceptance Criteria:
+${storyToRefine.acceptanceCriteria.map((ac: string, i: number) => `${i + 1}. ${ac}`).join('\n')}
+
+## User Feedback
+${refineFeedback}
+${contextInfo}
+
+Please refine the story according to the feedback while maintaining consistency with the context.`;
+
+      const refineResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: refineSystemPrompt },
+            { role: 'user', content: refineUserPrompt }
+          ],
+          temperature: 0.7,
+        }),
+      });
+
+      if (!refineResponse.ok) {
+        const errorText = await refineResponse.text();
+        console.error('Lovable AI error during refinement:', refineResponse.status, errorText);
+        return new Response(
+          JSON.stringify({ error: 'Failed to refine story' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const refineData = await refineResponse.json();
+      const refineContent = refineData.choices?.[0]?.message?.content;
+
+      if (!refineContent) {
+        return new Response(
+          JSON.stringify({ error: 'No response from AI' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Parse the refined story
+      try {
+        const jsonMatch = refineContent.match(/```(?:json)?\s*([\s\S]*?)```/) || [null, refineContent];
+        const jsonStr = jsonMatch[1].trim();
+        const parsedRefine = JSON.parse(jsonStr);
+        
+        console.log('Story refined successfully:', parsedRefine.changes);
+        
+        return new Response(
+          JSON.stringify(parsedRefine),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (parseError) {
+        console.error('Failed to parse refined story:', parseError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to parse refined story response' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Determine if we're generating from an Epic

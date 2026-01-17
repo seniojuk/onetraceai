@@ -16,6 +16,8 @@ import {
   Plus,
   Trash2,
   Paperclip,
+  Wand2,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +43,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useCreateArtifact, useArtifacts, Artifact } from "@/hooks/useArtifacts";
 import { useCreateArtifactEdge } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
@@ -139,6 +149,12 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const [selectedStories, setSelectedStories] = useState<Set<number>>(new Set());
   const [isBulkSaving, setIsBulkSaving] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  
+  // Refine with AI state
+  const [refiningStoryIndex, setRefiningStoryIndex] = useState<number | null>(null);
+  const [refineFeedback, setRefineFeedback] = useState("");
+  const [isRefining, setIsRefining] = useState(false);
+  const [showRefineDialog, setShowRefineDialog] = useState(false);
 
   // Fetch parent PRD when source is an Epic
   useEffect(() => {
@@ -803,6 +819,86 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
     toast.success(`Removed ${indicesToDelete.length} stories`);
   };
 
+  // Refine story with AI
+  const handleOpenRefineDialog = (index: number) => {
+    setRefiningStoryIndex(index);
+    setRefineFeedback("");
+    setShowRefineDialog(true);
+  };
+
+  const handleCloseRefineDialog = () => {
+    setShowRefineDialog(false);
+    setRefiningStoryIndex(null);
+    setRefineFeedback("");
+  };
+
+  const handleRefineStory = async () => {
+    if (refiningStoryIndex === null || !refineFeedback.trim()) {
+      toast.error("Please provide feedback for refinement");
+      return;
+    }
+
+    const storyToRefine = generatedStories[refiningStoryIndex];
+    setIsRefining(true);
+
+    try {
+      // Build the request body with full context
+      const requestBody: Record<string, unknown> = {
+        action: "refine",
+        storyToRefine: storyToRefine,
+        refineFeedback: refineFeedback.trim(),
+        attachedFiles: attachedFileContents,
+      };
+
+      // Add Epic-specific context if generating from an Epic
+      if (isSourceEpic && sourceArtifact) {
+        requestBody.epicContent = getEpicContent();
+        requestBody.epicTitle = sourceArtifact.title;
+        requestBody.parentPrdContent = getParentPrdContent();
+        requestBody.parentPrdTitle = parentPrdArtifact?.title || null;
+        requestBody.parentPrdFiles = parentPrdFileContents;
+      } else if (sourcePrdArtifact) {
+        // PRD-based context
+        const prdText = getPrdText();
+        requestBody.prdContent = prdText;
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-stories`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to refine story");
+      }
+
+      const data = await response.json();
+
+      if (data.refinedStory) {
+        // Update the story at the refining index
+        const updated = [...generatedStories];
+        updated[refiningStoryIndex] = data.refinedStory;
+        setGeneratedStories(updated);
+        toast.success("Story refined successfully");
+        handleCloseRefineDialog();
+      } else {
+        throw new Error("No refined story in response");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to refine story");
+    } finally {
+      setIsRefining(false);
+    }
+  };
+
   const handleReset = () => {
     setPhase("prd");
     setPrdContent(initialPRD || "");
@@ -1441,6 +1537,16 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
                                 Edit
                               </Button>
                               <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenRefineDialog(idx)}
+                                disabled={isSaved}
+                                className="text-accent hover:text-accent"
+                              >
+                                <Wand2 className="w-3 h-3 mr-1" />
+                                Refine with AI
+                              </Button>
+                              <Button
                                 size="sm"
                                 onClick={() => handleSaveSingleStory(idx)}
                                 disabled={isSaved || isSavingThis}
@@ -1539,6 +1645,115 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Refine Story with AI Dialog */}
+      <Dialog open={showRefineDialog} onOpenChange={(open) => !open && handleCloseRefineDialog()}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wand2 className="w-5 h-5 text-accent" />
+              Refine Story with AI
+            </DialogTitle>
+            <DialogDescription>
+              Provide feedback to refine this story. The AI will use the Epic/PRD context to improve it.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {refiningStoryIndex !== null && generatedStories[refiningStoryIndex] && (
+            <div className="space-y-4">
+              {/* Current Story Preview */}
+              <div className="p-3 rounded-lg border bg-muted/50">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Current Story</p>
+                <p className="font-medium text-sm">{generatedStories[refiningStoryIndex].title}</p>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  {generatedStories[refiningStoryIndex].description}
+                </p>
+              </div>
+
+              {/* Context Indicator */}
+              {(isSourceEpic || sourcePrdArtifact) && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {isSourceEpic ? (
+                    <GitBranch className="w-3 h-3" />
+                  ) : (
+                    <FileText className="w-3 h-3" />
+                  )}
+                  <span>
+                    Using context from: {isSourceEpic ? sourceArtifact?.title : sourcePrdArtifact?.title}
+                    {isSourceEpic && parentPrdArtifact && ` + ${parentPrdArtifact.title}`}
+                  </span>
+                </div>
+              )}
+
+              {/* Feedback Input */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Your Feedback</label>
+                <Textarea
+                  value={refineFeedback}
+                  onChange={(e) => setRefineFeedback(e.target.value)}
+                  placeholder="Describe how you'd like this story to be refined...
+
+Examples:
+• Make the acceptance criteria more specific
+• Add error handling scenarios
+• Focus more on the admin user perspective
+• Break this into smaller stories"
+                  className="min-h-[120px]"
+                />
+              </div>
+
+              {/* Quick Suggestions */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Quick refinements:</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "More detailed acceptance criteria",
+                    "Add edge cases",
+                    "Simplify scope",
+                    "Add technical details",
+                  ].map((suggestion) => (
+                    <Button
+                      key={suggestion}
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setRefineFeedback(prev => 
+                        prev ? `${prev}\n• ${suggestion}` : suggestion
+                      )}
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      {suggestion}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseRefineDialog} disabled={isRefining}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRefineStory} 
+              disabled={isRefining || !refineFeedback.trim()}
+              className="bg-accent hover:bg-accent/90"
+            >
+              {isRefining ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Refining...
+                </>
+              ) : (
+                <>
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  Refine Story
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
