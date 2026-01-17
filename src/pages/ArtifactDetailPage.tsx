@@ -234,6 +234,7 @@ const ArtifactDetailPage = () => {
   };
 
   const canGeneratePRD = artifact.type === "IDEA";
+  const canGenerateEpics = artifact.type === "PRD";
   const canGenerateStories = artifact.type === "PRD";
   const canEnhancePRD = artifact.type === "PRD";
   const canEnhanceIdea = artifact.type === "IDEA";
@@ -329,10 +330,19 @@ const ArtifactDetailPage = () => {
                       Enhance Idea
                     </Button>
                   )}
+                  {canGenerateEpics && (
+                    <Button 
+                      onClick={() => navigate(`/artifacts/new?type=EPIC&fromPRD=${artifact.id}`)}
+                      className="bg-accent hover:bg-accent/90"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate Epics
+                    </Button>
+                  )}
                   {canGenerateStories && (
                     <Button 
                       onClick={() => navigate(`/artifacts/new?type=STORY&fromPRD=${artifact.id}`)}
-                      className="bg-accent hover:bg-accent/90"
+                      variant="outline"
                     >
                       <Sparkles className="w-4 h-4 mr-2" />
                       Generate Stories
@@ -371,8 +381,12 @@ const ArtifactDetailPage = () => {
                           <DropdownMenuSeparator />
                         </>
                       )}
-                      {canGenerateStories && (
+                      {canGenerateEpics && (
                         <>
+                          <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=EPIC&fromPRD=${artifact.id}`)}>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Generate Epics from PRD
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=STORY&fromPRD=${artifact.id}`)}>
                             <Sparkles className="w-4 h-4 mr-2" />
                             Generate Stories from PRD
