@@ -112,6 +112,7 @@ export function useCreateArtifactEdge() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["artifact-edges", data.from_artifact_id] });
       queryClient.invalidateQueries({ queryKey: ["artifact-edges", data.to_artifact_id] });
+      queryClient.invalidateQueries({ queryKey: ["project-artifact-edges", data.project_id] });
     },
   });
 }
