@@ -833,6 +833,41 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
 
   return (
     <div className="space-y-6">
+      {/* Epic Context Indicator - Show when generating from Epic */}
+      {isSourceEpic && sourceArtifact && (
+        <Card className="border-accent/30 bg-accent/5">
+          <CardContent className="pt-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-accent/10">
+                <GitBranch className="w-5 h-5 text-accent" />
+              </div>
+              <div className="flex-1 space-y-2">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Generating Stories From</p>
+                  <p className="font-semibold text-foreground">{sourceArtifact.title}</p>
+                  <Badge variant="outline" className="mt-1 text-xs">Epic</Badge>
+                </div>
+                {parentPrdArtifact && (
+                  <div className="pt-2 border-t border-border/50">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Parent PRD Context</p>
+                    <p className="text-sm text-foreground">{parentPrdArtifact.title}</p>
+                    {attachedFileContents.length > 0 && (
+                      <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                        <Paperclip className="w-3 h-3" />
+                        <span>{attachedFileContents.length} attached file(s) included</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {!parentPrdArtifact && (
+                  <p className="text-xs text-muted-foreground italic">No parent PRD linked to this Epic</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Phase Indicator */}
       <div className="flex items-center gap-2">
         <div
@@ -841,8 +876,8 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             phase === "prd" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
           )}
         >
-          <FileText className="w-4 h-4" />
-          <span>PRD</span>
+          {isSourceEpic ? <GitBranch className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+          <span>{isSourceEpic ? "Epic" : "PRD"}</span>
         </div>
         <ArrowRight className="w-4 h-4 text-muted-foreground" />
         <div
@@ -866,18 +901,28 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
         </div>
       </div>
 
-      {/* PRD Phase */}
+      {/* PRD/Epic Phase */}
       {phase === "prd" && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-accent" />
-              {sourceArtifact ? `Generate Stories from "${sourceArtifact.title}"` : "Select or Paste PRD"}
+              {isSourceEpic ? (
+                <GitBranch className="w-5 h-5 text-accent" />
+              ) : (
+                <FileText className="w-5 h-5 text-accent" />
+              )}
+              {isSourceEpic 
+                ? `Generate Stories for Epic: "${sourceArtifact?.title}"`
+                : sourceArtifact 
+                  ? `Generate Stories from "${sourceArtifact.title}"` 
+                  : "Select or Paste PRD"}
             </CardTitle>
             <CardDescription>
-              {sourceArtifact 
-                ? "The AI will analyze your PRD and ask clarifying questions to create comprehensive user stories."
-                : "Choose an existing PRD or paste content. The AI will help break it down into user stories."}
+              {isSourceEpic
+                ? "The AI will analyze this Epic along with its parent PRD context to create detailed, implementable user stories."
+                : sourceArtifact 
+                  ? "The AI will analyze your PRD and ask clarifying questions to create comprehensive user stories."
+                  : "Choose an existing PRD or paste content. The AI will help break it down into user stories."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
