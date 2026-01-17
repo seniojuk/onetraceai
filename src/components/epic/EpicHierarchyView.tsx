@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronDown,
@@ -10,6 +10,7 @@ import {
   Layers,
   Search,
   Filter,
+  GripVertical,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,9 +31,11 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useArtifacts, Artifact } from "@/hooks/useArtifacts";
-import { useProjectArtifactEdges, ArtifactEdge } from "@/hooks/useArtifactEdges";
+import { useProjectArtifactEdges, ArtifactEdge, useCreateArtifactEdge, EdgeType } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
+import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface EpicWithStories {
   epic: Artifact;
@@ -60,15 +63,18 @@ const statusColors: Record<string, string> = {
 
 export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
   const navigate = useNavigate();
-  const { currentProjectId } = useUIStore();
+  const { currentProjectId, currentWorkspaceId } = useUIStore();
   const effectiveProjectId = projectId || currentProjectId;
 
   const { data: allArtifacts, isLoading: artifactsLoading } = useArtifacts(effectiveProjectId || undefined);
   const { data: edges, isLoading: edgesLoading } = useProjectArtifactEdges(effectiveProjectId || undefined);
+  const createEdge = useCreateArtifactEdge();
 
   const [expandedEpics, setExpandedEpics] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [dragOverEpicId, setDragOverEpicId] = useState<string | null>(null);
+  const [draggingStoryId, setDraggingStoryId] = useState<string | null>(null);
 
   // Build epic hierarchy from edges
   const epicHierarchy = useMemo((): EpicWithStories[] => {
@@ -182,6 +188,52 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
     setExpandedEpics(new Set());
   };
 
+  // Drag and drop handlers
+  const handleDragStart = (e: DragEvent<HTMLDivElement>, storyId: string) => {
+    e.dataTransfer.setData("storyId", storyId);
+    e.dataTransfer.effectAllowed = "move";
+    setDraggingStoryId(storyId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingStoryId(null);
+    setDragOverEpicId(null);
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>, epicId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverEpicId(epicId);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverEpicId(null);
+  };
+
+  const handleDrop = async (e: DragEvent<HTMLDivElement>, epicId: string) => {
+    e.preventDefault();
+    setDragOverEpicId(null);
+    setDraggingStoryId(null);
+
+    const storyId = e.dataTransfer.getData("storyId");
+    if (!storyId || !currentWorkspaceId || !effectiveProjectId) return;
+
+    try {
+      await createEdge.mutateAsync({
+        workspaceId: currentWorkspaceId,
+        projectId: effectiveProjectId,
+        fromArtifactId: epicId,
+        toArtifactId: storyId,
+        edgeType: EdgeType.PARENT_OF,
+        source: "MANUAL",
+      });
+      toast.success("Story linked to epic");
+    } catch (error) {
+      console.error("Failed to link story:", error);
+      toast.error("Failed to link story to epic");
+    }
+  };
+
   const isLoading = artifactsLoading || edgesLoading;
 
   if (isLoading) {
@@ -290,10 +342,14 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                       <CollapsibleTrigger asChild>
                         <div
                           className={cn(
-                            "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                            "flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all",
                             "hover:bg-accent/50",
-                            isExpanded && "bg-accent/30 border-primary/30"
+                            isExpanded && "bg-accent/30 border-primary/30",
+                            dragOverEpicId === epic.id && "ring-2 ring-primary bg-primary/10 border-primary"
                           )}
+                          onDragOver={(e) => handleDragOver(e, epic.id)}
+                          onDragLeave={handleDragLeave}
+                          onDrop={(e) => handleDrop(e, epic.id)}
                         >
                           <div className="text-muted-foreground">
                             {isExpanded ? (
@@ -452,7 +508,7 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                             </span>
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            Stories not connected to any epic
+                            Drag stories onto epics to link them
                           </div>
                         </div>
 
@@ -472,12 +528,20 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                           return (
                             <div
                               key={story.id}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, story.id)}
+                              onDragEnd={handleDragEnd}
                               className={cn(
-                                "flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors",
-                                "hover:bg-accent/50"
+                                "flex items-center gap-3 p-2 rounded-md cursor-grab transition-all",
+                                "hover:bg-accent/50",
+                                draggingStoryId === story.id && "opacity-50 ring-2 ring-primary"
                               )}
                               onClick={() => navigate(`/artifacts/${story.id}`)}
                             >
+                              <div className="p-1 rounded text-muted-foreground hover:text-foreground cursor-grab">
+                                <GripVertical className="h-3.5 w-3.5" />
+                              </div>
+
                               <div className="p-1.5 rounded bg-blue-100 dark:bg-blue-900/30">
                                 <FileText className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                               </div>
