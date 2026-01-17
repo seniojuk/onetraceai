@@ -353,13 +353,18 @@ const GraphPageInner = () => {
     [EdgeType.DEPENDS_ON]: { stroke: "#f97316", label: "depends" },
   };
 
+  // Get the set of visible node IDs for edge filtering
+  const visibleNodeIds = useMemo(() => {
+    return new Set(initialNodes.map(n => n.id));
+  }, [initialNodes]);
+
   // Generate edges from artifact_edges table
   const initialEdges: Edge[] = useMemo(() => {
     if (!artifactEdges || artifactEdges.length === 0) {
       // Fallback to parent relationships if no edges exist
       if (!artifacts) return [];
       return artifacts
-        .filter(a => a.parent_artifact_id)
+        .filter(a => a.parent_artifact_id && visibleNodeIds.has(a.id) && visibleNodeIds.has(a.parent_artifact_id))
         .map(a => ({
           id: `parent-${a.parent_artifact_id}-${a.id}`,
           source: a.parent_artifact_id!,
@@ -375,27 +380,30 @@ const GraphPageInner = () => {
         }));
     }
     
-    return artifactEdges.map(edge => {
-      const edgeStyle = edgeTypeStyles[edge.edge_type as EdgeType] || edgeTypeStyles[EdgeType.RELATED];
-      return {
-        id: edge.id,
-        source: edge.from_artifact_id,
-        target: edge.to_artifact_id,
-        type: "smoothstep",
-        animated: edge.edge_type === EdgeType.BLOCKS,
-        label: edgeStyle.label,
-        labelStyle: { fontSize: 10, fill: edgeStyle.stroke },
-        labelBgStyle: { fill: "hsl(var(--card))", fillOpacity: 0.9 },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          width: 15,
-          height: 15,
-          color: edgeStyle.stroke,
-        },
-        style: { stroke: edgeStyle.stroke, strokeWidth: 2 },
-      };
-    });
-  }, [artifactEdges, artifacts]);
+    // Filter edges to only include those where both nodes are visible
+    return artifactEdges
+      .filter(edge => visibleNodeIds.has(edge.from_artifact_id) && visibleNodeIds.has(edge.to_artifact_id))
+      .map(edge => {
+        const edgeStyle = edgeTypeStyles[edge.edge_type as EdgeType] || edgeTypeStyles[EdgeType.RELATED];
+        return {
+          id: edge.id,
+          source: edge.from_artifact_id,
+          target: edge.to_artifact_id,
+          type: "smoothstep",
+          animated: edge.edge_type === EdgeType.BLOCKS,
+          label: edgeStyle.label,
+          labelStyle: { fontSize: 10, fill: edgeStyle.stroke },
+          labelBgStyle: { fill: "hsl(var(--card))", fillOpacity: 0.9 },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 15,
+            height: 15,
+            color: edgeStyle.stroke,
+          },
+          style: { stroke: edgeStyle.stroke, strokeWidth: 2 },
+        };
+      });
+  }, [artifactEdges, artifacts, visibleNodeIds]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
