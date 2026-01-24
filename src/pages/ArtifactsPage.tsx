@@ -51,6 +51,8 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FilesSection } from "@/components/files/FilesSection";
 import { EpicHierarchyView } from "@/components/epic/EpicHierarchyView";
+import { UsageLimitBanner, UsageLimitDialog } from "@/components/billing";
+import { useUsageLimits } from "@/hooks/useUsageLimits";
 
 const artifactTypeConfig: Record<ArtifactType, { icon: React.ElementType; color: string; label: string }> = {
   IDEA: { icon: Lightbulb, color: "bg-yellow-100 text-yellow-800", label: "Idea" },
@@ -87,12 +89,14 @@ const ArtifactsPage = () => {
   
   const { currentProjectId, currentWorkspaceId, artifactTypeFilter, setArtifactTypeFilter, statusFilter, setStatusFilter } = useUIStore();
   const { data: artifacts, isLoading } = useArtifacts(currentProjectId || undefined);
+  const { canCreateArtifact, artifactAtLimit, artifactWarning } = useUsageLimits();
   
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   const [sortBy, setSortBy] = useState<"created_at" | "updated_at" | "title">("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedArtifacts, setSelectedArtifacts] = useState<Set<string>>(new Set());
+  const [showLimitDialog, setShowLimitDialog] = useState(false);
 
   // Filter out FILE type from main artifacts list and apply filters
   const filteredArtifacts = artifacts?.filter(artifact => {
@@ -121,6 +125,10 @@ const ArtifactsPage = () => {
   }) || [];
 
   const handleCreateArtifact = (type?: ArtifactType) => {
+    if (!canCreateArtifact) {
+      setShowLimitDialog(true);
+      return;
+    }
     const params = type ? `?type=${type}` : "";
     navigate(`/artifacts/new${params}`);
   };
@@ -161,6 +169,9 @@ const ArtifactsPage = () => {
     <AuthGuard>
       <AppLayout>
         <div className="p-8">
+          {/* Usage Limit Warning Banner */}
+          <UsageLimitBanner showFor={["artifact"]} />
+          
           {/* Tabs for Artifacts and Files */}
           <Tabs value={activeTab} onValueChange={(value) => setSearchParams({ tab: value })} className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
@@ -557,6 +568,14 @@ const ArtifactsPage = () => {
             </TabsContent>
           </Tabs>
         </div>
+        
+        {/* Usage Limit Dialog */}
+        <UsageLimitDialog
+          open={showLimitDialog}
+          onOpenChange={setShowLimitDialog}
+          type="artifact"
+          isAtLimit={artifactAtLimit}
+        />
       </AppLayout>
     </AuthGuard>
   );
