@@ -4,6 +4,7 @@ export { PlanCards } from "./PlanCards";
 export { UpgradeConfirmDialog } from "./UpgradeConfirmDialog";
 export { DowngradeConfirmDialog } from "./DowngradeConfirmDialog";
 export { CancelSubscriptionDialog } from "./CancelSubscriptionDialog";
+export { UsageDashboardWidget } from "./UsageDashboardWidget";
 export { ContactSalesDialog } from "./ContactSalesDialog";
 export { UsageLimitBanner } from "./UsageLimitBanner";
 export { UsageLimitDialog } from "./UsageLimitDialog";

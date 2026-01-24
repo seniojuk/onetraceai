@@ -23,6 +23,7 @@ import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { useProjects } from "@/hooks/useProjects";
 import { useArtifacts } from "@/hooks/useArtifacts";
 import { useUIStore } from "@/store/uiStore";
+import { UsageDashboardWidget } from "@/components/billing/UsageDashboardWidget";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -316,6 +317,11 @@ const Dashboard = () => {
                     </div>
                   </CardContent>
                 </Card>
+              </div>
+
+              {/* Usage Overview */}
+              <div className="mt-6">
+                <UsageDashboardWidget />
               </div>
             </>
           )}
