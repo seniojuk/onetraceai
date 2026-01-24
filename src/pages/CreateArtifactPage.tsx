@@ -55,7 +55,7 @@ const CreateArtifactPage = () => {
   const { toast } = useToast();
   const { currentWorkspaceId, currentProjectId } = useUIStore();
   const createArtifact = useCreateArtifact();
-  const { canCreateArtifact, artifactAtLimit, usage } = useUsageLimits();
+  const { canCreateArtifact, artifactAtLimit, artifactWarning, usage } = useUsageLimits();
 
   const preselectedType = searchParams.get("type") as ArtifactType | null;
   const fromIdeaId = searchParams.get("fromIdea");
@@ -184,18 +184,38 @@ const CreateArtifactPage = () => {
           </div>
 
           <div className="space-y-6">
-            {/* Limit Warning */}
+            {/* Limit Reached Warning */}
             {artifactAtLimit && (
               <Alert className="border-destructive/50 bg-destructive/5">
                 <AlertTriangle className="h-4 w-4 text-destructive" />
                 <AlertDescription className="flex items-center justify-between">
                   <span className="text-destructive">
-                    You've reached your artifact limit ({usage?.artifacts.used}/{usage?.artifacts.limit}).
+                    You've reached your artifact limit ({usage?.artifacts.used}/{usage?.artifacts.limit}). Upgrade to create more artifacts.
                   </span>
                   <Button 
                     variant="outline" 
                     size="sm"
                     className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                    onClick={() => navigate("/billing")}
+                  >
+                    Upgrade Plan
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Approaching Limit Warning */}
+            {artifactWarning && !artifactAtLimit && usage?.artifacts && (
+              <Alert className="border-warning/50 bg-warning/5">
+                <Sparkles className="h-4 w-4 text-warning" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span className="text-warning">
+                    You're approaching your artifact limit ({usage.artifacts.used}/{usage.artifacts.limit} used).
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="border-warning/50 text-warning hover:bg-warning/10"
                     onClick={() => navigate("/billing")}
                   >
                     Upgrade Plan
@@ -398,7 +418,7 @@ const CreateArtifactPage = () => {
                     </Button>
                     <Button 
                       type="submit" 
-                      disabled={createArtifact.isPending || !title.trim()}
+                      disabled={createArtifact.isPending || !title.trim() || artifactAtLimit}
                       className="bg-accent hover:bg-accent/90"
                     >
                       {createArtifact.isPending ? (
@@ -406,7 +426,7 @@ const CreateArtifactPage = () => {
                       ) : (
                         <Save className="w-4 h-4 mr-2" />
                       )}
-                      Create {selectedType?.label}
+                      {artifactAtLimit ? "Limit Reached" : `Create ${selectedType?.label}`}
                     </Button>
                   </div>
                 </div>
