@@ -28,6 +28,7 @@ import { useCreateArtifactEdge } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AIRunLimitWarning, useAIRunLimit } from "@/components/billing/AIRunLimitWarning";
 
 interface Question {
   id: string;
@@ -88,6 +89,7 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
   const createArtifact = useCreateArtifact();
   const createEdge = useCreateArtifactEdge();
   const { data: artifacts } = useArtifacts(currentProjectId || undefined, "IDEA");
+  const { canRunAI, isAtLimit } = useAIRunLimit();
 
   const [phase, setPhase] = useState<"idea" | "questions" | "complete">("idea");
   const [ideaSource, setIdeaSource] = useState<"new" | "existing">(sourceArtifact ? "existing" : "new");
@@ -152,6 +154,11 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
   };
 
   const handleSubmitIdea = async () => {
+    if (isAtLimit) {
+      toast.error("You've reached your AI run limit. Please upgrade your plan to continue.");
+      return;
+    }
+    
     const ideaText = getIdeaText();
     if (!ideaText) {
       toast.error("Please enter an idea or select an existing one");
@@ -425,6 +432,9 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
 
   return (
     <div className="space-y-6">
+      {/* AI Run Limit Warning */}
+      <AIRunLimitWarning />
+
       {/* Phase Indicator */}
       <div className="flex items-center gap-2">
         <div
@@ -569,7 +579,7 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
             <div className="flex justify-end">
               <Button
                 onClick={handleSubmitIdea}
-                disabled={!canSubmitIdea || isLoading}
+                disabled={!canSubmitIdea || isLoading || isAtLimit}
                 className="bg-accent hover:bg-accent/90"
               >
                 {isLoading ? (
