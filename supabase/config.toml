@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.invoke-agent]
 verify_jwt = false
+
+[functions.send-billing-email]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
