@@ -17,15 +17,43 @@ const PRICE_IDS: Record<string, string> = {
   pro: "price_1St7mPG45CY5mATXpSHF0gry",
 };
 
+const PLAN_NAMES: Record<string, string> = {
+  pro: "Pro",
+  free: "Free",
+  enterprise: "Enterprise",
+};
+
+// Helper to send billing email
+const sendBillingEmail = async (
+  supabaseUrl: string,
+  supabaseKey: string,
+  payload: Record<string, unknown>
+) => {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-billing-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${supabaseKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json();
+    logStep("Billing email sent", result);
+  } catch (error) {
+    logStep("Failed to send billing email", { error: String(error) });
+  }
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-  );
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  
+  const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
   try {
     logStep("Function started");
@@ -57,10 +85,24 @@ serve(async (req) => {
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string | undefined;
+    let previousPlan = "Free";
     
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Existing customer found", { customerId });
+      
+      // Check for existing subscription to determine previous plan
+      const existingSubs = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "active",
+        limit: 1,
+      });
+      if (existingSubs.data.length > 0) {
+        const existingProductId = existingSubs.data[0].items.data[0].price.product as string;
+        if (existingProductId === "prod_TqpRp9M0STW5f3") {
+          previousPlan = "Pro";
+        }
+      }
     }
 
     const origin = req.headers.get("origin") || "http://localhost:5173";
@@ -81,6 +123,8 @@ serve(async (req) => {
         workspace_id: workspaceId,
         plan_id: planId,
         user_id: user.id,
+        user_email: user.email,
+        previous_plan: previousPlan,
       },
       subscription_data: {
         metadata: {
