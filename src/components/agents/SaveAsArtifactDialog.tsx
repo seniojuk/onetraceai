@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, Save, Loader2, Link } from "lucide-react";
+import { FileText, Save, Loader2, Link, AlertTriangle, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,9 +19,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useCreateArtifact, type ArtifactType } from "@/hooks/useArtifacts";
+import { useUsageLimits } from "@/hooks/useUsageLimits";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface SaveAsArtifactDialogProps {
   open: boolean;
@@ -60,9 +62,18 @@ export function SaveAsArtifactDialog({
   const [type, setType] = useState<ArtifactType>(suggestedType || "PRD");
   const [isSaving, setIsSaving] = useState(false);
   
+  const navigate = useNavigate();
   const createArtifact = useCreateArtifact();
+  const { canCreateArtifact, artifactAtLimit, artifactWarning, usage } = useUsageLimits();
 
   const handleSave = async () => {
+    if (artifactAtLimit) {
+      toast.error("Artifact limit reached", {
+        description: "Upgrade your plan to create more artifacts.",
+      });
+      return;
+    }
+
     if (!title.trim()) {
       toast.error("Please enter a title");
       return;
@@ -133,6 +144,39 @@ export function SaveAsArtifactDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Limit Reached Warning */}
+          {artifactAtLimit && (
+            <Alert className="border-destructive/50 bg-destructive/5">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <AlertDescription className="flex items-center justify-between">
+                <span className="text-destructive text-sm">
+                  Artifact limit reached ({usage?.artifacts.used}/{usage?.artifacts.limit}).
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-destructive/50 text-destructive hover:bg-destructive/10 text-xs"
+                  onClick={() => {
+                    onOpenChange(false);
+                    navigate("/billing");
+                  }}
+                >
+                  Upgrade
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Approaching Limit Warning */}
+          {artifactWarning && !artifactAtLimit && usage?.artifacts && (
+            <Alert className="border-warning/50 bg-warning/5">
+              <Sparkles className="h-4 w-4 text-warning" />
+              <AlertDescription className="text-warning text-sm">
+                Approaching limit ({usage.artifacts.used}/{usage.artifacts.limit} used).
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Pipeline source badge */}
           {pipelineName && (
             <div className="flex items-center gap-2">
@@ -193,7 +237,7 @@ export function SaveAsArtifactDialog({
           </Button>
           <Button
             onClick={handleSave}
-            disabled={isSaving || !title.trim()}
+            disabled={isSaving || !title.trim() || artifactAtLimit}
             className="bg-accent hover:bg-accent/90"
           >
             {isSaving ? (
@@ -204,7 +248,7 @@ export function SaveAsArtifactDialog({
             ) : (
               <>
                 <FileText className="w-4 h-4 mr-2" />
-                Create Artifact
+                {artifactAtLimit ? "Limit Reached" : "Create Artifact"}
               </>
             )}
           </Button>
