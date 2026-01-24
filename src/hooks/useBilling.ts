@@ -19,6 +19,13 @@ export interface Subscription {
   updated_at: string;
 }
 
+export interface SubscriptionStatus {
+  subscribed: boolean;
+  plan_id: string;
+  product_id: string | null;
+  subscription_end: string | null;
+}
+
 export interface PlanLimit {
   id: string;
   plan_id: string;
@@ -47,6 +54,28 @@ export interface Invoice {
   period_end: string | null;
   paid_at: string | null;
   created_at: string;
+}
+
+// Check subscription status directly from Stripe
+export function useCheckSubscription() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["subscription-status"],
+    queryFn: async (): Promise<SubscriptionStatus> => {
+      const response = await supabase.functions.invoke("check-subscription");
+      
+      if (response.error) {
+        console.error("Check subscription error:", response.error);
+        return { subscribed: false, plan_id: "free", product_id: null, subscription_end: null };
+      }
+      
+      return response.data as SubscriptionStatus;
+    },
+    enabled: !!user,
+    refetchInterval: 60000, // Refresh every minute
+    staleTime: 30000,
+  });
 }
 
 export function useSubscription(workspaceId: string | undefined) {
@@ -109,38 +138,35 @@ export function useInvoices(workspaceId: string | undefined) {
   });
 }
 
-export function useCreateCheckoutSession() {
+export function useCreateCheckout() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      workspaceId,
-      priceId,
       planId,
+      workspaceId,
     }: {
-      workspaceId: string;
-      priceId: string;
       planId: string;
+      workspaceId: string;
     }) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-
-      const response = await supabase.functions.invoke("stripe-checkout", {
+      const response = await supabase.functions.invoke("create-checkout", {
         body: {
-          workspaceId,
-          priceId,
           planId,
+          workspaceId,
           successUrl: `${window.location.origin}/billing?success=true`,
           cancelUrl: `${window.location.origin}/billing?canceled=true`,
         },
       });
 
-      if (response.error) throw response.error;
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+      
       return response.data;
     },
     onSuccess: (data) => {
       if (data?.url) {
-        window.location.href = data.url;
+        window.open(data.url, "_blank");
       }
     },
     onError: (error: Error) => {
@@ -153,27 +179,23 @@ export function useCreateCheckoutSession() {
   });
 }
 
-export function useCreatePortalSession() {
+export function useCustomerPortal() {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (workspaceId: string) => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-
-      const response = await supabase.functions.invoke("stripe-portal", {
-        body: {
-          workspaceId,
-          returnUrl: `${window.location.origin}/billing`,
-        },
+    mutationFn: async (returnUrl?: string) => {
+      const response = await supabase.functions.invoke("customer-portal", {
+        body: { returnUrl: returnUrl || `${window.location.origin}/billing` },
       });
 
-      if (response.error) throw response.error;
+      if (response.error) throw new Error(response.error.message);
+      if (response.data?.error) throw new Error(response.data.error);
+      
       return response.data;
     },
     onSuccess: (data) => {
       if (data?.url) {
-        window.location.href = data.url;
+        window.open(data.url, "_blank");
       }
     },
     onError: (error: Error) => {
@@ -185,3 +207,7 @@ export function useCreatePortalSession() {
     },
   });
 }
+
+// Legacy exports for compatibility
+export const useCreateCheckoutSession = useCreateCheckout;
+export const useCreatePortalSession = useCustomerPortal;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Receipt, Settings, CalendarDays, AlertTriangle } from "lucide-react";
+import { Receipt, Settings, CalendarDays, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,36 +10,42 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useToast } from "@/hooks/use-toast";
 import { useUIStore } from "@/store/uiStore";
 import { 
-  useSubscription, 
+  useCheckSubscription,
   usePlanLimits, 
   useInvoices, 
-  useCreateCheckoutSession,
-  useCreatePortalSession,
+  useCreateCheckout,
+  useCustomerPortal,
   PlanLimit 
 } from "@/hooks/useBilling";
 import { useUsageMetrics } from "@/hooks/useUsageMetrics";
 import { CurrentPlanUsage } from "@/components/billing/CurrentPlanUsage";
 import { PlanCards } from "@/components/billing/PlanCards";
 import { InvoiceHistoryTable } from "@/components/billing/InvoiceHistoryTable";
+import { UpgradeConfirmDialog } from "@/components/billing/UpgradeConfirmDialog";
+import { ContactSalesDialog } from "@/components/billing/ContactSalesDialog";
 import { format } from "date-fns";
 
 const BillingPage = () => {
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentWorkspaceId } = useUIStore();
-  const [upgradingPlanId, setUpgradingPlanId] = useState<string | null>(null);
+  
+  // Dialog states
+  const [selectedPlan, setSelectedPlan] = useState<PlanLimit | null>(null);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [showContactSalesDialog, setShowContactSalesDialog] = useState(false);
 
   // Data hooks
-  const { data: subscription, isLoading: subscriptionLoading } = useSubscription(currentWorkspaceId ?? undefined);
+  const { data: subscriptionStatus, isLoading: statusLoading, refetch: refetchStatus } = useCheckSubscription();
   const { data: plans, isLoading: plansLoading } = usePlanLimits();
   const { data: invoices, isLoading: invoicesLoading } = useInvoices(currentWorkspaceId ?? undefined);
   
-  const currentPlanId = subscription?.plan_id || "free";
+  const currentPlanId = subscriptionStatus?.plan_id || "free";
   const { data: usage, isLoading: usageLoading } = useUsageMetrics(currentWorkspaceId ?? undefined, currentPlanId);
 
   // Mutations
-  const checkoutMutation = useCreateCheckoutSession();
-  const portalMutation = useCreatePortalSession();
+  const checkoutMutation = useCreateCheckout();
+  const portalMutation = useCustomerPortal();
 
   // Handle checkout success/cancel from URL params
   useEffect(() => {
@@ -51,61 +57,49 @@ const BillingPage = () => {
         title: "Subscription activated!",
         description: "Your plan has been upgraded successfully.",
       });
+      refetchStatus();
+      // Clear URL params
+      setSearchParams({});
     } else if (canceled === "true") {
       toast({
         title: "Checkout canceled",
         description: "Your subscription was not changed.",
         variant: "destructive",
       });
+      setSearchParams({});
     }
-  }, [searchParams, toast]);
+  }, [searchParams, toast, refetchStatus, setSearchParams]);
 
-  const handleUpgrade = async (plan: PlanLimit) => {
-    if (!currentWorkspaceId) {
-      toast({
-        title: "No workspace selected",
-        description: "Please select a workspace first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleUpgradeClick = (plan: PlanLimit) => {
     if (plan.plan_id === "enterprise") {
-      toast({
-        title: "Contact Sales",
-        description: "Please contact our sales team for enterprise pricing.",
-      });
+      setShowContactSalesDialog(true);
       return;
     }
 
-    // TODO: Replace with actual Stripe price ID from your Stripe dashboard
-    const priceId = plan.plan_id === "pro" ? "price_pro_monthly" : "";
-    
-    if (!priceId) {
-      toast({
-        title: "Configuration needed",
-        description: "Stripe price IDs need to be configured for this plan.",
-        variant: "destructive",
-      });
+    if (plan.plan_id === currentPlanId) {
       return;
     }
 
-    setUpgradingPlanId(plan.plan_id);
+    setSelectedPlan(plan);
+    setShowUpgradeDialog(true);
+  };
+
+  const handleConfirmUpgrade = async () => {
+    if (!selectedPlan || !currentWorkspaceId) return;
+
     try {
       await checkoutMutation.mutateAsync({
+        planId: selectedPlan.plan_id,
         workspaceId: currentWorkspaceId,
-        priceId,
-        planId: plan.plan_id,
       });
-    } finally {
-      setUpgradingPlanId(null);
+      setShowUpgradeDialog(false);
+    } catch (error) {
+      // Error handled by mutation
     }
   };
 
   const handleManageBilling = async () => {
-    if (!currentWorkspaceId) return;
-    
-    if (!subscription?.stripe_customer_id) {
+    if (!subscriptionStatus?.subscribed) {
       toast({
         title: "No active subscription",
         description: "You need an active subscription to manage billing.",
@@ -113,32 +107,45 @@ const BillingPage = () => {
       return;
     }
 
-    portalMutation.mutate(currentWorkspaceId);
+    portalMutation.mutate(`${window.location.origin}/billing`);
   };
 
   const currentPlan = plans?.find((p) => p.plan_id === currentPlanId);
   const isPaidPlan = currentPlanId !== "free";
-  const isCanceling = subscription?.cancel_at_period_end;
+  const subscriptionEnd = subscriptionStatus?.subscription_end;
 
   return (
     <AuthGuard>
       <AppLayout>
         <div className="p-8 max-w-6xl mx-auto">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground">Billing</h1>
-            <p className="text-muted-foreground">
-              Manage your subscription and billing
-            </p>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Billing</h1>
+              <p className="text-muted-foreground">
+                Manage your subscription and billing
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetchStatus()}
+              disabled={statusLoading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${statusLoading ? "animate-spin" : ""}`} />
+              Refresh Status
+            </Button>
           </div>
 
-          {/* Cancellation Warning */}
-          {isCanceling && subscription?.current_period_end && (
-            <Alert variant="destructive" className="mb-6">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                Your subscription is set to cancel on{" "}
-                {format(new Date(subscription.current_period_end), "MMMM d, yyyy")}.
-                Click "Manage Billing" to reactivate.
+          {/* Subscription Status Alert */}
+          {subscriptionEnd && isPaidPlan && (
+            <Alert className="mb-6 border-accent/30 bg-accent/5">
+              <CalendarDays className="h-4 w-4 text-accent" />
+              <AlertDescription className="text-foreground">
+                Your {currentPlan?.plan_name} subscription {
+                  subscriptionStatus?.subscribed 
+                    ? `renews on ${format(new Date(subscriptionEnd), "MMMM d, yyyy")}`
+                    : `ended on ${format(new Date(subscriptionEnd), "MMMM d, yyyy")}`
+                }
               </AlertDescription>
             </Alert>
           )}
@@ -166,16 +173,9 @@ const BillingPage = () => {
             <CardContent>
               <CurrentPlanUsage usage={usage} isLoading={usageLoading} />
               
-              {/* Subscription details for paid plans */}
-              {isPaidPlan && subscription?.current_period_end && (
-                <div className="mt-6 pt-6 border-t flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <CalendarDays className="w-4 h-4" />
-                    <span>
-                      {isCanceling ? "Access until" : "Renews"}{" "}
-                      {format(new Date(subscription.current_period_end), "MMMM d, yyyy")}
-                    </span>
-                  </div>
+              {/* Subscription management for paid plans */}
+              {isPaidPlan && (
+                <div className="mt-6 pt-6 border-t flex items-center justify-end">
                   <Button
                     variant="outline"
                     size="sm"
@@ -197,8 +197,8 @@ const BillingPage = () => {
               plans={plans}
               currentPlanId={currentPlanId}
               isLoading={plansLoading}
-              isUpgrading={!!upgradingPlanId}
-              onUpgrade={handleUpgrade}
+              isUpgrading={checkoutMutation.isPending}
+              onUpgrade={handleUpgradeClick}
             />
           </div>
 
@@ -218,7 +218,7 @@ const BillingPage = () => {
                     disabled={portalMutation.isPending}
                   >
                     <Receipt className="w-4 h-4 mr-2" />
-                    Manage Billing
+                    View All Invoices
                   </Button>
                 )}
               </div>
@@ -228,6 +228,22 @@ const BillingPage = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Upgrade Confirmation Dialog */}
+        <UpgradeConfirmDialog
+          open={showUpgradeDialog}
+          onOpenChange={setShowUpgradeDialog}
+          plan={selectedPlan}
+          currentPlanId={currentPlanId}
+          onConfirm={handleConfirmUpgrade}
+          isLoading={checkoutMutation.isPending}
+        />
+
+        {/* Contact Sales Dialog */}
+        <ContactSalesDialog
+          open={showContactSalesDialog}
+          onOpenChange={setShowContactSalesDialog}
+        />
       </AppLayout>
     </AuthGuard>
   );
