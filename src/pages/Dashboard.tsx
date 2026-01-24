@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
@@ -24,6 +25,7 @@ import { useProjects } from "@/hooks/useProjects";
 import { useArtifacts } from "@/hooks/useArtifacts";
 import { useUIStore } from "@/store/uiStore";
 import { UsageDashboardWidget } from "@/components/billing/UsageDashboardWidget";
+import { useUsageLimits } from "@/hooks/useUsageLimits";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -31,6 +33,7 @@ const Dashboard = () => {
   const { data: workspaces, isLoading: loadingWorkspaces } = useWorkspaces();
   const { data: projects, isLoading: loadingProjects } = useProjects(currentWorkspaceId || undefined);
   const { data: artifacts, isLoading: loadingArtifacts } = useArtifacts(currentProjectId || undefined);
+  const { canCreateProject, projectAtLimit, projectWarning, usage } = useUsageLimits();
 
   // Show onboarding only if no workspaces exist (first time user)
   useEffect(() => {
@@ -103,9 +106,44 @@ const Dashboard = () => {
               <p className="text-muted-foreground mb-6 text-center max-w-md">
                 Create your first project to start building traceable software with AI assistance.
               </p>
-              <Button onClick={() => navigate("/onboarding")} className="bg-accent hover:bg-accent/90">
+              
+              {/* Project Limit Warning */}
+              {projectAtLimit && (
+                <Alert className="border-destructive/50 bg-destructive/5 mb-4 max-w-md">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  <AlertDescription className="flex items-center justify-between">
+                    <span className="text-destructive text-sm">
+                      Project limit reached ({usage?.projects.used}/{usage?.projects.limit}).
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="border-destructive/50 text-destructive hover:bg-destructive/10 ml-2"
+                      onClick={() => navigate("/billing")}
+                    >
+                      Upgrade
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Approaching Limit Warning */}
+              {projectWarning && !projectAtLimit && usage?.projects && (
+                <Alert className="border-warning/50 bg-warning/5 mb-4 max-w-md">
+                  <Sparkles className="h-4 w-4 text-warning" />
+                  <AlertDescription className="text-warning text-sm">
+                    Approaching project limit ({usage.projects.used}/{usage.projects.limit} used).
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <Button 
+                onClick={() => navigate("/onboarding?step=create-project")} 
+                className="bg-accent hover:bg-accent/90"
+                disabled={projectAtLimit}
+              >
                 <Plus className="w-4 h-4 mr-2" />
-                Create Project
+                {projectAtLimit ? "Limit Reached" : "Create Project"}
               </Button>
             </div>
           ) : (

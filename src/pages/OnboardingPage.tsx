@@ -46,7 +46,7 @@ const OnboardingPage = () => {
   
   const createWorkspace = useCreateWorkspace();
   const createProject = useCreateProject();
-  const { canCreateProject, projectAtLimit, usage } = useUsageLimits();
+  const { canCreateProject, projectAtLimit, projectWarning, usage } = useUsageLimits();
 
   // Use existing workspace if adding project only, otherwise use newly created one
   const [createdWorkspaceId, setCreatedWorkspaceId] = useState<string | null>(
@@ -255,20 +255,42 @@ const OnboardingPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Show warning if approaching or at project limit */}
+                  {/* Limit Reached Warning */}
                   {isAddingProjectOnly && projectAtLimit && (
                     <Alert className="border-destructive/50 bg-destructive/5">
                       <AlertTriangle className="h-4 w-4 text-destructive" />
-                      <AlertDescription className="text-destructive">
-                        You've reached your project limit ({usage?.projects.used}/{usage?.projects.limit}).{" "}
+                      <AlertDescription className="flex items-center justify-between">
+                        <span className="text-destructive">
+                          You've reached your project limit ({usage?.projects.used}/{usage?.projects.limit}).
+                        </span>
                         <Button 
-                          variant="link" 
-                          className="p-0 h-auto text-destructive underline"
+                          variant="outline" 
+                          size="sm"
+                          className="border-destructive/50 text-destructive hover:bg-destructive/10"
                           onClick={() => navigate("/billing")}
                         >
-                          Upgrade your plan
-                        </Button>{" "}
-                        to create more projects.
+                          Upgrade Plan
+                        </Button>
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {/* Approaching Limit Warning */}
+                  {isAddingProjectOnly && projectWarning && !projectAtLimit && usage?.projects && (
+                    <Alert className="border-warning/50 bg-warning/5">
+                      <Sparkles className="h-4 w-4 text-warning" />
+                      <AlertDescription className="flex items-center justify-between">
+                        <span className="text-warning">
+                          You're approaching your project limit ({usage.projects.used}/{usage.projects.limit} used).
+                        </span>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="border-warning/50 text-warning hover:bg-warning/10"
+                          onClick={() => navigate("/billing")}
+                        >
+                          Upgrade Plan
+                        </Button>
                       </AlertDescription>
                     </Alert>
                   )}
@@ -322,7 +344,7 @@ const OnboardingPage = () => {
                       {createProject.isPending ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       ) : null}
-                      Create Project
+                      {isAddingProjectOnly && projectAtLimit ? "Limit Reached" : "Create Project"}
                     </Button>
                   </div>
                 </CardContent>
