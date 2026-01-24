@@ -46,6 +46,7 @@ import { useFilesForArtifact } from "@/hooks/useFileArtifacts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AIRunLimitWarning, useAIRunLimit } from "@/components/billing/AIRunLimitWarning";
 
 // Check if file type is text-extractable
 const isTextExtractable = (fileType: string, fileName: string): boolean => {
@@ -99,6 +100,7 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
   const createArtifact = useCreateArtifact();
   const createEdge = useCreateArtifactEdge();
   const { data: artifacts } = useArtifacts(currentProjectId || undefined, "PRD");
+  const { canRunAI, isAtLimit } = useAIRunLimit();
 
   // Get the effective PRD artifact ID for file fetching
   const effectivePrdId = sourceArtifact?.id || "";
@@ -217,6 +219,11 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
   };
 
   const handleSubmitPrd = async () => {
+    if (isAtLimit) {
+      toast.error("You've reached your AI run limit. Please upgrade your plan to continue.");
+      return;
+    }
+    
     const prd = getPrdText();
     if (!prd) {
       toast.error("Please enter PRD content or select an existing PRD");
@@ -607,6 +614,9 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
 
   return (
     <div className="space-y-6">
+      {/* AI Run Limit Warning */}
+      <AIRunLimitWarning />
+
       {/* Phase Indicator */}
       <div className="flex items-center gap-2">
         <div
@@ -720,7 +730,7 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
 
             <Button
               onClick={handleSubmitPrd}
-              disabled={isLoading || !canSubmitPrd}
+              disabled={isLoading || !canSubmitPrd || isAtLimit}
               className="w-full bg-accent hover:bg-accent/90"
             >
               {isLoading ? (

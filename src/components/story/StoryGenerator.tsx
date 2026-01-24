@@ -59,6 +59,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AIRunLimitWarning, useAIRunLimit } from "@/components/billing/AIRunLimitWarning";
 
 // Check if file type is text-extractable
 const isTextExtractable = (fileType: string, fileName: string): boolean => {
@@ -110,6 +111,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const createEdge = useCreateArtifactEdge();
   const { data: prdArtifacts } = useArtifacts(currentProjectId || undefined, "PRD");
   const { data: epicArtifacts } = useArtifacts(currentProjectId || undefined, "EPIC");
+  const { canRunAI, isAtLimit } = useAIRunLimit();
 
   // Detect if source is an Epic
   const isSourceEpic = sourceArtifact?.type === "EPIC";
@@ -361,6 +363,11 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   };
 
   const handleSubmitPrd = async () => {
+    if (isAtLimit) {
+      toast.error("You've reached your AI run limit. Please upgrade your plan to continue.");
+      return;
+    }
+    
     // When generating from Epic, use Epic content as primary source
     const contentToProcess = isSourceEpic ? getEpicContent() : getPrdText();
     
@@ -929,6 +936,9 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
 
   return (
     <div className="space-y-6">
+      {/* AI Run Limit Warning */}
+      <AIRunLimitWarning />
+
       {/* Epic Context Indicator - Show when generating from Epic */}
       {isSourceEpic && sourceArtifact && (
         <Card className="border-accent/30 bg-accent/5">
@@ -1097,7 +1107,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
 
             <Button
               onClick={handleSubmitPrd}
-              disabled={isLoading || !canSubmitPrd}
+              disabled={isLoading || !canSubmitPrd || isAtLimit}
               className="w-full bg-accent hover:bg-accent/90"
             >
               {isLoading ? (

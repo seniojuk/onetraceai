@@ -5,6 +5,7 @@ export { UpgradeConfirmDialog } from "./UpgradeConfirmDialog";
 export { DowngradeConfirmDialog } from "./DowngradeConfirmDialog";
 export { CancelSubscriptionDialog } from "./CancelSubscriptionDialog";
 export { UsageDashboardWidget } from "./UsageDashboardWidget";
+export { AIRunLimitWarning, useAIRunLimit } from "./AIRunLimitWarning";
 export { ContactSalesDialog } from "./ContactSalesDialog";
 export { UsageLimitBanner } from "./UsageLimitBanner";
 export { UsageLimitDialog } from "./UsageLimitDialog";
