@@ -8,13 +8,30 @@ import { PlanLimit } from "@/hooks/useBilling";
 
 interface PlanCardProps {
   plan: PlanLimit;
+  currentPlanId: string;
   isCurrentPlan: boolean;
   isPopular?: boolean;
   isUpgrading: boolean;
-  onUpgrade: (plan: PlanLimit) => void;
+  onPlanAction: (plan: PlanLimit, action: "upgrade" | "downgrade" | "contact") => void;
 }
 
-function PlanCard({ plan, isCurrentPlan, isPopular, isUpgrading, onUpgrade }: PlanCardProps) {
+function getPlanPriority(planId: string): number {
+  switch (planId) {
+    case "free":
+      return 0;
+    case "pro":
+      return 1;
+    case "enterprise":
+      return 2;
+    default:
+      return 0;
+  }
+}
+
+function PlanCard({ plan, currentPlanId, isCurrentPlan, isPopular, isUpgrading, onPlanAction }: PlanCardProps) {
+  const isUpgrade = getPlanPriority(plan.plan_id) > getPlanPriority(currentPlanId);
+  const isDowngrade = getPlanPriority(plan.plan_id) < getPlanPriority(currentPlanId);
+  const isEnterprise = plan.plan_id === "enterprise";
   const features = [
     plan.max_workspaces === null ? "Unlimited workspaces" : `${plan.max_workspaces} workspace${plan.max_workspaces > 1 ? "s" : ""}`,
     plan.max_projects === null ? "Unlimited projects" : `${plan.max_projects} projects`,
@@ -101,16 +118,37 @@ function PlanCard({ plan, isCurrentPlan, isPopular, isUpgrading, onUpgrade }: Pl
           <Button variant="outline" className="w-full" disabled>
             Current Plan
           </Button>
-        ) : (
+        ) : isEnterprise ? (
           <Button
-            className={cn("w-full", isPopular && "bg-accent hover:bg-accent/90")}
-            onClick={() => onUpgrade(plan)}
+            className="w-full"
+            onClick={() => onPlanAction(plan, "contact")}
+            disabled={isUpgrading}
+          >
+            Contact Sales
+            <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        ) : isDowngrade ? (
+          <Button
+            variant="outline"
+            className="w-full border-warning/50 text-warning hover:bg-warning/10"
+            onClick={() => onPlanAction(plan, "downgrade")}
             disabled={isUpgrading}
           >
             {isUpgrading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : null}
-            {plan.price_monthly === -1 ? "Contact Sales" : "Upgrade"}
+            Downgrade
+          </Button>
+        ) : (
+          <Button
+            className={cn("w-full", isPopular && "bg-accent hover:bg-accent/90")}
+            onClick={() => onPlanAction(plan, "upgrade")}
+            disabled={isUpgrading}
+          >
+            {isUpgrading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : null}
+            Upgrade
             {!isUpgrading && <ArrowRight className="w-4 h-4 ml-2" />}
           </Button>
         )}
@@ -124,10 +162,10 @@ interface PlanCardsProps {
   currentPlanId: string;
   isLoading: boolean;
   isUpgrading: boolean;
-  onUpgrade: (plan: PlanLimit) => void;
+  onPlanAction: (plan: PlanLimit, action: "upgrade" | "downgrade" | "contact") => void;
 }
 
-export function PlanCards({ plans, currentPlanId, isLoading, isUpgrading, onUpgrade }: PlanCardsProps) {
+export function PlanCards({ plans, currentPlanId, isLoading, isUpgrading, onPlanAction }: PlanCardsProps) {
   if (isLoading) {
     return (
       <div className="grid md:grid-cols-3 gap-6">
@@ -166,10 +204,11 @@ export function PlanCards({ plans, currentPlanId, isLoading, isUpgrading, onUpgr
         <PlanCard
           key={plan.id}
           plan={plan}
+          currentPlanId={currentPlanId}
           isCurrentPlan={plan.plan_id === currentPlanId}
           isPopular={plan.plan_id === "pro"}
           isUpgrading={isUpgrading}
-          onUpgrade={onUpgrade}
+          onPlanAction={onPlanAction}
         />
       ))}
     </div>
