@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { 
   ArrowLeft, 
@@ -15,6 +15,7 @@ import {
   Paperclip,
   X,
   File,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useCreateArtifact, useArtifact, ArtifactType } from "@/hooks/useArtifacts";
@@ -34,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { PRDGenerator } from "@/components/prd/PRDGenerator";
 import { StoryGenerator } from "@/components/story/StoryGenerator";
 import { EpicGenerator } from "@/components/epic/EpicGenerator";
+import { useUsageLimits } from "@/hooks/useUsageLimits";
 
 const artifactTypes: { value: ArtifactType; label: string; icon: React.ElementType; description: string; hasAI?: boolean }[] = [
   { value: "IDEA", label: "Idea", icon: Lightbulb, description: "Capture initial concepts and thoughts" },
@@ -52,6 +55,7 @@ const CreateArtifactPage = () => {
   const { toast } = useToast();
   const { currentWorkspaceId, currentProjectId } = useUIStore();
   const createArtifact = useCreateArtifact();
+  const { canCreateArtifact, artifactAtLimit, usage } = useUsageLimits();
 
   const preselectedType = searchParams.get("type") as ArtifactType | null;
   const fromIdeaId = searchParams.get("fromIdea");
@@ -87,6 +91,16 @@ const CreateArtifactPage = () => {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
+  // Redirect if at limit
+  useEffect(() => {
+    if (artifactAtLimit) {
+      toast({
+        title: "Artifact limit reached",
+        description: "Upgrade your plan to create more artifacts.",
+        variant: "destructive",
+      });
+    }
+  }, [artifactAtLimit, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +111,16 @@ const CreateArtifactPage = () => {
         description: "Please select a workspace and project first.",
         variant: "destructive",
       });
+      return;
+    }
+
+    if (!canCreateArtifact) {
+      toast({
+        title: "Artifact limit reached",
+        description: "Upgrade your plan to create more artifacts.",
+        variant: "destructive",
+      });
+      navigate("/billing");
       return;
     }
 
@@ -160,6 +184,26 @@ const CreateArtifactPage = () => {
           </div>
 
           <div className="space-y-6">
+            {/* Limit Warning */}
+            {artifactAtLimit && (
+              <Alert className="border-destructive/50 bg-destructive/5">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                <AlertDescription className="flex items-center justify-between">
+                  <span className="text-destructive">
+                    You've reached your artifact limit ({usage?.artifacts.used}/{usage?.artifacts.limit}).
+                  </span>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                    onClick={() => navigate("/billing")}
+                  >
+                    Upgrade Plan
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Type Selection */}
             <Card>
               <CardHeader>

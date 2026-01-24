@@ -5,3 +5,5 @@ export { UpgradeConfirmDialog } from "./UpgradeConfirmDialog";
 export { DowngradeConfirmDialog } from "./DowngradeConfirmDialog";
 export { CancelSubscriptionDialog } from "./CancelSubscriptionDialog";
 export { ContactSalesDialog } from "./ContactSalesDialog";
+export { UsageLimitBanner } from "./UsageLimitBanner";
+export { UsageLimitDialog } from "./UsageLimitDialog";

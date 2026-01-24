@@ -7,18 +7,21 @@ import {
   CheckCircle2, 
   Loader2,
   FolderPlus,
-  Sparkles
+  Sparkles,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useCreateWorkspace } from "@/hooks/useWorkspaces";
 import { useCreateProject } from "@/hooks/useProjects";
 import { useUIStore } from "@/store/uiStore";
 import { useToast } from "@/hooks/use-toast";
+import { useUsageLimits } from "@/hooks/useUsageLimits";
 
 type Step = "welcome" | "create-workspace" | "create-project" | "success";
 
@@ -43,6 +46,7 @@ const OnboardingPage = () => {
   
   const createWorkspace = useCreateWorkspace();
   const createProject = useCreateProject();
+  const { canCreateProject, projectAtLimit, usage } = useUsageLimits();
 
   // Use existing workspace if adding project only, otherwise use newly created one
   const [createdWorkspaceId, setCreatedWorkspaceId] = useState<string | null>(
@@ -76,6 +80,17 @@ const OnboardingPage = () => {
   const handleCreateProject = async () => {
     if (!projectName.trim() || !projectKey.trim() || !createdWorkspaceId) {
       toast({ title: "Project name and key required", variant: "destructive" });
+      return;
+    }
+
+    // Check project limit (only when adding to existing workspace)
+    if (isAddingProjectOnly && !canCreateProject) {
+      toast({ 
+        title: "Project limit reached", 
+        description: "Upgrade your plan to create more projects.",
+        variant: "destructive" 
+      });
+      navigate("/billing");
       return;
     }
 
@@ -240,6 +255,23 @@ const OnboardingPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Show warning if approaching or at project limit */}
+                  {isAddingProjectOnly && projectAtLimit && (
+                    <Alert className="border-destructive/50 bg-destructive/5">
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                      <AlertDescription className="text-destructive">
+                        You've reached your project limit ({usage?.projects.used}/{usage?.projects.limit}).{" "}
+                        <Button 
+                          variant="link" 
+                          className="p-0 h-auto text-destructive underline"
+                          onClick={() => navigate("/billing")}
+                        >
+                          Upgrade your plan
+                        </Button>{" "}
+                        to create more projects.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="projectName">Project name</Label>
                     <Input
@@ -285,7 +317,7 @@ const OnboardingPage = () => {
                     <Button 
                       className="flex-1" 
                       onClick={handleCreateProject}
-                      disabled={createProject.isPending}
+                      disabled={createProject.isPending || (isAddingProjectOnly && projectAtLimit)}
                     >
                       {createProject.isPending ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />

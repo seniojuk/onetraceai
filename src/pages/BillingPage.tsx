@@ -172,6 +172,36 @@ const BillingPage = () => {
             </Alert>
           )}
 
+          {/* Usage Limit Warnings */}
+          {usage && (
+            <>
+              {usage.artifacts.limit && usage.artifacts.used >= usage.artifacts.limit && (
+                <Alert className="mb-4 border-destructive/50 bg-destructive/5">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  <AlertDescription className="text-destructive">
+                    You've reached your artifact limit. Upgrade your plan to create more artifacts.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {usage.projects.limit && usage.projects.used >= usage.projects.limit && (
+                <Alert className="mb-4 border-destructive/50 bg-destructive/5">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  <AlertDescription className="text-destructive">
+                    You've reached your project limit. Upgrade your plan to create more projects.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {usage.aiRuns.limit && usage.aiRuns.used >= usage.aiRuns.limit && (
+                <Alert className="mb-4 border-destructive/50 bg-destructive/5">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  <AlertDescription className="text-destructive">
+                    You've used all your AI runs for this month. Upgrade for more or wait until next month.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
+          )}
+
           {/* Current Plan Card */}
           <Card className="mb-8">
             <CardHeader>
