@@ -22,6 +22,8 @@ import { CurrentPlanUsage } from "@/components/billing/CurrentPlanUsage";
 import { PlanCards } from "@/components/billing/PlanCards";
 import { InvoiceHistoryTable } from "@/components/billing/InvoiceHistoryTable";
 import { UpgradeConfirmDialog } from "@/components/billing/UpgradeConfirmDialog";
+import { DowngradeConfirmDialog } from "@/components/billing/DowngradeConfirmDialog";
+import { CancelSubscriptionDialog } from "@/components/billing/CancelSubscriptionDialog";
 import { ContactSalesDialog } from "@/components/billing/ContactSalesDialog";
 import { format } from "date-fns";
 
@@ -33,6 +35,8 @@ const BillingPage = () => {
   // Dialog states
   const [selectedPlan, setSelectedPlan] = useState<PlanLimit | null>(null);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showContactSalesDialog, setShowContactSalesDialog] = useState(false);
 
   // Data hooks
@@ -70,8 +74,8 @@ const BillingPage = () => {
     }
   }, [searchParams, toast, refetchStatus, setSearchParams]);
 
-  const handleUpgradeClick = (plan: PlanLimit) => {
-    if (plan.plan_id === "enterprise") {
+  const handlePlanAction = (plan: PlanLimit, action: "upgrade" | "downgrade" | "contact") => {
+    if (action === "contact") {
       setShowContactSalesDialog(true);
       return;
     }
@@ -81,7 +85,12 @@ const BillingPage = () => {
     }
 
     setSelectedPlan(plan);
-    setShowUpgradeDialog(true);
+    
+    if (action === "downgrade") {
+      setShowDowngradeDialog(true);
+    } else {
+      setShowUpgradeDialog(true);
+    }
   };
 
   const handleConfirmUpgrade = async () => {
@@ -96,6 +105,19 @@ const BillingPage = () => {
     } catch (error) {
       // Error handled by mutation
     }
+  };
+
+  const handleConfirmDowngrade = async () => {
+    // For downgrade to free, redirect to customer portal for cancellation
+    if (selectedPlan?.plan_id === "free") {
+      portalMutation.mutate(`${window.location.origin}/billing`);
+      setShowDowngradeDialog(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    portalMutation.mutate(`${window.location.origin}/billing`);
+    setShowCancelDialog(false);
   };
 
   const handleManageBilling = async () => {
@@ -175,7 +197,15 @@ const BillingPage = () => {
               
               {/* Subscription management for paid plans */}
               {isPaidPlan && (
-                <div className="mt-6 pt-6 border-t flex items-center justify-end">
+                <div className="mt-6 pt-6 border-t flex items-center justify-between">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowCancelDialog(true)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    Cancel Subscription
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -197,8 +227,8 @@ const BillingPage = () => {
               plans={plans}
               currentPlanId={currentPlanId}
               isLoading={plansLoading}
-              isUpgrading={checkoutMutation.isPending}
-              onUpgrade={handleUpgradeClick}
+              isUpgrading={checkoutMutation.isPending || portalMutation.isPending}
+              onPlanAction={handlePlanAction}
             />
           </div>
 
@@ -237,6 +267,27 @@ const BillingPage = () => {
           currentPlanId={currentPlanId}
           onConfirm={handleConfirmUpgrade}
           isLoading={checkoutMutation.isPending}
+        />
+
+        {/* Downgrade Confirmation Dialog */}
+        <DowngradeConfirmDialog
+          open={showDowngradeDialog}
+          onOpenChange={setShowDowngradeDialog}
+          targetPlan={selectedPlan}
+          currentPlan={currentPlan || null}
+          subscriptionEnd={subscriptionEnd || null}
+          onConfirm={handleConfirmDowngrade}
+          isLoading={portalMutation.isPending}
+        />
+
+        {/* Cancel Subscription Dialog */}
+        <CancelSubscriptionDialog
+          open={showCancelDialog}
+          onOpenChange={setShowCancelDialog}
+          planName={currentPlan?.plan_name || "Pro"}
+          subscriptionEnd={subscriptionEnd || null}
+          onConfirm={handleCancelSubscription}
+          isLoading={portalMutation.isPending}
         />
 
         {/* Contact Sales Dialog */}
