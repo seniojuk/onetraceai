@@ -106,26 +106,39 @@ export function useJiraOAuthInit() {
 
         // Build redirect URI (back to the app after OAuth)
         const redirectUri = `${window.location.origin}/integrations/jira/callback`;
+        console.log("[JIRA OAuth] Initiating with redirectUri:", redirectUri);
 
         const response = await supabase.functions.invoke("jira-oauth-init", {
           body: { workspaceId, redirectUri },
         });
 
+        console.log("[JIRA OAuth] Response:", response);
+
         if (response.error) {
           throw new Error(response.error.message || "Failed to initiate OAuth");
         }
 
-        const { authUrl } = response.data;
+        const { authUrl, state } = response.data;
+        
+        if (!authUrl) {
+          throw new Error("No auth URL returned from server");
+        }
+
+        console.log("[JIRA OAuth] Received authUrl:", authUrl);
         
         // Store state in sessionStorage for callback verification
-        sessionStorage.setItem("jira_oauth_state", response.data.state);
+        sessionStorage.setItem("jira_oauth_state", state);
         sessionStorage.setItem("jira_oauth_workspace", workspaceId);
         sessionStorage.setItem("jira_oauth_redirect", redirectUri);
 
-        // Redirect to Jira OAuth
-        window.location.href = authUrl;
+        // Use setTimeout to ensure this runs after any React state updates
+        // This helps avoid issues with dialogs/modals blocking navigation
+        setTimeout(() => {
+          console.log("[JIRA OAuth] Redirecting to:", authUrl);
+          window.location.assign(authUrl);
+        }, 100);
       } catch (error) {
-        console.error("OAuth init error:", error);
+        console.error("[JIRA OAuth] Init error:", error);
         toast({
           title: "Connection Failed",
           description: error instanceof Error ? error.message : "Failed to connect to Jira",
