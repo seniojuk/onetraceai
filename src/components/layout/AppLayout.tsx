@@ -17,7 +17,8 @@ import {
   LogOut,
   Plus,
   Menu,
-  X
+  X,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -34,6 +35,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { useProjects } from "@/hooks/useProjects";
 import { useUIStore } from "@/store/uiStore";
+import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
@@ -72,6 +74,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const { data: workspaces, isLoading: loadingWorkspaces } = useWorkspaces();
   const { data: projects, isLoading: loadingProjects } = useProjects(currentWorkspaceId || undefined);
+  const { data: isPlatformAdmin } = usePlatformAdmin();
 
   // Set default workspace on load
   useEffect(() => {
@@ -227,6 +230,22 @@ export function AppLayout({ children }: AppLayoutProps) {
                     </Link>
                   );
                 })}
+                
+                {/* Platform Admin Link - Only visible to platform admins */}
+                {isPlatformAdmin && (
+                  <Link
+                    to="/admin"
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
+                      location.pathname === "/admin"
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground" 
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <Shield className="w-5 h-5 flex-shrink-0" />
+                    <span className="text-sm font-medium">Platform Admin</span>
+                  </Link>
+                )}
               </nav>
             </>
           )}

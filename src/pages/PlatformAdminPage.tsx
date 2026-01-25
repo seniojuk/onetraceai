@@ -2,9 +2,10 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { JiraPlatformAdminPanel } from "@/components/integrations/jira/JiraPlatformAdminPanel";
+import { PlatformAdminManagement } from "@/components/admin/PlatformAdminManagement";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Shield, Users, Settings2 } from "lucide-react";
+import { Shield, Users, Settings2, UserCog } from "lucide-react";
 
 const PlatformAdminPage = () => {
   const { data: isPlatformAdmin, isLoading } = usePlatformAdmin();
@@ -42,6 +43,17 @@ const PlatformAdminPage = () => {
             </Card>
           ) : (
             <div className="space-y-8">
+              {/* Platform Admin Management */}
+              <section>
+                <div className="flex items-center gap-2 mb-4">
+                  <UserCog className="w-5 h-5 text-muted-foreground" />
+                  <h2 className="text-lg font-semibold text-foreground">Admin Management</h2>
+                </div>
+                <PlatformAdminManagement />
+              </section>
+
+              <Separator />
+
               {/* Jira Connections Overview */}
               <section>
                 <div className="flex items-center gap-2 mb-4">
