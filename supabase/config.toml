@@ -23,3 +23,18 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.jira-oauth-init]
+verify_jwt = false
+
+[functions.jira-oauth-callback]
+verify_jwt = false
+
+[functions.jira-refresh-token]
+verify_jwt = false
+
+[functions.jira-disconnect]
+verify_jwt = false
+
+[functions.jira-get-projects]
+verify_jwt = false
