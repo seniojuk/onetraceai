@@ -3,9 +3,11 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { JiraPlatformAdminPanel } from "@/components/integrations/jira/JiraPlatformAdminPanel";
 import { PlatformAdminManagement } from "@/components/admin/PlatformAdminManagement";
+import { WorkspaceMetricsPanel } from "@/components/admin/WorkspaceMetricsPanel";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Shield, Users, Settings2, UserCog } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Shield, Users, Settings2, UserCog, BarChart3 } from "lucide-react";
 
 const PlatformAdminPage = () => {
   const { data: isPlatformAdmin, isLoading } = usePlatformAdmin();
@@ -42,45 +44,44 @@ const PlatformAdminPage = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-8">
-              {/* Platform Admin Management */}
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <UserCog className="w-5 h-5 text-muted-foreground" />
-                  <h2 className="text-lg font-semibold text-foreground">Admin Management</h2>
-                </div>
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList>
+                <TabsTrigger value="overview" className="gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  Usage Overview
+                </TabsTrigger>
+                <TabsTrigger value="admins" className="gap-2">
+                  <UserCog className="w-4 h-4" />
+                  Admin Management
+                </TabsTrigger>
+                <TabsTrigger value="integrations" className="gap-2">
+                  <Settings2 className="w-4 h-4" />
+                  Integrations
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-6">
+                <WorkspaceMetricsPanel />
+              </TabsContent>
+
+              <TabsContent value="admins" className="space-y-6">
                 <PlatformAdminManagement />
-              </section>
+              </TabsContent>
 
-              <Separator />
-
-              {/* Jira Connections Overview */}
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <Settings2 className="w-5 h-5 text-muted-foreground" />
-                  <h2 className="text-lg font-semibold text-foreground">Jira Integrations</h2>
-                </div>
+              <TabsContent value="integrations" className="space-y-6">
                 <JiraPlatformAdminPanel />
-              </section>
-
-              <Separator />
-
-              {/* Future: Workspace Overview */}
-              <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <Users className="w-5 h-5 text-muted-foreground" />
-                  <h2 className="text-lg font-semibold text-foreground">Workspaces Overview</h2>
-                </div>
+                
+                {/* Future: More integrations */}
                 <Card className="border-dashed">
                   <CardHeader>
-                    <CardTitle className="text-base text-muted-foreground">Coming Soon</CardTitle>
+                    <CardTitle className="text-base text-muted-foreground">More Integrations Coming Soon</CardTitle>
                     <CardDescription>
-                      Platform-wide workspace metrics and management tools will be available here.
+                      Platform-wide integration management for additional services will be available here.
                     </CardDescription>
                   </CardHeader>
                 </Card>
-              </section>
-            </div>
+              </TabsContent>
+            </Tabs>
           )}
         </div>
       </AppLayout>

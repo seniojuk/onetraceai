@@ -103,6 +103,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "agent_configs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       agent_pipelines: {
@@ -155,6 +162,13 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_pipelines_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
             referencedColumns: ["id"]
           },
         ]
@@ -252,6 +266,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ai_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       artifact_edges: {
@@ -324,6 +345,13 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artifact_edges_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
             referencedColumns: ["id"]
           },
         ]
@@ -420,6 +448,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "artifact_versions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       artifacts: {
@@ -496,6 +531,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "artifacts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       coverage_snapshots: {
@@ -558,6 +600,13 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coverage_snapshots_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
             referencedColumns: ["id"]
           },
         ]
@@ -639,6 +688,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "drift_findings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       invoices: {
@@ -706,6 +762,13 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
             referencedColumns: ["id"]
           },
         ]
@@ -811,6 +874,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "jira_audit_logs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       jira_connections: {
@@ -880,6 +950,13 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_connections_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
             referencedColumns: ["id"]
           },
         ]
@@ -993,6 +1070,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "jira_issue_mappings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       jira_issues_shadow: {
@@ -1080,6 +1164,13 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_issues_shadow_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1177,6 +1268,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "jira_project_links_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       jira_webhook_events: {
@@ -1236,6 +1334,13 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_webhook_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1326,6 +1431,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "llm_providers_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       onboarding_progress: {
@@ -1375,6 +1487,13 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "onboarding_progress_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1448,6 +1567,13 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pipeline_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1584,6 +1710,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "projects_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       subscriptions: {
@@ -1643,6 +1776,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "subscriptions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: true
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       usage_metrics: {
@@ -1684,6 +1824,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "usage_metrics_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       workspace_members: {
@@ -1717,6 +1864,13 @@ export type Database = {
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1780,6 +1934,13 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "jira_connections_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       jira_project_links_workspace_view: {
@@ -1835,7 +1996,37 @@ export type Database = {
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "jira_project_links_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      workspaces_admin_metrics_view: {
+        Row: {
+          ai_runs_this_month: number | null
+          artifact_count: number | null
+          created_at: string | null
+          created_by: string | null
+          created_by_name: string | null
+          current_period_end: string | null
+          id: string | null
+          max_ai_runs_per_month: number | null
+          max_artifacts: number | null
+          max_projects: number | null
+          max_storage_mb: number | null
+          member_count: number | null
+          name: string | null
+          plan_id: string | null
+          project_count: number | null
+          slug: string | null
+          storage_bytes: number | null
+          subscription_status: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
