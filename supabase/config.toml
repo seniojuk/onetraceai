@@ -44,3 +44,9 @@ verify_jwt = false
 
 [functions.jira-push-bulk]
 verify_jwt = false
+
+[functions.jira-pull-issue]
+verify_jwt = false
+
+[functions.jira-pull-sync]
+verify_jwt = false
