@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { useProjects } from "@/hooks/useProjects";
 import { useJiraConnection, useJiraProjectLink, useJiraDisconnect } from "@/hooks/useJiraConnection";
-import { JiraSetupWizard, JiraConfigurationDialog } from "@/components/integrations/jira";
+import { JiraSetupWizard, JiraConfigurationDialog, JiraConflictList } from "@/components/integrations/jira";
 import { useUIStore } from "@/store/uiStore";
 
 interface Integration {
@@ -359,6 +359,13 @@ const IntegrationsPage = () => {
               );
             })}
           </div>
+
+          {/* Jira Conflicts Section */}
+          {jiraConnection && activeProjectId && (
+            <div className="mt-8">
+              <JiraConflictList projectId={activeProjectId} workspaceId={activeWorkspaceId} />
+            </div>
+          )}
 
           {/* Jira Setup Wizard */}
           {activeWorkspaceId && activeProjectId && (
