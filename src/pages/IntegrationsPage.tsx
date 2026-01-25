@@ -394,6 +394,7 @@ const IntegrationsPage = () => {
               connection={jiraConnection}
               projectLink={jiraProjectLink || null}
               workspaceId={activeWorkspaceId}
+              projectId={activeProjectId}
               onDisconnected={() => {
                 refetchJiraConnection();
               }}
