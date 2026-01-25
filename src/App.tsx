@@ -16,6 +16,7 @@ import CoveragePage from "./pages/CoveragePage";
 import DriftPage from "./pages/DriftPage";
 import AIAgentsPage from "./pages/AIAgentsPage";
 import IntegrationsPage from "./pages/IntegrationsPage";
+import JiraOAuthCallbackPage from "./pages/JiraOAuthCallbackPage";
 import TeamPage from "./pages/TeamPage";
 import BillingPage from "./pages/BillingPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/drift" element={<DriftPage />} />
           <Route path="/ai-agents" element={<AIAgentsPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
+          <Route path="/integrations/jira/callback" element={<JiraOAuthCallbackPage />} />
           <Route path="/team" element={<TeamPage />} />
           <Route path="/billing" element={<BillingPage />} />
           <Route path="/settings" element={<SettingsPage />} />
