@@ -2,3 +2,7 @@ export { JiraSetupWizard } from "./JiraSetupWizard";
 export { JiraConnectionStep } from "./JiraConnectionStep";
 export { JiraProjectSelectStep } from "./JiraProjectSelectStep";
 export { JiraFieldMappingStep } from "./JiraFieldMappingStep";
+export { JiraConfigurationPanel } from "./JiraConfigurationPanel";
+export { JiraConfigurationDialog } from "./JiraConfigurationDialog";
+export { JiraStatusMappingEditor } from "./JiraStatusMappingEditor";
+export { JiraSyncSettingsEditor } from "./JiraSyncSettingsEditor";
