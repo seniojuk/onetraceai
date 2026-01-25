@@ -710,6 +710,494 @@ export type Database = {
           },
         ]
       }
+      jira_audit_logs: {
+        Row: {
+          action: string
+          action_details: Json | null
+          actor_id: string | null
+          actor_type: string
+          artifact_ids: string[] | null
+          connection_id: string | null
+          created_at: string | null
+          error_details: Json | null
+          error_message: string | null
+          id: string
+          ip_address: string | null
+          jira_issue_keys: string[] | null
+          project_id: string | null
+          project_link_id: string | null
+          result: string
+          user_agent: string | null
+          workspace_id: string
+        }
+        Insert: {
+          action: string
+          action_details?: Json | null
+          actor_id?: string | null
+          actor_type?: string
+          artifact_ids?: string[] | null
+          connection_id?: string | null
+          created_at?: string | null
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          jira_issue_keys?: string[] | null
+          project_id?: string | null
+          project_link_id?: string | null
+          result?: string
+          user_agent?: string | null
+          workspace_id: string
+        }
+        Update: {
+          action?: string
+          action_details?: Json | null
+          actor_id?: string | null
+          actor_type?: string
+          artifact_ids?: string[] | null
+          connection_id?: string | null
+          created_at?: string | null
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          jira_issue_keys?: string[] | null
+          project_id?: string | null
+          project_link_id?: string | null
+          result?: string
+          user_agent?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jira_audit_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "jira_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_audit_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_audit_logs_project_link_id_fkey"
+            columns: ["project_link_id"]
+            isOneToOne: false
+            referencedRelation: "jira_project_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_audit_logs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jira_connections: {
+        Row: {
+          access_token: string
+          connected_by: string | null
+          created_at: string | null
+          failure_count: number | null
+          id: string
+          jira_base_url: string
+          jira_cloud_id: string
+          jira_site_name: string | null
+          last_error_at: string | null
+          last_error_message: string | null
+          last_successful_sync: string | null
+          last_webhook_received: string | null
+          permissions: string
+          refresh_token: string | null
+          status: Database["public"]["Enums"]["jira_connection_status"]
+          token_expires_at: string | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          access_token: string
+          connected_by?: string | null
+          created_at?: string | null
+          failure_count?: number | null
+          id?: string
+          jira_base_url: string
+          jira_cloud_id: string
+          jira_site_name?: string | null
+          last_error_at?: string | null
+          last_error_message?: string | null
+          last_successful_sync?: string | null
+          last_webhook_received?: string | null
+          permissions?: string
+          refresh_token?: string | null
+          status?: Database["public"]["Enums"]["jira_connection_status"]
+          token_expires_at?: string | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          access_token?: string
+          connected_by?: string | null
+          created_at?: string | null
+          failure_count?: number | null
+          id?: string
+          jira_base_url?: string
+          jira_cloud_id?: string
+          jira_site_name?: string | null
+          last_error_at?: string | null
+          last_error_message?: string | null
+          last_successful_sync?: string | null
+          last_webhook_received?: string | null
+          permissions?: string
+          refresh_token?: string | null
+          status?: Database["public"]["Enums"]["jira_connection_status"]
+          token_expires_at?: string | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jira_connections_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jira_issue_mappings: {
+        Row: {
+          artifact_id: string
+          conflict_detected_at: string | null
+          conflict_resolved_at: string | null
+          conflict_resolved_by: string | null
+          created_at: string | null
+          created_by: string | null
+          has_conflict: boolean | null
+          id: string
+          jira_issue_id: string
+          jira_issue_key: string
+          jira_issue_type: string | null
+          jira_issue_url: string | null
+          last_pulled_at: string | null
+          last_pulled_description_hash: string | null
+          last_pulled_summary_hash: string | null
+          last_pushed_at: string | null
+          last_pushed_description_hash: string | null
+          last_pushed_summary_hash: string | null
+          project_id: string
+          project_link_id: string
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          artifact_id: string
+          conflict_detected_at?: string | null
+          conflict_resolved_at?: string | null
+          conflict_resolved_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          has_conflict?: boolean | null
+          id?: string
+          jira_issue_id: string
+          jira_issue_key: string
+          jira_issue_type?: string | null
+          jira_issue_url?: string | null
+          last_pulled_at?: string | null
+          last_pulled_description_hash?: string | null
+          last_pulled_summary_hash?: string | null
+          last_pushed_at?: string | null
+          last_pushed_description_hash?: string | null
+          last_pushed_summary_hash?: string | null
+          project_id: string
+          project_link_id: string
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          artifact_id?: string
+          conflict_detected_at?: string | null
+          conflict_resolved_at?: string | null
+          conflict_resolved_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          has_conflict?: boolean | null
+          id?: string
+          jira_issue_id?: string
+          jira_issue_key?: string
+          jira_issue_type?: string | null
+          jira_issue_url?: string | null
+          last_pulled_at?: string | null
+          last_pulled_description_hash?: string | null
+          last_pulled_summary_hash?: string | null
+          last_pushed_at?: string | null
+          last_pushed_description_hash?: string | null
+          last_pushed_summary_hash?: string | null
+          project_id?: string
+          project_link_id?: string
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jira_issue_mappings_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_issue_mappings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_issue_mappings_project_link_id_fkey"
+            columns: ["project_link_id"]
+            isOneToOne: false
+            referencedRelation: "jira_project_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_issue_mappings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jira_issues_shadow: {
+        Row: {
+          assignee_id: string | null
+          assignee_name: string | null
+          created_at: string | null
+          description_adf: Json | null
+          fetched_at: string | null
+          id: string
+          issue_type: string | null
+          jira_data: Json
+          jira_issue_id: string
+          jira_issue_key: string
+          mapping_id: string | null
+          priority: string | null
+          project_link_id: string
+          source: string
+          status: string | null
+          summary: string | null
+          workspace_id: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          assignee_name?: string | null
+          created_at?: string | null
+          description_adf?: Json | null
+          fetched_at?: string | null
+          id?: string
+          issue_type?: string | null
+          jira_data: Json
+          jira_issue_id: string
+          jira_issue_key: string
+          mapping_id?: string | null
+          priority?: string | null
+          project_link_id: string
+          source?: string
+          status?: string | null
+          summary?: string | null
+          workspace_id: string
+        }
+        Update: {
+          assignee_id?: string | null
+          assignee_name?: string | null
+          created_at?: string | null
+          description_adf?: Json | null
+          fetched_at?: string | null
+          id?: string
+          issue_type?: string | null
+          jira_data?: Json
+          jira_issue_id?: string
+          jira_issue_key?: string
+          mapping_id?: string | null
+          priority?: string | null
+          project_link_id?: string
+          source?: string
+          status?: string | null
+          summary?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jira_issues_shadow_mapping_id_fkey"
+            columns: ["mapping_id"]
+            isOneToOne: false
+            referencedRelation: "jira_issue_mappings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_issues_shadow_project_link_id_fkey"
+            columns: ["project_link_id"]
+            isOneToOne: false
+            referencedRelation: "jira_project_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_issues_shadow_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jira_project_links: {
+        Row: {
+          connection_id: string
+          created_at: string | null
+          created_by: string | null
+          field_map: Json | null
+          field_mode: Database["public"]["Enums"]["jira_field_mode"]
+          id: string
+          jira_project_id: string
+          jira_project_key: string
+          jira_project_name: string | null
+          last_pull_at: string | null
+          last_pull_status: string | null
+          last_push_at: string | null
+          last_push_status: string | null
+          project_id: string
+          required_field_defaults: Json | null
+          status_mapping: Json | null
+          sync_settings: Json | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string | null
+          created_by?: string | null
+          field_map?: Json | null
+          field_mode?: Database["public"]["Enums"]["jira_field_mode"]
+          id?: string
+          jira_project_id: string
+          jira_project_key: string
+          jira_project_name?: string | null
+          last_pull_at?: string | null
+          last_pull_status?: string | null
+          last_push_at?: string | null
+          last_push_status?: string | null
+          project_id: string
+          required_field_defaults?: Json | null
+          status_mapping?: Json | null
+          sync_settings?: Json | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          field_map?: Json | null
+          field_mode?: Database["public"]["Enums"]["jira_field_mode"]
+          id?: string
+          jira_project_id?: string
+          jira_project_key?: string
+          jira_project_name?: string | null
+          last_pull_at?: string | null
+          last_pull_status?: string | null
+          last_push_at?: string | null
+          last_push_status?: string | null
+          project_id?: string
+          required_field_defaults?: Json | null
+          status_mapping?: Json | null
+          sync_settings?: Json | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jira_project_links_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "jira_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_project_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_project_links_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jira_webhook_events: {
+        Row: {
+          connection_id: string | null
+          event_type: string
+          id: string
+          payload: Json
+          processed: boolean | null
+          processed_at: string | null
+          processing_error: string | null
+          received_at: string | null
+          webhook_id: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          connection_id?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          processed?: boolean | null
+          processed_at?: string | null
+          processing_error?: string | null
+          received_at?: string | null
+          webhook_id?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          connection_id?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed?: boolean | null
+          processed_at?: string | null
+          processing_error?: string | null
+          received_at?: string | null
+          webhook_id?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jira_webhook_events_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "jira_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_webhook_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       llm_models: {
         Row: {
           capabilities: Json | null
@@ -1205,7 +1693,13 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      jira_connection_status:
+        | "connected"
+        | "degraded"
+        | "broken"
+        | "disconnected"
+      jira_field_mode: "custom_fields" | "issue_properties"
+      jira_sync_direction: "push" | "pull" | "both"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1332,6 +1826,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      jira_connection_status: [
+        "connected",
+        "degraded",
+        "broken",
+        "disconnected",
+      ],
+      jira_field_mode: ["custom_fields", "issue_properties"],
+      jira_sync_direction: ["push", "pull", "both"],
+    },
   },
 } as const
