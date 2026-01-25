@@ -38,3 +38,9 @@ verify_jwt = false
 
 [functions.jira-get-projects]
 verify_jwt = false
+
+[functions.jira-push-artifact]
+verify_jwt = false
+
+[functions.jira-push-bulk]
+verify_jwt = false
