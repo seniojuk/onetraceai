@@ -777,6 +777,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "jira_audit_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "jira_connections_admin_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "jira_audit_logs_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -788,6 +795,13 @@ export type Database = {
             columns: ["project_link_id"]
             isOneToOne: false
             referencedRelation: "jira_project_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_audit_logs_project_link_id_fkey"
+            columns: ["project_link_id"]
+            isOneToOne: false
+            referencedRelation: "jira_project_links_workspace_view"
             referencedColumns: ["id"]
           },
           {
@@ -966,6 +980,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "jira_issue_mappings_project_link_id_fkey"
+            columns: ["project_link_id"]
+            isOneToOne: false
+            referencedRelation: "jira_project_links_workspace_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "jira_issue_mappings_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
@@ -1045,6 +1066,13 @@ export type Database = {
             columns: ["project_link_id"]
             isOneToOne: false
             referencedRelation: "jira_project_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_issues_shadow_project_link_id_fkey"
+            columns: ["project_link_id"]
+            isOneToOne: false
+            referencedRelation: "jira_project_links_workspace_view"
             referencedColumns: ["id"]
           },
           {
@@ -1129,6 +1157,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "jira_project_links_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "jira_connections_admin_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "jira_project_links_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -1187,6 +1222,13 @@ export type Database = {
             columns: ["connection_id"]
             isOneToOne: false
             referencedRelation: "jira_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_webhook_events_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "jira_connections_admin_view"
             referencedColumns: ["id"]
           },
           {
@@ -1452,6 +1494,30 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_admins: {
+        Row: {
+          created_at: string | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1684,9 +1750,96 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      jira_connections_admin_view: {
+        Row: {
+          connected_by: string | null
+          connected_by_name: string | null
+          created_at: string | null
+          failure_count: number | null
+          id: string | null
+          jira_base_url: string | null
+          jira_cloud_id: string | null
+          jira_site_name: string | null
+          last_error_at: string | null
+          last_error_message: string | null
+          last_successful_sync: string | null
+          permissions: string | null
+          project_links_count: number | null
+          status: Database["public"]["Enums"]["jira_connection_status"] | null
+          token_expires_at: string | null
+          updated_at: string | null
+          workspace_id: string | null
+          workspace_name: string | null
+          workspace_slug: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jira_connections_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jira_project_links_workspace_view: {
+        Row: {
+          connection_id: string | null
+          created_at: string | null
+          created_by: string | null
+          created_by_name: string | null
+          field_mode: Database["public"]["Enums"]["jira_field_mode"] | null
+          id: string | null
+          issue_mappings_count: number | null
+          jira_project_id: string | null
+          jira_project_key: string | null
+          jira_project_name: string | null
+          last_pull_at: string | null
+          last_pull_status: string | null
+          last_push_at: string | null
+          last_push_status: string | null
+          project_id: string | null
+          project_key: string | null
+          project_name: string | null
+          status_mapping: Json | null
+          sync_settings: Json | null
+          updated_at: string | null
+          workspace_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jira_project_links_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "jira_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_project_links_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "jira_connections_admin_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_project_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jira_project_links_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      is_platform_admin: { Args: { _user_id: string }; Returns: boolean }
       is_workspace_member: {
         Args: { workspace_uuid: string }
         Returns: boolean
