@@ -6,3 +6,5 @@ export { JiraConfigurationPanel } from "./JiraConfigurationPanel";
 export { JiraConfigurationDialog } from "./JiraConfigurationDialog";
 export { JiraStatusMappingEditor } from "./JiraStatusMappingEditor";
 export { JiraSyncSettingsEditor } from "./JiraSyncSettingsEditor";
+export { JiraConflictList } from "./JiraConflictList";
+export { JiraConflictResolverDialog } from "./JiraConflictResolverDialog";
