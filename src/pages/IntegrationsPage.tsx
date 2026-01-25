@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { useProjects } from "@/hooks/useProjects";
 import { useJiraConnection, useJiraProjectLink, useJiraDisconnect } from "@/hooks/useJiraConnection";
-import { JiraSetupWizard } from "@/components/integrations/jira";
+import { JiraSetupWizard, JiraConfigurationDialog } from "@/components/integrations/jira";
 import { useUIStore } from "@/store/uiStore";
 
 interface Integration {
@@ -99,6 +99,7 @@ const IntegrationsPage = () => {
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [showJiraWizard, setShowJiraWizard] = useState(false);
+  const [showJiraConfig, setShowJiraConfig] = useState(false);
 
   // Get workspace and project context
   const { currentWorkspaceId, currentProjectId } = useUIStore();
@@ -133,7 +134,7 @@ const IntegrationsPage = () => {
       return;
     }
 
-    // Special handling for Jira - open the wizard
+    // Special handling for Jira
     if (integration.id === "jira") {
       if (!activeWorkspaceId || !activeProjectId) {
         toast({
@@ -143,7 +144,12 @@ const IntegrationsPage = () => {
         });
         return;
       }
-      setShowJiraWizard(true);
+      // If already connected, open config dialog instead of wizard
+      if (jiraConnection) {
+        setShowJiraConfig(true);
+      } else {
+        setShowJiraWizard(true);
+      }
       return;
     }
 
@@ -373,7 +379,19 @@ const IntegrationsPage = () => {
             />
           )}
 
-          {/* Configuration Dialog for other integrations */}
+          {/* Jira Configuration Dialog */}
+          {activeWorkspaceId && jiraConnection && (
+            <JiraConfigurationDialog
+              open={showJiraConfig}
+              onOpenChange={setShowJiraConfig}
+              connection={jiraConnection}
+              projectLink={jiraProjectLink || null}
+              workspaceId={activeWorkspaceId}
+              onDisconnected={() => {
+                refetchJiraConnection();
+              }}
+            />
+          )}
           <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
             <DialogContent>
               <DialogHeader>
