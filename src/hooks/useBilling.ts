@@ -166,7 +166,8 @@ export function useCreateCheckout() {
     },
     onSuccess: (data) => {
       if (data?.url) {
-        window.open(data.url, "_blank");
+        // Use location.href instead of window.open to avoid popup blockers
+        window.location.href = data.url;
       }
     },
     onError: (error: Error) => {
@@ -195,7 +196,8 @@ export function useCustomerPortal() {
     },
     onSuccess: (data) => {
       if (data?.url) {
-        window.open(data.url, "_blank");
+        // Use location.href instead of window.open to avoid popup blockers
+        window.location.href = data.url;
       }
     },
     onError: (error: Error) => {
