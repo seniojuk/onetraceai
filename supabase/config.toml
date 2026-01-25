@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.jira-resolve-conflict]
 verify_jwt = false
+
+[functions.manage-platform-admins]
+verify_jwt = false
