@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCheckSubscription } from "./useBilling";
+import { useCheckSubscription, useSubscription } from "./useBilling";
 import { useAuth } from "./useAuth";
+import { useUIStore } from "@/store/uiStore";
 
 // Plans that have access to integrations
 const INTEGRATION_ENABLED_PLANS = ["pro", "enterprise"];
@@ -58,11 +59,19 @@ export function useWorkspaceMemberRole(workspaceId: string | undefined) {
 export function useIntegrationPermissions(
   workspaceId: string | undefined
 ): IntegrationPermissions {
-  const { data: subscriptionStatus, isLoading: planLoading } = useCheckSubscription();
+  const { currentWorkspaceId } = useUIStore();
+  const effectiveWorkspaceId = workspaceId || currentWorkspaceId;
+  
+  const { data: subscriptionStatus, isLoading: stripeLoading } = useCheckSubscription();
+  const { data: dbSubscription, isLoading: dbLoading } = useSubscription(effectiveWorkspaceId);
   const { data: role, isLoading: roleLoading } = useWorkspaceMemberRole(workspaceId);
 
   return useMemo(() => {
-    const planId = subscriptionStatus?.plan_id || "free";
+    // Use Stripe subscription if available, otherwise fall back to database subscription
+    const stripePlanId = subscriptionStatus?.plan_id;
+    const dbPlanId = dbSubscription?.plan_id;
+    const planId = stripePlanId && stripePlanId !== "free" ? stripePlanId : (dbPlanId || "free");
+    
     const hasIntegrationAccess = INTEGRATION_ENABLED_PLANS.includes(planId);
     const requiresUpgrade = !hasIntegrationAccess;
 
@@ -78,13 +87,13 @@ export function useIntegrationPermissions(
       canManageIntegrations: hasIntegrationAccess && canManageIntegrations,
       canConfigureSync: hasIntegrationAccess && canConfigureSync,
       canPushPull: hasIntegrationAccess && canPushPull,
-      isLoading: planLoading || roleLoading,
+      isLoading: stripeLoading || dbLoading || roleLoading,
       requiresUpgrade,
       upgradeMessage: requiresUpgrade
         ? "Jira integration is available on Pro and Enterprise plans. Upgrade to connect your Jira projects."
         : "",
     };
-  }, [subscriptionStatus, role, planLoading, roleLoading]);
+  }, [subscriptionStatus, dbSubscription, role, stripeLoading, dbLoading, roleLoading]);
 }
 
 // Helper to check if a specific integration feature is available
