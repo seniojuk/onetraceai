@@ -20,6 +20,7 @@ import JiraOAuthCallbackPage from "./pages/JiraOAuthCallbackPage";
 import TeamPage from "./pages/TeamPage";
 import BillingPage from "./pages/BillingPage";
 import SettingsPage from "./pages/SettingsPage";
+import PlatformAdminPage from "./pages/PlatformAdminPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
           <Route path="/team" element={<TeamPage />} />
           <Route path="/billing" element={<BillingPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/admin" element={<PlatformAdminPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

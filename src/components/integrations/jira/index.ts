@@ -11,3 +11,5 @@ export { JiraConflictResolverDialog } from "./JiraConflictResolverDialog";
 export { JiraHealthStatus } from "./JiraHealthStatus";
 export { JiraAuditLogTable } from "./JiraAuditLogTable";
 export { JiraSyncHistoryPanel } from "./JiraSyncHistoryPanel";
+export { JiraWorkspaceProjectLinks } from "./JiraWorkspaceProjectLinks";
+export { JiraPlatformAdminPanel } from "./JiraPlatformAdminPanel";
