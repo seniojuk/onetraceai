@@ -60,6 +60,16 @@ const OnboardingPage = () => {
     }
   }, [isAddingProjectOnly, currentWorkspaceId]);
 
+  // Check if user already has workspaces and redirect to dashboard
+  useEffect(() => {
+    // Only check if not adding project and not already completed onboarding
+    if (!isAddingProjectOnly && currentWorkspaceId) {
+      // User already has a workspace selected, redirect to dashboard
+      setShowOnboarding(false);
+      navigate("/dashboard");
+    }
+  }, [isAddingProjectOnly, currentWorkspaceId, setShowOnboarding, navigate]);
+
   const handleCreateWorkspace = async () => {
     if (!workspaceName.trim()) {
       toast({ title: "Workspace name required", variant: "destructive" });
