@@ -8,3 +8,6 @@ export { JiraStatusMappingEditor } from "./JiraStatusMappingEditor";
 export { JiraSyncSettingsEditor } from "./JiraSyncSettingsEditor";
 export { JiraConflictList } from "./JiraConflictList";
 export { JiraConflictResolverDialog } from "./JiraConflictResolverDialog";
+export { JiraHealthStatus } from "./JiraHealthStatus";
+export { JiraAuditLogTable } from "./JiraAuditLogTable";
+export { JiraSyncHistoryPanel } from "./JiraSyncHistoryPanel";
