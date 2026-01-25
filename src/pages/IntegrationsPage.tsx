@@ -1,16 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Plug, 
   Check, 
   ExternalLink,
   Settings,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,11 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useWorkspaces } from "@/hooks/useWorkspaces";
+import { useProjects } from "@/hooks/useProjects";
+import { useJiraConnection, useJiraProjectLink, useJiraDisconnect } from "@/hooks/useJiraConnection";
+import { JiraSetupWizard } from "@/components/integrations/jira";
+import { useUIStore } from "@/store/uiStore";
 
 interface Integration {
   id: string;
@@ -93,7 +98,31 @@ const IntegrationsPage = () => {
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
-  const [apiKey, setApiKey] = useState("");
+  const [showJiraWizard, setShowJiraWizard] = useState(false);
+
+  // Get workspace and project context
+  const { currentWorkspaceId, currentProjectId } = useUIStore();
+  const { data: workspaces } = useWorkspaces();
+  const { data: projects } = useProjects(currentWorkspaceId || workspaces?.[0]?.id);
+  
+  // Current workspace/project selection (use first if none selected)
+  const activeWorkspaceId = currentWorkspaceId || workspaces?.[0]?.id;
+  const activeProjectId = currentProjectId || projects?.[0]?.id;
+
+  // Jira connection state
+  const { data: jiraConnection, isLoading: jiraLoading, refetch: refetchJiraConnection } = useJiraConnection(activeWorkspaceId);
+  const { data: jiraProjectLink } = useJiraProjectLink(activeProjectId);
+  const jiraDisconnect = useJiraDisconnect();
+
+  // Derive Jira status from actual connection
+  const getJiraStatus = (): "connected" | "disconnected" | "degraded" => {
+    if (!jiraConnection) return "disconnected";
+    if (jiraConnection.status === "connected") return "connected";
+    if (jiraConnection.status === "degraded" || jiraConnection.status === "broken") return "degraded";
+    return "disconnected";
+  };
+
+  const jiraStatus = getJiraStatus();
 
   const handleConnect = async (integration: Integration) => {
     if (integration.status === "coming_soon") {
@@ -104,8 +133,36 @@ const IntegrationsPage = () => {
       return;
     }
 
+    // Special handling for Jira - open the wizard
+    if (integration.id === "jira") {
+      if (!activeWorkspaceId || !activeProjectId) {
+        toast({
+          title: "Select a Project",
+          description: "Please select a workspace and project before connecting Jira.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setShowJiraWizard(true);
+      return;
+    }
+
     setSelectedIntegration(integration);
     setShowConfigDialog(true);
+  };
+
+  const handleJiraDisconnect = async () => {
+    if (!jiraConnection || !activeWorkspaceId) return;
+    
+    setConnectingId("jira");
+    try {
+      await jiraDisconnect.mutateAsync({
+        connectionId: jiraConnection.id,
+        workspaceId: activeWorkspaceId,
+      });
+    } finally {
+      setConnectingId(null);
+    }
   };
 
   const handleSaveConnection = async () => {
@@ -121,10 +178,14 @@ const IntegrationsPage = () => {
     
     setConnectingId(null);
     setShowConfigDialog(false);
-    setApiKey("");
   };
 
   const handleDisconnect = async (integration: Integration) => {
+    if (integration.id === "jira") {
+      handleJiraDisconnect();
+      return;
+    }
+
     setConnectingId(integration.id);
     await new Promise(resolve => setTimeout(resolve, 1000));
     
@@ -143,6 +204,18 @@ const IntegrationsPage = () => {
     { id: "ai", label: "AI & ML" },
   ];
 
+  // Merge dynamic Jira status with static integrations
+  const getIntegrationWithStatus = (integration: Integration): Integration => {
+    if (integration.id === "jira") {
+      return {
+        ...integration,
+        status: jiraStatus === "degraded" ? "connected" : jiraStatus,
+        lastSync: jiraConnection?.last_successful_sync || undefined,
+      };
+    }
+    return integration;
+  };
+
   return (
     <AuthGuard>
       <AppLayout>
@@ -156,106 +229,151 @@ const IntegrationsPage = () => {
 
           <div className="space-y-8">
             {categories.map(category => {
-              const categoryIntegrations = integrations.filter(i => i.category === category.id);
+              const categoryIntegrations = integrations
+                .filter(i => i.category === category.id)
+                .map(getIntegrationWithStatus);
               if (categoryIntegrations.length === 0) return null;
 
               return (
                 <div key={category.id}>
                   <h2 className="text-lg font-semibold text-foreground mb-4">{category.label}</h2>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {categoryIntegrations.map(integration => (
-                      <Card 
-                        key={integration.id}
-                        className={cn(
-                          "relative",
-                          integration.status === "connected" && "border-success/50 bg-success/5"
-                        )}
-                      >
-                        <CardContent className="pt-6">
-                          <div className="flex items-start gap-4">
-                            <img 
-                              src={integration.icon} 
-                              alt={integration.name}
-                              className="w-10 h-10 rounded-lg"
-                              onError={(e) => {
-                                e.currentTarget.src = "https://via.placeholder.com/40";
-                              }}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-medium text-foreground">{integration.name}</h3>
-                                {integration.status === "connected" && (
-                                  <Badge className="bg-success/10 text-success border-success/30">
-                                    <Check className="w-3 h-3 mr-1" />
-                                    Connected
-                                  </Badge>
-                                )}
-                                {integration.status === "coming_soon" && (
-                                  <Badge variant="secondary">Coming Soon</Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-muted-foreground mb-3">
-                                {integration.description}
-                              </p>
-                              {integration.lastSync && (
-                                <p className="text-xs text-muted-foreground mb-3">
-                                  Last synced: {new Date(integration.lastSync).toLocaleString()}
+                    {categoryIntegrations.map(integration => {
+                      const isJira = integration.id === "jira";
+                      const isDegraded = isJira && jiraStatus === "degraded";
+
+                      return (
+                        <Card 
+                          key={integration.id}
+                          className={cn(
+                            "relative",
+                            integration.status === "connected" && !isDegraded && "border-success/50 bg-success/5",
+                            isDegraded && "border-warning/50 bg-warning/5"
+                          )}
+                        >
+                          <CardContent className="pt-6">
+                            <div className="flex items-start gap-4">
+                              <img 
+                                src={integration.icon} 
+                                alt={integration.name}
+                                className="w-10 h-10 rounded-lg"
+                                onError={(e) => {
+                                  e.currentTarget.src = "https://via.placeholder.com/40";
+                                }}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                  <h3 className="font-medium text-foreground">{integration.name}</h3>
+                                  {integration.status === "connected" && !isDegraded && (
+                                    <Badge className="bg-success/10 text-success border-success/30">
+                                      <Check className="w-3 h-3 mr-1" />
+                                      Connected
+                                    </Badge>
+                                  )}
+                                  {isDegraded && (
+                                    <Badge className="bg-warning/10 text-warning border-warning/30">
+                                      <AlertCircle className="w-3 h-3 mr-1" />
+                                      Needs Attention
+                                    </Badge>
+                                  )}
+                                  {integration.status === "coming_soon" && (
+                                    <Badge variant="secondary">Coming Soon</Badge>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  {integration.description}
                                 </p>
-                              )}
-                              <div className="flex gap-2">
-                                {integration.status === "connected" ? (
-                                  <>
+                                {/* Jira-specific info */}
+                                {isJira && jiraConnection && (
+                                  <p className="text-xs text-muted-foreground mb-2">
+                                    {jiraConnection.jira_site_name || jiraConnection.jira_base_url}
+                                    {jiraProjectLink && (
+                                      <span className="block mt-0.5">
+                                        Project: {jiraProjectLink.jira_project_key}
+                                      </span>
+                                    )}
+                                  </p>
+                                )}
+                                {integration.lastSync && (
+                                  <p className="text-xs text-muted-foreground mb-3">
+                                    Last synced: {new Date(integration.lastSync).toLocaleString()}
+                                  </p>
+                                )}
+                                <div className="flex gap-2 flex-wrap">
+                                  {integration.status === "connected" ? (
+                                    <>
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => handleConnect(integration)}
+                                        disabled={jiraLoading}
+                                      >
+                                        <Settings className="w-4 h-4 mr-1" />
+                                        Configure
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm"
+                                        onClick={() => handleDisconnect(integration)}
+                                        disabled={connectingId === integration.id}
+                                      >
+                                        {connectingId === integration.id ? (
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          "Disconnect"
+                                        )}
+                                      </Button>
+                                    </>
+                                  ) : (
                                     <Button 
-                                      variant="outline" 
                                       size="sm"
                                       onClick={() => handleConnect(integration)}
-                                    >
-                                      <Settings className="w-4 h-4 mr-1" />
-                                      Configure
-                                    </Button>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      onClick={() => handleDisconnect(integration)}
-                                      disabled={connectingId === integration.id}
-                                    >
-                                      {connectingId === integration.id ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        "Disconnect"
+                                      disabled={integration.status === "coming_soon" || connectingId === integration.id || jiraLoading}
+                                      className={cn(
+                                        integration.status !== "coming_soon" && "bg-accent hover:bg-accent/90"
                                       )}
+                                    >
+                                      {connectingId === integration.id || (isJira && jiraLoading) ? (
+                                        <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                      ) : (
+                                        <Plug className="w-4 h-4 mr-1" />
+                                      )}
+                                      Connect
                                     </Button>
-                                  </>
-                                ) : (
-                                  <Button 
-                                    size="sm"
-                                    onClick={() => handleConnect(integration)}
-                                    disabled={integration.status === "coming_soon" || connectingId === integration.id}
-                                    className={cn(
-                                      integration.status !== "coming_soon" && "bg-accent hover:bg-accent/90"
-                                    )}
-                                  >
-                                    {connectingId === integration.id ? (
-                                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                                    ) : (
-                                      <Plug className="w-4 h-4 mr-1" />
-                                    )}
-                                    Connect
-                                  </Button>
-                                )}
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Configuration Dialog */}
+          {/* Jira Setup Wizard */}
+          {activeWorkspaceId && activeProjectId && (
+            <JiraSetupWizard
+              open={showJiraWizard}
+              onOpenChange={setShowJiraWizard}
+              workspaceId={activeWorkspaceId}
+              projectId={activeProjectId}
+              connection={jiraConnection || null}
+              projectLink={jiraProjectLink || null}
+              onComplete={() => {
+                refetchJiraConnection();
+                toast({
+                  title: "Jira Integration Complete",
+                  description: "Your Jira project is now linked and ready to sync.",
+                });
+              }}
+            />
+          )}
+
+          {/* Configuration Dialog for other integrations */}
           <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
             <DialogContent>
               <DialogHeader>
@@ -276,38 +394,6 @@ const IntegrationsPage = () => {
                       <ExternalLink className="w-4 h-4 mr-2" />
                       Authorize with GitHub
                     </Button>
-                  </div>
-                )}
-                {selectedIntegration?.id === "jira" && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="jiraDomain">Jira Domain</Label>
-                      <Input
-                        id="jiraDomain"
-                        placeholder="yourcompany.atlassian.net"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="jiraEmail">Email</Label>
-                      <Input
-                        id="jiraEmail"
-                        type="email"
-                        placeholder="you@company.com"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="jiraToken">API Token</Label>
-                      <Input
-                        id="jiraToken"
-                        type="password"
-                        placeholder="Enter your Jira API token"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
-                          Create an API token
-                        </a>
-                      </p>
-                    </div>
                   </div>
                 )}
                 {selectedIntegration?.id === "openai" && (
