@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   Plug, 
   Check, 
@@ -6,7 +6,8 @@ import {
   Settings,
   Loader2,
   AlertCircle,
-  RefreshCw
+  Lock,
+  Crown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,8 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +28,9 @@ import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { useProjects } from "@/hooks/useProjects";
 import { useJiraConnection, useJiraProjectLink, useJiraDisconnect } from "@/hooks/useJiraConnection";
 import { JiraSetupWizard, JiraConfigurationDialog, JiraConflictList } from "@/components/integrations/jira";
+import { IntegrationUpgradeDialog } from "@/components/integrations/IntegrationUpgradeDialog";
 import { useUIStore } from "@/store/uiStore";
+import { useIntegrationPermissions, isFeatureAvailable } from "@/hooks/useIntegrationPermissions";
 
 interface Integration {
   id: string;
@@ -100,6 +101,8 @@ const IntegrationsPage = () => {
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [showJiraWizard, setShowJiraWizard] = useState(false);
   const [showJiraConfig, setShowJiraConfig] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [upgradeIntegrationName, setUpgradeIntegrationName] = useState("");
 
   // Get workspace and project context
   const { currentWorkspaceId, currentProjectId } = useUIStore();
@@ -109,6 +112,9 @@ const IntegrationsPage = () => {
   // Current workspace/project selection (use first if none selected)
   const activeWorkspaceId = currentWorkspaceId || workspaces?.[0]?.id;
   const activeProjectId = currentProjectId || projects?.[0]?.id;
+
+  // Permission checks
+  const permissions = useIntegrationPermissions(activeWorkspaceId);
 
   // Jira connection state
   const { data: jiraConnection, isLoading: jiraLoading, refetch: refetchJiraConnection } = useJiraConnection(activeWorkspaceId);
@@ -125,11 +131,33 @@ const IntegrationsPage = () => {
 
   const jiraStatus = getJiraStatus();
 
+  // Check if integration requires upgrade
+  const requiresUpgrade = (integrationId: string): boolean => {
+    return !isFeatureAvailable(permissions.planId, integrationId as any);
+  };
+
   const handleConnect = async (integration: Integration) => {
     if (integration.status === "coming_soon") {
       toast({
         title: "Coming Soon",
         description: `${integration.name} integration is coming soon!`,
+      });
+      return;
+    }
+
+    // Check if plan upgrade is required for this integration
+    if (requiresUpgrade(integration.id)) {
+      setUpgradeIntegrationName(integration.name);
+      setShowUpgradeDialog(true);
+      return;
+    }
+
+    // Check role-based permissions for managing integrations
+    if (!permissions.canManageIntegrations) {
+      toast({
+        title: "Permission Denied",
+        description: "You need Admin or Owner permissions to manage integrations.",
+        variant: "destructive",
       });
       return;
     }
@@ -247,6 +275,7 @@ const IntegrationsPage = () => {
                     {categoryIntegrations.map(integration => {
                       const isJira = integration.id === "jira";
                       const isDegraded = isJira && jiraStatus === "degraded";
+                      const needsUpgrade = requiresUpgrade(integration.id);
 
                       return (
                         <Card 
@@ -257,6 +286,15 @@ const IntegrationsPage = () => {
                             isDegraded && "border-warning/50 bg-warning/5"
                           )}
                         >
+                          {/* Pro Badge for premium integrations */}
+                          {needsUpgrade && integration.status !== "coming_soon" && (
+                            <div className="absolute top-2 right-2">
+                              <Badge className="bg-primary/10 text-primary border-primary/30">
+                                <Crown className="w-3 h-3 mr-1" />
+                                Pro
+                              </Badge>
+                            </div>
+                          )}
                           <CardContent className="pt-6">
                             <div className="flex items-start gap-4">
                               <img 
@@ -336,15 +374,18 @@ const IntegrationsPage = () => {
                                       onClick={() => handleConnect(integration)}
                                       disabled={integration.status === "coming_soon" || connectingId === integration.id || jiraLoading}
                                       className={cn(
-                                        integration.status !== "coming_soon" && "bg-accent hover:bg-accent/90"
+                                        integration.status !== "coming_soon" && !needsUpgrade && "bg-accent hover:bg-accent/90"
                                       )}
+                                      variant={needsUpgrade ? "outline" : "default"}
                                     >
                                       {connectingId === integration.id || (isJira && jiraLoading) ? (
                                         <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                      ) : needsUpgrade ? (
+                                        <Lock className="w-4 h-4 mr-1" />
                                       ) : (
                                         <Plug className="w-4 h-4 mr-1" />
                                       )}
-                                      Connect
+                                      {needsUpgrade ? "Upgrade to Connect" : "Connect"}
                                     </Button>
                                   )}
                                 </div>
@@ -455,6 +496,14 @@ const IntegrationsPage = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          {/* Integration Upgrade Dialog */}
+          <IntegrationUpgradeDialog
+            open={showUpgradeDialog}
+            onOpenChange={setShowUpgradeDialog}
+            integrationName={upgradeIntegrationName}
+            requiredPlan="Pro"
+          />
         </div>
       </AppLayout>
     </AuthGuard>
