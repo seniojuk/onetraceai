@@ -41,6 +41,7 @@ interface JiraConfigurationPanelProps {
   projectLink: JiraProjectLink | null;
   workspaceId: string;
   onDisconnected?: () => void;
+  onLinkProject?: () => void;
 }
 
 export function JiraConfigurationPanel({
@@ -48,6 +49,7 @@ export function JiraConfigurationPanel({
   projectLink,
   workspaceId,
   onDisconnected,
+  onLinkProject,
 }: JiraConfigurationPanelProps) {
   const [statusMappingOpen, setStatusMappingOpen] = useState(false);
   const [syncSettingsOpen, setSyncSettingsOpen] = useState(false);
@@ -335,7 +337,7 @@ export function JiraConfigurationPanel({
             <p className="text-muted-foreground mb-4">
               No Jira project linked to this OneTrace project yet.
             </p>
-            <Button variant="outline">
+            <Button variant="outline" onClick={onLinkProject}>
               Link Jira Project
             </Button>
           </CardContent>

@@ -21,6 +21,7 @@ interface JiraConfigurationDialogProps {
   workspaceId: string;
   projectId?: string;
   onDisconnected?: () => void;
+  onLinkProject?: () => void;
 }
 
 export function JiraConfigurationDialog({
@@ -31,6 +32,7 @@ export function JiraConfigurationDialog({
   workspaceId,
   projectId,
   onDisconnected,
+  onLinkProject,
 }: JiraConfigurationDialogProps) {
   const userRole = useCurrentUserRole(workspaceId);
   const isAdminOrOwner = userRole === "OWNER" || userRole === "ADMIN";
@@ -38,6 +40,11 @@ export function JiraConfigurationDialog({
   const handleDisconnected = () => {
     onDisconnected?.();
     onOpenChange(false);
+  };
+
+  const handleLinkProject = () => {
+    onOpenChange(false);
+    onLinkProject?.();
   };
 
   return (
@@ -64,6 +71,7 @@ export function JiraConfigurationDialog({
                 projectLink={projectLink}
                 workspaceId={workspaceId}
                 onDisconnected={handleDisconnected}
+                onLinkProject={handleLinkProject}
               />
             </ScrollArea>
           </TabsContent>
