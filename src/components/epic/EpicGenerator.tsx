@@ -47,6 +47,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { AIRunLimitWarning, useAIRunLimit } from "@/components/billing/AIRunLimitWarning";
+import { useAIRunTracking } from "@/hooks/useAIRunTracking";
 
 // Check if file type is text-extractable
 const isTextExtractable = (fileType: string, fileName: string): boolean => {
@@ -101,6 +102,10 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
   const createEdge = useCreateArtifactEdge();
   const { data: artifacts } = useArtifacts(currentProjectId || undefined, "PRD");
   const { canRunAI, isAtLimit } = useAIRunLimit();
+  const { startRun, completeRunWithResult, failRunWithError } = useAIRunTracking();
+  
+  // Track the current AI run ID
+  const [currentRunId, setCurrentRunId] = useState<string | null>(null);
 
   // Get the effective PRD artifact ID for file fetching
   const effectivePrdId = sourceArtifact?.id || "";
@@ -231,6 +236,20 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
     }
 
     setIsLoading(true);
+    
+    // Start AI run tracking
+    let runId: string | null = null;
+    if (currentWorkspaceId) {
+      runId = await startRun({
+        workspaceId: currentWorkspaceId,
+        projectId: currentProjectId || undefined,
+        generationType: "EPIC",
+        sourceArtifactId: sourceArtifact?.id,
+        inputSource: prdSource === "existing" ? "EXISTING_PRD" : "NEW_PRD",
+      });
+      setCurrentRunId(runId);
+    }
+    
     try {
       const data = await callEpicGenerator(prd, []);
 
@@ -246,11 +265,25 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
           },
         ]);
         setPhase("questions");
+        // Don't complete the run yet - we're still in conversation
       } else if (data.phase === "complete" && data.epics) {
         setGeneratedEpics(data.epics);
         setPhase("complete");
+        
+        // Complete the AI run tracking
+        if (runId && currentWorkspaceId) {
+          await completeRunWithResult(runId, currentWorkspaceId, {
+            generatedItems: data.epics.map((e: EpicData) => ({ title: e.title, type: "EPIC" })),
+          });
+          setCurrentRunId(null);
+        }
       }
     } catch (error) {
+      // Fail the AI run tracking
+      if (runId && currentWorkspaceId) {
+        await failRunWithError(runId, currentWorkspaceId, error instanceof Error ? error.message : "Unknown error");
+        setCurrentRunId(null);
+      }
       toast.error(error instanceof Error ? error.message : "Failed to start epic generation");
     } finally {
       setIsLoading(false);
@@ -299,8 +332,21 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
           },
         ]);
         setPhase("complete");
+        
+        // Complete the AI run tracking
+        if (currentRunId && currentWorkspaceId) {
+          await completeRunWithResult(currentRunId, currentWorkspaceId, {
+            generatedItems: data.epics.map((e: EpicData) => ({ title: e.title, type: "EPIC" })),
+          });
+          setCurrentRunId(null);
+        }
       }
     } catch (error) {
+      // Fail the AI run tracking
+      if (currentRunId && currentWorkspaceId) {
+        await failRunWithError(currentRunId, currentWorkspaceId, error instanceof Error ? error.message : "Unknown error");
+        setCurrentRunId(null);
+      }
       toast.error(error instanceof Error ? error.message : "Failed to process answers");
     } finally {
       setIsLoading(false);
@@ -324,8 +370,21 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
       if (data.phase === "complete" && data.epics) {
         setGeneratedEpics(data.epics);
         setPhase("complete");
+        
+        // Complete the AI run tracking
+        if (currentRunId && currentWorkspaceId) {
+          await completeRunWithResult(currentRunId, currentWorkspaceId, {
+            generatedItems: data.epics.map((e: EpicData) => ({ title: e.title, type: "EPIC" })),
+          });
+          setCurrentRunId(null);
+        }
       }
     } catch (error) {
+      // Fail the AI run tracking
+      if (currentRunId && currentWorkspaceId) {
+        await failRunWithError(currentRunId, currentWorkspaceId, error instanceof Error ? error.message : "Unknown error");
+        setCurrentRunId(null);
+      }
       toast.error(error instanceof Error ? error.message : "Failed to generate epics");
     } finally {
       setIsLoading(false);

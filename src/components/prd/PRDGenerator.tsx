@@ -29,6 +29,7 @@ import { useUIStore } from "@/store/uiStore";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { AIRunLimitWarning, useAIRunLimit } from "@/components/billing/AIRunLimitWarning";
+import { useAIRunTracking } from "@/hooks/useAIRunTracking";
 
 interface Question {
   id: string;
@@ -90,6 +91,10 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
   const createEdge = useCreateArtifactEdge();
   const { data: artifacts } = useArtifacts(currentProjectId || undefined, "IDEA");
   const { canRunAI, isAtLimit } = useAIRunLimit();
+  const { startRun, completeRunWithResult, failRunWithError } = useAIRunTracking();
+  
+  // Track the current AI run ID
+  const [currentRunId, setCurrentRunId] = useState<string | null>(null);
 
   const [phase, setPhase] = useState<"idea" | "questions" | "complete">("idea");
   const [ideaSource, setIdeaSource] = useState<"new" | "existing">(sourceArtifact ? "existing" : "new");
@@ -166,6 +171,20 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
     }
 
     setIsLoading(true);
+    
+    // Start AI run tracking
+    let runId: string | null = null;
+    if (currentWorkspaceId) {
+      runId = await startRun({
+        workspaceId: currentWorkspaceId,
+        projectId: currentProjectId || undefined,
+        generationType: "PRD",
+        sourceArtifactId: sourceArtifact?.id,
+        inputSource: ideaSource === "existing" ? "EXISTING_IDEA" : "NEW_IDEA",
+      });
+      setCurrentRunId(runId);
+    }
+    
     try {
       const data = await callPRDGenerator(ideaText, []);
 
@@ -184,11 +203,25 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
           },
         ]);
         setPhase("questions");
+        // Don't complete the run yet - we're still in conversation
       } else if (data.phase === "complete" && data.prd) {
         setGeneratedPRD(data.prd);
         setPhase("complete");
+        
+        // Complete the AI run tracking
+        if (runId && currentWorkspaceId) {
+          await completeRunWithResult(runId, currentWorkspaceId, {
+            generatedItems: [{ title: data.prd.title, type: "PRD" }],
+          });
+          setCurrentRunId(null);
+        }
       }
     } catch (error) {
+      // Fail the AI run tracking
+      if (runId && currentWorkspaceId) {
+        await failRunWithError(runId, currentWorkspaceId, error instanceof Error ? error.message : "Unknown error");
+        setCurrentRunId(null);
+      }
       toast.error(error instanceof Error ? error.message : "Failed to start PRD generation");
     } finally {
       setIsLoading(false);
@@ -241,8 +274,21 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
           },
         ]);
         setPhase("complete");
+        
+        // Complete the AI run tracking
+        if (currentRunId && currentWorkspaceId) {
+          await completeRunWithResult(currentRunId, currentWorkspaceId, {
+            generatedItems: [{ title: data.prd.title, type: "PRD" }],
+          });
+          setCurrentRunId(null);
+        }
       }
     } catch (error) {
+      // Fail the AI run tracking
+      if (currentRunId && currentWorkspaceId) {
+        await failRunWithError(currentRunId, currentWorkspaceId, error instanceof Error ? error.message : "Unknown error");
+        setCurrentRunId(null);
+      }
       toast.error(error instanceof Error ? error.message : "Failed to process answers");
     } finally {
       setIsLoading(false);
@@ -267,8 +313,21 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
       if (data.phase === "complete" && data.prd) {
         setGeneratedPRD(data.prd);
         setPhase("complete");
+        
+        // Complete the AI run tracking
+        if (currentRunId && currentWorkspaceId) {
+          await completeRunWithResult(currentRunId, currentWorkspaceId, {
+            generatedItems: [{ title: data.prd.title, type: "PRD" }],
+          });
+          setCurrentRunId(null);
+        }
       }
     } catch (error) {
+      // Fail the AI run tracking
+      if (currentRunId && currentWorkspaceId) {
+        await failRunWithError(currentRunId, currentWorkspaceId, error instanceof Error ? error.message : "Unknown error");
+        setCurrentRunId(null);
+      }
       toast.error(error instanceof Error ? error.message : "Failed to generate PRD");
     } finally {
       setIsLoading(false);

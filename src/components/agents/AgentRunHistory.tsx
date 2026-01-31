@@ -118,7 +118,10 @@ export function AgentRunHistory({ runs, isLoading, onViewRun, workspaceId, proje
                     <div className="flex items-center gap-2">
                       <Bot className="w-4 h-4 text-muted-foreground" />
                       <span className="font-medium truncate">
-                        {run.agent_config?.name || "Unknown Agent"}
+                        {run.agent_config?.name || 
+                          (run.metadata && typeof run.metadata === 'object' && 'generationType' in run.metadata 
+                            ? `${(run.metadata as { generationType: string }).generationType} Generator` 
+                            : "Unknown Agent")}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
