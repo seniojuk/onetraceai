@@ -268,13 +268,6 @@ export function useJiraProjects(connectionId: string | undefined, workspaceId: s
     queryFn: async () => {
       if (!connectionId || !workspaceId) return [];
 
-      const response = await supabase.functions.invoke("jira-get-projects", {
-        body: null,
-        method: "GET",
-        headers: {},
-      });
-
-      // Use query params approach
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
