@@ -8,7 +8,8 @@ import {
   AlertCircle,
   ExternalLink,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -30,11 +31,25 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { JiraConnection, JiraProjectLink, useJiraDisconnect, useJiraRefreshToken } from "@/hooks/useJiraConnection";
 import { useUpdateJiraProjectLink } from "@/hooks/useJiraProjectLinkMutations";
 import { JiraStatusMappingEditor } from "./JiraStatusMappingEditor";
 import { JiraSyncSettingsEditor } from "./JiraSyncSettingsEditor";
 import { cn } from "@/lib/utils";
+
+// Tooltip descriptions for section headings
+const SECTION_TOOLTIPS = {
+  connectionStatus: "Shows the current state of your Jira Cloud connection including site URL, last sync time, and token expiration. Use this to monitor the health of your integration and take action if issues arise.",
+  statusMapping: "Define how artifact statuses in OneTrace translate to Jira issue statuses and vice versa. When a status changes in one system, it will automatically update to the mapped status in the other system during sync.",
+  syncSettings: "Control which fields are synchronized between OneTrace and Jira. Enable or disable specific sync behaviors like title sync, description sync, coverage metrics, and automatic push on publish.",
+  traceabilityMode: "Determines how OneTrace stores traceability metadata on Jira issues. Custom Fields are visible in Jira UI but require admin setup. Issue Properties are hidden but work without admin configuration.",
+};
 
 interface JiraConfigurationPanelProps {
   connection: JiraConnection;
@@ -125,28 +140,39 @@ export function JiraConfigurationPanel({
   const isTokenExpiringSoon = tokenExpiresAt && tokenExpiresAt.getTime() - Date.now() < 24 * 60 * 60 * 1000;
 
   return (
-    <div className="space-y-6">
-      {/* Connection Status Card */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img 
-                src="https://wac-cdn.atlassian.com/assets/img/favicons/atlassian/favicon.png"
-                alt="Jira"
-                className="w-8 h-8 rounded"
-              />
-              <div>
-                <CardTitle className="text-lg">Jira Cloud</CardTitle>
-                <CardDescription>
-                  {connection.jira_site_name || connection.jira_base_url}
-                </CardDescription>
+    <TooltipProvider delayDuration={200}>
+      <div className="space-y-6">
+        {/* Connection Status Card */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img 
+                  src="https://wac-cdn.atlassian.com/assets/img/favicons/atlassian/favicon.png"
+                  alt="Jira"
+                  className="w-8 h-8 rounded"
+                />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-lg">Jira Cloud</CardTitle>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-xs">
+                        <p>{SECTION_TOOLTIPS.connectionStatus}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <CardDescription>
+                    {connection.jira_site_name || connection.jira_base_url}
+                  </CardDescription>
+                </div>
               </div>
+              {getStatusBadge()}
             </div>
-            {getStatusBadge()}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </CardHeader>
+          <CardContent className="space-y-4">
           {/* Connection Details */}
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
@@ -250,6 +276,14 @@ export function JiraConfigurationPanel({
                     <div className="flex items-center gap-2">
                       <ArrowRightLeft className="w-4 h-4 text-muted-foreground" />
                       <CardTitle className="text-base">Status Mapping</CardTitle>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs">
+                          <p>{SECTION_TOOLTIPS.statusMapping}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                     {statusMappingOpen ? (
                       <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -280,6 +314,14 @@ export function JiraConfigurationPanel({
                     <div className="flex items-center gap-2">
                       <Settings2 className="w-4 h-4 text-muted-foreground" />
                       <CardTitle className="text-base">Sync Settings</CardTitle>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-xs">
+                          <p>{SECTION_TOOLTIPS.syncSettings}</p>
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                     {syncSettingsOpen ? (
                       <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -307,6 +349,14 @@ export function JiraConfigurationPanel({
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
                 <CardTitle className="text-base">Traceability Mode</CardTitle>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-xs">
+                    <p>{SECTION_TOOLTIPS.traceabilityMode}</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </CardHeader>
             <CardContent>
@@ -344,5 +394,6 @@ export function JiraConfigurationPanel({
         </Card>
       )}
     </div>
+    </TooltipProvider>
   );
 }
