@@ -115,6 +115,22 @@ Deno.serve(async (req) => {
       business: "com.atlassian.jira-core-project-templates:jira-core-simplified-project-management",
     };
 
+    // Check if we have the manage:jira-configuration permission by checking stored permissions
+    const storedPermissions = connection.permissions || "";
+    const hasManagePermission = storedPermissions.includes("manage:jira-configuration");
+    
+    if (!hasManagePermission) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Missing required permission: manage:jira-configuration",
+          code: "MISSING_PERMISSION",
+          requiredScope: "manage:jira-configuration",
+          message: "The OneTrace AI Jira connection does not have permission to create projects. Please ask your Jira administrator to grant the 'manage:jira-configuration' scope to the OneTrace AI OAuth app, or create the project manually in Jira."
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // First, get the current user's account ID from Jira
     const myselfUrl = `https://api.atlassian.com/ex/jira/${connection.jira_cloud_id}/rest/api/3/myself`;
     const myselfResponse = await fetch(myselfUrl, {
@@ -183,6 +199,18 @@ Deno.serve(async (req) => {
           .from("jira_connections")
           .update({ status: "degraded", last_error_message: "Authentication failed" })
           .eq("id", connectionId);
+      }
+
+      // Handle 403 - permission denied from Jira API
+      if (createResponse.status === 403) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Permission denied by Jira",
+            code: "JIRA_PERMISSION_DENIED",
+            message: "Jira denied the request to create a project. This may be due to missing 'manage:jira-configuration' scope or insufficient Jira user permissions. You can create the project manually in Jira and then select it here."
+          }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
       
       return new Response(

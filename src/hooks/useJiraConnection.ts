@@ -292,3 +292,9 @@ export function useJiraProjects(connectionId: string | undefined, workspaceId: s
     enabled: !!connectionId && !!workspaceId,
   });
 }
+
+// Check if connection has specific permission
+export function useJiraHasPermission(connection: JiraConnection | null | undefined, permission: string) {
+  if (!connection?.permissions) return false;
+  return connection.permissions.includes(permission);
+}

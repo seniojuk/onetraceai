@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Select,
@@ -21,10 +21,12 @@ import {
   FolderKanban,
   AlertCircle,
   Check,
-  Plus
+  Plus,
+  ShieldAlert,
+  ExternalLink
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { JiraConnection, JiraProject, useJiraProjects } from "@/hooks/useJiraConnection";
+import { JiraConnection, JiraProject, useJiraProjects, useJiraHasPermission } from "@/hooks/useJiraConnection";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -55,8 +57,12 @@ export function JiraProjectSelectStep({
   const [newProjectType, setNewProjectType] = useState<ProjectType>("software");
   const [newProjectDescription, setNewProjectDescription] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
   
   const { toast } = useToast();
+
+  // Check if the connection has permission to create projects
+  const hasCreatePermission = useJiraHasPermission(connection, "manage:jira-configuration");
 
   const { data: projects, isLoading, error, refetch } = useJiraProjects(
     connection.id,
@@ -115,6 +121,7 @@ export function JiraProjectSelectStep({
     }
 
     setIsCreating(true);
+    setPermissionError(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
@@ -172,11 +179,18 @@ export function JiraProjectSelectStep({
       
     } catch (err) {
       console.error("Failed to create Jira project:", err);
-      toast({
-        title: "Failed to Create Project",
-        description: err instanceof Error ? err.message : "An unexpected error occurred",
-        variant: "destructive",
-      });
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
+      
+      // Check if it's a permission error
+      if (errorMessage.includes("manage:jira-configuration") || errorMessage.includes("Permission denied")) {
+        setPermissionError(errorMessage);
+      } else {
+        toast({
+          title: "Failed to Create Project",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsCreating(false);
     }
@@ -315,6 +329,83 @@ export function JiraProjectSelectStep({
         </TabsContent>
 
         <TabsContent value="create" className="mt-4 space-y-4">
+          {/* Permission warning - show if we know permission is missing */}
+          {!hasCreatePermission && (
+            <Alert className="bg-amber-500/10 border-amber-500/30">
+              <ShieldAlert className="h-4 w-4 text-amber-500" />
+              <AlertTitle className="text-amber-600">Limited Permissions</AlertTitle>
+              <AlertDescription className="text-muted-foreground">
+                <p className="mb-2">
+                  The OneTrace AI Jira connection may not have permission to create projects. 
+                  The <code className="text-xs bg-muted px-1 py-0.5 rounded">manage:jira-configuration</code> scope 
+                  is required for this feature.
+                </p>
+                <p className="text-sm">
+                  If project creation fails, you can either:
+                </p>
+                <ul className="list-disc list-inside mt-1 text-sm space-y-1">
+                  <li>Ask your Jira administrator to grant the required scope</li>
+                  <li>
+                    <a 
+                      href={connection.jira_base_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      Create the project manually in Jira
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                    {" "}and then select it from the Existing Projects tab
+                  </li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Permission error - show after a failed attempt */}
+          {permissionError && (
+            <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Permission Denied</AlertTitle>
+              <AlertDescription>
+                <p className="mb-2">{permissionError}</p>
+                <p className="text-sm mt-2">
+                  <strong>To resolve this:</strong>
+                </p>
+                <ul className="list-disc list-inside mt-1 text-sm space-y-1">
+                  <li>
+                    Ask your Jira administrator to add the <code className="text-xs bg-muted px-1 py-0.5 rounded">manage:jira-configuration</code> scope 
+                    to the OneTrace AI OAuth app in the Atlassian Developer Console
+                  </li>
+                  <li>
+                    Or,{" "}
+                    <a 
+                      href={connection.jira_base_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      create the project manually in Jira
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                    {" "}and select it from the "Existing Projects" tab
+                  </li>
+                </ul>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-3"
+                  onClick={() => {
+                    setActiveTab("existing");
+                    refetch();
+                  }}
+                >
+                  Go to Existing Projects
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="projectName">Project Name *</Label>
