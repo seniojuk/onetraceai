@@ -571,7 +571,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             fromArtifactId: epicId,
             toArtifactId: artifact.id,
             edgeType: "CONTAINS",
-            source: "USER_ASSIGNED",
+            source: "MANUAL",
             sourceRef: "story-generator",
             metadata: { linkedVia: "epic-selector" },
           });
@@ -636,7 +636,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             fromArtifactId: epicId,
             toArtifactId: artifact.id,
             edgeType: "CONTAINS",
-            source: "USER_ASSIGNED",
+            source: "MANUAL",
             sourceRef: "story-generator",
             metadata: { linkedVia: "epic-selector" },
           });
@@ -783,7 +783,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             fromArtifactId: epicId,
             toArtifactId: artifact.id,
             edgeType: "CONTAINS",
-            source: "USER_ASSIGNED",
+            source: "MANUAL",
             sourceRef: "story-generator",
             metadata: { linkedVia: "epic-selector" },
           });
