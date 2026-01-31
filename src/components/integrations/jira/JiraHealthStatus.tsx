@@ -6,13 +6,23 @@ import {
   RefreshCw,
   Clock,
   AlertCircle,
+  HelpCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useJiraConnectionHealth } from "@/hooks/useJiraAuditLogs";
 import { cn } from "@/lib/utils";
+
+// Tooltip description for connection health
+const CONNECTION_HEALTH_TOOLTIP = "Displays the real-time status of your Jira connection. Shows when the last successful sync occurred, any recent failures, error messages, and token expiration warnings. A healthy connection shows 'Connected' status with recent sync activity.";
 
 interface JiraHealthStatusProps {
   connectionId: string;
@@ -76,17 +86,26 @@ export function JiraHealthStatus({
     : false;
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            {getStatusIcon()}
-            Connection Health
-          </CardTitle>
-          {getStatusBadge()}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <TooltipProvider delayDuration={200}>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              {getStatusIcon()}
+              Connection Health
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-xs">
+                  <p>{CONNECTION_HEALTH_TOOLTIP}</p>
+                </TooltipContent>
+              </Tooltip>
+            </CardTitle>
+            {getStatusBadge()}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
         <div className="grid gap-3 text-sm">
           {health.last_successful_sync && (
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -153,7 +172,8 @@ export function JiraHealthStatus({
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }
