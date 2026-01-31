@@ -105,75 +105,102 @@ function computeHash(content: string): string {
 }
 
 // Convert markdown to Atlassian Document Format (ADF) - simplified version
-function markdownToADF(markdown: string | null): object {
-  if (!markdown) {
-    return {
-      version: 1,
-      type: "doc",
-      content: [
-        {
-          type: "paragraph",
-          content: [{ type: "text", text: "No description provided." }],
-        },
-      ],
-    };
-  }
-
-  // Simple conversion: split by newlines and create paragraphs
-  const lines = markdown.split("\n");
+// Optionally appends OneTrace metadata footer for traceability
+function markdownToADF(
+  markdown: string | null,
+  metadata?: { shortId: string; artifactId: string; type: string }
+): object {
   const content: object[] = [];
 
-  for (const line of lines) {
-    if (line.trim() === "") continue;
+  if (!markdown) {
+    content.push({
+      type: "paragraph",
+      content: [{ type: "text", text: "No description provided." }],
+    });
+  } else {
+    // Simple conversion: split by newlines and create paragraphs
+    const lines = markdown.split("\n");
 
-    // Handle headers
-    if (line.startsWith("### ")) {
-      content.push({
-        type: "heading",
-        attrs: { level: 3 },
-        content: [{ type: "text", text: line.substring(4) }],
-      });
-    } else if (line.startsWith("## ")) {
-      content.push({
-        type: "heading",
-        attrs: { level: 2 },
-        content: [{ type: "text", text: line.substring(3) }],
-      });
-    } else if (line.startsWith("# ")) {
-      content.push({
-        type: "heading",
-        attrs: { level: 1 },
-        content: [{ type: "text", text: line.substring(2) }],
-      });
-    } else if (line.startsWith("- ") || line.startsWith("* ")) {
-      // Handle bullet points
-      content.push({
-        type: "bulletList",
-        content: [
-          {
-            type: "listItem",
-            content: [
-              {
-                type: "paragraph",
-                content: [{ type: "text", text: line.substring(2) }],
-              },
-            ],
-          },
-        ],
-      });
-    } else {
-      // Regular paragraph
+    for (const line of lines) {
+      if (line.trim() === "") continue;
+
+      // Handle headers
+      if (line.startsWith("### ")) {
+        content.push({
+          type: "heading",
+          attrs: { level: 3 },
+          content: [{ type: "text", text: line.substring(4) }],
+        });
+      } else if (line.startsWith("## ")) {
+        content.push({
+          type: "heading",
+          attrs: { level: 2 },
+          content: [{ type: "text", text: line.substring(3) }],
+        });
+      } else if (line.startsWith("# ")) {
+        content.push({
+          type: "heading",
+          attrs: { level: 1 },
+          content: [{ type: "text", text: line.substring(2) }],
+        });
+      } else if (line.startsWith("- ") || line.startsWith("* ")) {
+        // Handle bullet points
+        content.push({
+          type: "bulletList",
+          content: [
+            {
+              type: "listItem",
+              content: [
+                {
+                  type: "paragraph",
+                  content: [{ type: "text", text: line.substring(2) }],
+                },
+              ],
+            },
+          ],
+        });
+      } else {
+        // Regular paragraph
+        content.push({
+          type: "paragraph",
+          content: [{ type: "text", text: line }],
+        });
+      }
+    }
+
+    if (content.length === 0) {
       content.push({
         type: "paragraph",
-        content: [{ type: "text", text: line }],
+        content: [{ type: "text", text: markdown }],
       });
     }
   }
 
-  if (content.length === 0) {
+  // Add OneTrace metadata footer for traceability
+  if (metadata) {
+    // Add a horizontal rule separator
+    content.push({ type: "rule" });
+
+    // Add metadata panel
     content.push({
-      type: "paragraph",
-      content: [{ type: "text", text: markdown }],
+      type: "panel",
+      attrs: { panelType: "info" },
+      content: [
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "OneTrace Reference: ", marks: [{ type: "strong" }] },
+            { type: "text", text: `${metadata.shortId} (${metadata.type})` },
+          ],
+        },
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "Artifact ID: ", marks: [{ type: "strong" }] },
+            { type: "text", text: metadata.artifactId, marks: [{ type: "code" }] },
+          ],
+        },
+      ],
     });
   }
 
@@ -249,7 +276,13 @@ async function createJiraIssue(
   projectLink: ProjectLink
 ): Promise<{ id: string; key: string; self: string }> {
   const issueType = mapArtifactTypeToJiraIssueType(artifact.type);
-  const description = markdownToADF(artifact.content_markdown);
+  
+  // Include OneTrace metadata in the description for traceability
+  const description = markdownToADF(artifact.content_markdown, {
+    shortId: artifact.short_id,
+    artifactId: artifact.id,
+    type: artifact.type,
+  });
 
   const issueData: Record<string, unknown> = {
     fields: {
@@ -307,7 +340,13 @@ async function updateJiraIssue(
   artifact: ArtifactData,
   projectLink: ProjectLink
 ): Promise<void> {
-  const description = markdownToADF(artifact.content_markdown);
+  // Include OneTrace metadata in the description for traceability
+  const description = markdownToADF(artifact.content_markdown, {
+    shortId: artifact.short_id,
+    artifactId: artifact.id,
+    type: artifact.type,
+  });
+  
   const updateData: Record<string, unknown> = {
     fields: {},
   };
