@@ -14,6 +14,11 @@ import { JiraAuditLogTable } from "./JiraAuditLogTable";
 import { JiraConflictList } from "./JiraConflictList";
 import { useJiraPullSync } from "@/hooks/useJiraPull";
 import { useJiraBulkPush } from "@/hooks/useJiraPush";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+// Supported artifact types for Jira sync
+const PUSHABLE_ARTIFACT_TYPES = ["EPIC", "STORY", "BUG"];
 
 // Tooltip descriptions for section headings
 const SECTION_TOOLTIPS = {
@@ -36,8 +41,10 @@ export function JiraSyncHistoryPanel({
   projectLinkId,
 }: JiraSyncHistoryPanelProps) {
   const [activeTab, setActiveTab] = useState("activity");
+  const [isPushingAll, setIsPushingAll] = useState(false);
   const pullSync = useJiraPullSync();
   const bulkPush = useJiraBulkPush();
+  const { toast } = useToast();
 
   const handlePullSync = async () => {
     if (!projectLinkId) return;
@@ -46,8 +53,45 @@ export function JiraSyncHistoryPanel({
 
   const handlePushAll = async () => {
     if (!projectLinkId) return;
-    // For now, push all would need artifact IDs - this is a placeholder
-    // In a full implementation, you'd query for all linked artifacts
+    
+    setIsPushingAll(true);
+    try {
+      // Query for all pushable artifacts in this project
+      const { data: artifacts, error } = await supabase
+        .from("artifacts")
+        .select("id")
+        .eq("project_id", projectId)
+        .eq("workspace_id", workspaceId)
+        .in("type", PUSHABLE_ARTIFACT_TYPES);
+
+      if (error) {
+        throw new Error("Failed to fetch artifacts: " + error.message);
+      }
+
+      if (!artifacts || artifacts.length === 0) {
+        toast({
+          title: "No Artifacts to Push",
+          description: "No Epic, Story, or Bug artifacts found in this project.",
+        });
+        return;
+      }
+
+      const artifactIds = artifacts.map((a) => a.id);
+      
+      await bulkPush.mutateAsync({
+        artifactIds,
+        projectLinkId,
+        workspaceId,
+      });
+    } catch (error) {
+      toast({
+        title: "Push Failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPushingAll(false);
+    }
   };
 
   return (
@@ -88,11 +132,15 @@ export function JiraSyncHistoryPanel({
             <Button
               variant="outline"
               size="sm"
-              disabled={!projectLinkId}
+              disabled={!projectLinkId || isPushingAll}
               onClick={handlePushAll}
             >
-              <ArrowUpCircle className="h-4 w-4 mr-2" />
-              Push All Changes
+              {isPushingAll ? (
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <ArrowUpCircle className="h-4 w-4 mr-2" />
+              )}
+              {isPushingAll ? "Pushing..." : "Push All Changes"}
             </Button>
           </CardContent>
         </Card>
