@@ -283,8 +283,8 @@ export function AgentRunResultsDialog({
           )}
 
           {/* Content Tabs */}
-          <Tabs defaultValue="outputs" className="flex-1 flex flex-col min-h-0">
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs defaultValue="outputs" className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <TabsList className="grid w-full grid-cols-3 flex-shrink-0">
               <TabsTrigger value="outputs" className="gap-2">
                 <FileText className="w-4 h-4" />
                 Outputs ({outputs.length})
@@ -299,7 +299,7 @@ export function AgentRunResultsDialog({
               </TabsTrigger>
             </TabsList>
 
-            <ScrollArea className="flex-1 mt-4">
+            <ScrollArea className="flex-1 mt-4 min-h-0">
               <TabsContent value="outputs" className="m-0 space-y-3">
                 {outputs.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
