@@ -480,11 +480,12 @@ const LandingPage = () => {
             <div className="flex items-center gap-8 text-sm text-primary-foreground/70">
               <a href="#" className="hover:text-primary-foreground transition-colors">Docs</a>
               <a href="#" className="hover:text-primary-foreground transition-colors">Blog</a>
-              <a href="#" className="hover:text-primary-foreground transition-colors">Privacy</a>
-              <a href="#" className="hover:text-primary-foreground transition-colors">Terms</a>
+              <Link to="/privacy" className="hover:text-primary-foreground transition-colors">Privacy</Link>
+              <Link to="/terms" className="hover:text-primary-foreground transition-colors">Terms</Link>
+              <Link to="/contact" className="hover:text-primary-foreground transition-colors">Contact</Link>
             </div>
             <p className="text-sm text-primary-foreground/70">
-              © 2024 OneTrace AI. All rights reserved.
+              © 2026 OneTrace AI, Inc. All rights reserved.
             </p>
           </div>
         </div>
