@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -36,15 +36,23 @@ export function JiraSetupWizard({
   projectLink,
   onComplete,
 }: JiraSetupWizardProps) {
-  // Determine initial step based on existing connection state
-  const getInitialStep = (): WizardStep => {
+  // Determine step based on existing connection state
+  const getCorrectStep = (): WizardStep => {
     if (!connection || connection.status === "disconnected") return "connect";
     if (!projectLink) return "select-project";
     return "field-mapping";
   };
 
-  const [currentStep, setCurrentStep] = useState<WizardStep>(getInitialStep);
+  const [currentStep, setCurrentStep] = useState<WizardStep>(getCorrectStep);
   const [selectedJiraProject, setSelectedJiraProject] = useState<JiraProject | null>(null);
+
+  // Reset step when dialog opens to ensure correct starting point
+  useEffect(() => {
+    if (open) {
+      setCurrentStep(getCorrectStep());
+      setSelectedJiraProject(null);
+    }
+  }, [open, connection, projectLink]);
 
   const currentStepIndex = STEPS.findIndex((s) => s.id === currentStep);
   const progress = ((currentStepIndex + 1) / STEPS.length) * 100;
