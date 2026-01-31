@@ -268,12 +268,47 @@ async function refreshTokenIfNeeded(
   return tokenData.access_token;
 }
 
+async function findParentEpicJiraKey(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  artifactId: string,
+  workspaceId: string,
+  projectLinkId: string
+): Promise<string | null> {
+  // Find parent Epic via artifact_edges (CONTAINS relationship where Epic contains Story)
+  const { data: parentEdge } = await supabase
+    .from("artifact_edges")
+    .select(`
+      from_artifact_id,
+      from_artifact:artifacts!artifact_edges_from_artifact_id_fkey(type)
+    `)
+    .eq("to_artifact_id", artifactId)
+    .eq("workspace_id", workspaceId)
+    .eq("edge_type", "CONTAINS")
+    .maybeSingle();
+
+  if (!parentEdge || parentEdge.from_artifact?.type !== "EPIC") {
+    return null;
+  }
+
+  // Check if the parent Epic has already been pushed to Jira
+  const { data: parentMapping } = await supabase
+    .from("jira_issue_mappings")
+    .select("jira_issue_key")
+    .eq("artifact_id", parentEdge.from_artifact_id)
+    .eq("project_link_id", projectLinkId)
+    .maybeSingle();
+
+  return parentMapping?.jira_issue_key || null;
+}
+
 async function createJiraIssue(
   accessToken: string,
   cloudId: string,
   projectKey: string,
   artifact: ArtifactData,
-  projectLink: ProjectLink
+  projectLink: ProjectLink,
+  parentEpicKey: string | null
 ): Promise<{ id: string; key: string; self: string }> {
   const issueType = mapArtifactTypeToJiraIssueType(artifact.type);
   
@@ -284,14 +319,19 @@ async function createJiraIssue(
     type: artifact.type,
   });
 
-  const issueData: Record<string, unknown> = {
-    fields: {
-      project: { key: projectKey },
-      summary: artifact.title,
-      issuetype: { name: issueType },
-      description,
-    },
+  const fields: Record<string, unknown> = {
+    project: { key: projectKey },
+    summary: artifact.title,
+    issuetype: { name: issueType },
+    description,
   };
+
+  // Link Story to parent Epic if available
+  if (parentEpicKey && artifact.type === "STORY") {
+    fields.parent = { key: parentEpicKey };
+  }
+
+  const issueData: Record<string, unknown> = { fields };
 
   // Add OneTrace reference in issue properties if using that mode
   if (projectLink.field_mode === "issue_properties") {
@@ -687,12 +727,25 @@ Deno.serve(async (req) => {
     } else {
       // Create new issue
       action = "push_create";
+      
+      // Find parent Epic's Jira key if this is a Story
+      let parentEpicKey: string | null = null;
+      if (artifact.type === "STORY") {
+        parentEpicKey = await findParentEpicJiraKey(
+          supabase,
+          artifactId,
+          workspaceId,
+          projectLinkId
+        );
+      }
+      
       const result = await createJiraIssue(
         accessToken,
         connection.jira_cloud_id,
         projectLink.jira_project_key,
         artifact as ArtifactData,
-        projectLink as unknown as ProjectLink
+        projectLink as unknown as ProjectLink,
+        parentEpicKey
       );
 
       jiraIssueKey = result.key;
