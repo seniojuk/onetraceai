@@ -8,13 +8,16 @@ const corsHeaders = {
 // Jira OAuth 2.0 (3LO) authorization endpoint
 const JIRA_AUTH_URL = "https://auth.atlassian.com/authorize";
 
-// Required scopes for Jira integration
-const JIRA_SCOPES = [
+// Base scopes required for Jira integration
+const BASE_SCOPES = [
   "read:jira-work",
   "read:jira-user", 
   "write:jira-work",
   "offline_access", // For refresh tokens
-].join(" ");
+];
+
+// Optional scope for project management (create projects)
+const PROJECT_MANAGEMENT_SCOPE = "manage:jira-configuration";
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -50,7 +53,7 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub;
 
     // Parse request body
-    const { workspaceId, redirectUri } = await req.json();
+    const { workspaceId, redirectUri, includeProjectManagement } = await req.json();
 
     if (!workspaceId || !redirectUri) {
       return new Response(
@@ -58,6 +61,13 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Build scopes based on user preference
+    const scopes = [...BASE_SCOPES];
+    if (includeProjectManagement) {
+      scopes.push(PROJECT_MANAGEMENT_SCOPE);
+    }
+    const scopeString = scopes.join(" ");
 
     // Verify user is admin/owner of workspace
     const { data: membership, error: memberError } = await supabase
@@ -90,10 +100,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Generate state parameter (includes workspace ID for callback)
+    // Generate state parameter (includes workspace ID and permissions for callback)
     const state = btoa(JSON.stringify({
       workspaceId,
       userId,
+      includeProjectManagement: !!includeProjectManagement,
       timestamp: Date.now(),
       nonce: crypto.randomUUID(),
     }));
@@ -102,7 +113,7 @@ Deno.serve(async (req) => {
     const authUrl = new URL(JIRA_AUTH_URL);
     authUrl.searchParams.set("audience", "api.atlassian.com");
     authUrl.searchParams.set("client_id", clientId);
-    authUrl.searchParams.set("scope", JIRA_SCOPES);
+    authUrl.searchParams.set("scope", scopeString);
     authUrl.searchParams.set("redirect_uri", redirectUri);
     authUrl.searchParams.set("state", state);
     authUrl.searchParams.set("response_type", "code");
