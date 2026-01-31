@@ -59,12 +59,14 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useArtifact, useUpdateArtifact, useArtifacts, ArtifactStatus, Artifact } from "@/hooks/useArtifacts";
 import { useArtifactEdges } from "@/hooks/useArtifactEdges";
 import { usePipelineRunForArtifact } from "@/hooks/useArtifactLineage";
+import { useJiraIssueMapping } from "@/hooks/useJiraIssueMapping";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { PRDEnhancer } from "@/components/prd/PRDEnhancer";
 import { PRDVersionHistory } from "@/components/prd/PRDVersionHistory";
 import { AttachedFiles } from "@/components/files/AttachedFiles";
 import { IdeaEnhancer } from "@/components/idea/IdeaEnhancer";
+import { JiraIssueBadge, JiraIssueSidebarCard } from "@/components/integrations/jira/JiraIssueBadge";
 
 const statusOptions: { value: ArtifactStatus; label: string }[] = [
   { value: "DRAFT", label: "Draft" },
@@ -85,6 +87,7 @@ const ArtifactDetailPage = () => {
   const { data: edges, isLoading: edgesLoading } = useArtifactEdges(id);
   const { data: allArtifacts } = useArtifacts(artifact?.project_id);
   const { data: pipelineRun } = usePipelineRunForArtifact(id);
+  const { data: jiraMapping } = useJiraIssueMapping(id);
   
   const [isEditing, setIsEditing] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -266,6 +269,9 @@ const ArtifactDetailPage = () => {
             <Badge className={cn(statusColor[artifact.status as ArtifactStatus])}>
               {artifact.status}
             </Badge>
+            {jiraMapping && (
+              <JiraIssueBadge mapping={jiraMapping} />
+            )}
           </div>
 
           {/* Title & Actions */}
@@ -717,6 +723,14 @@ const ArtifactDetailPage = () => {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Jira Integration */}
+              {jiraMapping && (
+                <JiraIssueSidebarCard
+                  mapping={jiraMapping}
+                  artifactShortId={artifact.short_id}
+                />
+              )}
             </div>
           </div>
         </div>
