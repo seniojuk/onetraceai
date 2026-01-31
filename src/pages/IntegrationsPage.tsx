@@ -439,6 +439,9 @@ const IntegrationsPage = () => {
               onDisconnected={() => {
                 refetchJiraConnection();
               }}
+              onLinkProject={() => {
+                setShowJiraWizard(true);
+              }}
             />
           )}
           <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
