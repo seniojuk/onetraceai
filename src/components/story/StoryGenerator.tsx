@@ -60,6 +60,7 @@ import { toast } from "sonner";
 import { GitBranch } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AIRunLimitWarning, useAIRunLimit } from "@/components/billing/AIRunLimitWarning";
+import { useAIRunTracking } from "@/hooks/useAIRunTracking";
 
 // Check if file type is text-extractable
 const isTextExtractable = (fileType: string, fileName: string): boolean => {
@@ -112,6 +113,10 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const { data: prdArtifacts } = useArtifacts(currentProjectId || undefined, "PRD");
   const { data: epicArtifacts } = useArtifacts(currentProjectId || undefined, "EPIC");
   const { canRunAI, isAtLimit } = useAIRunLimit();
+  const { startRun, completeRunWithResult, failRunWithError } = useAIRunTracking();
+  
+  // Track the current AI run ID
+  const [currentRunId, setCurrentRunId] = useState<string | null>(null);
 
   // Detect if source is an Epic
   const isSourceEpic = sourceArtifact?.type === "EPIC";
@@ -380,6 +385,20 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
     }
 
     setIsLoading(true);
+    
+    // Start AI run tracking
+    let runId: string | null = null;
+    if (currentWorkspaceId) {
+      runId = await startRun({
+        workspaceId: currentWorkspaceId,
+        projectId: currentProjectId || undefined,
+        generationType: "STORY",
+        sourceArtifactId: sourceArtifact?.id,
+        inputSource: isSourceEpic ? "EPIC" : (prdSource === "existing" ? "EXISTING_PRD" : "NEW_PRD"),
+      });
+      setCurrentRunId(runId);
+    }
+    
     try {
       const data = await callStoryGenerator(isSourceEpic ? null : contentToProcess, []);
 
@@ -395,6 +414,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
           },
         ]);
         setPhase("questions");
+        // Don't complete the run yet - we're still in conversation
       } else if (data.phase === "complete" && data.stories) {
         setGeneratedStories(data.stories);
         // Auto-assign all stories to the source Epic when generating from Epic
@@ -406,8 +426,21 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
           setStoryEpicAssignments(assignments);
         }
         setPhase("complete");
+        
+        // Complete the AI run tracking
+        if (runId && currentWorkspaceId) {
+          await completeRunWithResult(runId, currentWorkspaceId, {
+            generatedItems: data.stories.map((s: StoryData) => ({ title: s.title, type: "STORY" })),
+          });
+          setCurrentRunId(null);
+        }
       }
     } catch (error) {
+      // Fail the AI run tracking
+      if (runId && currentWorkspaceId) {
+        await failRunWithError(runId, currentWorkspaceId, error instanceof Error ? error.message : "Unknown error");
+        setCurrentRunId(null);
+      }
       toast.error(error instanceof Error ? error.message : "Failed to start story generation");
     } finally {
       setIsLoading(false);
@@ -464,8 +497,21 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
           },
         ]);
         setPhase("complete");
+        
+        // Complete the AI run tracking
+        if (currentRunId && currentWorkspaceId) {
+          await completeRunWithResult(currentRunId, currentWorkspaceId, {
+            generatedItems: data.stories.map((s: StoryData) => ({ title: s.title, type: "STORY" })),
+          });
+          setCurrentRunId(null);
+        }
       }
     } catch (error) {
+      // Fail the AI run tracking
+      if (currentRunId && currentWorkspaceId) {
+        await failRunWithError(currentRunId, currentWorkspaceId, error instanceof Error ? error.message : "Unknown error");
+        setCurrentRunId(null);
+      }
       toast.error(error instanceof Error ? error.message : "Failed to process answers");
     } finally {
       setIsLoading(false);
@@ -497,8 +543,21 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
           setStoryEpicAssignments(assignments);
         }
         setPhase("complete");
+        
+        // Complete the AI run tracking
+        if (currentRunId && currentWorkspaceId) {
+          await completeRunWithResult(currentRunId, currentWorkspaceId, {
+            generatedItems: data.stories.map((s: StoryData) => ({ title: s.title, type: "STORY" })),
+          });
+          setCurrentRunId(null);
+        }
       }
     } catch (error) {
+      // Fail the AI run tracking
+      if (currentRunId && currentWorkspaceId) {
+        await failRunWithError(currentRunId, currentWorkspaceId, error instanceof Error ? error.message : "Unknown error");
+        setCurrentRunId(null);
+      }
       toast.error(error instanceof Error ? error.message : "Failed to generate stories");
     } finally {
       setIsLoading(false);
