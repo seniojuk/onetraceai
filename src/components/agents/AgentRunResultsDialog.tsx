@@ -198,8 +198,8 @@ export function AgentRunResultsDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col overflow-hidden">
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Bot className="w-5 h-5 text-accent" />
               Agent Run Results
@@ -210,7 +210,7 @@ export function AgentRunResultsDialog({
           </DialogHeader>
 
           {/* Run Summary */}
-          <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/30 rounded-lg">
+          <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/30 rounded-lg flex-shrink-0">
             <div className={cn("p-2 rounded-lg", status.bgColor)}>
               <StatusIcon className={cn(
                 "w-4 h-4",
@@ -273,7 +273,7 @@ export function AgentRunResultsDialog({
 
           {/* Error Message */}
           {run.status === "FAILED" && run.error_message && (
-            <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg">
+            <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-lg flex-shrink-0">
               <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-medium text-sm mb-1">
                 <XCircle className="w-4 h-4" />
                 Error
@@ -299,8 +299,8 @@ export function AgentRunResultsDialog({
               </TabsTrigger>
             </TabsList>
 
-            <ScrollArea className="flex-1 mt-4 min-h-0">
-              <TabsContent value="outputs" className="m-0 space-y-3">
+            <div className="flex-1 mt-4 overflow-auto min-h-0">
+              <TabsContent value="outputs" className="m-0 space-y-3 mt-0">
                 {outputs.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -318,13 +318,13 @@ export function AgentRunResultsDialog({
                 )}
               </TabsContent>
 
-              <TabsContent value="input" className="m-0 space-y-3">
+              <TabsContent value="input" className="m-0 space-y-3 mt-0">
                 {hasInputContext && (
                   <JsonViewer data={run.input_context as Json} label="Input Context" />
                 )}
               </TabsContent>
 
-              <TabsContent value="metadata" className="m-0 space-y-3">
+              <TabsContent value="metadata" className="m-0 space-y-3 mt-0">
                 {hasMetadata && (
                   <JsonViewer data={run.metadata as Json} label="Run Metadata" />
                 )}
@@ -349,7 +349,7 @@ export function AgentRunResultsDialog({
                   </div>
                 )}
               </TabsContent>
-            </ScrollArea>
+            </div>
           </Tabs>
         </DialogContent>
       </Dialog>
