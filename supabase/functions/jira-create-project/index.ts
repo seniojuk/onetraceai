@@ -222,6 +222,21 @@ Deno.serve(async (req) => {
     const createdProject = await createResponse.json();
     console.log("Created Jira project:", JSON.stringify(createdProject));
 
+    // Auto-recover from degraded status on successful API call
+    if (connection.status === "degraded") {
+      await supabaseAdmin
+        .from("jira_connections")
+        .update({
+          status: "connected",
+          last_error_message: null,
+          last_error_at: null,
+          failure_count: 0,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", connectionId);
+      console.log(`Connection ${connectionId} recovered from degraded status`);
+    }
+
     return new Response(
       JSON.stringify({
         project: {

@@ -687,6 +687,21 @@ Deno.serve(async (req) => {
       })
       .eq("id", projectLinkId);
 
+    // Auto-recover from degraded status on successful API call
+    if (connection.status === "degraded") {
+      await supabase
+        .from("jira_connections")
+        .update({
+          status: "connected",
+          last_error_message: null,
+          last_error_at: null,
+          failure_count: 0,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", connection.id);
+      console.log(`Connection ${connection.id} recovered from degraded status`);
+    }
+
     // Log audit event
     await logAuditEvent(supabase, {
       workspaceId,
