@@ -268,13 +268,12 @@ async function refreshTokenIfNeeded(
   return tokenData.access_token;
 }
 
-async function findParentEpicJiraKey(
+async function findParentEpic(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   artifactId: string,
-  workspaceId: string,
-  projectLinkId: string
-): Promise<string | null> {
+  workspaceId: string
+): Promise<{ artifactId: string; type: string } | null> {
   // Find parent Epic via artifact_edges (CONTAINS relationship where Epic contains Story)
   const { data: parentEdge } = await supabase
     .from("artifact_edges")
@@ -291,15 +290,100 @@ async function findParentEpicJiraKey(
     return null;
   }
 
+  return {
+    artifactId: parentEdge.from_artifact_id,
+    type: parentEdge.from_artifact.type,
+  };
+}
+
+async function getOrCreateParentEpicJiraKey(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
+  accessToken: string,
+  connection: JiraConnection,
+  projectLink: ProjectLink,
+  parentEpicArtifactId: string,
+  workspaceId: string,
+  userId: string
+): Promise<string | null> {
   // Check if the parent Epic has already been pushed to Jira
   const { data: parentMapping } = await supabase
     .from("jira_issue_mappings")
     .select("jira_issue_key")
-    .eq("artifact_id", parentEdge.from_artifact_id)
-    .eq("project_link_id", projectLinkId)
+    .eq("artifact_id", parentEpicArtifactId)
+    .eq("project_link_id", projectLink.id)
     .maybeSingle();
 
-  return parentMapping?.jira_issue_key || null;
+  if (parentMapping?.jira_issue_key) {
+    return parentMapping.jira_issue_key;
+  }
+
+  // Parent Epic hasn't been pushed yet - push it first
+  console.log(`Parent Epic ${parentEpicArtifactId} not in Jira, pushing it first...`);
+
+  // Fetch the parent Epic artifact
+  const { data: epicArtifact, error: epicError } = await supabase
+    .from("artifacts")
+    .select("*")
+    .eq("id", parentEpicArtifactId)
+    .eq("workspace_id", workspaceId)
+    .single();
+
+  if (epicError || !epicArtifact) {
+    console.error("Failed to fetch parent Epic artifact:", epicError);
+    return null;
+  }
+
+  // Create the Epic in Jira (Epics don't have parents)
+  const epicResult = await createJiraIssue(
+    accessToken,
+    connection.jira_cloud_id,
+    projectLink.jira_project_key,
+    epicArtifact as ArtifactData,
+    projectLink,
+    null // Epics don't have parent issues
+  );
+
+  // Compute hashes for the Epic
+  const epicSummaryHash = computeHash(epicArtifact.title);
+  const epicDescriptionHash = computeHash(epicArtifact.content_markdown || "");
+
+  // Create mapping record for the Epic
+  await supabase.from("jira_issue_mappings").insert({
+    workspace_id: workspaceId,
+    project_id: epicArtifact.project_id,
+    project_link_id: projectLink.id,
+    artifact_id: parentEpicArtifactId,
+    jira_issue_id: epicResult.id,
+    jira_issue_key: epicResult.key,
+    jira_issue_url: `${connection.jira_base_url}/browse/${epicResult.key}`,
+    jira_issue_type: "Epic",
+    last_pushed_at: new Date().toISOString(),
+    last_pushed_summary_hash: epicSummaryHash,
+    last_pushed_description_hash: epicDescriptionHash,
+    created_by: userId,
+  });
+
+  // Log audit event for the auto-pushed Epic
+  await logAuditEvent(supabase, {
+    workspaceId,
+    projectId: epicArtifact.project_id,
+    connectionId: connection.id,
+    projectLinkId: projectLink.id,
+    actorId: userId,
+    action: "push_create",
+    artifactIds: [parentEpicArtifactId],
+    jiraIssueKeys: [epicResult.key],
+    result: "success",
+    actionDetails: {
+      artifactType: "EPIC",
+      artifactTitle: epicArtifact.title,
+      autoPushedForChild: true,
+    },
+  });
+
+  console.log(`Auto-pushed parent Epic ${epicResult.key} to Jira`);
+  return epicResult.key;
 }
 
 async function createJiraIssue(
@@ -728,15 +812,23 @@ Deno.serve(async (req) => {
       // Create new issue
       action = "push_create";
       
-      // Find parent Epic's Jira key if this is a Story
+      // Find and auto-push parent Epic if this is a Story
       let parentEpicKey: string | null = null;
       if (artifact.type === "STORY") {
-        parentEpicKey = await findParentEpicJiraKey(
-          supabase,
-          artifactId,
-          workspaceId,
-          projectLinkId
-        );
+        const parentEpic = await findParentEpic(supabase, artifactId, workspaceId);
+        
+        if (parentEpic) {
+          // Get or create the parent Epic in Jira
+          parentEpicKey = await getOrCreateParentEpicJiraKey(
+            supabase,
+            accessToken,
+            connection as JiraConnection,
+            projectLink as unknown as ProjectLink,
+            parentEpic.artifactId,
+            workspaceId,
+            userId
+          );
+        }
       }
       
       const result = await createJiraIssue(
