@@ -2,13 +2,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { 
   Loader2, 
   ExternalLink, 
   CheckCircle2, 
   AlertCircle,
   RefreshCw,
-  Shield
+  Shield,
+  Info
 } from "lucide-react";
 import { JiraConnection, useJiraOAuthInit, useJiraRefreshToken } from "@/hooks/useJiraConnection";
 
@@ -25,12 +28,13 @@ export function JiraConnectionStep({
 }: JiraConnectionStepProps) {
   const { initiateOAuth, isInitiating } = useJiraOAuthInit();
   const refreshToken = useJiraRefreshToken();
+  const [includeProjectManagement, setIncludeProjectManagement] = useState(false);
 
   const isConnected = connection && connection.status !== "disconnected";
   const needsReauth = connection?.status === "broken";
 
   const handleConnect = async () => {
-    await initiateOAuth(workspaceId);
+    await initiateOAuth(workspaceId, includeProjectManagement);
   };
 
   const handleRefreshToken = async () => {
@@ -148,7 +152,7 @@ export function JiraConnectionStep({
           <div className="space-y-3">
             <h4 className="font-medium text-foreground flex items-center gap-2">
               <Shield className="w-4 h-4 text-primary" />
-              Permissions Required
+              Required Permissions
             </h4>
             <ul className="text-sm text-muted-foreground space-y-2">
               <li className="flex items-start gap-2">
@@ -164,6 +168,32 @@ export function JiraConnectionStep({
                 <span><strong>Offline access</strong> to maintain sync when you're away</span>
               </li>
             </ul>
+          </div>
+
+          <div className="border-t pt-4 space-y-3">
+            <h4 className="font-medium text-foreground flex items-center gap-2">
+              <Info className="w-4 h-4 text-muted-foreground" />
+              Optional Permission
+            </h4>
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+              <Checkbox 
+                id="project-management" 
+                checked={includeProjectManagement}
+                onCheckedChange={(checked) => setIncludeProjectManagement(checked === true)}
+              />
+              <div className="space-y-1">
+                <Label 
+                  htmlFor="project-management" 
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Enable project creation in Jira
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Allows OneTrace to create new Jira projects on your behalf. 
+                  Leave unchecked if you prefer to create projects directly in Jira and select them here.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="bg-muted/50 rounded-lg p-4">

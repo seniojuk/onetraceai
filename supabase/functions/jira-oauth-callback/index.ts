@@ -75,7 +75,12 @@ Deno.serve(async (req) => {
     }
 
     // Decode and validate state
-    let stateData: { workspaceId: string; userId: string; timestamp: number };
+    let stateData: { 
+      workspaceId: string; 
+      userId: string; 
+      timestamp: number;
+      includeProjectManagement?: boolean;
+    };
     try {
       stateData = JSON.parse(atob(state));
     } catch {
@@ -165,6 +170,18 @@ Deno.serve(async (req) => {
     // Calculate token expiry
     const tokenExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
+    // Build permissions string based on requested scopes
+    // The tokens.scope field contains the actual scopes granted by Atlassian
+    const grantedScopes = tokens.scope.split(" ");
+    const hasWritePermission = grantedScopes.includes("write:jira-work");
+    const hasProjectManagement = grantedScopes.includes("manage:jira-configuration");
+    
+    // Store permissions as a comma-separated list of capabilities
+    let permissions = hasWritePermission ? "read_write" : "read_only";
+    if (hasProjectManagement) {
+      permissions += ",manage:jira-configuration";
+    }
+
     // Check if connection already exists for this workspace
     const { data: existingConnection } = await supabaseAdmin
       .from("jira_connections")
@@ -185,6 +202,7 @@ Deno.serve(async (req) => {
           jira_cloud_id: resources[0].id,
           jira_base_url: resources[0].url,
           jira_site_name: resources[0].name,
+          permissions: permissions,
           status: "connected",
           last_error_message: null,
           last_error_at: null,
@@ -213,7 +231,7 @@ Deno.serve(async (req) => {
           jira_base_url: resources[0].url,
           jira_site_name: resources[0].name,
           status: "connected",
-          permissions: resources[0].scopes.includes("write:jira-work") ? "read_write" : "read_only",
+          permissions: permissions,
           connected_by: userId,
         })
         .select("id")

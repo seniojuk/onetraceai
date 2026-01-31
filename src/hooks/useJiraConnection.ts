@@ -96,7 +96,7 @@ export function useJiraOAuthInit() {
   const [isInitiating, setIsInitiating] = useState(false);
 
   const initiateOAuth = useCallback(
-    async (workspaceId: string) => {
+    async (workspaceId: string, includeProjectManagement: boolean = false) => {
       setIsInitiating(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -106,10 +106,10 @@ export function useJiraOAuthInit() {
 
         // Build redirect URI (back to the app after OAuth)
         const redirectUri = `${window.location.origin}/integrations/jira/callback`;
-        console.log("[JIRA OAuth] Initiating with redirectUri:", redirectUri);
+        console.log("[JIRA OAuth] Initiating with redirectUri:", redirectUri, "includeProjectManagement:", includeProjectManagement);
 
         const response = await supabase.functions.invoke("jira-oauth-init", {
-          body: { workspaceId, redirectUri },
+          body: { workspaceId, redirectUri, includeProjectManagement },
         });
 
         console.log("[JIRA OAuth] Response:", response);
