@@ -280,6 +280,21 @@ Deno.serve(async (req) => {
       mapping.jira_issue_key
     );
 
+    // Auto-recover from degraded status on successful API call
+    if (connection.status === "degraded") {
+      await supabase
+        .from("jira_connections")
+        .update({
+          status: "connected",
+          last_error_message: null,
+          last_error_at: null,
+          failure_count: 0,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", connection.id);
+      console.log(`Connection ${connection.id} recovered from degraded status`);
+    }
+
     // Compute hashes of current Jira data
     const jiraSummaryHash = computeHash(jiraIssue.fields.summary);
     const jiraDescriptionText = adfToPlainText(jiraIssue.fields.description);
