@@ -49,23 +49,23 @@ export function JiraConfigurationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh]">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Jira Integration Settings</DialogTitle>
           <DialogDescription>
             Manage your Jira connection, project mappings, and sync settings.
           </DialogDescription>
         </DialogHeader>
-        <Tabs defaultValue="settings" className="w-full">
-          <TabsList className={`grid w-full ${isAdminOrOwner ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <Tabs defaultValue="settings" className="w-full flex-1 flex flex-col min-h-0">
+          <TabsList className={`grid w-full flex-shrink-0 ${isAdminOrOwner ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="settings">Settings</TabsTrigger>
             <TabsTrigger value="activity">Activity & Health</TabsTrigger>
             {isAdminOrOwner && (
               <TabsTrigger value="all-projects">All Projects</TabsTrigger>
             )}
           </TabsList>
-          <TabsContent value="settings" className="mt-4">
-            <ScrollArea className="max-h-[calc(85vh-180px)] pr-4">
+          <TabsContent value="settings" className="mt-4 flex-1 min-h-0">
+            <ScrollArea className="h-full max-h-[calc(85vh-200px)] pr-4">
               <JiraConfigurationPanel
                 connection={connection}
                 projectLink={projectLink}
@@ -75,8 +75,8 @@ export function JiraConfigurationDialog({
               />
             </ScrollArea>
           </TabsContent>
-          <TabsContent value="activity" className="mt-4">
-            <ScrollArea className="max-h-[calc(85vh-180px)] pr-4">
+          <TabsContent value="activity" className="mt-4 flex-1 min-h-0">
+            <ScrollArea className="h-full max-h-[calc(85vh-200px)] pr-4">
               {projectId ? (
                 <JiraSyncHistoryPanel
                   connectionId={connection.id}
@@ -92,8 +92,8 @@ export function JiraConfigurationDialog({
             </ScrollArea>
           </TabsContent>
           {isAdminOrOwner && (
-            <TabsContent value="all-projects" className="mt-4">
-              <ScrollArea className="max-h-[calc(85vh-180px)] pr-4">
+            <TabsContent value="all-projects" className="mt-4 flex-1 min-h-0">
+              <ScrollArea className="h-full max-h-[calc(85vh-200px)] pr-4">
                 <JiraWorkspaceProjectLinks workspaceId={workspaceId} />
               </ScrollArea>
             </TabsContent>
