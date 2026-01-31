@@ -131,8 +131,10 @@ const IntegrationsPage = () => {
 
   const jiraStatus = getJiraStatus();
 
-  // Check if integration requires upgrade
+  // Check if integration requires upgrade (only when permissions are loaded)
   const requiresUpgrade = (integrationId: string): boolean => {
+    // Don't show upgrade required while still loading subscription status
+    if (permissions.isLoading) return false;
     return !isFeatureAvailable(permissions.planId, integrationId as any);
   };
 
