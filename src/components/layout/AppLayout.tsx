@@ -153,7 +153,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/onboarding")}>
+                <DropdownMenuItem onClick={() => navigate("/onboarding?step=create-workspace")}>
                   <Plus className="w-4 h-4 mr-2" />
                   New Workspace
                 </DropdownMenuItem>
@@ -341,7 +341,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                   ))
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/onboarding")} className="cursor-pointer">
+                <DropdownMenuItem onClick={() => navigate("/onboarding?step=create-workspace")} className="cursor-pointer">
                   <Plus className="w-4 h-4 mr-2" />
                   Create Workspace
                 </DropdownMenuItem>

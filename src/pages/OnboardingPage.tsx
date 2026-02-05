@@ -30,14 +30,19 @@ const OnboardingPage = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   
-  // Check if we're adding a project to existing workspace
+  // Check if we're adding a project to existing workspace or creating a new workspace
   const stepParam = searchParams.get("step");
   const isAddingProjectOnly = stepParam === "create-project";
+  const isCreatingNewWorkspace = stepParam === "create-workspace";
   
   const { currentWorkspaceId, setCurrentWorkspace, setCurrentProject, setShowOnboarding } = useUIStore();
   
   const [currentStep, setCurrentStep] = useState<Step>(
-    isAddingProjectOnly && currentWorkspaceId ? "create-project" : "welcome"
+    isAddingProjectOnly && currentWorkspaceId 
+      ? "create-project" 
+      : isCreatingNewWorkspace 
+        ? "create-workspace" 
+        : "welcome"
   );
   const [workspaceName, setWorkspaceName] = useState("");
   const [projectName, setProjectName] = useState("");
@@ -62,13 +67,13 @@ const OnboardingPage = () => {
 
   // Check if user already has workspaces and redirect to dashboard
   useEffect(() => {
-    // Only check if not adding project and not already completed onboarding
-    if (!isAddingProjectOnly && currentWorkspaceId) {
+    // Only redirect if not explicitly adding project or creating a new workspace
+    if (!isAddingProjectOnly && !isCreatingNewWorkspace && currentWorkspaceId) {
       // User already has a workspace selected, redirect to dashboard
       setShowOnboarding(false);
       navigate("/dashboard");
     }
-  }, [isAddingProjectOnly, currentWorkspaceId, setShowOnboarding, navigate]);
+  }, [isAddingProjectOnly, isCreatingNewWorkspace, currentWorkspaceId, setShowOnboarding, navigate]);
 
   const handleCreateWorkspace = async () => {
     if (!workspaceName.trim()) {
