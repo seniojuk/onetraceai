@@ -598,16 +598,26 @@ export const PRDEnhancer = ({ artifact, onComplete, onCancel }: PRDEnhancerProps
                   </label>
                   {q.options && q.options.length > 0 && (
                     <div className="flex flex-wrap gap-2 ml-7">
-                      {q.options.map((opt) => (
-                        <Badge
-                          key={opt}
-                          variant={answers[q.id] === opt ? "default" : "outline"}
-                          className="cursor-pointer"
-                          onClick={() => handleAnswerChange(q.id, opt)}
-                        >
-                          {opt}
-                        </Badge>
-                      ))}
+                      {q.options.map((opt) => {
+                        const currentVal = answers[q.id] || "";
+                        const selectedOpts = currentVal.split(",").map(s => s.trim()).filter(Boolean);
+                        const isSelected = selectedOpts.includes(opt);
+                        return (
+                          <Badge
+                            key={opt}
+                            variant={isSelected ? "default" : "outline"}
+                            className="cursor-pointer"
+                            onClick={() => {
+                              const newOpts = isSelected
+                                ? selectedOpts.filter(o => o !== opt)
+                                : [...selectedOpts, opt];
+                              handleAnswerChange(q.id, newOpts.join(", "));
+                            }}
+                          >
+                            {opt}
+                          </Badge>
+                        );
+                      })}
                     </div>
                   )}
                   <Textarea
