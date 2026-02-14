@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { 
   Network, 
@@ -18,7 +18,8 @@ import {
   Plus,
   Menu,
   X,
-  Shield
+  Shield,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -32,13 +33,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/useAuth";
-import { useWorkspaces } from "@/hooks/useWorkspaces";
-import { useProjects } from "@/hooks/useProjects";
+import { useWorkspaces, useDeleteWorkspace } from "@/hooks/useWorkspaces";
+import { useProjects, useDeleteProject } from "@/hooks/useProjects";
 import { useUIStore } from "@/store/uiStore";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { useSessionRecovery } from "@/hooks/useSessionRecovery";
 import { SessionRecoveryDialog } from "@/components/auth/SessionRecoveryDialog";
+import { DeleteConfirmDialog } from "@/components/layout/DeleteConfirmDialog";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -78,6 +81,15 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { data: workspaces, isLoading: loadingWorkspaces } = useWorkspaces();
   const { data: projects, isLoading: loadingProjects } = useProjects(currentWorkspaceId || undefined);
   const { data: isPlatformAdmin } = usePlatformAdmin();
+  const deleteWorkspaceMutation = useDeleteWorkspace();
+  const deleteProjectMutation = useDeleteProject();
+
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    type: "workspace" | "project";
+    id: string;
+    name: string;
+  } | null>(null);
 
   // Set default workspace on load
   useEffect(() => {
@@ -99,6 +111,31 @@ export function AppLayout({ children }: AppLayoutProps) {
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteDialog) return;
+    try {
+      if (deleteDialog.type === "workspace") {
+        await deleteWorkspaceMutation.mutateAsync({ workspaceId: deleteDialog.id });
+        if (currentWorkspaceId === deleteDialog.id) {
+          const remaining = workspaces?.filter(w => w.id !== deleteDialog.id);
+          setCurrentWorkspace(remaining?.[0]?.id || null);
+        }
+        toast.success("Workspace deleted successfully");
+      } else {
+        await deleteProjectMutation.mutateAsync({ projectId: deleteDialog.id, workspaceId: currentWorkspaceId! });
+        if (currentProjectId === deleteDialog.id) {
+          const remaining = projects?.filter(p => p.id !== deleteDialog.id);
+          setCurrentProject(remaining?.[0]?.id || null);
+        }
+        toast.success("Project deleted successfully");
+      }
+      setDeleteDialog(null);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Delete failed";
+      toast.error(message);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -150,9 +187,18 @@ export function AppLayout({ children }: AppLayoutProps) {
                   <DropdownMenuItem 
                     key={ws.id} 
                     onClick={() => setCurrentWorkspace(ws.id)}
-                    className={cn(ws.id === currentWorkspaceId && "bg-accent/10")}
+                    className={cn("group", ws.id === currentWorkspaceId && "bg-accent/10")}
                   >
-                    {ws.name}
+                    <span className="flex-1 truncate">{ws.name}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteDialog({ open: true, type: "workspace", id: ws.id, name: ws.name });
+                      }}
+                      className="opacity-0 group-hover:opacity-100 ml-2 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
@@ -169,10 +215,19 @@ export function AppLayout({ children }: AppLayoutProps) {
                       <DropdownMenuItem 
                         key={proj.id} 
                         onClick={() => setCurrentProject(proj.id)}
-                        className={cn(proj.id === currentProjectId && "bg-accent/10")}
+                        className={cn("group", proj.id === currentProjectId && "bg-accent/10")}
                       >
                         <span className="text-xs text-muted-foreground mr-2">{proj.project_key}</span>
-                        {proj.name}
+                        <span className="flex-1 truncate">{proj.name}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteDialog({ open: true, type: "project", id: proj.id, name: proj.name });
+                          }}
+                          className="opacity-0 group-hover:opacity-100 ml-2 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
@@ -332,14 +387,23 @@ export function AppLayout({ children }: AppLayoutProps) {
                       key={ws.id} 
                       onClick={() => setCurrentWorkspace(ws.id)}
                       className={cn(
-                        "cursor-pointer",
+                        "cursor-pointer group",
                         ws.id === currentWorkspaceId && "bg-accent/10 text-accent"
                       )}
                     >
                       <div className="w-6 h-6 rounded bg-accent/20 flex items-center justify-center text-xs font-bold text-accent mr-2">
                         {ws.name?.charAt(0) || "W"}
                       </div>
-                      {ws.name}
+                      <span className="flex-1 truncate">{ws.name}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteDialog({ open: true, type: "workspace", id: ws.id, name: ws.name });
+                        }}
+                        className="opacity-0 group-hover:opacity-100 ml-2 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </DropdownMenuItem>
                   ))
                 )}
@@ -374,12 +438,21 @@ export function AppLayout({ children }: AppLayoutProps) {
                       key={proj.id} 
                       onClick={() => setCurrentProject(proj.id)}
                       className={cn(
-                        "cursor-pointer",
+                        "cursor-pointer group",
                         proj.id === currentProjectId && "bg-accent/10 text-accent"
                       )}
                     >
                       <span className="text-xs text-muted-foreground w-16 flex-shrink-0">{proj.project_key}</span>
-                      <span className="truncate">{proj.name}</span>
+                      <span className="flex-1 truncate">{proj.name}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteDialog({ open: true, type: "project", id: proj.id, name: proj.name });
+                        }}
+                        className="opacity-0 group-hover:opacity-100 ml-2 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </DropdownMenuItem>
                   ))
                 ) : (
@@ -415,6 +488,21 @@ export function AppLayout({ children }: AppLayoutProps) {
         onRecovered={handleRecovered}
         userEmail={lastEmail}
       />
+
+      {/* Delete Confirm Dialog */}
+      {deleteDialog && (
+        <DeleteConfirmDialog
+          open={deleteDialog.open}
+          onOpenChange={(open) => {
+            if (!open) setDeleteDialog(null);
+          }}
+          onConfirm={handleDeleteConfirm}
+          title={`Delete ${deleteDialog.type === "workspace" ? "Workspace" : "Project"}`}
+          entityName={deleteDialog.name}
+          entityType={deleteDialog.type}
+          isDeleting={deleteWorkspaceMutation.isPending || deleteProjectMutation.isPending}
+        />
+      )}
     </div>
   );
 }

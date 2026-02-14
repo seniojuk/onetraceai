@@ -142,12 +142,23 @@ export function useDeleteProject() {
 
   return useMutation({
     mutationFn: async ({ projectId, workspaceId }: { projectId: string; workspaceId: string }) => {
-      const { error } = await supabase
-        .from("projects")
-        .delete()
-        .eq("id", projectId);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
 
-      if (error) throw error;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-project`,
+        {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ projectId }),
+        }
+      );
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to delete project");
       return { projectId, workspaceId };
     },
     onSuccess: (_, variables) => {
