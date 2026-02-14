@@ -36,6 +36,8 @@ import { useWorkspaces } from "@/hooks/useWorkspaces";
 import { useProjects } from "@/hooks/useProjects";
 import { useUIStore } from "@/store/uiStore";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
+import { useSessionRecovery } from "@/hooks/useSessionRecovery";
+import { SessionRecoveryDialog } from "@/components/auth/SessionRecoveryDialog";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
@@ -63,6 +65,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { sessionExpired, lastEmail, handleRecovered } = useSessionRecovery();
   const { 
     sidebarCollapsed, 
     toggleSidebar, 
@@ -405,6 +408,13 @@ export function AppLayout({ children }: AppLayoutProps) {
           {children}
         </div>
       </main>
+
+      {/* Session Recovery Dialog */}
+      <SessionRecoveryDialog
+        open={sessionExpired}
+        onRecovered={handleRecovered}
+        userEmail={lastEmail}
+      />
     </div>
   );
 }
