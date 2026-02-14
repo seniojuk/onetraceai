@@ -34,26 +34,16 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    const { data: { user: authUser }, error: userError } = await supabaseClient.auth.getUser();
     
-    if (claimsError || !claimsData?.claims) {
+    if (userError || !authUser) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = claimsData.claims.sub;
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "Invalid token - no user ID" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Create a user object for compatibility with existing code
-    const user = { id: userId };
+    const user = { id: authUser.id };
 
     const url = new URL(req.url);
     const workspaceId = url.searchParams.get("id");
