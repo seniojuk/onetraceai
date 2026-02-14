@@ -26,6 +26,8 @@ import { useArtifacts } from "@/hooks/useArtifacts";
 import { useUIStore } from "@/store/uiStore";
 import { UsageDashboardWidget } from "@/components/billing/UsageDashboardWidget";
 import { useUsageLimits } from "@/hooks/useUsageLimits";
+import { useCoverageSnapshots } from "@/hooks/useCoverage";
+import { useDriftFindings } from "@/hooks/useDriftFindings";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -34,6 +36,8 @@ const Dashboard = () => {
   const { data: projects, isLoading: loadingProjects } = useProjects(currentWorkspaceId || undefined);
   const { data: artifacts, isLoading: loadingArtifacts } = useArtifacts(currentProjectId || undefined);
   const { canCreateProject, projectAtLimit, projectWarning, usage } = useUsageLimits();
+  const { data: snapshots } = useCoverageSnapshots(currentProjectId || undefined);
+  const { data: driftFindings } = useDriftFindings(currentProjectId || undefined);
 
   // Show onboarding only if no workspaces exist (first time user)
   useEffect(() => {
@@ -73,9 +77,24 @@ const Dashboard = () => {
   const inProgressCount = artifacts?.filter(a => a.status === "IN_PROGRESS").length || 0;
   const totalArtifacts = artifacts?.length || 0;
   
-  // Mock coverage/drift data for demo
-  const coveragePercent = totalArtifacts > 0 ? Math.round((doneCount / totalArtifacts) * 100) : 0;
-  const driftCount = 3;
+  // Real coverage from snapshots
+  const hasSnapshots = (snapshots || []).length > 0;
+  let totalACs = 0;
+  let satisfiedACs = 0;
+  if (hasSnapshots) {
+    for (const s of snapshots!) {
+      totalACs += s.total_acs;
+      satisfiedACs += s.satisfied_acs;
+    }
+  } else {
+    totalACs = acCount;
+    satisfiedACs = doneCount;
+  }
+  const coveragePercent = totalACs > 0 ? Math.round((satisfiedACs / totalACs) * 100) : 0;
+
+  // Real drift count
+  const openDriftFindings = driftFindings?.filter(f => f.status === "OPEN") || [];
+  const driftCount = openDriftFindings.length;
 
   const currentProject = projects?.find(p => p.id === currentProjectId);
 
@@ -153,17 +172,15 @@ const Dashboard = () => {
                 <StatsCard
                   title="Coverage"
                   value={`${coveragePercent}%`}
-                  subtitle={`${doneCount}/${totalArtifacts} artifacts complete`}
+                  subtitle={`${satisfiedACs}/${totalACs} ACs satisfied`}
                   icon={BarChart3}
-                  trend={+8}
                   color="success"
                 />
                 <StatsCard
                   title="Drift Findings"
                   value={driftCount.toString()}
-                  subtitle="Open issues to review"
+                  subtitle={driftCount === 0 ? "No open issues" : "Open issues to review"}
                   icon={AlertTriangle}
-                  trend={-2}
                   color="drift"
                 />
                 <StatsCard
@@ -189,7 +206,7 @@ const Dashboard = () => {
                   <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                       <CardTitle>Coverage Overview</CardTitle>
-                      <CardDescription>Acceptance criteria satisfaction by Epic</CardDescription>
+                      <CardDescription>Acceptance criteria satisfaction by Story</CardDescription>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => navigate("/coverage")}>
                       View Details
@@ -198,40 +215,54 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {[
-                        { name: "User Authentication", coverage: 85, total: 12, satisfied: 10 },
-                        { name: "Payment Integration", coverage: 60, total: 8, satisfied: 5 },
-                        { name: "Dashboard Views", coverage: 100, total: 6, satisfied: 6 },
-                        { name: "API Layer", coverage: 45, total: 15, satisfied: 7 },
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-4">
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium text-foreground">{item.name}</span>
-                              <span className="text-xs text-muted-foreground">{item.satisfied}/{item.total} ACs</span>
-                            </div>
-                            <Progress 
-                              value={item.coverage} 
-                              className={`h-2 ${
+                      {hasSnapshots ? (
+                        (() => {
+                          const stories = artifacts?.filter(a => a.type === "STORY") || [];
+                          const storyRows = stories.slice(0, 5).map(story => {
+                            const snap = snapshots?.find(s => s.artifact_id === story.id);
+                            const cov = snap ? Math.round((snap.coverage_ratio ?? 0) * 100) : 0;
+                            return { name: story.title, coverage: cov, total: snap?.total_acs || 0, satisfied: snap?.satisfied_acs || 0 };
+                          });
+                          return storyRows.length > 0 ? storyRows.map((item, i) => (
+                            <div key={i} className="flex items-center gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="text-sm font-medium text-foreground truncate">{item.name}</span>
+                                  <span className="text-xs text-muted-foreground">{item.satisfied}/{item.total} ACs</span>
+                                </div>
+                                <Progress 
+                                  value={item.coverage} 
+                                  className={`h-2 ${
+                                    item.coverage === 100 
+                                      ? '[&>div]:bg-coverage-full' 
+                                      : item.coverage >= 70 
+                                        ? '[&>div]:bg-coverage-partial' 
+                                        : '[&>div]:bg-coverage-none'
+                                  }`}
+                                />
+                              </div>
+                              <span className={`text-sm font-medium w-12 text-right ${
                                 item.coverage === 100 
-                                  ? '[&>div]:bg-coverage-full' 
+                                  ? 'text-coverage-full' 
                                   : item.coverage >= 70 
-                                    ? '[&>div]:bg-coverage-partial' 
-                                    : '[&>div]:bg-coverage-none'
-                              }`}
-                            />
-                          </div>
-                          <span className={`text-sm font-medium w-12 text-right ${
-                            item.coverage === 100 
-                              ? 'text-coverage-full' 
-                              : item.coverage >= 70 
-                                ? 'text-coverage-partial' 
-                                : 'text-coverage-none'
-                          }`}>
-                            {item.coverage}%
-                          </span>
+                                    ? 'text-coverage-partial' 
+                                    : 'text-coverage-none'
+                              }`}>
+                                {item.coverage}%
+                              </span>
+                            </div>
+                          )) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">No story coverage data yet</p>
+                          );
+                        })()
+                      ) : (
+                        <div className="text-center py-6">
+                          <p className="text-sm text-muted-foreground">No coverage data yet.</p>
+                          <Button variant="outline" size="sm" className="mt-2" onClick={() => navigate("/coverage")}>
+                            Run Coverage Analysis
+                          </Button>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -249,22 +280,25 @@ const Dashboard = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {[
-                        { type: "Untraced commit", desc: "abc123 has no linked requirement", severity: "high" },
-                        { type: "Missing tests", desc: "STORY-004 has 0/3 ACs tested", severity: "medium" },
-                        { type: "Status mismatch", desc: "STORY-002 is Done but Jira shows In Review", severity: "low" },
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
-                          <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                            item.severity === 'high' ? 'bg-red-500' : 
-                            item.severity === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
-                          }`} />
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{item.type}</p>
-                            <p className="text-xs text-muted-foreground">{item.desc}</p>
+                      {openDriftFindings.length > 0 ? (
+                        openDriftFindings.slice(0, 4).map((finding) => (
+                          <div key={finding.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
+                            <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              finding.severity === 3 ? 'bg-red-500' : 
+                              finding.severity === 2 ? 'bg-amber-500' : 'bg-blue-500'
+                            }`} />
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{finding.title}</p>
+                              <p className="text-xs text-muted-foreground truncate">{finding.description}</p>
+                            </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-4">
+                          <CheckCircle2 className="w-8 h-8 text-success mx-auto mb-2" />
+                          <p className="text-sm text-muted-foreground">No open drift issues</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </CardContent>
                 </Card>
