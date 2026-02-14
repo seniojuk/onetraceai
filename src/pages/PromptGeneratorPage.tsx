@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Wand2, FileText, Loader2 } from "lucide-react";
+import { Wand2, FileText, Loader2, History, Copy, Eye } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,24 +10,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useArtifacts } from "@/hooks/useArtifacts";
 import { useUIStore } from "@/store/uiStore";
 import { PromptGeneratorDialog } from "@/components/prompts/PromptGeneratorDialog";
+import { useGeneratedPrompts } from "@/hooks/usePromptGenerator";
+import { useToast } from "@/hooks/use-toast";
 
 const PromptGeneratorPage = () => {
   const { currentProjectId } = useUIStore();
   const { data: artifacts, isLoading } = useArtifacts(currentProjectId || undefined);
   const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [viewingPrompt, setViewingPrompt] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const selectedArtifact = artifacts?.find((a) => a.id === selectedArtifactId);
+  const { data: savedPrompts } = useGeneratedPrompts(selectedArtifactId || undefined);
+
+  const handleCopy = async (content: string) => {
+    await navigator.clipboard.writeText(content);
+    toast({ title: "Copied to clipboard" });
+  };
 
   return (
     <AuthGuard>
       <AppLayout>
-        <div className="p-8 max-w-4xl mx-auto">
+        <div className="p-8 max-w-4xl mx-auto space-y-6">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
               <Wand2 className="w-8 h-8 text-accent" />
@@ -60,7 +71,10 @@ const PromptGeneratorPage = () => {
                     <Label>Artifact</Label>
                     <Select
                       value={selectedArtifactId || ""}
-                      onValueChange={(v) => setSelectedArtifactId(v)}
+                      onValueChange={(v) => {
+                        setSelectedArtifactId(v);
+                        setViewingPrompt(null);
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Choose an artifact..." />
@@ -111,6 +125,98 @@ const PromptGeneratorPage = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Prompt History - visible on page without opening dialog */}
+          {selectedArtifact && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <History className="w-5 h-5 text-muted-foreground" />
+                  Prompt History
+                  {savedPrompts && savedPrompts.length > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {savedPrompts.length}
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  Previously generated and saved prompts for this artifact
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!savedPrompts || savedPrompts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <History className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm">No saved prompts yet</p>
+                    <p className="text-xs mt-1">
+                      Generate and save prompts to see them here
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {savedPrompts.map((sp) => (
+                      <div
+                        key={sp.id}
+                        className="p-4 rounded-lg border bg-card space-y-2"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              {(sp.metadata as any)?.toolName || "unknown"}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              v{sp.version}
+                            </Badge>
+                            {(sp.metadata as any)?.estimatedTokensUsed && (
+                              <span className="text-xs text-muted-foreground">
+                                ~{(sp.metadata as any).estimatedTokensUsed.toLocaleString()} tokens
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(sp.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+
+                        {viewingPrompt === sp.id ? (
+                          <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed p-3 rounded border bg-muted/30 max-h-[400px] overflow-auto">
+                            {sp.prompt_content}
+                          </pre>
+                        ) : (
+                          <pre className="text-xs font-mono text-muted-foreground line-clamp-4 whitespace-pre-wrap">
+                            {sp.prompt_content}
+                          </pre>
+                        )}
+
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-xs"
+                            onClick={() => handleCopy(sp.prompt_content)}
+                          >
+                            <Copy className="w-3 h-3 mr-1" />
+                            Copy
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-xs"
+                            onClick={() =>
+                              setViewingPrompt(viewingPrompt === sp.id ? null : sp.id)
+                            }
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            {viewingPrompt === sp.id ? "Collapse" : "View Full"}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {selectedArtifact && (
             <PromptGeneratorDialog
