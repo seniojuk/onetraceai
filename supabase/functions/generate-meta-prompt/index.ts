@@ -14,7 +14,24 @@ interface ArtifactContext {
   short_id: string;
   status: string;
   content_markdown: string | null;
+  depth: number;
+  direction: "parent" | "self" | "child";
 }
+
+// Rough token estimator (~4 chars per token)
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
+// Priority order: target first, then by type hierarchy proximity
+const TYPE_PRIORITY: Record<string, number> = {
+  STORY: 1,
+  ACCEPTANCE_CRITERION: 2,
+  EPIC: 3,
+  PRD: 4,
+  TEST_CASE: 5,
+  IDEA: 6,
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -91,10 +108,12 @@ serve(async (req) => {
       .limit(1)
       .single();
 
-    // Walk the lineage to gather context
+    // Context configuration
     const includeParents = contextConfig?.includeParents !== false;
     const includeChildren = contextConfig?.includeChildren !== false;
     const maxDepth = contextConfig?.maxDepth ?? 3;
+    const tokenBudget = contextConfig?.tokenBudget ?? tool.default_token_limit ?? 8000;
+    const includeTypes: string[] | null = contextConfig?.includeTypes ?? null; // null = all types
 
     const contextArtifacts: ArtifactContext[] = [
       {
@@ -104,6 +123,8 @@ serve(async (req) => {
         short_id: artifact.short_id,
         status: artifact.status,
         content_markdown: artifact.content_markdown,
+        depth: 0,
+        direction: "self",
       },
     ];
 
@@ -131,7 +152,13 @@ serve(async (req) => {
             .eq("id", edge.from_artifact_id)
             .single();
           if (parent) {
-            contextArtifacts.unshift(parent as ArtifactContext);
+            // Apply type filter
+            if (includeTypes && !includeTypes.includes(parent.type)) continue;
+            contextArtifacts.unshift({
+              ...parent,
+              depth: depth + 1,
+              direction: "parent",
+            } as ArtifactContext);
             await walkUp(edge.from_artifact_id, depth + 1);
           }
         }
@@ -154,7 +181,13 @@ serve(async (req) => {
             .eq("id", edge.to_artifact_id)
             .single();
           if (child) {
-            contextArtifacts.push(child as ArtifactContext);
+            // Apply type filter
+            if (includeTypes && !includeTypes.includes(child.type)) continue;
+            contextArtifacts.push({
+              ...child,
+              depth: depth + 1,
+              direction: "child",
+            } as ArtifactContext);
             await walkDown(edge.to_artifact_id, depth + 1);
           }
         }
@@ -162,26 +195,105 @@ serve(async (req) => {
       await walkDown(artifact.id, 0);
     }
 
-    // Build the context document
+    // Sort by type hierarchy order
     const typeOrder = ["IDEA", "PRD", "EPIC", "STORY", "ACCEPTANCE_CRITERION", "TEST_CASE"];
     contextArtifacts.sort(
       (a, b) => typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type)
     );
 
-    let contextDocument = "";
-    for (const ctx of contextArtifacts) {
+    // === Smart Token Budget Allocation ===
+    // Reserve ~30% for system prompt overhead, allocate rest to context
+    const contextTokenBudget = Math.floor(tokenBudget * 0.7);
+
+    // Build context sections with priority-based truncation
+    interface ContextSection {
+      artifact: ArtifactContext;
+      header: string;
+      content: string;
+      tokens: number;
+      priority: number; // lower = higher priority
+    }
+
+    const sections: ContextSection[] = contextArtifacts.map((ctx) => {
       const marker = ctx.id === artifact.id ? " ← TARGET ARTIFACT" : "";
-      contextDocument += `\n## [${ctx.type}] ${ctx.title} (${ctx.short_id})${marker}\n`;
-      contextDocument += `Status: ${ctx.status}\n`;
-      if (ctx.content_markdown) {
-        // Truncate very long content
-        const content =
-          ctx.content_markdown.length > 5000
-            ? ctx.content_markdown.slice(0, 5000) + "\n... (truncated)"
-            : ctx.content_markdown;
-        contextDocument += `\n${content}\n`;
+      const depthLabel = ctx.direction === "self" ? "" : ` [depth: ${ctx.depth}]`;
+      const header = `## [${ctx.type}] ${ctx.title} (${ctx.short_id})${marker}${depthLabel}\nStatus: ${ctx.status}\n`;
+      const content = ctx.content_markdown || "(no content)";
+      const fullText = `${header}\n${content}\n\n---\n`;
+
+      // Priority: target=0, then by type proximity and depth
+      const typePriority = TYPE_PRIORITY[ctx.type] ?? 10;
+      const priority = ctx.direction === "self" ? 0 : typePriority + ctx.depth;
+
+      return {
+        artifact: ctx,
+        header,
+        content,
+        tokens: estimateTokens(fullText),
+        priority,
+      };
+    });
+
+    // Sort by priority (target first, then closest/most relevant)
+    sections.sort((a, b) => a.priority - b.priority);
+
+    // Allocate tokens greedily by priority
+    let usedTokens = 0;
+    const includedSections: ContextSection[] = [];
+    const truncatedSections: Array<{ short_id: string; type: string; reason: string }> = [];
+
+    for (const section of sections) {
+      const remaining = contextTokenBudget - usedTokens;
+
+      if (remaining <= 0) {
+        truncatedSections.push({
+          short_id: section.artifact.short_id,
+          type: section.artifact.type,
+          reason: "token_budget_exceeded",
+        });
+        continue;
       }
-      contextDocument += "\n---\n";
+
+      if (section.tokens <= remaining) {
+        // Fits fully
+        includedSections.push(section);
+        usedTokens += section.tokens;
+      } else {
+        // Partial inclusion — truncate content to fit
+        const headerTokens = estimateTokens(section.header);
+        const availableForContent = remaining - headerTokens - 20; // 20 tokens for truncation notice
+
+        if (availableForContent > 100) {
+          const truncatedContent = section.content.slice(0, availableForContent * 4) + "\n... (truncated to fit token budget)";
+          includedSections.push({
+            ...section,
+            content: truncatedContent,
+            tokens: remaining,
+          });
+          usedTokens += remaining;
+        } else {
+          truncatedSections.push({
+            short_id: section.artifact.short_id,
+            type: section.artifact.type,
+            reason: "insufficient_space",
+          });
+        }
+      }
+    }
+
+    // Re-sort included sections back to hierarchy order for the prompt
+    includedSections.sort(
+      (a, b) => typeOrder.indexOf(a.artifact.type) - typeOrder.indexOf(b.artifact.type)
+    );
+
+    // Build the final context document
+    let contextDocument = "";
+    for (const section of includedSections) {
+      contextDocument += `\n${section.header}\n${section.content}\n\n---\n`;
+    }
+
+    if (truncatedSections.length > 0) {
+      contextDocument += `\n\n_Note: ${truncatedSections.length} artifact(s) were excluded or truncated due to token budget constraints._\n`;
     }
 
     // Build the meta-prompt generation system prompt
@@ -327,7 +439,12 @@ IMPORTANT:
           type: a.type,
           title: a.title,
           short_id: a.short_id,
+          depth: a.depth,
+          direction: a.direction,
         })),
+        truncatedArtifacts: truncatedSections,
+        tokenBudget,
+        estimatedTokensUsed: usedTokens,
         usage: aiData.usage || null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
