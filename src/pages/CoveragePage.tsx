@@ -29,6 +29,7 @@ import { useCoverageSnapshots, useComputeCoverage, type CoverageSnapshot } from 
 import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import CoverageGapReport from "@/components/coverage/CoverageGapReport";
 
 const CoveragePage = () => {
   const navigate = useNavigate();
@@ -72,6 +73,14 @@ const CoveragePage = () => {
 
   const coveragePercent = totalACs > 0 ? Math.round((satisfiedACs / totalACs) * 100) : 0;
   const testCoveragePercent = totalACs > 0 ? Math.round((testedACs / totalACs) * 100) : 0;
+
+  // Aggregate all untested/unsatisfied AC IDs from snapshots for gap report
+  const allUntestedAcIds = new Set<string>();
+  const allUnsatisfiedAcIds = new Set<string>();
+  for (const s of snapshots || []) {
+    for (const id of s.missing?.untested_ac_ids || []) allUntestedAcIds.add(id);
+    for (const id of s.missing?.unsatisfied_ac_ids || []) allUnsatisfiedAcIds.add(id);
+  }
 
   // Build per-story coverage rows
   const coverageByStory = stories.map(story => {
@@ -326,6 +335,17 @@ const CoveragePage = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Coverage Gap Report */}
+          {hasSnapshots && (allUntestedAcIds.size > 0 || allUnsatisfiedAcIds.size > 0) && (
+            <div className="mt-6">
+              <CoverageGapReport
+                untestedAcIds={Array.from(allUntestedAcIds)}
+                unsatisfiedAcIds={Array.from(allUnsatisfiedAcIds)}
+                artifacts={artifacts || []}
+              />
+            </div>
+          )}
         </div>
       </AppLayout>
     </AuthGuard>
