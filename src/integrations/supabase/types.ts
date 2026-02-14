@@ -697,6 +697,97 @@ export type Database = {
           },
         ]
       }
+      generated_prompts: {
+        Row: {
+          artifact_id: string
+          context_config: Json | null
+          context_snapshot: Json | null
+          created_at: string
+          created_by: string | null
+          id: string
+          metadata: Json | null
+          project_id: string
+          prompt_content: string
+          template_id: string | null
+          tool_id: string
+          version: number
+          workspace_id: string
+        }
+        Insert: {
+          artifact_id: string
+          context_config?: Json | null
+          context_snapshot?: Json | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          metadata?: Json | null
+          project_id: string
+          prompt_content: string
+          template_id?: string | null
+          tool_id: string
+          version?: number
+          workspace_id: string
+        }
+        Update: {
+          artifact_id?: string
+          context_config?: Json | null
+          context_snapshot?: Json | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          metadata?: Json | null
+          project_id?: string
+          prompt_content?: string
+          template_id?: string | null
+          tool_id?: string
+          version?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_prompts_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_prompts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_prompts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_prompts_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_tools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_prompts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_prompts_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount_due: number
@@ -1718,6 +1809,112 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prompt_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          format_rules: Json | null
+          id: string
+          is_system: boolean
+          name: string
+          template_body: string
+          tool_id: string
+          updated_at: string
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          format_rules?: Json | null
+          id?: string
+          is_system?: boolean
+          name: string
+          template_body: string
+          tool_id: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          format_rules?: Json | null
+          id?: string
+          is_system?: boolean
+          name?: string
+          template_body?: string
+          tool_id?: string
+          updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prompt_templates_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_tools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prompt_templates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prompt_templates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prompt_tools: {
+        Row: {
+          created_at: string
+          default_token_limit: number | null
+          description: string | null
+          display_name: string
+          enabled: boolean
+          icon_name: string | null
+          id: string
+          is_system: boolean
+          name: string
+          output_format: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          default_token_limit?: number | null
+          description?: string | null
+          display_name: string
+          enabled?: boolean
+          icon_name?: string | null
+          id?: string
+          is_system?: boolean
+          name: string
+          output_format?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          default_token_limit?: number | null
+          description?: string | null
+          display_name?: string
+          enabled?: boolean
+          icon_name?: string | null
+          id?: string
+          is_system?: boolean
+          name?: string
+          output_format?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       subscriptions: {
         Row: {
