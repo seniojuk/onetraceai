@@ -74,6 +74,7 @@ const CreateArtifactPage = () => {
     preselectedType === "PRD" || preselectedType === "EPIC" || preselectedType === "STORY" ? "ai" : "manual"
   );
   const [uploadedFiles, setUploadedFiles] = useState<FileArtifact[]>([]);
+  const [showTypeGrid, setShowTypeGrid] = useState(!preselectedType);
   
   const uploadFile = useUploadFile();
   const associateFile = useAssociateFile();
@@ -228,47 +229,72 @@ const CreateArtifactPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Artifact Type</CardTitle>
-                <CardDescription>Select the type of artifact you want to create</CardDescription>
+                <CardDescription>
+                  {showTypeGrid ? "Select the type of artifact you want to create" : "Creating a new artifact"}
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {artifactTypes.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => {
-                        setType(option.value);
-                        if (option.hasAI) {
-                          setCreationMode("ai");
-                        } else {
-                          setCreationMode("manual");
-                        }
-                      }}
-                      className={cn(
-                        "flex items-start gap-3 p-4 rounded-lg border text-left transition-all relative",
-                        type === option.value
-                          ? "border-accent bg-accent/5 ring-1 ring-accent"
-                          : "border-border hover:border-accent/50 hover:bg-muted/50"
-                      )}
-                    >
-                      {option.hasAI && (
-                        <div className="absolute top-2 right-2">
-                          <Sparkles className="w-4 h-4 text-accent" />
-                        </div>
-                      )}
-                      <div className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
-                        type === option.value ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
-                      )}>
-                        <option.icon className="w-5 h-5" />
+                {!showTypeGrid && selectedType ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-accent text-accent-foreground">
+                        <selectedType.icon className="w-5 h-5" />
                       </div>
                       <div>
-                        <p className="font-medium text-foreground">{option.label}</p>
-                        <p className="text-xs text-muted-foreground">{option.description}</p>
+                        <p className="font-medium text-foreground">{selectedType.label}</p>
+                        <p className="text-xs text-muted-foreground">{selectedType.description}</p>
                       </div>
-                    </button>
-                  ))}
-                </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowTypeGrid(true)}
+                    >
+                      Change type
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {artifactTypes.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => {
+                          setType(option.value);
+                          setShowTypeGrid(false);
+                          if (option.hasAI) {
+                            setCreationMode("ai");
+                          } else {
+                            setCreationMode("manual");
+                          }
+                        }}
+                        className={cn(
+                          "flex items-start gap-3 p-4 rounded-lg border text-left transition-all relative",
+                          type === option.value
+                            ? "border-accent bg-accent/5 ring-1 ring-accent"
+                            : "border-border hover:border-accent/50 hover:bg-muted/50"
+                        )}
+                      >
+                        {option.hasAI && (
+                          <div className="absolute top-2 right-2">
+                            <Sparkles className="w-4 h-4 text-accent" />
+                          </div>
+                        )}
+                        <div className={cn(
+                          "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+                          type === option.value ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground"
+                        )}>
+                          <option.icon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">{option.label}</p>
+                          <p className="text-xs text-muted-foreground">{option.description}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
