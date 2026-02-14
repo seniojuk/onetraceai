@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.generate-meta-prompt]
 verify_jwt = false
+
+[functions.compute-coverage]
+verify_jwt = false
