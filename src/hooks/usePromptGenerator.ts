@@ -34,7 +34,27 @@ export interface ContextConfig {
   includeParents: boolean;
   includeChildren: boolean;
   maxDepth: number;
+  tokenBudget: number;
+  includeTypes: string[] | null; // null = all types
 }
+
+export const ALL_ARTIFACT_TYPES = [
+  "IDEA",
+  "PRD",
+  "EPIC",
+  "STORY",
+  "ACCEPTANCE_CRITERION",
+  "TEST_CASE",
+] as const;
+
+export const ARTIFACT_TYPE_LABELS: Record<string, string> = {
+  IDEA: "Idea",
+  PRD: "PRD",
+  EPIC: "Epic",
+  STORY: "Story",
+  ACCEPTANCE_CRITERION: "Acceptance Criterion",
+  TEST_CASE: "Test Case",
+};
 
 export function usePromptTools() {
   return useQuery({
