@@ -243,7 +243,7 @@ export function PromptGeneratorDialog({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="generate" className="flex-1 flex flex-col min-h-0 mt-4">
+          <TabsContent value="generate" className="flex-1 flex flex-col min-h-0 mt-4 overflow-auto">
             {generatedPrompt ? (
               <ResultView
                 generatedPrompt={generatedPrompt}
