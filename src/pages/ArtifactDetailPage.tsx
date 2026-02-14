@@ -614,8 +614,8 @@ const ArtifactDetailPage = () => {
                   )}
                 </CardContent>
               </Card>
-              {/* PRD Version History */}
-              {artifact.type === "PRD" && (
+              {/* Version History */}
+              {(artifact.type === "PRD" || artifact.type === "IDEA") && (
                 <PRDVersionHistory artifactId={artifact.id} />
               )}
             </div>
