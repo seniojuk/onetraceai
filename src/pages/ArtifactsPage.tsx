@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { 
   Plus, 
@@ -18,7 +18,10 @@ import {
   Download,
   X,
   Paperclip,
-  Layers
+  Layers,
+  ChevronRight,
+  ChevronDown,
+  Network,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,10 +96,12 @@ const ArtifactsPage = () => {
   
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [hierarchyMode, setHierarchyMode] = useState(false);
   const [sortBy, setSortBy] = useState<"created_at" | "updated_at" | "title">("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [selectedArtifacts, setSelectedArtifacts] = useState<Set<string>>(new Set());
   const [showLimitDialog, setShowLimitDialog] = useState(false);
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
   // Filter out FILE type from main artifacts list and apply filters
   const filteredArtifacts = artifacts?.filter(artifact => {
@@ -123,6 +128,122 @@ const ArtifactsPage = () => {
     }
     return sortOrder === "asc" ? comparison : -comparison;
   }) || [];
+
+  // Build hierarchical tree from filtered artifacts
+  const { flattenedTree, childrenMap } = useMemo(() => {
+    if (!hierarchyMode || !artifacts) return { flattenedTree: filteredArtifacts, childrenMap: new Map<string, Artifact[]>() };
+
+    // All artifacts (not just filtered) to build full tree
+    const allArtifacts = artifacts.filter(a => a.type !== "FILE");
+    const filteredIds = new Set(filteredArtifacts.map(a => a.id));
+    
+    // Build parent->children map
+    const cMap = new Map<string, Artifact[]>();
+    const parentIds = new Set<string>();
+    
+    for (const a of allArtifacts) {
+      if (a.parent_artifact_id) {
+        parentIds.add(a.parent_artifact_id);
+        if (!cMap.has(a.parent_artifact_id)) cMap.set(a.parent_artifact_id, []);
+        cMap.get(a.parent_artifact_id)!.push(a);
+      }
+    }
+
+    // Find all ancestor IDs for filtered artifacts so we can show their parents
+    const visibleIds = new Set<string>(filteredIds);
+    const findAncestors = (id: string) => {
+      const artifact = allArtifacts.find(a => a.id === id);
+      if (artifact?.parent_artifact_id) {
+        visibleIds.add(artifact.parent_artifact_id);
+        findAncestors(artifact.parent_artifact_id);
+      }
+    };
+    filteredIds.forEach(id => findAncestors(id));
+
+    // Roots: artifacts with no parent or whose parent is not in the visible set
+    const roots = allArtifacts
+      .filter(a => visibleIds.has(a.id) && (!a.parent_artifact_id || !visibleIds.has(a.parent_artifact_id)));
+
+    // Flatten tree respecting expanded state
+    const result: { artifact: Artifact; depth: number; hasChildren: boolean; isMatchedByFilter: boolean }[] = [];
+    const flatten = (items: Artifact[], depth: number) => {
+      for (const item of items) {
+        if (!visibleIds.has(item.id)) continue;
+        const children = (cMap.get(item.id) || []).filter(c => visibleIds.has(c.id));
+        const hasChildren = children.length > 0;
+        result.push({ artifact: item, depth, hasChildren, isMatchedByFilter: filteredIds.has(item.id) });
+        if (hasChildren && expandedNodes.has(item.id)) {
+          flatten(children, depth + 1);
+        }
+      }
+    };
+    flatten(roots, 0);
+
+    return { flattenedTree: result.map(r => r.artifact), childrenMap: cMap, _treeData: result };
+  }, [hierarchyMode, artifacts, filteredArtifacts, expandedNodes]);
+
+  // Access the full tree data for rendering
+  const treeData = useMemo(() => {
+    if (!hierarchyMode || !artifacts) return null;
+    
+    const allArtifacts = artifacts.filter(a => a.type !== "FILE");
+    const filteredIds = new Set(filteredArtifacts.map(a => a.id));
+    
+    const cMap = new Map<string, Artifact[]>();
+    for (const a of allArtifacts) {
+      if (a.parent_artifact_id) {
+        if (!cMap.has(a.parent_artifact_id)) cMap.set(a.parent_artifact_id, []);
+        cMap.get(a.parent_artifact_id)!.push(a);
+      }
+    }
+
+    const visibleIds = new Set<string>(filteredIds);
+    const findAncestors = (id: string) => {
+      const artifact = allArtifacts.find(a => a.id === id);
+      if (artifact?.parent_artifact_id) {
+        visibleIds.add(artifact.parent_artifact_id);
+        findAncestors(artifact.parent_artifact_id);
+      }
+    };
+    filteredIds.forEach(id => findAncestors(id));
+
+    const roots = allArtifacts
+      .filter(a => visibleIds.has(a.id) && (!a.parent_artifact_id || !visibleIds.has(a.parent_artifact_id)));
+
+    const result: { artifact: Artifact; depth: number; hasChildren: boolean; isMatchedByFilter: boolean }[] = [];
+    const flatten = (items: Artifact[], depth: number) => {
+      for (const item of items) {
+        if (!visibleIds.has(item.id)) continue;
+        const children = (cMap.get(item.id) || []).filter(c => visibleIds.has(c.id));
+        const hasChildren = children.length > 0;
+        result.push({ artifact: item, depth, hasChildren, isMatchedByFilter: filteredIds.has(item.id) });
+        if (hasChildren && expandedNodes.has(item.id)) {
+          flatten(children, depth + 1);
+        }
+      }
+    };
+    flatten(roots, 0);
+    return result;
+  }, [hierarchyMode, artifacts, filteredArtifacts, expandedNodes]);
+
+  const toggleExpanded = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedNodes(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const expandAll = useCallback(() => {
+    if (!artifacts) return;
+    const allParentIds = new Set<string>();
+    artifacts.forEach(a => { if (a.parent_artifact_id) allParentIds.add(a.parent_artifact_id); });
+    setExpandedNodes(allParentIds);
+  }, [artifacts]);
+
+  const collapseAll = useCallback(() => setExpandedNodes(new Set()), []);
 
   const handleCreateArtifact = (type?: ArtifactType) => {
     if (!canCreateArtifact) {
@@ -351,6 +472,20 @@ const ArtifactsPage = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              {/* Hierarchy Toggle */}
+              {viewMode === "list" && (
+                <Button
+                  variant={hierarchyMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setHierarchyMode(!hierarchyMode)}
+                  title="Toggle hierarchy view"
+                  className={cn(hierarchyMode && "bg-accent hover:bg-accent/90")}
+                >
+                  <Network className="w-4 h-4 mr-2" />
+                  Hierarchy
+                </Button>
+              )}
+
               {/* View Toggle */}
               <div className="flex border rounded-lg overflow-hidden">
                 <Button
@@ -372,6 +507,21 @@ const ArtifactsPage = () => {
               </div>
             </div>
           </div>
+
+          {/* Hierarchy controls */}
+          {hierarchyMode && viewMode === "list" && (
+            <div className="flex items-center gap-2 mb-2">
+              <Button variant="ghost" size="sm" onClick={expandAll}>
+                Expand all
+              </Button>
+              <Button variant="ghost" size="sm" onClick={collapseAll}>
+                Collapse all
+              </Button>
+              <span className="text-xs text-muted-foreground ml-2">
+                Showing parent → child relationships
+              </span>
+            </div>
+          )}
 
           {/* Selection Bar */}
           {selectedCount > 0 && (
@@ -452,63 +602,95 @@ const ArtifactsPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredArtifacts.map((artifact) => {
-                    const typeConfig = artifactTypeConfig[artifact.type as ArtifactType];
-                    const status = statusConfig[artifact.status as ArtifactStatus];
+                  {(hierarchyMode && treeData ? treeData : filteredArtifacts.map(a => ({ artifact: a, depth: 0, hasChildren: false, isMatchedByFilter: true }))).map(
+                    (item) => {
+                      const artifact = 'artifact' in item ? item.artifact : item as unknown as Artifact;
+                      const depth = 'depth' in item ? item.depth : 0;
+                      const hasChildren = 'hasChildren' in item ? item.hasChildren : false;
+                      const isMatchedByFilter = 'isMatchedByFilter' in item ? item.isMatchedByFilter : true;
+                      const typeConfig = artifactTypeConfig[artifact.type as ArtifactType];
+                      const status = statusConfig[artifact.status as ArtifactStatus];
+                      const isExpanded = expandedNodes.has(artifact.id);
+                      
                       return (
-                      <TableRow 
-                        key={artifact.id} 
-                        className={cn("cursor-pointer hover:bg-muted/50", selectedArtifacts.has(artifact.id) && "bg-accent/5")}
-                        onClick={() => navigate(`/artifacts/${artifact.id}`)}
-                      >
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <Checkbox
-                            checked={selectedArtifacts.has(artifact.id)}
-                            onCheckedChange={() => handleToggleSelect(artifact.id)}
-                          />
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          {artifact.short_id}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={cn("gap-1", typeConfig?.color)}>
-                            {typeConfig?.icon && <typeConfig.icon className="w-3 h-3" />}
-                            {typeConfig?.label || artifact.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{artifact.title}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={cn(status?.color)}>
-                            {status?.label || artifact.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {new Date(artifact.updated_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/artifacts/${artifact.id}`); }}>
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/artifacts/${artifact.id}/edit`); }}>
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/graph?focus=${artifact.id}`); }}>
-                                View in Graph
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                        <TableRow 
+                          key={artifact.id} 
+                          className={cn(
+                            "cursor-pointer hover:bg-muted/50", 
+                            selectedArtifacts.has(artifact.id) && "bg-accent/5",
+                            hierarchyMode && !isMatchedByFilter && "opacity-50"
+                          )}
+                          onClick={() => navigate(`/artifacts/${artifact.id}`)}
+                        >
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedArtifacts.has(artifact.id)}
+                              onCheckedChange={() => handleToggleSelect(artifact.id)}
+                            />
+                          </TableCell>
+                          <TableCell className="font-mono text-xs text-muted-foreground">
+                            {artifact.short_id}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={cn("gap-1", typeConfig?.color)}>
+                              {typeConfig?.icon && <typeConfig.icon className="w-3 h-3" />}
+                              {typeConfig?.label || artifact.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center" style={{ paddingLeft: `${depth * 24}px` }}>
+                              {hierarchyMode && (
+                                <span 
+                                  className="inline-flex items-center justify-center w-5 h-5 mr-1 shrink-0"
+                                  onClick={(e) => hasChildren ? toggleExpanded(artifact.id, e) : e.stopPropagation()}
+                                >
+                                  {hasChildren ? (
+                                    isExpanded ? (
+                                      <ChevronDown className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                                    ) : (
+                                      <ChevronRight className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
+                                    )
+                                  ) : (
+                                    <span className="w-4 h-4" />
+                                  )}
+                                </span>
+                              )}
+                              <span className="truncate">{artifact.title}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={cn(status?.color)}>
+                              {status?.label || artifact.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {new Date(artifact.updated_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <Button variant="ghost" size="sm">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/artifacts/${artifact.id}`); }}>
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/artifacts/${artifact.id}/edit`); }}>
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/graph?focus=${artifact.id}`); }}>
+                                  View in Graph
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+                  )}
                 </TableBody>
               </Table>
             </Card>
