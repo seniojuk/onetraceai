@@ -48,7 +48,16 @@ serve(async (req) => {
       });
     }
 
-    const { projectId } = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid or empty request body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { projectId } = body;
     if (!projectId) {
       return new Response(JSON.stringify({ error: "Project ID required" }), {
         status: 400,
