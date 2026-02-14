@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   AlertTriangle, 
@@ -8,11 +7,10 @@ import {
   Filter,
   RefreshCw,
   ExternalLink,
-  ChevronRight,
   Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -24,84 +22,51 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useUIStore } from "@/store/uiStore";
+import { useDriftFindings, useResolveDriftFinding, useIgnoreDriftFinding, type DriftFinding } from "@/hooks/useDriftFindings";
+import { useComputeCoverage } from "@/hooks/useCoverage";
+import { useArtifacts } from "@/hooks/useArtifacts";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
+import { useState } from "react";
 
-interface DriftFinding {
-  id: string;
-  type: "UNTRACED_COMMIT" | "MISSING_TESTS" | "STATUS_MISMATCH" | "ORPHAN_ARTIFACT" | "STALE_REQUIREMENT";
-  title: string;
-  description: string;
-  severity: "HIGH" | "MEDIUM" | "LOW";
-  status: "OPEN" | "RESOLVED" | "IGNORED";
-  artifactId?: string;
-  artifactShortId?: string;
-  evidence?: string;
-  detectedAt: string;
-}
+const severityLabel = (sev: number | null) => {
+  if (sev === 3) return "HIGH";
+  if (sev === 2) return "MEDIUM";
+  return "LOW";
+};
 
-// Mock drift findings
-const mockFindings: DriftFinding[] = [
-  {
-    id: "1",
-    type: "UNTRACED_COMMIT",
-    title: "Commit abc123 has no linked requirement",
-    description: "A commit was pushed that doesn't reference any story or AC in its message.",
-    severity: "HIGH",
-    status: "OPEN",
-    evidence: "Commit: feat: add payment processing logic",
-    detectedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-  },
-  {
-    id: "2",
-    type: "MISSING_TESTS",
-    title: "STORY-004 has 0/3 ACs tested",
-    description: "This story has acceptance criteria but no test cases linked to them.",
-    severity: "MEDIUM",
-    status: "OPEN",
-    artifactShortId: "STORY-004",
-    detectedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-  },
-  {
-    id: "3",
-    type: "STATUS_MISMATCH",
-    title: "STORY-002 status out of sync with Jira",
-    description: "The story shows as Done here but In Review in Jira.",
-    severity: "LOW",
-    status: "OPEN",
-    artifactShortId: "STORY-002",
-    evidence: "OneTrace: DONE, Jira: IN_REVIEW",
-    detectedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-  {
-    id: "4",
-    type: "ORPHAN_ARTIFACT",
-    title: "AC-015 has no parent story",
-    description: "This acceptance criterion is not linked to any user story.",
-    severity: "MEDIUM",
-    status: "RESOLVED",
-    artifactShortId: "AC-015",
-    detectedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-  },
-  {
-    id: "5",
-    type: "STALE_REQUIREMENT",
-    title: "PRD-001 not updated in 30+ days",
-    description: "This requirement document may be outdated and should be reviewed.",
-    severity: "LOW",
-    status: "IGNORED",
-    artifactShortId: "PRD-001",
-    detectedAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
-  },
-];
+const severityColors: Record<string, string> = {
+  HIGH: "bg-red-100 text-red-700 border-red-200",
+  MEDIUM: "bg-amber-100 text-amber-700 border-amber-200",
+  LOW: "bg-blue-100 text-blue-700 border-blue-200",
+};
+
+const typeLabels: Record<string, string> = {
+  COVERAGE_GAP: "Coverage Gap",
+  UNTRACED_COMMIT: "Untraced Commit",
+  MISSING_TESTS: "Missing Tests",
+  STATUS_MISMATCH: "Status Mismatch",
+  ORPHAN_ARTIFACT: "Orphan Artifact",
+  STALE_REQUIREMENT: "Stale Requirement",
+};
 
 const DriftPage = () => {
   const navigate = useNavigate();
-  const { currentProjectId } = useUIStore();
+  const { currentProjectId, currentWorkspaceId } = useUIStore();
   
-  const [findings, setFindings] = useState<DriftFinding[]>(mockFindings);
+  const { data: findings = [], isLoading } = useDriftFindings(currentProjectId || undefined);
+  const { data: artifacts } = useArtifacts(currentProjectId || undefined);
+  const resolveFinding = useResolveDriftFinding();
+  const ignoreFinding = useIgnoreDriftFinding();
+  const computeCoverage = useComputeCoverage();
+
   const [severityFilter, setSeverityFilter] = useState<string[]>([]);
-  const [typeFilter, setTypeFilter] = useState<string[]>([]);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Build artifact lookup for short_ids
+  const artifactMap = new Map<string, { short_id: string; title: string }>();
+  for (const a of artifacts || []) {
+    artifactMap.set(a.id, { short_id: a.short_id, title: a.title });
+  }
 
   const openFindings = findings.filter(f => f.status === "OPEN");
   const resolvedFindings = findings.filter(f => f.status === "RESOLVED");
@@ -110,108 +75,135 @@ const DriftPage = () => {
   const filteredFindings = (status: string) => {
     return findings
       .filter(f => f.status === status)
-      .filter(f => severityFilter.length === 0 || severityFilter.includes(f.severity))
-      .filter(f => typeFilter.length === 0 || typeFilter.includes(f.type));
+      .filter(f => severityFilter.length === 0 || severityFilter.includes(severityLabel(f.severity)));
   };
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsRefreshing(false);
+  const handleScan = async () => {
+    if (!currentProjectId || !currentWorkspaceId) {
+      toast({ title: "No project selected", description: "Please select a project first.", variant: "destructive" });
+      return;
+    }
+    try {
+      const result = await computeCoverage.mutateAsync({
+        projectId: currentProjectId,
+        workspaceId: currentWorkspaceId,
+      });
+      toast({
+        title: "Scan complete",
+        description: `${result.drift_findings_created} new drift findings detected.`,
+      });
+    } catch (err: any) {
+      toast({ title: "Scan failed", description: err.message, variant: "destructive" });
+    }
   };
 
   const handleResolve = (id: string) => {
-    setFindings(findings.map(f => 
-      f.id === id ? { ...f, status: "RESOLVED" as const } : f
-    ));
+    resolveFinding.mutate({ findingId: id }, {
+      onSuccess: () => toast({ title: "Finding resolved" }),
+      onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+    });
   };
 
   const handleIgnore = (id: string) => {
-    setFindings(findings.map(f => 
-      f.id === id ? { ...f, status: "IGNORED" as const } : f
-    ));
+    ignoreFinding.mutate({ findingId: id }, {
+      onSuccess: () => toast({ title: "Finding ignored" }),
+      onError: (err) => toast({ title: "Error", description: err.message, variant: "destructive" }),
+    });
   };
 
-  const severityColors = {
-    HIGH: "bg-red-100 text-red-700 border-red-200",
-    MEDIUM: "bg-amber-100 text-amber-700 border-amber-200",
-    LOW: "bg-blue-100 text-blue-700 border-blue-200",
-  };
+  const renderFindingCard = (finding: DriftFinding) => {
+    const sevLabel = severityLabel(finding.severity);
+    const primaryArtifact = finding.primary_artifact_id ? artifactMap.get(finding.primary_artifact_id) : null;
 
-  const typeLabels = {
-    UNTRACED_COMMIT: "Untraced Commit",
-    MISSING_TESTS: "Missing Tests",
-    STATUS_MISMATCH: "Status Mismatch",
-    ORPHAN_ARTIFACT: "Orphan Artifact",
-    STALE_REQUIREMENT: "Stale Requirement",
-  };
-
-  const renderFindingCard = (finding: DriftFinding) => (
-    <Card key={finding.id} className="mb-3">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className={cn(severityColors[finding.severity])}>
-                {finding.severity}
-              </Badge>
-              <Badge variant="secondary" className="text-xs">
-                {typeLabels[finding.type]}
-              </Badge>
-              {finding.artifactShortId && (
-                <span className="font-mono text-xs text-muted-foreground">
-                  {finding.artifactShortId}
-                </span>
+    return (
+      <Card key={finding.id} className="mb-3">
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline" className={cn(severityColors[sevLabel])}>
+                  {sevLabel}
+                </Badge>
+                <Badge variant="secondary" className="text-xs">
+                  {typeLabels[finding.type] || finding.type}
+                </Badge>
+                {primaryArtifact && (
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {primaryArtifact.short_id}
+                  </span>
+                )}
+              </div>
+              <h4 className="font-medium text-foreground mb-1">{finding.title}</h4>
+              {finding.description && (
+                <p className="text-sm text-muted-foreground mb-2">{finding.description}</p>
+              )}
+              {finding.evidence && (
+                <div className="text-xs font-mono bg-muted px-2 py-1 rounded inline-block">
+                  Coverage: {Math.round((finding.evidence.coverage_ratio ?? 0) * 100)}% 
+                  (threshold: {Math.round((finding.evidence.threshold ?? 0.7) * 100)}%)
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground mt-2">
+                <Clock className="w-3 h-3 inline mr-1" />
+                Detected {finding.detected_at ? new Date(finding.detected_at).toLocaleString() : "unknown"}
+              </p>
+              {finding.resolution_note && (
+                <p className="text-xs text-muted-foreground mt-1 italic">
+                  Note: {finding.resolution_note}
+                </p>
               )}
             </div>
-            <h4 className="font-medium text-foreground mb-1">{finding.title}</h4>
-            <p className="text-sm text-muted-foreground mb-2">{finding.description}</p>
-            {finding.evidence && (
-              <p className="text-xs font-mono bg-muted px-2 py-1 rounded inline-block">
-                {finding.evidence}
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground mt-2">
-              <Clock className="w-3 h-3 inline mr-1" />
-              Detected {new Date(finding.detectedAt).toLocaleString()}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2">
-            {finding.status === "OPEN" && (
-              <>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => handleResolve(finding.id)}
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-1" />
-                  Resolve
-                </Button>
+            <div className="flex flex-col gap-2">
+              {finding.status === "OPEN" && (
+                <>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleResolve(finding.id)}
+                    disabled={resolveFinding.isPending}
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-1" />
+                    Resolve
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="ghost"
+                    onClick={() => handleIgnore(finding.id)}
+                    disabled={ignoreFinding.isPending}
+                  >
+                    <XCircle className="w-4 h-4 mr-1" />
+                    Ignore
+                  </Button>
+                </>
+              )}
+              {finding.primary_artifact_id && (
                 <Button 
                   size="sm" 
                   variant="ghost"
-                  onClick={() => handleIgnore(finding.id)}
+                  onClick={() => navigate(`/artifacts/${finding.primary_artifact_id}`)}
                 >
-                  <XCircle className="w-4 h-4 mr-1" />
-                  Ignore
+                  <ExternalLink className="w-4 h-4 mr-1" />
+                  View
                 </Button>
-              </>
-            )}
-            {finding.artifactShortId && (
-              <Button 
-                size="sm" 
-                variant="ghost"
-                onClick={() => navigate(`/artifacts?search=${finding.artifactShortId}`)}
-              >
-                <ExternalLink className="w-4 h-4 mr-1" />
-                View
-              </Button>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        </CardContent>
+      </Card>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <AuthGuard>
+        <AppLayout>
+          <div className="flex items-center justify-center min-h-screen">
+            <Loader2 className="w-8 h-8 animate-spin text-accent" />
+          </div>
+        </AppLayout>
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard>
@@ -257,11 +249,11 @@ const DriftPage = () => {
 
               <Button 
                 variant="outline" 
-                onClick={handleRefresh}
-                disabled={isRefreshing}
+                onClick={handleScan}
+                disabled={computeCoverage.isPending}
               >
-                <RefreshCw className={cn("w-4 h-4 mr-2", isRefreshing && "animate-spin")} />
-                Scan
+                <RefreshCw className={cn("w-4 h-4 mr-2", computeCoverage.isPending && "animate-spin")} />
+                {computeCoverage.isPending ? "Scanning…" : "Scan"}
               </Button>
             </div>
           </div>
