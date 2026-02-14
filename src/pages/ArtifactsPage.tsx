@@ -47,6 +47,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useArtifacts, ArtifactType, ArtifactStatus, Artifact } from "@/hooks/useArtifacts";
+import { useProjectArtifactEdges } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
 import { downloadExport, ExportFormat } from "@/utils/artifactExport";
@@ -92,6 +93,7 @@ const ArtifactsPage = () => {
   
   const { currentProjectId, currentWorkspaceId, artifactTypeFilter, setArtifactTypeFilter, statusFilter, setStatusFilter } = useUIStore();
   const { data: artifacts, isLoading } = useArtifacts(currentProjectId || undefined);
+  const { data: projectEdges } = useProjectArtifactEdges(currentProjectId || undefined);
   const { canCreateArtifact, artifactAtLimit, artifactWarning } = useUsageLimits();
   
   const [search, setSearch] = useState("");
@@ -129,40 +131,78 @@ const ArtifactsPage = () => {
     return sortOrder === "asc" ? comparison : -comparison;
   }) || [];
 
-  // Build hierarchical tree from filtered artifacts
+  // Build hierarchical tree from filtered artifacts using artifact_edges
   const { flattenedTree, childrenMap } = useMemo(() => {
-    if (!hierarchyMode || !artifacts) return { flattenedTree: filteredArtifacts, childrenMap: new Map<string, Artifact[]>() };
+    if (!hierarchyMode || !artifacts || !projectEdges) return { flattenedTree: filteredArtifacts, childrenMap: new Map<string, Artifact[]>() };
 
     // All artifacts (not just filtered) to build full tree
     const allArtifacts = artifacts.filter(a => a.type !== "FILE");
     const filteredIds = new Set(filteredArtifacts.map(a => a.id));
+    const artifactMap = new Map(allArtifacts.map(a => [a.id, a]));
     
-    // Build parent->children map
+    // Build parent->children map from edges (CONTAINS and DERIVES_FROM indicate hierarchy)
     const cMap = new Map<string, Artifact[]>();
-    const parentIds = new Set<string>();
+    const childIds = new Set<string>();
     
+    for (const edge of projectEdges) {
+      // CONTAINS: parent contains child (from -> to is parent -> child)
+      // DERIVES_FROM: child derives from parent (from is parent, to is child)
+      if (edge.edge_type === "CONTAINS" || edge.edge_type === "DERIVES_FROM") {
+        const parentId = edge.from_artifact_id;
+        const childId = edge.to_artifact_id;
+        const childArtifact = artifactMap.get(childId);
+        if (childArtifact && artifactMap.has(parentId)) {
+          childIds.add(childId);
+          if (!cMap.has(parentId)) cMap.set(parentId, []);
+          // Avoid duplicate children
+          const existing = cMap.get(parentId)!;
+          if (!existing.some(c => c.id === childId)) {
+            existing.push(childArtifact);
+          }
+        }
+      }
+    }
+
+    // Also use parent_artifact_id as fallback
     for (const a of allArtifacts) {
-      if (a.parent_artifact_id) {
-        parentIds.add(a.parent_artifact_id);
+      if (a.parent_artifact_id && artifactMap.has(a.parent_artifact_id)) {
+        childIds.add(a.id);
         if (!cMap.has(a.parent_artifact_id)) cMap.set(a.parent_artifact_id, []);
-        cMap.get(a.parent_artifact_id)!.push(a);
+        const existing = cMap.get(a.parent_artifact_id)!;
+        if (!existing.some(c => c.id === a.id)) {
+          existing.push(a);
+        }
       }
     }
 
     // Find all ancestor IDs for filtered artifacts so we can show their parents
     const visibleIds = new Set<string>(filteredIds);
     const findAncestors = (id: string) => {
-      const artifact = allArtifacts.find(a => a.id === id);
-      if (artifact?.parent_artifact_id) {
+      // Check edges for parents
+      for (const edge of projectEdges) {
+        if ((edge.edge_type === "CONTAINS" || edge.edge_type === "DERIVES_FROM") && edge.to_artifact_id === id) {
+          if (artifactMap.has(edge.from_artifact_id)) {
+            visibleIds.add(edge.from_artifact_id);
+            findAncestors(edge.from_artifact_id);
+          }
+        }
+      }
+      // Also check parent_artifact_id
+      const artifact = artifactMap.get(id);
+      if (artifact?.parent_artifact_id && artifactMap.has(artifact.parent_artifact_id)) {
         visibleIds.add(artifact.parent_artifact_id);
         findAncestors(artifact.parent_artifact_id);
       }
     };
     filteredIds.forEach(id => findAncestors(id));
 
-    // Roots: artifacts with no parent or whose parent is not in the visible set
+    // Roots: artifacts that are not children of any other artifact
     const roots = allArtifacts
-      .filter(a => visibleIds.has(a.id) && (!a.parent_artifact_id || !visibleIds.has(a.parent_artifact_id)));
+      .filter(a => visibleIds.has(a.id) && !childIds.has(a.id));
+
+    // Sort roots by type hierarchy: IDEA -> PRD -> EPIC -> STORY -> others
+    const typeOrder: Record<string, number> = { IDEA: 0, PRD: 1, EPIC: 2, STORY: 3 };
+    roots.sort((a, b) => (typeOrder[a.type] ?? 99) - (typeOrder[b.type] ?? 99));
 
     // Flatten tree respecting expanded state
     const result: { artifact: Artifact; depth: number; hasChildren: boolean; isMatchedByFilter: boolean }[] = [];
@@ -170,6 +210,7 @@ const ArtifactsPage = () => {
       for (const item of items) {
         if (!visibleIds.has(item.id)) continue;
         const children = (cMap.get(item.id) || []).filter(c => visibleIds.has(c.id));
+        children.sort((a, b) => (typeOrder[a.type] ?? 99) - (typeOrder[b.type] ?? 99));
         const hasChildren = children.length > 0;
         result.push({ artifact: item, depth, hasChildren, isMatchedByFilter: filteredIds.has(item.id) });
         if (hasChildren && expandedNodes.has(item.id)) {
@@ -180,27 +221,60 @@ const ArtifactsPage = () => {
     flatten(roots, 0);
 
     return { flattenedTree: result.map(r => r.artifact), childrenMap: cMap, _treeData: result };
-  }, [hierarchyMode, artifacts, filteredArtifacts, expandedNodes]);
+  }, [hierarchyMode, artifacts, projectEdges, filteredArtifacts, expandedNodes]);
 
   // Access the full tree data for rendering
   const treeData = useMemo(() => {
-    if (!hierarchyMode || !artifacts) return null;
+    if (!hierarchyMode || !artifacts || !projectEdges) return null;
     
     const allArtifacts = artifacts.filter(a => a.type !== "FILE");
     const filteredIds = new Set(filteredArtifacts.map(a => a.id));
+    const artifactMap = new Map(allArtifacts.map(a => [a.id, a]));
     
+    // Build parent->children map from edges
     const cMap = new Map<string, Artifact[]>();
+    const childIds = new Set<string>();
+    
+    for (const edge of projectEdges) {
+      if (edge.edge_type === "CONTAINS" || edge.edge_type === "DERIVES_FROM") {
+        const parentId = edge.from_artifact_id;
+        const childId = edge.to_artifact_id;
+        const childArtifact = artifactMap.get(childId);
+        if (childArtifact && artifactMap.has(parentId)) {
+          childIds.add(childId);
+          if (!cMap.has(parentId)) cMap.set(parentId, []);
+          const existing = cMap.get(parentId)!;
+          if (!existing.some(c => c.id === childId)) {
+            existing.push(childArtifact);
+          }
+        }
+      }
+    }
+
+    // Also use parent_artifact_id as fallback
     for (const a of allArtifacts) {
-      if (a.parent_artifact_id) {
+      if (a.parent_artifact_id && artifactMap.has(a.parent_artifact_id)) {
+        childIds.add(a.id);
         if (!cMap.has(a.parent_artifact_id)) cMap.set(a.parent_artifact_id, []);
-        cMap.get(a.parent_artifact_id)!.push(a);
+        const existing = cMap.get(a.parent_artifact_id)!;
+        if (!existing.some(c => c.id === a.id)) {
+          existing.push(a);
+        }
       }
     }
 
     const visibleIds = new Set<string>(filteredIds);
     const findAncestors = (id: string) => {
-      const artifact = allArtifacts.find(a => a.id === id);
-      if (artifact?.parent_artifact_id) {
+      for (const edge of projectEdges) {
+        if ((edge.edge_type === "CONTAINS" || edge.edge_type === "DERIVES_FROM") && edge.to_artifact_id === id) {
+          if (artifactMap.has(edge.from_artifact_id)) {
+            visibleIds.add(edge.from_artifact_id);
+            findAncestors(edge.from_artifact_id);
+          }
+        }
+      }
+      const artifact = artifactMap.get(id);
+      if (artifact?.parent_artifact_id && artifactMap.has(artifact.parent_artifact_id)) {
         visibleIds.add(artifact.parent_artifact_id);
         findAncestors(artifact.parent_artifact_id);
       }
@@ -208,13 +282,17 @@ const ArtifactsPage = () => {
     filteredIds.forEach(id => findAncestors(id));
 
     const roots = allArtifacts
-      .filter(a => visibleIds.has(a.id) && (!a.parent_artifact_id || !visibleIds.has(a.parent_artifact_id)));
+      .filter(a => visibleIds.has(a.id) && !childIds.has(a.id));
+
+    const typeOrder: Record<string, number> = { IDEA: 0, PRD: 1, EPIC: 2, STORY: 3 };
+    roots.sort((a, b) => (typeOrder[a.type] ?? 99) - (typeOrder[b.type] ?? 99));
 
     const result: { artifact: Artifact; depth: number; hasChildren: boolean; isMatchedByFilter: boolean }[] = [];
     const flatten = (items: Artifact[], depth: number) => {
       for (const item of items) {
         if (!visibleIds.has(item.id)) continue;
         const children = (cMap.get(item.id) || []).filter(c => visibleIds.has(c.id));
+        children.sort((a, b) => (typeOrder[a.type] ?? 99) - (typeOrder[b.type] ?? 99));
         const hasChildren = children.length > 0;
         result.push({ artifact: item, depth, hasChildren, isMatchedByFilter: filteredIds.has(item.id) });
         if (hasChildren && expandedNodes.has(item.id)) {
@@ -224,7 +302,7 @@ const ArtifactsPage = () => {
     };
     flatten(roots, 0);
     return result;
-  }, [hierarchyMode, artifacts, filteredArtifacts, expandedNodes]);
+  }, [hierarchyMode, artifacts, projectEdges, filteredArtifacts, expandedNodes]);
 
   const toggleExpanded = useCallback((id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -237,11 +315,18 @@ const ArtifactsPage = () => {
   }, []);
 
   const expandAll = useCallback(() => {
-    if (!artifacts) return;
+    if (!artifacts || !projectEdges) return;
     const allParentIds = new Set<string>();
+    // From edges
+    projectEdges.forEach(e => {
+      if (e.edge_type === "CONTAINS" || e.edge_type === "DERIVES_FROM") {
+        allParentIds.add(e.from_artifact_id);
+      }
+    });
+    // From parent_artifact_id
     artifacts.forEach(a => { if (a.parent_artifact_id) allParentIds.add(a.parent_artifact_id); });
     setExpandedNodes(allParentIds);
-  }, [artifacts]);
+  }, [artifacts, projectEdges]);
 
   const collapseAll = useCallback(() => setExpandedNodes(new Set()), []);
 
