@@ -148,7 +148,7 @@ export function useDeleteProject() {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-project`,
         {
-          method: "DELETE",
+          method: "POST",
           headers: {
             "Authorization": `Bearer ${session.access_token}`,
             "Content-Type": "application/json",
