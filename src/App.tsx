@@ -25,6 +25,7 @@ import BillingPage from "./pages/BillingPage";
 import SettingsPage from "./pages/SettingsPage";
 import PlatformAdminPage from "./pages/PlatformAdminPage";
 import NotFound from "./pages/NotFound";
+import PromptGeneratorPage from "./pages/PromptGeneratorPage";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
           <Route path="/billing" element={<BillingPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/admin" element={<PlatformAdminPage />} />
+          <Route path="/prompt-generator" element={<PromptGeneratorPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

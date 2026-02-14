@@ -67,6 +67,7 @@ import { PRDVersionHistory } from "@/components/prd/PRDVersionHistory";
 import { AttachedFiles } from "@/components/files/AttachedFiles";
 import { IdeaEnhancer } from "@/components/idea/IdeaEnhancer";
 import { JiraIssueBadge, JiraIssueSidebarCard } from "@/components/integrations/jira/JiraIssueBadge";
+import { PromptGeneratorDialog } from "@/components/prompts/PromptGeneratorDialog";
 
 const statusOptions: { value: ArtifactStatus; label: string }[] = [
   { value: "DRAFT", label: "Draft" },
@@ -91,6 +92,7 @@ const ArtifactDetailPage = () => {
   
   const [isEditing, setIsEditing] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isPromptGenOpen, setIsPromptGenOpen] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedContent, setEditedContent] = useState("");
   const [editedStatus, setEditedStatus] = useState<ArtifactStatus>("DRAFT");
@@ -427,6 +429,10 @@ const ArtifactDetailPage = () => {
                         <GitBranch className="w-4 h-4 mr-2" />
                         View in Graph
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setIsPromptGenOpen(true)}>
+                        <Wand2 className="w-4 h-4 mr-2" />
+                        Generate Code Prompt
+                      </DropdownMenuItem>
                       <DropdownMenuItem>
                         <Link2 className="w-4 h-4 mr-2" />
                         Copy Link
@@ -731,9 +737,34 @@ const ArtifactDetailPage = () => {
                   artifactShortId={artifact.short_id}
                 />
               )}
+
+              {/* Generate Code Prompt Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Code Generation</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setIsPromptGenOpen(true)}
+                  >
+                    <Wand2 className="w-4 h-4 mr-2" />
+                    Generate Prompt
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
+
+        {/* Prompt Generator Dialog */}
+        <PromptGeneratorDialog
+          open={isPromptGenOpen}
+          onOpenChange={setIsPromptGenOpen}
+          artifact={artifact}
+        />
       </AppLayout>
     </AuthGuard>
   );

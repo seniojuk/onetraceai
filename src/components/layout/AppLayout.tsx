@@ -55,6 +55,7 @@ const navItems = [
   { icon: BarChart3, label: "Coverage", path: "/coverage" },
   { icon: AlertTriangle, label: "Drift", path: "/drift" },
   { icon: Sparkles, label: "AI Agents", path: "/ai-agents" },
+  { icon: Sparkles, label: "Prompt Gen", path: "/prompt-generator" },
 ];
 
 const settingsItems = [
