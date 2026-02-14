@@ -25,17 +25,19 @@ import {
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useArtifacts } from "@/hooks/useArtifacts";
-import { useCoverageSnapshots, useComputeCoverage, type CoverageSnapshot } from "@/hooks/useCoverage";
+import { useCoverageSnapshots, useCoverageHistory, useComputeCoverage, type CoverageSnapshot } from "@/hooks/useCoverage";
 import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import CoverageGapReport from "@/components/coverage/CoverageGapReport";
+import CoverageTrendChart from "@/components/coverage/CoverageTrendChart";
 
 const CoveragePage = () => {
   const navigate = useNavigate();
   const { currentProjectId, currentWorkspaceId } = useUIStore();
   const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(currentProjectId || undefined);
   const { data: snapshots, isLoading: snapshotsLoading } = useCoverageSnapshots(currentProjectId || undefined);
+  const { data: coverageHistory } = useCoverageHistory(currentProjectId || undefined);
   const computeCoverage = useComputeCoverage();
 
   const isLoading = artifactsLoading || snapshotsLoading;
@@ -236,6 +238,13 @@ const CoveragePage = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Coverage Trend Chart */}
+          {coverageHistory && coverageHistory.length >= 2 && (
+            <div className="mb-8">
+              <CoverageTrendChart history={coverageHistory} />
+            </div>
+          )}
 
           {/* Coverage by Story */}
           <Card>
