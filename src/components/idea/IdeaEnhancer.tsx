@@ -613,16 +613,31 @@ export const IdeaEnhancer = ({ artifact, onComplete, onCancel }: IdeaEnhancerPro
                   </div>
                   {q.options && q.options.length > 0 && (
                     <div className="flex flex-wrap gap-2 ml-8">
-                      {q.options.map((opt, optIdx) => (
-                        <Button
-                          key={optIdx}
-                          variant={answers[q.id] === opt ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handleAnswerChange(q.id, opt)}
-                        >
-                          {opt}
-                        </Button>
-                      ))}
+                      {q.options.map((opt, optIdx) => {
+                        const currentValues = (answers[q.id] || "")
+                          .split(",")
+                          .map((v) => v.trim())
+                          .filter(Boolean);
+                        const isSelected = currentValues.includes(opt);
+                        return (
+                          <Button
+                            key={optIdx}
+                            variant={isSelected ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                              let newValues: string[];
+                              if (isSelected) {
+                                newValues = currentValues.filter((v) => v !== opt);
+                              } else {
+                                newValues = [...currentValues, opt];
+                              }
+                              handleAnswerChange(q.id, newValues.join(", "));
+                            }}
+                          >
+                            {opt}
+                          </Button>
+                        );
+                      })}
                     </div>
                   )}
                   <Textarea
