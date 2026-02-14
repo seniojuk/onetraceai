@@ -1227,16 +1227,26 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
                     </div>
                     {q.options && q.options.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
-                        {q.options.map((opt, i) => (
-                          <Button
-                            key={i}
-                            variant={answers[q.id] === opt ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handleAnswerChange(q.id, opt)}
-                          >
-                            {opt}
-                          </Button>
-                        ))}
+                        {q.options.map((opt, i) => {
+                          const currentVal = answers[q.id] || "";
+                          const selectedOpts = currentVal.split(",").map(s => s.trim()).filter(Boolean);
+                          const isSelected = selectedOpts.includes(opt);
+                          return (
+                            <Button
+                              key={i}
+                              variant={isSelected ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => {
+                                const newOpts = isSelected
+                                  ? selectedOpts.filter(o => o !== opt)
+                                  : [...selectedOpts, opt];
+                                handleAnswerChange(q.id, newOpts.join(", "));
+                              }}
+                            >
+                              {opt}
+                            </Button>
+                          );
+                        })}
                       </div>
                     ) : null}
                     <Textarea

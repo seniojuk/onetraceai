@@ -834,33 +834,35 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
                     </div>
                     {q.options && q.options.length > 0 ? (
                       <div className="space-y-2 ml-4">
-                        {q.options.map((option) => (
-                          <label
-                            key={option}
-                            className={cn(
-                              "flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors",
-                              answers[q.id] === option
-                                ? "border-accent bg-accent/5"
-                                : "border-border hover:border-accent/50"
-                            )}
-                          >
-                            <input
-                              type="radio"
-                              name={q.id}
-                              value={option}
-                              checked={answers[q.id] === option}
-                              onChange={(e) => handleAnswerChange(q.id, e.target.value)}
-                              className="accent-accent"
-                            />
-                            <span className="text-sm">{option}</span>
-                          </label>
-                        ))}
+                        <div className="flex flex-wrap gap-2">
+                          {q.options.map((option) => {
+                            const currentVal = answers[q.id] || "";
+                            const selectedOpts = currentVal.split(",").map(s => s.trim()).filter(Boolean);
+                            const isSelected = selectedOpts.includes(option);
+                            return (
+                              <Badge
+                                key={option}
+                                variant={isSelected ? "default" : "outline"}
+                                className={cn(
+                                  "cursor-pointer p-2 text-sm",
+                                  isSelected ? "border-accent bg-accent/10" : "hover:border-accent/50"
+                                )}
+                                onClick={() => {
+                                  const newOpts = isSelected
+                                    ? selectedOpts.filter(o => o !== option)
+                                    : [...selectedOpts, option];
+                                  handleAnswerChange(q.id, newOpts.join(", "));
+                                }}
+                              >
+                                {option}
+                              </Badge>
+                            );
+                          })}
+                        </div>
                         <Textarea
                           placeholder="Or provide your own answer..."
-                          value={answers[q.id]?.startsWith("Custom:") ? answers[q.id].slice(7) : ""}
-                          onChange={(e) =>
-                            handleAnswerChange(q.id, e.target.value ? `Custom: ${e.target.value}` : "")
-                          }
+                          value={answers[q.id] || ""}
+                          onChange={(e) => handleAnswerChange(q.id, e.target.value)}
                           className="mt-2"
                           rows={2}
                         />

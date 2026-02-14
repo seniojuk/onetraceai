@@ -708,16 +708,26 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
                   </label>
                   {q.options && q.options.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-2">
-                      {q.options.map((opt, optIdx) => (
-                        <Badge
-                          key={optIdx}
-                          variant={answers[q.id] === opt ? "default" : "outline"}
-                          className="cursor-pointer"
-                          onClick={() => handleAnswerChange(q.id, opt)}
-                        >
-                          {opt}
-                        </Badge>
-                      ))}
+                      {q.options.map((opt, optIdx) => {
+                        const currentVal = answers[q.id] || "";
+                        const selectedOpts = currentVal.split(",").map(s => s.trim()).filter(Boolean);
+                        const isSelected = selectedOpts.includes(opt);
+                        return (
+                          <Badge
+                            key={optIdx}
+                            variant={isSelected ? "default" : "outline"}
+                            className="cursor-pointer"
+                            onClick={() => {
+                              const newOpts = isSelected
+                                ? selectedOpts.filter(o => o !== opt)
+                                : [...selectedOpts, opt];
+                              handleAnswerChange(q.id, newOpts.join(", "));
+                            }}
+                          >
+                            {opt}
+                          </Badge>
+                        );
+                      })}
                     </div>
                   )}
                   <Textarea
