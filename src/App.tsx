@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/AuthPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
@@ -14,7 +14,7 @@ import ArtifactsPage from "./pages/ArtifactsPage";
 import ArtifactDetailPage from "./pages/ArtifactDetailPage";
 import CreateArtifactPage from "./pages/CreateArtifactPage";
 import GraphPage from "./pages/GraphPage";
-import LineagePage from "./pages/LineagePage";
+
 import CoveragePage from "./pages/CoveragePage";
 import DriftPage from "./pages/DriftPage";
 import AIAgentsPage from "./pages/AIAgentsPage";
@@ -47,7 +47,7 @@ const App = () => (
           <Route path="/artifacts/new" element={<CreateArtifactPage />} />
           <Route path="/artifacts/:id" element={<ArtifactDetailPage />} />
           <Route path="/graph" element={<GraphPage />} />
-          <Route path="/lineage" element={<LineagePage />} />
+          <Route path="/lineage" element={<Navigate to="/graph?view=lineage" replace />} />
           <Route path="/coverage" element={<CoveragePage />} />
           <Route path="/drift" element={<DriftPage />} />
           <Route path="/ai-agents" element={<AIAgentsPage />} />
