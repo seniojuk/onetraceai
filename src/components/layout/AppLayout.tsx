@@ -5,7 +5,6 @@ import {
   LayoutDashboard, 
   FileText, 
   GitBranch,
-  GitMerge,
   BarChart3, 
   AlertTriangle,
   Settings,
@@ -50,8 +49,7 @@ interface AppLayoutProps {
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: FileText, label: "Artifacts", path: "/artifacts" },
-  { icon: GitBranch, label: "Graph", path: "/graph" },
-  { icon: GitMerge, label: "Lineage", path: "/lineage" },
+  { icon: GitBranch, label: "Graph & Lineage", path: "/graph" },
   { icon: BarChart3, label: "Coverage", path: "/coverage" },
   { icon: AlertTriangle, label: "Drift", path: "/drift" },
   { icon: Sparkles, label: "AI Agents", path: "/ai-agents" },

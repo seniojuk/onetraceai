@@ -80,6 +80,8 @@ import { Label } from "@/components/ui/label";
 import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { ArtifactLineageView } from "@/components/lineage/ArtifactLineageView";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Custom node component
 function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; shortId: string; status: string; isHighlighted?: boolean; isUpstream?: boolean; isSelected?: boolean; isDimmed?: boolean; isSearchMatch?: boolean; coverageRatio?: number | null; hasDrift?: boolean; driftSeverity?: number | null; showOverlays?: boolean } }) {
@@ -198,7 +200,7 @@ const nodeTypes = {
   artifact: ArtifactNode,
 };
 
-const GraphPageInner = () => {
+const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: string) => void; currentView: string }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const focusId = searchParams.get("focus");
@@ -809,7 +811,15 @@ const GraphPageInner = () => {
             <Panel position="top-left" className="m-4">
               <Card className="shadow-lg">
                 <CardContent className="p-4">
-                  <h2 className="text-lg font-semibold text-foreground mb-2">Artifact Graph</h2>
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-lg font-semibold text-foreground">Artifact Graph</h2>
+                    <Tabs value={currentView} onValueChange={onViewChange}>
+                      <TabsList className="h-7">
+                        <TabsTrigger value="graph" className="text-xs px-2 py-0.5">Graph</TabsTrigger>
+                        <TabsTrigger value="lineage" className="text-xs px-2 py-0.5">Lineage</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
                   <p className="text-sm text-muted-foreground mb-3">
                     {nodes.length} artifacts • {edges.length} connections
                   </p>
@@ -1323,9 +1333,50 @@ const GraphPageInner = () => {
 
 // Wrapper component to provide ReactFlow context
 const GraphPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentView = searchParams.get("view") === "lineage" ? "lineage" : "graph";
+  const { currentProjectId, currentWorkspaceId } = useUIStore();
+
+  const handleViewChange = (value: string) => {
+    if (value === "lineage") {
+      setSearchParams({ view: "lineage" });
+    } else {
+      setSearchParams({});
+    }
+  };
+
+  if (currentView === "lineage") {
+    return (
+      <AuthGuard>
+        <AppLayout>
+          <div className="p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Graph & Lineage</h1>
+                <p className="text-muted-foreground text-sm">
+                  Visual traceability of artifacts and pipeline runs
+                </p>
+              </div>
+              <Tabs value={currentView} onValueChange={handleViewChange}>
+                <TabsList>
+                  <TabsTrigger value="graph">Artifact Graph</TabsTrigger>
+                  <TabsTrigger value="lineage">Pipeline Lineage</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            <ArtifactLineageView
+              projectId={currentProjectId || undefined}
+              workspaceId={currentWorkspaceId || undefined}
+            />
+          </div>
+        </AppLayout>
+      </AuthGuard>
+    );
+  }
+
   return (
     <ReactFlowProvider>
-      <GraphPageInner />
+      <GraphPageInner onViewChange={handleViewChange} currentView={currentView} />
     </ReactFlowProvider>
   );
 };
