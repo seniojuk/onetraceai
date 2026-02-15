@@ -33,7 +33,10 @@ import {
   Search,
   Download,
   Image,
-  FileCode
+  FileCode,
+  Trash2,
+  Info,
+  Link2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -178,9 +181,10 @@ const GraphPageInner = () => {
   const [selectedEdgeType, setSelectedEdgeType] = useState<EdgeType>(EdgeType.RELATED);
   const [isCreatingEdge, setIsCreatingEdge] = useState(false);
 
-  // Edge deletion state
-  const [selectedEdgeForDelete, setSelectedEdgeForDelete] = useState<ArtifactEdge | null>(null);
+  // Edge inspection & deletion state
+  const [selectedEdge, setSelectedEdge] = useState<ArtifactEdge | null>(null);
   const [isDeletingEdge, setIsDeletingEdge] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -518,13 +522,14 @@ const GraphPageInner = () => {
     setImpactAnalysisMode(false);
   }, []);
 
-  // Handle edge click for deletion
+  // Handle edge click for inspection
   const onEdgeClick = useCallback(
     (_: React.MouseEvent, edge: Edge) => {
       if (!artifactEdges) return;
       const dbEdge = artifactEdges.find(e => e.id === edge.id);
       if (dbEdge) {
-        setSelectedEdgeForDelete(dbEdge);
+        setSelectedEdge(dbEdge);
+        setShowDeleteConfirm(false);
       }
     },
     [artifactEdges]
@@ -532,22 +537,23 @@ const GraphPageInner = () => {
 
   // Handle edge deletion
   const handleDeleteEdge = useCallback(async () => {
-    if (!selectedEdgeForDelete || !currentProjectId) return;
+    if (!selectedEdge || !currentProjectId) return;
     setIsDeletingEdge(true);
     try {
       await deleteEdgeMutation.mutateAsync({
-        edgeId: selectedEdgeForDelete.id,
+        edgeId: selectedEdge.id,
         projectId: currentProjectId,
       });
       toast.success("Connection deleted");
-      setSelectedEdgeForDelete(null);
+      setSelectedEdge(null);
+      setShowDeleteConfirm(false);
     } catch (error) {
       console.error("Failed to delete edge:", error);
       toast.error("Failed to delete connection");
     } finally {
       setIsDeletingEdge(false);
     }
-  }, [selectedEdgeForDelete, currentProjectId, deleteEdgeMutation]);
+  }, [selectedEdge, currentProjectId, deleteEdgeMutation]);
 
   // Export graph as image
   const exportAsImage = useCallback(async (format: 'png' | 'svg') => {
@@ -1005,60 +1011,107 @@ const GraphPageInner = () => {
             </DialogContent>
           </Dialog>
 
-          {/* Edge Delete Confirmation Dialog */}
-          <Dialog open={!!selectedEdgeForDelete} onOpenChange={(open) => !open && setSelectedEdgeForDelete(null)}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Delete Connection</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to delete this connection?
-                </DialogDescription>
-              </DialogHeader>
-              {selectedEdgeForDelete && (
-                <div className="space-y-3 py-4">
-                  <div className="space-y-2">
-                    <Label className="text-muted-foreground">From</Label>
+          {/* Edge Details Sidebar Panel */}
+          {selectedEdge && !impactAnalysisMode && (
+            <div className="fixed top-20 right-4 z-50 w-80">
+              <Card className="shadow-lg">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Link2 className="w-4 h-4 text-accent" />
+                      Edge Details
+                    </h3>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setSelectedEdge(null)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  {/* From / To */}
+                  <div className="space-y-2 mb-3">
                     <div className="p-2 bg-muted rounded-md">
-                      <p className="text-sm font-medium">
-                        {artifacts?.find(a => a.id === selectedEdgeForDelete.from_artifact_id)?.title || "Unknown"}
+                      <p className="text-xs text-muted-foreground">From</p>
+                      <p className="text-sm font-medium truncate">
+                        {artifacts?.find(a => a.id === selectedEdge.from_artifact_id)?.title || "Unknown"}
                       </p>
+                      <span className="text-xs text-muted-foreground font-mono">
+                        {artifacts?.find(a => a.id === selectedEdge.from_artifact_id)?.short_id}
+                      </span>
+                    </div>
+                    <div className="p-2 bg-muted rounded-md">
+                      <p className="text-xs text-muted-foreground">To</p>
+                      <p className="text-sm font-medium truncate">
+                        {artifacts?.find(a => a.id === selectedEdge.to_artifact_id)?.title || "Unknown"}
+                      </p>
+                      <span className="text-xs text-muted-foreground font-mono">
+                        {artifacts?.find(a => a.id === selectedEdge.to_artifact_id)?.short_id}
+                      </span>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-muted-foreground">To</Label>
-                    <div className="p-2 bg-muted rounded-md">
-                      <p className="text-sm font-medium">
-                        {artifacts?.find(a => a.id === selectedEdgeForDelete.to_artifact_id)?.title || "Unknown"}
-                      </p>
+
+                  {/* Metadata */}
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Type</span>
+                      <Badge variant="secondary">{selectedEdge.edge_type}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Source</span>
+                      <Badge variant="outline">{selectedEdge.source}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Confidence</span>
+                      <span className="text-sm font-medium">{Math.round((selectedEdge.confidence ?? 1) * 100)}%</span>
+                    </div>
+                    {selectedEdge.source_ref && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Ref</span>
+                        <span className="text-xs font-mono truncate max-w-[160px]">{selectedEdge.source_ref}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Created</span>
+                      <span className="text-xs">{selectedEdge.created_at ? new Date(selectedEdge.created_at).toLocaleDateString() : "—"}</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Type</span>
-                    <Badge variant="secondary">{selectedEdgeForDelete.edge_type}</Badge>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Source</span>
-                    <Badge variant="outline">{selectedEdgeForDelete.source}</Badge>
-                  </div>
-                </div>
-              )}
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setSelectedEdgeForDelete(null)}>
-                  Cancel
-                </Button>
-                <Button variant="destructive" onClick={handleDeleteEdge} disabled={isDeletingEdge}>
-                  {isDeletingEdge ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    "Delete Connection"
+
+                  {/* Custom Metadata */}
+                  {selectedEdge.metadata && Object.keys(selectedEdge.metadata).length > 0 && (
+                    <div className="mb-3">
+                      <p className="text-xs text-muted-foreground mb-1">Metadata</p>
+                      <pre className="text-xs bg-muted rounded-md p-2 overflow-auto max-h-24">
+                        {JSON.stringify(selectedEdge.metadata, null, 2)}
+                      </pre>
+                    </div>
                   )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+
+                  {/* Delete action */}
+                  {!showDeleteConfirm ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full text-destructive hover:text-destructive"
+                      onClick={() => setShowDeleteConfirm(true)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Connection
+                    </Button>
+                  ) : (
+                    <div className="space-y-2 p-2 border border-destructive/30 rounded-md bg-destructive/5">
+                      <p className="text-xs text-destructive">Are you sure? This cannot be undone.</p>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1" onClick={() => setShowDeleteConfirm(false)}>
+                          Cancel
+                        </Button>
+                        <Button variant="destructive" size="sm" className="flex-1" onClick={handleDeleteEdge} disabled={isDeletingEdge}>
+                          {isDeletingEdge ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </AppLayout>
     </AuthGuard>
