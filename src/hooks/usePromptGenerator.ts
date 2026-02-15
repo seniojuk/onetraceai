@@ -112,15 +112,17 @@ export function useGeneratePrompt() {
       artifactId,
       toolName,
       contextConfig,
+      techStackText,
     }: {
       artifactId: string;
       toolName: string;
       contextConfig?: ContextConfig;
+      techStackText?: string;
     }) => {
       const { data, error } = await supabase.functions.invoke(
         "generate-meta-prompt",
         {
-          body: { artifactId, toolName, contextConfig },
+          body: { artifactId, toolName, contextConfig, techStackText },
         }
       );
       if (error) throw error;

@@ -9,6 +9,7 @@ export interface Project {
   name: string;
   description: string | null;
   status: "ACTIVE" | "ARCHIVED";
+  tech_stack_profile_id: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;

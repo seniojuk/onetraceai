@@ -16,6 +16,7 @@ import {
   Settings,
   History,
   Info,
+  Layers,
 } from "lucide-react";
 import {
   Dialog,
@@ -53,8 +54,10 @@ import {
   type ContextConfig,
   type DetailLevel,
 } from "@/hooks/usePromptGenerator";
+import { useProjectTechStack, formatTechStackForPrompt } from "@/hooks/useTechStackProfiles";
 import type { Artifact } from "@/hooks/useArtifacts";
 import { cn } from "@/lib/utils";
+import { useUIStore } from "@/store/uiStore";
 
 const toolIcons: Record<string, typeof Heart> = {
   lovable: Heart,
@@ -77,10 +80,12 @@ export function PromptGeneratorDialog({
   artifact,
 }: PromptGeneratorDialogProps) {
   const { toast } = useToast();
+  const { currentProjectId } = useUIStore();
   const { data: tools, isLoading: toolsLoading } = usePromptTools();
   const generatePrompt = useGeneratePrompt();
   const savePrompt = useSaveGeneratedPrompt();
   const { data: savedPrompts } = useGeneratedPrompts(artifact.id);
+  const { data: projectTechStack } = useProjectTechStack(currentProjectId || undefined);
 
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [generatedPrompt, setGeneratedPrompt] = useState<string | null>(null);
@@ -89,6 +94,7 @@ export function PromptGeneratorDialog({
   const [saved, setSaved] = useState(false);
   const [showContextConfig, setShowContextConfig] = useState(false);
   const [activeTab, setActiveTab] = useState<"generate" | "history">("generate");
+  const [includeTechStack, setIncludeTechStack] = useState(true);
 
   const [contextConfig, setContextConfig] = useState<ContextConfig>({
     includeParents: true,
@@ -130,12 +136,18 @@ export function PromptGeneratorDialog({
   const handleGenerate = async () => {
     if (!selectedTool) return;
 
+    // Build tech stack text if enabled and available
+    const techStackText = (includeTechStack && projectTechStack)
+      ? formatTechStackForPrompt(projectTechStack)
+      : undefined;
+
     try {
       setSaved(false);
       const result = await generatePrompt.mutateAsync({
         artifactId: artifact.id,
         toolName: selectedTool,
         contextConfig,
+        techStackText,
       });
       setGeneratedPrompt(result.prompt);
       setGeneratedMeta(result);
@@ -274,6 +286,9 @@ export function PromptGeneratorDialog({
                 isTypeIncluded={isTypeIncluded}
                 onToggleType={handleToggleType}
                 selectedToolData={selectedToolData}
+                projectTechStack={projectTechStack}
+                includeTechStack={includeTechStack}
+                onIncludeTechStackChange={setIncludeTechStack}
               />
             )}
           </TabsContent>
@@ -458,6 +473,9 @@ function ToolSelectionView({
   isTypeIncluded,
   onToggleType,
   selectedToolData,
+  projectTechStack,
+  includeTechStack,
+  onIncludeTechStackChange,
 }: {
   tools: any[] | undefined;
   toolsLoading: boolean;
@@ -470,6 +488,9 @@ function ToolSelectionView({
   isTypeIncluded: (type: string) => boolean;
   onToggleType: (type: string, checked: boolean) => void;
   selectedToolData: any;
+  projectTechStack: any | null | undefined;
+  includeTechStack: boolean;
+  onIncludeTechStackChange: (v: boolean) => void;
 }) {
   return (
     <div className="space-y-6">
@@ -522,6 +543,26 @@ function ToolSelectionView({
           </div>
         )}
       </div>
+
+      {/* Tech Stack Profile */}
+      {projectTechStack && (
+        <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium">Tech Stack: {projectTechStack.name}</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+              {[...projectTechStack.frontend, ...projectTechStack.backend, ...projectTechStack.database].slice(0, 5).join(", ")}
+              {[...projectTechStack.frontend, ...projectTechStack.backend, ...projectTechStack.database].length > 5 && "…"}
+            </p>
+          </div>
+          <Switch
+            checked={includeTechStack}
+            onCheckedChange={onIncludeTechStackChange}
+          />
+        </div>
+      )}
 
       <Separator />
 
