@@ -30,12 +30,29 @@ export interface GeneratedPrompt {
   created_at: string;
 }
 
+export type DetailLevel = "concise" | "standard" | "comprehensive" | "exhaustive";
+
+export const DETAIL_LEVEL_LABELS: Record<DetailLevel, string> = {
+  concise: "Concise",
+  standard: "Standard",
+  comprehensive: "Comprehensive",
+  exhaustive: "Exhaustive",
+};
+
+export const DETAIL_LEVEL_DESCRIPTIONS: Record<DetailLevel, string> = {
+  concise: "Brief, high-level prompt (~1000 words)",
+  standard: "Balanced detail level (~2000 words)",
+  comprehensive: "Detailed with full specs (~4000 words)",
+  exhaustive: "Maximum detail, all edge cases (~8000+ words)",
+};
+
 export interface ContextConfig {
   includeParents: boolean;
   includeChildren: boolean;
   maxDepth: number;
   tokenBudget: number;
   includeTypes: string[] | null; // null = all types
+  detailLevel: DetailLevel;
 }
 
 export const ALL_ARTIFACT_TYPES = [
