@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { formatDistanceToNow, format } from "date-fns";
+import { format } from "date-fns";
 import {
   Bot,
   Brain,
@@ -16,6 +16,7 @@ import {
   Save,
   ChevronDown,
   ChevronRight,
+  Download,
 } from "lucide-react";
 import {
   Dialog,
@@ -35,9 +36,11 @@ import {
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
 import type { AIRun, AIRunStatus } from "@/hooks/useAIRuns";
 import type { Json } from "@/integrations/supabase/types";
 import { SaveAsArtifactDialog } from "./SaveAsArtifactDialog";
+import { downloadAsText, downloadAsPdf, downloadAsMarkdown } from "@/utils/outputExport";
 
 interface AgentRunResultsDialogProps {
   open: boolean;
@@ -115,6 +118,7 @@ function JsonViewer({ data, label }: { data: Json; label: string }) {
 
 function OutputItem({ output, index, onSave }: { output: Json; index: number; onSave: (content: string) => void }) {
   const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState<"rendered" | "raw">("rendered");
 
   const getContent = (): string => {
     if (typeof output === "string") return output;
@@ -128,7 +132,8 @@ function OutputItem({ output, index, onSave }: { output: Json; index: number; on
   };
 
   const content = getContent();
-  const isJson = typeof output === "object" && output !== null;
+  const isJson = typeof output === "object" && output !== null && !("content" in output || "text" in output || "markdown" in output);
+  const title = `Output ${index + 1}`;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(content);
@@ -142,12 +147,23 @@ function OutputItem({ output, index, onSave }: { output: Json; index: number; on
       <div className="flex items-center justify-between p-3 bg-muted/30">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-accent" />
-          <span className="font-medium text-sm">Output {index + 1}</span>
+          <span className="font-medium text-sm">{title}</span>
           {isJson && (
             <Badge variant="secondary" className="text-xs">JSON</Badge>
           )}
         </div>
         <div className="flex items-center gap-1">
+          {!isJson && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setViewMode(viewMode === "rendered" ? "raw" : "rendered")}
+              className="text-xs"
+            >
+              <Code className="w-4 h-4 mr-1" />
+              {viewMode === "rendered" ? "Raw" : "Rendered"}
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={handleCopy}>
             {copied ? (
               <Check className="w-4 h-4 text-green-600" />
@@ -155,15 +171,27 @@ function OutputItem({ output, index, onSave }: { output: Json; index: number; on
               <Copy className="w-4 h-4" />
             )}
           </Button>
+          <Button variant="ghost" size="sm" onClick={() => downloadAsText(content, title)}>
+            <FileText className="w-3.5 h-3.5" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => downloadAsPdf(content, title)}>
+            <Download className="w-3.5 h-3.5" />
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => onSave(content)}>
             <Save className="w-4 h-4" />
           </Button>
         </div>
       </div>
       <ScrollArea className="max-h-64">
-        <pre className="p-4 text-sm font-mono bg-background whitespace-pre-wrap break-words">
-          {content}
-        </pre>
+        {viewMode === "rendered" && !isJson ? (
+          <div className="p-4 prose prose-sm dark:prose-invert max-w-none">
+            <ReactMarkdown>{content}</ReactMarkdown>
+          </div>
+        ) : (
+          <pre className="p-4 text-sm font-mono bg-background whitespace-pre-wrap break-words">
+            {content}
+          </pre>
+        )}
       </ScrollArea>
     </div>
   );
@@ -193,7 +221,20 @@ export function AgentRunResultsDialog({
     setSaveDialogOpen(true);
   };
 
+  // Combine all outputs for bulk download
+  const allOutputContent = outputs.map((o, i) => {
+    if (typeof o === "string") return o;
+    if (o && typeof o === "object") {
+      if ("content" in o && typeof o.content === "string") return o.content;
+      if ("text" in o && typeof o.text === "string") return o.text;
+      if ("markdown" in o && typeof o.markdown === "string") return o.markdown;
+      return JSON.stringify(o, null, 2);
+    }
+    return String(o);
+  }).join("\n\n---\n\n");
+
   const totalTokens = (run.input_tokens || 0) + (run.output_tokens || 0);
+  const agentName = run.agent_config?.name || "Agent";
 
   return (
     <>
@@ -222,7 +263,7 @@ export function AgentRunResultsDialog({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium">
-                  {run.agent_config?.name || "Unknown Agent"}
+                  {agentName}
                 </span>
                 <Badge variant="outline" className={cn("capitalize", status.color)}>
                   {status.label}
@@ -270,6 +311,25 @@ export function AgentRunResultsDialog({
               </div>
             )}
           </div>
+
+          {/* Download all outputs */}
+          {run.status === "COMPLETED" && outputs.length > 0 && (
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-xs text-muted-foreground">Download all:</span>
+              <Button variant="outline" size="sm" onClick={() => downloadAsText(allOutputContent, `${agentName} Run`)}>
+                <FileText className="w-3.5 h-3.5 mr-1" />
+                .txt
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => downloadAsMarkdown(allOutputContent, `${agentName} Run`)}>
+                <Code className="w-3.5 h-3.5 mr-1" />
+                .md
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => downloadAsPdf(allOutputContent, `${agentName} Run`)}>
+                <Download className="w-3.5 h-3.5 mr-1" />
+                PDF
+              </Button>
+            </div>
+          )}
 
           {/* Error Message */}
           {run.status === "FAILED" && run.error_message && (
@@ -360,7 +420,7 @@ export function AgentRunResultsDialog({
         content={contentToSave}
         workspaceId={workspaceId}
         projectId={projectId}
-        suggestedTitle={`Output from ${run.agent_config?.name || "Agent"}`}
+        suggestedTitle={`Output from ${agentName}`}
         suggestedType="IDEA"
       />
     </>

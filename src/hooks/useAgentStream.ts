@@ -35,6 +35,7 @@ export interface StreamAgentParams {
   inputArtifactId?: string;
   workspaceId: string;
   projectId?: string;
+  outputFormat?: "markdown" | "json" | "text";
 }
 
 export function useAgentStream() {
