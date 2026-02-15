@@ -1,4 +1,6 @@
 import { useState, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface StreamingState {
   isStreaming: boolean;
@@ -39,6 +41,7 @@ export interface StreamAgentParams {
 }
 
 export function useAgentStream() {
+  const queryClient = useQueryClient();
   const [state, setState] = useState<StreamingState>({
     isStreaming: false,
     content: "",
@@ -68,13 +71,18 @@ export function useAgentStream() {
     });
 
     try {
+      // Get the user's session token for auth
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invoke-agent`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            "Authorization": `Bearer ${authToken}`,
+            "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify({
             ...params,
@@ -151,6 +159,8 @@ export function useAgentStream() {
                     metadata: parsed.metadata,
                   },
                 }));
+                // Invalidate ai-runs queries so history updates
+                queryClient.invalidateQueries({ queryKey: ["ai-runs"] });
                 break;
 
               case "error":
