@@ -18,12 +18,10 @@ interface ArtifactContext {
   direction: "parent" | "self" | "child";
 }
 
-// Rough token estimator (~4 chars per token)
 function estimateTokens(text: string): number {
   return Math.ceil(text.length / 4);
 }
 
-// Priority order: target first, then by type hierarchy proximity
 const TYPE_PRIORITY: Record<string, number> = {
   STORY: 1,
   ACCEPTANCE_CRITERION: 2,
@@ -61,7 +59,7 @@ serve(async (req) => {
       });
     }
 
-    const { artifactId, toolName, contextConfig, detailLevel: rawDetailLevel } = await req.json();
+    const { artifactId, toolName, contextConfig, detailLevel: rawDetailLevel, techStackText } = await req.json();
     const detailLevel = contextConfig?.detailLevel || rawDetailLevel || "standard";
 
     if (!artifactId || !toolName) {
@@ -114,7 +112,7 @@ serve(async (req) => {
     const includeChildren = contextConfig?.includeChildren !== false;
     const maxDepth = contextConfig?.maxDepth ?? 3;
     const tokenBudget = contextConfig?.tokenBudget ?? tool.default_token_limit ?? 8000;
-    const includeTypes: string[] | null = contextConfig?.includeTypes ?? null; // null = all types
+    const includeTypes: string[] | null = contextConfig?.includeTypes ?? null;
 
     const contextArtifacts: ArtifactContext[] = [
       {
@@ -138,7 +136,7 @@ serve(async (req) => {
     const edges = allEdges || [];
     const visited = new Set<string>([artifact.id]);
 
-    // Walk ancestors (incoming edges)
+    // Walk ancestors
     if (includeParents) {
       const walkUp = async (currentId: string, depth: number) => {
         if (depth >= maxDepth) return;
@@ -153,7 +151,6 @@ serve(async (req) => {
             .eq("id", edge.from_artifact_id)
             .single();
           if (parent) {
-            // Apply type filter
             if (includeTypes && !includeTypes.includes(parent.type)) continue;
             contextArtifacts.unshift({
               ...parent,
@@ -167,7 +164,7 @@ serve(async (req) => {
       await walkUp(artifact.id, 0);
     }
 
-    // Walk descendants (outgoing edges)
+    // Walk descendants
     if (includeChildren) {
       const walkDown = async (currentId: string, depth: number) => {
         if (depth >= maxDepth) return;
@@ -182,7 +179,6 @@ serve(async (req) => {
             .eq("id", edge.to_artifact_id)
             .single();
           if (child) {
-            // Apply type filter
             if (includeTypes && !includeTypes.includes(child.type)) continue;
             contextArtifacts.push({
               ...child,
@@ -203,16 +199,14 @@ serve(async (req) => {
     );
 
     // === Smart Token Budget Allocation ===
-    // Reserve ~30% for system prompt overhead, allocate rest to context
     const contextTokenBudget = Math.floor(tokenBudget * 0.7);
 
-    // Build context sections with priority-based truncation
     interface ContextSection {
       artifact: ArtifactContext;
       header: string;
       content: string;
       tokens: number;
-      priority: number; // lower = higher priority
+      priority: number;
     }
 
     const sections: ContextSection[] = contextArtifacts.map((ctx) => {
@@ -221,73 +215,44 @@ serve(async (req) => {
       const header = `## [${ctx.type}] ${ctx.title} (${ctx.short_id})${marker}${depthLabel}\nStatus: ${ctx.status}\n`;
       const content = ctx.content_markdown || "(no content)";
       const fullText = `${header}\n${content}\n\n---\n`;
-
-      // Priority: target=0, then by type proximity and depth
       const typePriority = TYPE_PRIORITY[ctx.type] ?? 10;
       const priority = ctx.direction === "self" ? 0 : typePriority + ctx.depth;
 
-      return {
-        artifact: ctx,
-        header,
-        content,
-        tokens: estimateTokens(fullText),
-        priority,
-      };
+      return { artifact: ctx, header, content, tokens: estimateTokens(fullText), priority };
     });
 
-    // Sort by priority (target first, then closest/most relevant)
     sections.sort((a, b) => a.priority - b.priority);
 
-    // Allocate tokens greedily by priority
     let usedTokens = 0;
     const includedSections: ContextSection[] = [];
     const truncatedSections: Array<{ short_id: string; type: string; reason: string }> = [];
 
     for (const section of sections) {
       const remaining = contextTokenBudget - usedTokens;
-
       if (remaining <= 0) {
-        truncatedSections.push({
-          short_id: section.artifact.short_id,
-          type: section.artifact.type,
-          reason: "token_budget_exceeded",
-        });
+        truncatedSections.push({ short_id: section.artifact.short_id, type: section.artifact.type, reason: "token_budget_exceeded" });
         continue;
       }
-
       if (section.tokens <= remaining) {
-        // Fits fully
         includedSections.push(section);
         usedTokens += section.tokens;
       } else {
-        // Partial inclusion — truncate content to fit
         const headerTokens = estimateTokens(section.header);
-        const availableForContent = remaining - headerTokens - 20; // 20 tokens for truncation notice
-
+        const availableForContent = remaining - headerTokens - 20;
         if (availableForContent > 100) {
           const truncatedContent = section.content.slice(0, availableForContent * 4) + "\n... (truncated to fit token budget)";
-          includedSections.push({
-            ...section,
-            content: truncatedContent,
-            tokens: remaining,
-          });
+          includedSections.push({ ...section, content: truncatedContent, tokens: remaining });
           usedTokens += remaining;
         } else {
-          truncatedSections.push({
-            short_id: section.artifact.short_id,
-            type: section.artifact.type,
-            reason: "insufficient_space",
-          });
+          truncatedSections.push({ short_id: section.artifact.short_id, type: section.artifact.type, reason: "insufficient_space" });
         }
       }
     }
 
-    // Re-sort included sections back to hierarchy order for the prompt
     includedSections.sort(
       (a, b) => typeOrder.indexOf(a.artifact.type) - typeOrder.indexOf(b.artifact.type)
     );
 
-    // Build the final context document
     let contextDocument = "";
     for (const section of includedSections) {
       contextDocument += `\n${section.header}\n${section.content}\n\n---\n`;
@@ -295,6 +260,11 @@ serve(async (req) => {
 
     if (truncatedSections.length > 0) {
       contextDocument += `\n\n_Note: ${truncatedSections.length} artifact(s) were excluded or truncated due to token budget constraints._\n`;
+    }
+
+    // Inject tech stack if provided
+    if (techStackText) {
+      contextDocument = `\n${techStackText}\n\n---\n${contextDocument}`;
     }
 
     // Detail level instructions & max_tokens mapping
@@ -315,7 +285,6 @@ serve(async (req) => {
     const selectedDetailInstruction = detailInstructions[detailLevel] || detailInstructions.standard;
     const maxOutputTokens = detailMaxTokens[detailLevel] || 4000;
 
-    // Build the meta-prompt generation system prompt
     const toolInstructions: Record<string, string> = {
       lovable: `You are generating a prompt for **Lovable**, an AI app builder. 
 Rules:
@@ -369,9 +338,14 @@ Rules:
 - Format as a well-organized implementation guide`,
     };
 
+    // Build tech stack instruction for system prompt
+    const techStackInstruction = techStackText
+      ? `\n\nIMPORTANT: A Technology Stack Profile has been provided in the context. You MUST incorporate these specific technologies, frameworks, and guidelines into the generated prompt. All code suggestions, architecture decisions, and implementation guidance should be aligned with this tech stack. Reference specific technologies by name when describing implementation approaches.`
+      : "";
+
     const systemPrompt = `${toolInstructions[toolName] || toolInstructions.custom}
 
-${selectedDetailInstruction}
+${selectedDetailInstruction}${techStackInstruction}
 
 You will be given a collection of software artifacts (ideas, PRDs, epics, stories, acceptance criteria, test cases) that form a traceability hierarchy. Your job is to transform this artifact context into an optimized code generation prompt for the specified tool.
 
@@ -450,7 +424,6 @@ IMPORTANT:
       );
     }
 
-    // Return the generated prompt along with context info
     return new Response(
       JSON.stringify({
         prompt: promptContent,
@@ -475,9 +448,7 @@ IMPORTANT:
   } catch (error) {
     console.error("Error in generate-meta-prompt:", error);
     return new Response(
-      JSON.stringify({
-        error: error instanceof Error ? error.message : "Unknown error",
-      }),
+      JSON.stringify({ error: error.message || "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

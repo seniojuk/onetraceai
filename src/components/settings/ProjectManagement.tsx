@@ -7,8 +7,7 @@ import {
   RotateCcw,
   Loader2,
   AlertTriangle,
-  Eye,
-  EyeOff,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,10 +34,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useProjects, useUpdateProject, useDeleteProject, type Project } from "@/hooks/useProjects";
+import { useTechStackProfiles, useAssignTechStackToProject } from "@/hooks/useTechStackProfiles";
 import { formatDistanceToNow } from "date-fns";
 
 interface ProjectManagementProps {
@@ -49,12 +56,14 @@ interface ProjectManagementProps {
 export function ProjectManagement({ workspaceId, userRole }: ProjectManagementProps) {
   const [showArchived, setShowArchived] = useState(false);
   const { data: projects, isLoading } = useProjects(workspaceId, showArchived);
+  const { data: stackProfiles } = useTechStackProfiles(workspaceId);
   const updateProject = useUpdateProject();
   const deleteProject = useDeleteProject();
+  const assignStack = useAssignTechStackToProject();
 
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [deleteProjectConfirm, setDeleteProjectConfirm] = useState<Project | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", description: "" });
+  const [editForm, setEditForm] = useState({ name: "", description: "", techStackProfileId: "" });
 
   const canManage = userRole === "OWNER" || userRole === "ADMIN";
   
@@ -65,6 +74,7 @@ export function ProjectManagement({ workspaceId, userRole }: ProjectManagementPr
     setEditForm({
       name: project.name,
       description: project.description || "",
+      techStackProfileId: (project as any).tech_stack_profile_id || "",
     });
     setEditingProject(project);
   };
@@ -78,6 +88,14 @@ export function ProjectManagement({ workspaceId, userRole }: ProjectManagementPr
         name: editForm.name,
         description: editForm.description,
       });
+      // Assign tech stack if changed
+      const currentStackId = (editingProject as any).tech_stack_profile_id || "";
+      if (editForm.techStackProfileId !== currentStackId) {
+        await assignStack.mutateAsync({
+          projectId: editingProject.id,
+          profileId: editForm.techStackProfileId || null,
+        });
+      }
       toast.success("Project updated successfully");
       setEditingProject(null);
     } catch (error) {
@@ -191,6 +209,7 @@ export function ProjectManagement({ workspaceId, userRole }: ProjectManagementPr
               <div className="space-y-2">
                 {projects.map((project) => {
                   const isArchived = project.status === "ARCHIVED";
+                  const projectStack = stackProfiles?.find((s) => s.id === (project as any).tech_stack_profile_id);
                   return (
                     <div
                       key={project.id}
@@ -220,6 +239,12 @@ export function ProjectManagement({ workspaceId, userRole }: ProjectManagementPr
                         )}
                         <p className="text-xs text-muted-foreground">
                           Created {formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}
+                          {projectStack && (
+                            <span className="ml-2 inline-flex items-center gap-1">
+                              <Layers className="w-3 h-3" />
+                              {projectStack.name}
+                            </span>
+                          )}
                         </p>
                       </div>
 
@@ -298,6 +323,33 @@ export function ProjectManagement({ workspaceId, userRole }: ProjectManagementPr
                 rows={3}
               />
             </div>
+            {stackProfiles && stackProfiles.length > 0 && (
+              <div className="space-y-2">
+                <Label>Tech Stack Profile</Label>
+                <Select
+                  value={editForm.techStackProfileId || "none"}
+                  onValueChange={(v) => setEditForm({ ...editForm, techStackProfileId: v === "none" ? "" : v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a tech stack..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {stackProfiles.map((sp) => (
+                      <SelectItem key={sp.id} value={sp.id}>
+                        <div className="flex items-center gap-2">
+                          <Layers className="w-3.5 h-3.5" />
+                          {sp.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Applied automatically during prompt/code generation
+                </p>
+              </div>
+            )}
           </div>
 
           <DialogFooter>

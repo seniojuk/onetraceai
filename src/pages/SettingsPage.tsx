@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ProjectManagement } from "@/components/settings/ProjectManagement";
 import { WorkspaceManagement } from "@/components/settings/WorkspaceManagement";
 import { MemberManagement } from "@/components/settings/MemberManagement";
+import { TechStackProfileManager } from "@/components/settings/TechStackProfileManager";
 import { useUIStore } from "@/store/uiStore";
 import { useCurrentUserRole, useWorkspace } from "@/hooks/useWorkspaces";
 
@@ -187,6 +188,7 @@ const SettingsPage = () => {
                     workspaceId={currentWorkspaceId} 
                     userRole={userRole as "OWNER" | "ADMIN" | "MEMBER" | "VIEWER" | null}
                   />
+                  <TechStackProfileManager workspaceId={currentWorkspaceId} />
                 </>
               )}
             </TabsContent>

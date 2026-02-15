@@ -1768,6 +1768,7 @@ export type Database = {
           name: string
           project_key: string
           status: string | null
+          tech_stack_profile_id: string | null
           updated_at: string | null
           workspace_id: string
         }
@@ -1779,6 +1780,7 @@ export type Database = {
           name: string
           project_key: string
           status?: string | null
+          tech_stack_profile_id?: string | null
           updated_at?: string | null
           workspace_id: string
         }
@@ -1790,10 +1792,18 @@ export type Database = {
           name?: string
           project_key?: string
           status?: string | null
+          tech_stack_profile_id?: string | null
           updated_at?: string | null
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "projects_tech_stack_profile_id_fkey"
+            columns: ["tech_stack_profile_id"]
+            isOneToOne: false
+            referencedRelation: "tech_stack_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "projects_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -1977,6 +1987,75 @@ export type Database = {
             foreignKeyName: "subscriptions_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: true
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_stack_profiles: {
+        Row: {
+          additional_guidelines: string | null
+          backend: Json | null
+          created_at: string
+          created_by: string | null
+          database: Json | null
+          description: string | null
+          frontend: Json | null
+          id: string
+          infrastructure: Json | null
+          is_default: boolean | null
+          mobile: Json | null
+          name: string
+          testing: Json | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          additional_guidelines?: string | null
+          backend?: Json | null
+          created_at?: string
+          created_by?: string | null
+          database?: Json | null
+          description?: string | null
+          frontend?: Json | null
+          id?: string
+          infrastructure?: Json | null
+          is_default?: boolean | null
+          mobile?: Json | null
+          name: string
+          testing?: Json | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          additional_guidelines?: string | null
+          backend?: Json | null
+          created_at?: string
+          created_by?: string | null
+          database?: Json | null
+          description?: string | null
+          frontend?: Json | null
+          id?: string
+          infrastructure?: Json | null
+          is_default?: boolean | null
+          mobile?: Json | null
+          name?: string
+          testing?: Json | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_stack_profiles_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tech_stack_profiles_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
             referencedRelation: "workspaces_admin_metrics_view"
             referencedColumns: ["id"]
           },
