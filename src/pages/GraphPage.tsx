@@ -186,6 +186,9 @@ const GraphPageInner = () => {
   const [isDeletingEdge, setIsDeletingEdge] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Edge type filter state
+  const [edgeTypeFilter, setEdgeTypeFilter] = useState<string[]>([]);
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Artifact[]>([]);
@@ -425,9 +428,13 @@ const GraphPageInner = () => {
         }));
     }
     
-    // Filter edges to only include those where both nodes are visible
+    // Filter edges to only include those where both nodes are visible and edge type matches filter
     return artifactEdges
-      .filter(edge => visibleNodeIds.has(edge.from_artifact_id) && visibleNodeIds.has(edge.to_artifact_id))
+      .filter(edge => {
+        if (!visibleNodeIds.has(edge.from_artifact_id) || !visibleNodeIds.has(edge.to_artifact_id)) return false;
+        if (edgeTypeFilter.length > 0 && !edgeTypeFilter.includes(edge.edge_type)) return false;
+        return true;
+      })
       .map(edge => {
         const edgeStyle = edgeTypeStyles[edge.edge_type as EdgeType] || edgeTypeStyles[EdgeType.RELATED];
         return {
@@ -448,7 +455,7 @@ const GraphPageInner = () => {
           style: { stroke: edgeStyle.stroke, strokeWidth: 2 },
         };
       });
-  }, [artifactEdges, artifacts, visibleNodeIds]);
+  }, [artifactEdges, artifacts, visibleNodeIds, edgeTypeFilter]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -771,6 +778,48 @@ const GraphPageInner = () => {
                             {type.label}
                           </DropdownMenuCheckboxItem>
                         ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Edge Type Filter */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Link2 className="w-4 h-4 mr-2" />
+                          Edges
+                          {edgeTypeFilter.length > 0 && (
+                            <Badge variant="secondary" className="ml-2">{edgeTypeFilter.length}</Badge>
+                          )}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {Object.entries(EdgeType).map(([key, value]) => (
+                          <DropdownMenuCheckboxItem
+                            key={value}
+                            checked={edgeTypeFilter.includes(value)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setEdgeTypeFilter([...edgeTypeFilter, value]);
+                              } else {
+                                setEdgeTypeFilter(edgeTypeFilter.filter(t => t !== value));
+                              }
+                            }}
+                          >
+                            <span
+                              className="w-2 h-2 rounded-full mr-2 inline-block"
+                              style={{ backgroundColor: edgeTypeStyles[value]?.stroke || '#6b7280' }}
+                            />
+                            {edgeTypeStyles[value]?.label || key.toLowerCase()}
+                          </DropdownMenuCheckboxItem>
+                        ))}
+                        {edgeTypeFilter.length > 0 && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setEdgeTypeFilter([])}>
+                              Clear all
+                            </DropdownMenuItem>
+                          </>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
 
