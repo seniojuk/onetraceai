@@ -117,6 +117,32 @@ const PRESET_TEMPLATES: Record<string, PresetTemplate> = {
       additional_guidelines: "Use Riverpod for state management. Follow clean architecture with repository pattern. Use GoRouter for navigation.",
     },
   },
+  claude_code: {
+    label: "Claude Code",
+    description: "Full-stack TypeScript with Claude Code conventions",
+    values: {
+      frontend: "React 18, TypeScript, Tailwind CSS, Vite",
+      backend: "Node.js, Express, TypeScript, Zod",
+      database: "PostgreSQL, Prisma ORM, Redis",
+      mobile: "",
+      infrastructure: "Docker, AWS (Lambda, RDS), GitHub Actions",
+      testing: "Vitest, React Testing Library, Playwright",
+      additional_guidelines: "Write concise, idiomatic TypeScript. Prefer composition over inheritance. Use Zod for all input validation. Keep functions small and pure where possible. Use barrel exports for clean module boundaries.",
+    },
+  },
+  antigravity: {
+    label: "Antigravity",
+    description: "Antigravity AI-assisted full-stack development",
+    values: {
+      frontend: "React 18, TypeScript, Tailwind CSS, Next.js 14 (App Router)",
+      backend: "Next.js API Routes, Server Actions, tRPC",
+      database: "PostgreSQL, Drizzle ORM, Supabase",
+      mobile: "",
+      infrastructure: "Vercel, Supabase Cloud, GitHub Actions",
+      testing: "Vitest, Playwright",
+      additional_guidelines: "Use Server Components by default. Leverage tRPC for end-to-end type safety. Use Drizzle ORM with Supabase PostgreSQL. Follow convention-over-configuration patterns.",
+    },
+  },
 };
 
 interface TechStackProfileManagerProps {
