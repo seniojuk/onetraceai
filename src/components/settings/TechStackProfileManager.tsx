@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, Layers, Loader2, Star } from "lucide-react";
+import { Plus, Pencil, Trash2, Layers, Loader2, Star, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   useTechStackProfiles,
   useCreateTechStackProfile,
   useUpdateTechStackProfile,
@@ -24,6 +31,93 @@ import {
   type StackCategory,
 } from "@/hooks/useTechStackProfiles";
 import { useToast } from "@/hooks/use-toast";
+
+interface PresetTemplate {
+  label: string;
+  description: string;
+  values: Omit<ProfileFormState, "name" | "description" | "is_default">;
+}
+
+const PRESET_TEMPLATES: Record<string, PresetTemplate> = {
+  lovable: {
+    label: "Lovable",
+    description: "React + Vite + Tailwind stack used by Lovable",
+    values: {
+      frontend: "React 18, TypeScript, Tailwind CSS, Vite, shadcn/ui",
+      backend: "Supabase Edge Functions (Deno), Supabase Auth",
+      database: "PostgreSQL (Supabase), Row Level Security",
+      mobile: "",
+      infrastructure: "Supabase Cloud, Lovable Hosting",
+      testing: "",
+      additional_guidelines: "Use shadcn/ui components. Follow Tailwind semantic tokens. Use Supabase client SDK for data access. Prefer React Query for server state.",
+    },
+  },
+  cursor: {
+    label: "Cursor",
+    description: "Next.js full-stack commonly used with Cursor",
+    values: {
+      frontend: "Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS",
+      backend: "Next.js API Routes, Server Actions, Prisma ORM",
+      database: "PostgreSQL, Prisma, Redis",
+      mobile: "",
+      infrastructure: "Vercel, Docker",
+      testing: "Jest, React Testing Library, Playwright",
+      additional_guidelines: "Use App Router with Server Components by default. Prefer Server Actions for mutations. Use Prisma for type-safe database access.",
+    },
+  },
+  codex: {
+    label: "OpenAI Codex / ChatGPT",
+    description: "Python + FastAPI backend with React frontend",
+    values: {
+      frontend: "React 18, TypeScript, Tailwind CSS, Vite",
+      backend: "Python 3.12, FastAPI, Pydantic, SQLAlchemy",
+      database: "PostgreSQL, Alembic migrations, Redis",
+      mobile: "",
+      infrastructure: "Docker, AWS (ECS, RDS), GitHub Actions",
+      testing: "pytest, React Testing Library, Cypress",
+      additional_guidelines: "Use Pydantic models for request/response validation. Follow RESTful API conventions. Use async/await for I/O-bound operations.",
+    },
+  },
+  windsurf: {
+    label: "Windsurf",
+    description: "Full-stack TypeScript with tRPC",
+    values: {
+      frontend: "Next.js 14, React 18, TypeScript, Tailwind CSS",
+      backend: "tRPC, Node.js, Zod, Drizzle ORM",
+      database: "PostgreSQL, Drizzle Kit migrations",
+      mobile: "",
+      infrastructure: "Vercel, PlanetScale, Upstash Redis",
+      testing: "Vitest, Playwright",
+      additional_guidelines: "Use tRPC for end-to-end type safety. Prefer Drizzle ORM for database queries. Use Zod schemas shared between client and server.",
+    },
+  },
+  mobile_rn: {
+    label: "Mobile (React Native)",
+    description: "React Native + Expo mobile stack",
+    values: {
+      frontend: "",
+      backend: "Node.js, Express, TypeScript",
+      database: "PostgreSQL, Prisma",
+      mobile: "React Native, Expo, TypeScript, React Navigation, NativeWind",
+      infrastructure: "EAS Build, Firebase (Push Notifications), AWS S3",
+      testing: "Jest, Detox",
+      additional_guidelines: "Use Expo managed workflow. Follow React Navigation patterns. Use NativeWind for styling consistency with web.",
+    },
+  },
+  flutter: {
+    label: "Mobile (Flutter)",
+    description: "Flutter + Firebase mobile stack",
+    values: {
+      frontend: "",
+      backend: "Firebase Cloud Functions (Node.js)",
+      database: "Firestore, Firebase Realtime Database",
+      mobile: "Flutter, Dart, Riverpod, GoRouter",
+      infrastructure: "Firebase Hosting, Cloud Storage, Firebase Auth",
+      testing: "Flutter Test, Integration Tests",
+      additional_guidelines: "Use Riverpod for state management. Follow clean architecture with repository pattern. Use GoRouter for navigation.",
+    },
+  },
+};
 
 interface TechStackProfileManagerProps {
   workspaceId: string;
@@ -241,6 +335,43 @@ export function TechStackProfileManager({ workspaceId }: TechStackProfileManager
             </DialogHeader>
 
             <div className="space-y-4">
+              {!editingId && (
+                <div className="space-y-1.5">
+                  <Label className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                    Start from a template
+                  </Label>
+                  <Select
+                    onValueChange={(key) => {
+                      const preset = PRESET_TEMPLATES[key];
+                      if (preset) {
+                        setForm((prev) => ({
+                          ...prev,
+                          name: prev.name || preset.label + " Stack",
+                          description: prev.description || preset.description,
+                          ...preset.values,
+                        }));
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a suggested template to pre-fill fields..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(PRESET_TEMPLATES).map(([key, t]) => (
+                        <SelectItem key={key} value={key}>
+                          <span className="font-medium">{t.label}</span>
+                          <span className="text-muted-foreground ml-1.5 text-xs">— {t.description}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground">
+                    Selecting a template pre-fills the fields below. You can still edit any value.
+                  </p>
+                </div>
+              )}
+
               <div className="grid sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>Profile Name *</Label>
