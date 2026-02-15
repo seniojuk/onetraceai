@@ -545,24 +545,35 @@ function ToolSelectionView({
       </div>
 
       {/* Tech Stack Profile */}
-      {projectTechStack && (
-        <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-muted-foreground" />
+      <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-muted-foreground" />
+            {projectTechStack ? (
               <span className="text-sm font-medium">Tech Stack: {projectTechStack.name}</span>
-            </div>
+            ) : (
+              <span className="text-sm text-muted-foreground">No tech stack profile assigned to this project</span>
+            )}
+          </div>
+          {projectTechStack && (
             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
               {[...projectTechStack.frontend, ...projectTechStack.backend, ...projectTechStack.database].slice(0, 5).join(", ")}
               {[...projectTechStack.frontend, ...projectTechStack.backend, ...projectTechStack.database].length > 5 && "…"}
             </p>
-          </div>
+          )}
+          {!projectTechStack && (
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Assign one in Settings → Manage to include tech stack context in prompts
+            </p>
+          )}
+        </div>
+        {projectTechStack && (
           <Switch
             checked={includeTechStack}
             onCheckedChange={onIncludeTechStackChange}
           />
-        </div>
-      )}
+        )}
+      </div>
 
       <Separator />
 
