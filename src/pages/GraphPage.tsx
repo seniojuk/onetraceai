@@ -22,6 +22,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { toPng, toSvg } from "html-to-image";
+import { jsPDF } from "jspdf";
 import { 
   Filter,
   LayoutGrid,
@@ -686,6 +687,46 @@ const GraphPageInner = () => {
     }
   }, [nodes]);
 
+  // Export graph as PDF
+  const exportAsPdf = useCallback(async () => {
+    const viewport = document.querySelector('.react-flow__viewport') as HTMLElement;
+    if (!viewport) {
+      toast.error("Could not find graph viewport");
+      return;
+    }
+
+    try {
+      toast.loading("Generating PDF...", { id: "export-pdf" });
+
+      const nodesBounds = getNodesBounds(nodes);
+      const padding = 50;
+      const width = nodesBounds.width + padding * 2;
+      const height = nodesBounds.height + padding * 2;
+
+      const dataUrl = await toPng(viewport, {
+        backgroundColor: 'hsl(222.2 84% 4.9%)',
+        width,
+        height,
+        pixelRatio: 2,
+        style: {
+          width: `${width}px`,
+          height: `${height}px`,
+          transform: `translate(${-nodesBounds.x + padding}px, ${-nodesBounds.y + padding}px)`,
+        },
+      });
+
+      const orientation = width > height ? 'landscape' as const : 'portrait' as const;
+      const pdf = new jsPDF({ orientation, unit: 'px', format: [width, height] });
+      pdf.addImage(dataUrl, 'PNG', 0, 0, width, height);
+      pdf.save('artifact-graph.pdf');
+
+      toast.success("Graph exported as PDF", { id: "export-pdf" });
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      toast.error("Failed to export PDF", { id: "export-pdf" });
+    }
+  }, [nodes]);
+
   // Update nodes first, then edges after a brief delay to ensure nodes are registered
   useEffect(() => {
     setNodes(initialNodes);
@@ -954,6 +995,11 @@ const GraphPageInner = () => {
                         <DropdownMenuItem onClick={() => exportAsImage('svg')}>
                           <FileCode className="w-4 h-4 mr-2" />
                           Export as SVG
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={exportAsPdf}>
+                          <Download className="w-4 h-4 mr-2" />
+                          Export as PDF
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
