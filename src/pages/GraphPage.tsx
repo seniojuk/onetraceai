@@ -37,6 +37,9 @@ import {
   Trash2,
   Info,
   Link2,
+  ShieldAlert,
+  BarChart3,
+  AlertTriangle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -55,6 +58,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useArtifacts, ArtifactType, Artifact } from "@/hooks/useArtifacts";
 import { useProjectArtifactEdges, useCreateArtifactEdge, useDeleteArtifactEdge, EdgeType, ArtifactEdge } from "@/hooks/useArtifactEdges";
+import { useCoverageSnapshots } from "@/hooks/useCoverage";
+import { useDriftFindings } from "@/hooks/useDriftFindings";
 import {
   Dialog,
   DialogContent,
@@ -76,7 +81,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 // Custom node component
-function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; shortId: string; status: string; isHighlighted?: boolean; isUpstream?: boolean; isSelected?: boolean; isDimmed?: boolean; isSearchMatch?: boolean } }) {
+function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; shortId: string; status: string; isHighlighted?: boolean; isUpstream?: boolean; isSelected?: boolean; isDimmed?: boolean; isSearchMatch?: boolean; coverageRatio?: number | null; hasDrift?: boolean; driftSeverity?: number | null; showOverlays?: boolean } }) {
   const typeColors: Record<ArtifactType, string> = {
     IDEA: "border-l-yellow-500",
     PRD: "border-l-purple-500",
@@ -113,6 +118,10 @@ function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; sho
     FILE: "File",
   };
 
+  const coverageColor = data.coverageRatio != null
+    ? data.coverageRatio >= 0.8 ? "bg-green-500" : data.coverageRatio >= 0.5 ? "bg-amber-500" : "bg-red-500"
+    : null;
+
   return (
     <div className={cn(
       "px-4 py-3 bg-card border-2 rounded-lg shadow-md border-l-4 min-w-[180px] max-w-[250px] cursor-pointer transition-all relative",
@@ -124,18 +133,31 @@ function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; sho
       data.isDimmed && "opacity-30",
       !data.isDimmed && "hover:shadow-lg hover:border-primary/50"
     )}>
-      {/* Source handle (right side) - drag from here to create connections */}
+      {/* Source handle (right side) */}
       <Handle
         type="source"
         position={Position.Right}
         className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!bg-primary/80 transition-colors"
       />
-      {/* Target handle (left side) - drop connections here */}
+      {/* Target handle (left side) */}
       <Handle
         type="target"
         position={Position.Left}
         className="!w-3 !h-3 !bg-muted-foreground !border-2 !border-background hover:!bg-primary transition-colors"
       />
+
+      {/* Drift warning indicator */}
+      {data.showOverlays && data.hasDrift && (
+        <div className="absolute -top-2 -right-2 z-10">
+          <div className={cn(
+            "w-5 h-5 rounded-full flex items-center justify-center",
+            data.driftSeverity && data.driftSeverity >= 3 ? "bg-red-500" : "bg-amber-500"
+          )}>
+            <AlertTriangle className="w-3 h-3 text-white" />
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 mb-1">
         <Badge variant="secondary" className="text-xs">
           {typeLabels[data.type]}
@@ -143,13 +165,30 @@ function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; sho
         <span className="text-xs text-muted-foreground font-mono">{data.shortId}</span>
       </div>
       <p className="text-sm font-medium text-foreground line-clamp-2">{data.label}</p>
-      <div className={cn(
-        "w-2 h-2 rounded-full mt-2",
-        data.status === "DONE" ? "bg-green-500" :
-        data.status === "IN_PROGRESS" ? "bg-amber-500" :
-        data.status === "BLOCKED" ? "bg-red-500" :
-        "bg-slate-400"
-      )} />
+      <div className="flex items-center gap-2 mt-2">
+        <div className={cn(
+          "w-2 h-2 rounded-full",
+          data.status === "DONE" ? "bg-green-500" :
+          data.status === "IN_PROGRESS" ? "bg-amber-500" :
+          data.status === "BLOCKED" ? "bg-red-500" :
+          "bg-slate-400"
+        )} />
+
+        {/* Coverage bar overlay */}
+        {data.showOverlays && data.coverageRatio != null && (
+          <div className="flex items-center gap-1.5 flex-1">
+            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className={cn("h-full rounded-full transition-all", coverageColor)}
+                style={{ width: `${Math.round(data.coverageRatio * 100)}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-muted-foreground font-mono">
+              {Math.round(data.coverageRatio * 100)}%
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -169,6 +208,8 @@ const GraphPageInner = () => {
   const { data: artifactEdges, isLoading: edgesLoading } = useProjectArtifactEdges(currentProjectId || undefined);
   const createEdge = useCreateArtifactEdge();
   const deleteEdgeMutation = useDeleteArtifactEdge();
+  const { data: coverageSnapshots } = useCoverageSnapshots(currentProjectId || undefined);
+  const { data: driftFindings } = useDriftFindings(currentProjectId || undefined);
 
   const isLoading = artifactsLoading || edgesLoading;
 
@@ -189,6 +230,36 @@ const GraphPageInner = () => {
   // Edge type filter state
   const [edgeTypeFilter, setEdgeTypeFilter] = useState<string[]>([]);
 
+  // Coverage & drift overlay toggle
+  const [showOverlays, setShowOverlays] = useState(false);
+
+  // Build coverage and drift lookup maps
+  const coverageByArtifact = useMemo(() => {
+    const map = new Map<string, number>();
+    coverageSnapshots?.forEach(s => map.set(s.artifact_id, s.coverage_ratio));
+    return map;
+  }, [coverageSnapshots]);
+
+  const driftByArtifact = useMemo(() => {
+    const map = new Map<string, { hasDrift: boolean; maxSeverity: number }>();
+    driftFindings?.filter(d => d.status === "OPEN").forEach(d => {
+      if (d.primary_artifact_id) {
+        const existing = map.get(d.primary_artifact_id);
+        const sev = d.severity ?? 1;
+        if (!existing || sev > existing.maxSeverity) {
+          map.set(d.primary_artifact_id, { hasDrift: true, maxSeverity: sev });
+        }
+      }
+      d.related_artifact_ids?.forEach(id => {
+        const existing = map.get(id);
+        const sev = d.severity ?? 1;
+        if (!existing || sev > existing.maxSeverity) {
+          map.set(id, { hasDrift: true, maxSeverity: sev });
+        }
+      });
+    });
+    return map;
+  }, [driftFindings]);
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Artifact[]>([]);
@@ -343,6 +414,7 @@ const GraphPageInner = () => {
       const isUpstream = impactAnalysisMode && upstreamArtifactIds.has(artifact.id);
       const isSearchMatch = searchMatchIds.has(artifact.id);
       const isDimmed = impactAnalysisMode && selectedNodeId && !isSelected && !isHighlighted && !isUpstream;
+      const drift = driftByArtifact.get(artifact.id);
       return {
         label: artifact.title,
         type: artifact.type,
@@ -353,6 +425,10 @@ const GraphPageInner = () => {
         isUpstream,
         isSearchMatch,
         isDimmed,
+        coverageRatio: coverageByArtifact.get(artifact.id) ?? null,
+        hasDrift: drift?.hasDrift ?? false,
+        driftSeverity: drift?.maxSeverity ?? null,
+        showOverlays,
       };
     };
 
@@ -386,7 +462,7 @@ const GraphPageInner = () => {
     });
 
     return nodes;
-  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds, searchMatchIds]);
+  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds, searchMatchIds, coverageByArtifact, driftByArtifact, showOverlays]);
 
   // Edge type colors for different relationship types
   const edgeTypeStyles: Record<string, { stroke: string; label: string }> = {
@@ -852,6 +928,16 @@ const GraphPageInner = () => {
                       </DropdownMenuContent>
                     </DropdownMenu>
 
+                    {/* Coverage & Drift Overlay Toggle */}
+                    <Button
+                      variant={showOverlays ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowOverlays(!showOverlays)}
+                    >
+                      <ShieldAlert className="w-4 h-4 mr-2" />
+                      Overlays
+                    </Button>
+
                     {/* Export Dropdown */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -903,6 +989,28 @@ const GraphPageInner = () => {
                       </div>
                     ))}
                   </div>
+                  {showOverlays && (
+                    <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-border">
+                      <div className="flex items-center gap-1">
+                        <div className="w-6 h-1.5 bg-green-500 rounded-full" />
+                        <span className="text-xs text-muted-foreground">≥80%</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-6 h-1.5 bg-amber-500 rounded-full" />
+                        <span className="text-xs text-muted-foreground">≥50%</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-6 h-1.5 bg-red-500 rounded-full" />
+                        <span className="text-xs text-muted-foreground">&lt;50%</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center">
+                          <AlertTriangle className="w-2.5 h-2.5 text-white" />
+                        </div>
+                        <span className="text-xs text-muted-foreground">Drift</span>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </Panel>
