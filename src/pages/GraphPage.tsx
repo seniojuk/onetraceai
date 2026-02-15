@@ -51,7 +51,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useArtifacts, ArtifactType, Artifact } from "@/hooks/useArtifacts";
-import { useProjectArtifactEdges, useCreateArtifactEdge, EdgeType, ArtifactEdge } from "@/hooks/useArtifactEdges";
+import { useProjectArtifactEdges, useCreateArtifactEdge, useDeleteArtifactEdge, EdgeType, ArtifactEdge } from "@/hooks/useArtifactEdges";
 import {
   Dialog,
   DialogContent,
@@ -165,6 +165,7 @@ const GraphPageInner = () => {
   const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(currentProjectId || undefined);
   const { data: artifactEdges, isLoading: edgesLoading } = useProjectArtifactEdges(currentProjectId || undefined);
   const createEdge = useCreateArtifactEdge();
+  const deleteEdgeMutation = useDeleteArtifactEdge();
 
   const isLoading = artifactsLoading || edgesLoading;
 
@@ -176,6 +177,10 @@ const GraphPageInner = () => {
   const [pendingConnection, setPendingConnection] = useState<Connection | null>(null);
   const [selectedEdgeType, setSelectedEdgeType] = useState<EdgeType>(EdgeType.RELATED);
   const [isCreatingEdge, setIsCreatingEdge] = useState(false);
+
+  // Edge deletion state
+  const [selectedEdgeForDelete, setSelectedEdgeForDelete] = useState<ArtifactEdge | null>(null);
+  const [isDeletingEdge, setIsDeletingEdge] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -513,6 +518,37 @@ const GraphPageInner = () => {
     setImpactAnalysisMode(false);
   }, []);
 
+  // Handle edge click for deletion
+  const onEdgeClick = useCallback(
+    (_: React.MouseEvent, edge: Edge) => {
+      if (!artifactEdges) return;
+      const dbEdge = artifactEdges.find(e => e.id === edge.id);
+      if (dbEdge) {
+        setSelectedEdgeForDelete(dbEdge);
+      }
+    },
+    [artifactEdges]
+  );
+
+  // Handle edge deletion
+  const handleDeleteEdge = useCallback(async () => {
+    if (!selectedEdgeForDelete || !currentProjectId) return;
+    setIsDeletingEdge(true);
+    try {
+      await deleteEdgeMutation.mutateAsync({
+        edgeId: selectedEdgeForDelete.id,
+        projectId: currentProjectId,
+      });
+      toast.success("Connection deleted");
+      setSelectedEdgeForDelete(null);
+    } catch (error) {
+      console.error("Failed to delete edge:", error);
+      toast.error("Failed to delete connection");
+    } finally {
+      setIsDeletingEdge(false);
+    }
+  }, [selectedEdgeForDelete, currentProjectId, deleteEdgeMutation]);
+
   // Export graph as image
   const exportAsImage = useCallback(async (format: 'png' | 'svg') => {
     const viewport = document.querySelector('.react-flow__viewport') as HTMLElement;
@@ -603,6 +639,7 @@ const GraphPageInner = () => {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
+            onEdgeClick={onEdgeClick}
             nodeTypes={nodeTypes}
             fitView
             className="bg-graph-bg"
@@ -962,6 +999,61 @@ const GraphPageInner = () => {
                     </>
                   ) : (
                     "Create Connection"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edge Delete Confirmation Dialog */}
+          <Dialog open={!!selectedEdgeForDelete} onOpenChange={(open) => !open && setSelectedEdgeForDelete(null)}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Delete Connection</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this connection?
+                </DialogDescription>
+              </DialogHeader>
+              {selectedEdgeForDelete && (
+                <div className="space-y-3 py-4">
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">From</Label>
+                    <div className="p-2 bg-muted rounded-md">
+                      <p className="text-sm font-medium">
+                        {artifacts?.find(a => a.id === selectedEdgeForDelete.from_artifact_id)?.title || "Unknown"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">To</Label>
+                    <div className="p-2 bg-muted rounded-md">
+                      <p className="text-sm font-medium">
+                        {artifacts?.find(a => a.id === selectedEdgeForDelete.to_artifact_id)?.title || "Unknown"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Type</span>
+                    <Badge variant="secondary">{selectedEdgeForDelete.edge_type}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Source</span>
+                    <Badge variant="outline">{selectedEdgeForDelete.source}</Badge>
+                  </div>
+                </div>
+              )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedEdgeForDelete(null)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={handleDeleteEdge} disabled={isDeletingEdge}>
+                  {isDeletingEdge ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    "Delete Connection"
                   )}
                 </Button>
               </DialogFooter>
