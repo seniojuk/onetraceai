@@ -68,6 +68,7 @@ import { AttachedFiles } from "@/components/files/AttachedFiles";
 import { IdeaEnhancer } from "@/components/idea/IdeaEnhancer";
 import { JiraIssueBadge, JiraIssueSidebarCard } from "@/components/integrations/jira/JiraIssueBadge";
 import { PromptGeneratorDialog } from "@/components/prompts/PromptGeneratorDialog";
+import { PromptHistorySection } from "@/components/prompts/PromptHistorySection";
 
 const statusOptions: { value: ArtifactStatus; label: string }[] = [
   { value: "DRAFT", label: "Draft" },
@@ -753,6 +754,7 @@ const ArtifactDetailPage = () => {
                     <Wand2 className="w-4 h-4 mr-2" />
                     Generate Prompt
                   </Button>
+                  <PromptHistorySection artifactId={artifact.id} />
                 </CardContent>
               </Card>
             </div>
