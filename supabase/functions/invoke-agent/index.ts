@@ -49,6 +49,7 @@ serve(async (req) => {
       workspaceId,
       projectId,
       stream = false,
+      outputFormat = 'json',
     } = await req.json();
     
     if (!agentId) {
@@ -161,8 +162,8 @@ serve(async (req) => {
       systemPrompt = `You are ${agentConfig.name}, an AI assistant specialized in ${agentConfig.agent_type.replace('_', ' ').toLowerCase()} tasks. Provide helpful, accurate, and concise responses.`;
     }
 
-    // Add output format guidance based on agent type
-    const outputFormatGuidance = getOutputFormatForAgentType(agentConfig.agent_type);
+    // Add output format guidance based on agent type and requested format
+    const outputFormatGuidance = getOutputFormatForAgentType(agentConfig.agent_type, outputFormat);
     if (outputFormatGuidance) {
       systemPrompt += '\n\n' + outputFormatGuidance;
     }
@@ -436,8 +437,26 @@ serve(async (req) => {
   }
 });
 
-// Helper to provide output format guidance based on agent type
-function getOutputFormatForAgentType(agentType: string): string {
+// Helper to provide output format guidance based on agent type and requested format
+function getOutputFormatForAgentType(agentType: string, outputFormat: string = 'json'): string {
+  if (outputFormat === 'text') {
+    return `IMPORTANT: Respond in plain text only. Do not use markdown formatting, headings, bullet points, or any special syntax. Write clear, readable paragraphs with simple line breaks for separation.`;
+  }
+
+  if (outputFormat === 'markdown') {
+    const typeGuidance: Record<string, string> = {
+      'PRODUCT_AGENT': 'When generating PRDs, use well-structured markdown with clear headings (##), bullet points, and sections for: Overview, Problem Statement, Target Users, Goals, Features, Non-Functional Requirements, Constraints, Timeline, and Success Criteria.',
+      'STORY_AGENT': 'When generating user stories, use markdown with each story as a section (###) containing: description, acceptance criteria (checkbox list), story points, and priority.',
+      'QA_AGENT': 'When generating test cases, use markdown with each test case as a section (###) containing: type badge, priority, preconditions, numbered steps with expected results, and tags.',
+      'ARCHITECTURE_AGENT': 'When designing architecture, use markdown with sections for: Overview, Components (with tables), Data Flow, Integrations, Security, Scalability, and Deployment Strategy.',
+      'UX_AGENT': 'When designing UX, use markdown with sections for: User Flows, Wireframe Descriptions, Accessibility Guidelines, Interaction Patterns, and Design Tokens.',
+      'SECURITY_AGENT': 'When analyzing security, use markdown with a threat table (name, severity, likelihood, impact, mitigation), recommendations list, compliance checklist, and auth/data protection sections.',
+      'DOCS_AGENT': 'When generating documentation, provide well-structured markdown with clear headings, code examples where relevant, and practical usage instructions.',
+    };
+    return typeGuidance[agentType] || 'Provide clear, well-structured markdown output with appropriate headings, lists, and formatting for readability.';
+  }
+
+  // JSON format (default)
   switch (agentType) {
     case 'PRODUCT_AGENT':
       return `When generating PRDs, structure your output as JSON with fields: title, overview, problemStatement, targetUsers, goals, features, nonFunctionalRequirements, constraints, assumptions, outOfScope, timeline, successCriteria.`;

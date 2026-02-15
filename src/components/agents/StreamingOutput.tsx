@@ -9,7 +9,10 @@ import {
   Clock,
   Coins,
   Copy,
-  Check
+  Check,
+  Download,
+  FileText,
+  FileJson,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +20,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import type { StreamingState } from "@/hooks/useAgentStream";
+import { downloadAsText, downloadAsPdf } from "@/utils/outputExport";
 
 interface StreamingOutputProps {
   state: StreamingState;
@@ -43,6 +48,21 @@ export function StreamingOutput({ state, className }: StreamingOutputProps) {
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
+  const contentForExport = state.result?.content || state.content;
+  const agentName = state.agentInfo?.agentName || "Agent Output";
+
+  // Detect if content looks like JSON
+  const isJsonContent = (() => {
+    try {
+      const trimmed = contentForExport.trim();
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        JSON.parse(trimmed);
+        return true;
+      }
+    } catch {}
+    return false;
+  })();
 
   // Calculate estimated progress based on tokens (rough estimate)
   const estimatedProgress = state.isStreaming 
@@ -120,20 +140,26 @@ export function StreamingOutput({ state, className }: StreamingOutputProps) {
               <XCircle className="w-4 h-4 inline mr-2" />
               {state.error}
             </div>
+          ) : isJsonContent && !state.isStreaming ? (
+            <pre className="whitespace-pre-wrap font-mono text-sm text-foreground bg-transparent p-0 m-0">
+              {JSON.stringify(JSON.parse(contentForExport.trim()), null, 2)}
+            </pre>
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none">
-              <pre className="whitespace-pre-wrap font-mono text-sm text-foreground bg-transparent p-0 m-0">
-                {state.content}
-                {state.isStreaming && (
+              {state.isStreaming ? (
+                <pre className="whitespace-pre-wrap font-mono text-sm text-foreground bg-transparent p-0 m-0">
+                  {state.content}
                   <span className="inline-block w-2 h-4 bg-accent animate-pulse ml-0.5" />
-                )}
-              </pre>
+                </pre>
+              ) : (
+                <ReactMarkdown>{contentForExport}</ReactMarkdown>
+              )}
             </div>
           )}
         </div>
       </ScrollArea>
 
-      {/* Result stats */}
+      {/* Result stats + actions */}
       {state.result && (
         <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -150,14 +176,24 @@ export function StreamingOutput({ state, className }: StreamingOutputProps) {
               <span>${state.result.usage.estimatedCost.toFixed(6)}</span>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleCopy}>
-            {copied ? (
-              <Check className="w-4 h-4 mr-1 text-green-500" />
-            ) : (
-              <Copy className="w-4 h-4 mr-1" />
-            )}
-            {copied ? "Copied" : "Copy"}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={handleCopy}>
+              {copied ? (
+                <Check className="w-4 h-4 mr-1 text-green-500" />
+              ) : (
+                <Copy className="w-4 h-4 mr-1" />
+              )}
+              {copied ? "Copied" : "Copy"}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => downloadAsText(contentForExport, agentName)}>
+              <FileText className="w-4 h-4 mr-1" />
+              .txt
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => downloadAsPdf(contentForExport, agentName)}>
+              <Download className="w-4 h-4 mr-1" />
+              PDF
+            </Button>
+          </div>
         </div>
       )}
 

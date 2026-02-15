@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, Play, FileText, Bot, Brain, Sparkles, StopCircle, RotateCcw } from "lucide-react";
+import { Loader2, Play, FileText, Bot, Brain, Sparkles, StopCircle, RotateCcw, FileJson, FileType, FileCode } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +59,7 @@ export function InvokeAgentDialog({
   const [selectedArtifact, setSelectedArtifact] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [useStreaming, setUseStreaming] = useState(true);
+  const [outputFormat, setOutputFormat] = useState<"markdown" | "json" | "text">("markdown");
 
   // Reset stream state when dialog opens/closes
   useEffect(() => {
@@ -83,6 +84,7 @@ export function InvokeAgentDialog({
         inputArtifactId: inputMode === "artifact" ? selectedArtifact : undefined,
         workspaceId: currentWorkspaceId,
         projectId: currentProjectId || undefined,
+        outputFormat,
       });
     } else {
       // Use non-streaming mode (original behavior)
@@ -147,10 +149,10 @@ export function InvokeAgentDialog({
             <StreamingOutput state={stream} />
           ) : (
             <>
-              {/* Model selection and streaming toggle */}
-              <div className="flex items-center gap-4">
+              {/* Model selection and output format */}
+              <div className="grid gap-4 sm:grid-cols-2">
                 {agent.routing_mode !== "LOCKED" && (
-                  <div className="flex-1 space-y-2">
+                  <div className="space-y-2">
                     <Label>Model</Label>
                     <Select 
                       value={selectedModel || agent.default_model_id || ""} 
@@ -175,16 +177,46 @@ export function InvokeAgentDialog({
                     </Select>
                   </div>
                 )}
-                <div className="flex items-center gap-2 pt-6">
-                  <Switch
-                    id="streaming"
-                    checked={useStreaming}
-                    onCheckedChange={setUseStreaming}
-                  />
-                  <Label htmlFor="streaming" className="text-sm cursor-pointer">
-                    Stream output
-                  </Label>
+                <div className="space-y-2">
+                  <Label>Output Format</Label>
+                  <Select value={outputFormat} onValueChange={(v) => setOutputFormat(v as "markdown" | "json" | "text")}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="markdown">
+                        <div className="flex items-center gap-2">
+                          <FileCode className="w-4 h-4" />
+                          <span>Markdown</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="json">
+                        <div className="flex items-center gap-2">
+                          <FileJson className="w-4 h-4" />
+                          <span>JSON</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="text">
+                        <div className="flex items-center gap-2">
+                          <FileType className="w-4 h-4" />
+                          <span>Plain Text</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
+
+              {/* Streaming toggle */}
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="streaming"
+                  checked={useStreaming}
+                  onCheckedChange={setUseStreaming}
+                />
+                <Label htmlFor="streaming" className="text-sm cursor-pointer">
+                  Stream output
+                </Label>
               </div>
 
               {/* Input tabs */}
