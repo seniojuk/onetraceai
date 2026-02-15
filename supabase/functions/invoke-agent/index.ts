@@ -80,6 +80,20 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Extract user ID from auth token if present
+    let userId: string | null = null;
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.replace('Bearer ', '');
+      // Try to get user from auth token (skip if it's the anon key)
+      try {
+        const { data: { user } } = await supabase.auth.getUser(token);
+        if (user) userId = user.id;
+      } catch {
+        // Not a user token, that's fine
+      }
+    }
+
     // Fetch agent configuration
     const { data: agent, error: agentError } = await supabase
       .from('agent_configs')
@@ -93,6 +107,29 @@ serve(async (req) => {
         JSON.stringify({ error: 'Agent not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Create ai_run record to track this invocation
+    const effectiveWorkspaceId = workspaceId || agent.workspace_id;
+    let runId: string | null = null;
+    if (effectiveWorkspaceId) {
+      const { data: runData } = await supabase
+        .from('ai_runs')
+        .insert({
+          workspace_id: effectiveWorkspaceId,
+          project_id: projectId || agent.project_id || null,
+          agent_config_id: agentId,
+          model_id: modelId || agent.default_model_id || null,
+          run_type: 'INVOKED',
+          status: 'RUNNING',
+          input_context: { inputContent: inputContent.substring(0, 500), inputArtifactId, outputFormat },
+          metadata: { generationType: agent.agent_type, agentName: agent.name },
+          started_at: new Date().toISOString(),
+          created_by: userId,
+        })
+        .select('id')
+        .single();
+      if (runData) runId = runData.id;
     }
 
     const agentConfig = agent as AgentConfig;
@@ -292,10 +329,24 @@ serve(async (req) => {
               // Not JSON
             }
 
+            // Update ai_run as completed
+            if (runId) {
+              await supabase.from('ai_runs').update({
+                status: 'COMPLETED',
+                output_artifacts: [{ type: agentConfig.agent_type, content: fullContent.substring(0, 2000) }],
+                input_tokens: inputTokens,
+                output_tokens: outputTokens,
+                total_cost: estimatedCost,
+                duration_ms: durationMs,
+                completed_at: new Date().toISOString(),
+              }).eq('id', runId);
+            }
+
             // Send completion event
             controller.enqueue(encoder.encode(`event: complete\ndata: ${JSON.stringify({
               content: fullContent,
               parsedOutput,
+              runId,
               usage: {
                 inputTokens,
                 outputTokens,
@@ -312,6 +363,14 @@ serve(async (req) => {
             controller.close();
           } catch (error) {
             console.error('Streaming error:', error);
+            // Update ai_run as failed
+            if (runId) {
+              await supabase.from('ai_runs').update({
+                status: 'FAILED',
+                error_message: error instanceof Error ? error.message : 'Streaming failed',
+                completed_at: new Date().toISOString(),
+              }).eq('id', runId);
+            }
             controller.enqueue(encoder.encode(`event: error\ndata: ${JSON.stringify({ 
               error: error instanceof Error ? error.message : 'Streaming failed' 
             })}\n\n`));
@@ -403,6 +462,19 @@ serve(async (req) => {
 
     console.log(`Agent run completed in ${durationMs}ms`);
     console.log(`Tokens - Input: ${inputTokens}, Output: ${outputTokens}`);
+
+    // Update ai_run as completed (non-streaming)
+    if (runId) {
+      await supabase.from('ai_runs').update({
+        status: 'COMPLETED',
+        output_artifacts: [{ type: agentConfig.agent_type, content: content.substring(0, 2000) }],
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        total_cost: estimatedCost,
+        duration_ms: durationMs,
+        completed_at: new Date().toISOString(),
+      }).eq('id', runId);
+    }
 
     return new Response(
       JSON.stringify({
