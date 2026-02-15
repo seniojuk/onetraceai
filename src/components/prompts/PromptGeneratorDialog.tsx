@@ -48,7 +48,10 @@ import {
   useGeneratedPrompts,
   ALL_ARTIFACT_TYPES,
   ARTIFACT_TYPE_LABELS,
+  DETAIL_LEVEL_LABELS,
+  DETAIL_LEVEL_DESCRIPTIONS,
   type ContextConfig,
+  type DetailLevel,
 } from "@/hooks/usePromptGenerator";
 import type { Artifact } from "@/hooks/useArtifacts";
 import { cn } from "@/lib/utils";
@@ -93,6 +96,7 @@ export function PromptGeneratorDialog({
     maxDepth: 3,
     tokenBudget: 8000,
     includeTypes: null, // null = all
+    detailLevel: "comprehensive",
   });
 
   const selectedToolData = tools?.find((t) => t.name === selectedTool);
@@ -607,6 +611,39 @@ function ToolSelectionView({
                 step={1}
               />
             </div>
+
+            {/* Output detail level */}
+            <div className="space-y-2">
+              <Label className="text-sm">Output detail level</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(DETAIL_LEVEL_LABELS) as DetailLevel[]).map((level) => (
+                  <button
+                    key={level}
+                    onClick={() =>
+                      onContextConfigChange({ ...contextConfig, detailLevel: level })
+                    }
+                    className={cn(
+                      "flex flex-col items-start gap-0.5 p-3 rounded-lg border-2 transition-all text-left",
+                      contextConfig.detailLevel === level
+                        ? "border-accent bg-accent/5"
+                        : "border-border hover:border-accent/50"
+                    )}
+                  >
+                    <span className={cn(
+                      "text-sm font-medium",
+                      contextConfig.detailLevel === level && "text-accent"
+                    )}>
+                      {DETAIL_LEVEL_LABELS[level]}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {DETAIL_LEVEL_DESCRIPTIONS[level]}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Separator />
 
             {/* Token budget slider */}
             <div className="space-y-2">

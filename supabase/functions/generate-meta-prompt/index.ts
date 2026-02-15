@@ -61,7 +61,8 @@ serve(async (req) => {
       });
     }
 
-    const { artifactId, toolName, contextConfig } = await req.json();
+    const { artifactId, toolName, contextConfig, detailLevel: rawDetailLevel } = await req.json();
+    const detailLevel = contextConfig?.detailLevel || rawDetailLevel || "standard";
 
     if (!artifactId || !toolName) {
       return new Response(
@@ -296,6 +297,24 @@ serve(async (req) => {
       contextDocument += `\n\n_Note: ${truncatedSections.length} artifact(s) were excluded or truncated due to token budget constraints._\n`;
     }
 
+    // Detail level instructions & max_tokens mapping
+    const detailInstructions: Record<string, string> = {
+      concise: `OUTPUT LENGTH: Keep the prompt CONCISE — approximately 1000 words. Focus on the most critical requirements only. Summarize, don't enumerate every detail.`,
+      standard: `OUTPUT LENGTH: Generate a STANDARD-length prompt — approximately 2000 words. Cover main requirements and key acceptance criteria.`,
+      comprehensive: `OUTPUT LENGTH: Generate a COMPREHENSIVE prompt — approximately 4000 words. Include detailed requirements, all acceptance criteria, edge cases, and specific implementation guidance.`,
+      exhaustive: `OUTPUT LENGTH: Generate an EXHAUSTIVE, maximally detailed prompt — 8000+ words. Include EVERY requirement, EVERY acceptance criterion, EVERY edge case, detailed implementation steps, data models, API specs, error handling, testing requirements, and security considerations. Leave nothing out. Be extremely thorough and specific.`,
+    };
+
+    const detailMaxTokens: Record<string, number> = {
+      concise: 2000,
+      standard: 4000,
+      comprehensive: 8000,
+      exhaustive: 16000,
+    };
+
+    const selectedDetailInstruction = detailInstructions[detailLevel] || detailInstructions.standard;
+    const maxOutputTokens = detailMaxTokens[detailLevel] || 4000;
+
     // Build the meta-prompt generation system prompt
     const toolInstructions: Record<string, string> = {
       lovable: `You are generating a prompt for **Lovable**, an AI app builder. 
@@ -352,6 +371,8 @@ Rules:
 
     const systemPrompt = `${toolInstructions[toolName] || toolInstructions.custom}
 
+${selectedDetailInstruction}
+
 You will be given a collection of software artifacts (ideas, PRDs, epics, stories, acceptance criteria, test cases) that form a traceability hierarchy. Your job is to transform this artifact context into an optimized code generation prompt for the specified tool.
 
 The TARGET ARTIFACT is the primary focus — use the other artifacts as supporting context to create a comprehensive, well-informed prompt.
@@ -362,7 +383,8 @@ IMPORTANT:
 - Output ONLY the generated prompt — no meta-commentary or explanations
 - Make the prompt self-contained (the reader won't have access to the original artifacts)
 - Include specific requirements, constraints, and acceptance criteria from the artifacts
-- Adapt the style and format to what works best for the target tool`;
+- Adapt the style and format to what works best for the target tool
+- RESPECT the output length directive above — it is critical`;
 
     const userMessage = `Here are the software artifacts to transform into a code generation prompt:\n\n${contextDocument}\n\nGenerate an optimized ${tool.display_name} prompt based on the TARGET ARTIFACT and its context.`;
 
@@ -390,6 +412,7 @@ IMPORTANT:
             { role: "user", content: userMessage },
           ],
           temperature: 0.5,
+          max_tokens: maxOutputTokens,
         }),
       }
     );
