@@ -16,10 +16,10 @@ import {
   Trash2,
   Plus,
   ExternalLink,
+  Link2,
 } from "lucide-react";
-import { GitHubConnection } from "@/hooks/useGitHubConnection";
+import { GitHubConnection, useGitHubPullCommits, useGitHubPullPRs, useGitHubLinkArtifacts } from "@/hooks/useGitHubConnection";
 import { useGitHubRepoLinks, useDeleteRepoLink, GitHubRepoLink } from "@/hooks/useGitHubRepoLinks";
-import { useGitHubPullCommits, useGitHubPullPRs } from "@/hooks/useGitHubConnection";
 import { GitHubSetupWizard } from "./GitHubSetupWizard";
 
 interface GitHubConfigPanelProps {
@@ -46,6 +46,7 @@ export function GitHubConfigPanel({
   const deleteLink = useDeleteRepoLink();
   const pullCommits = useGitHubPullCommits();
   const pullPRs = useGitHubPullPRs();
+  const linkArtifacts = useGitHubLinkArtifacts();
 
   const handleSync = async (link: GitHubRepoLink) => {
     if (!projectId) return;
@@ -156,6 +157,7 @@ export function GitHubConfigPanel({
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7"
+                          title="Sync commits & PRs"
                           onClick={() => handleSync(link)}
                           disabled={syncingLinkId === link.id}
                         >
@@ -163,6 +165,23 @@ export function GitHubConfigPanel({
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           ) : (
                             <RefreshCw className="w-3.5 h-3.5" />
+                          )}
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          title="Link artifacts from refs"
+                          onClick={() => {
+                            if (!projectId) return;
+                            linkArtifacts.mutate({ repoLinkId: link.id, workspaceId, projectId });
+                          }}
+                          disabled={linkArtifacts.isPending}
+                        >
+                          {linkArtifacts.isPending ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Link2 className="w-3.5 h-3.5" />
                           )}
                         </Button>
                         <Button
