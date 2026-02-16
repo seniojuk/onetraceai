@@ -158,3 +158,61 @@ export function useGitHubDisconnect() {
     },
   });
 }
+
+export interface GitHubRepo {
+  id: number;
+  name: string;
+  full_name: string;
+  owner: string;
+  description: string;
+  html_url: string;
+  default_branch: string;
+  private: boolean;
+  updated_at: string;
+  language: string | null;
+}
+
+// Fetch GitHub repos for repo picker
+export function useGitHubRepos(
+  connectionId: string | undefined,
+  workspaceId: string | undefined,
+  options?: { search?: string; page?: number }
+) {
+  const search = options?.search || "";
+  const page = options?.page || 1;
+
+  return useQuery({
+    queryKey: ["github-repos", connectionId, search, page],
+    queryFn: async () => {
+      if (!connectionId || !workspaceId) return { repos: [], has_next_page: false };
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const params = new URLSearchParams({
+        connectionId,
+        workspaceId,
+        page: String(page),
+        per_page: "30",
+      });
+      if (search) params.set("search", search);
+
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/github-list-repos?${params}`;
+
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to fetch repos");
+      }
+
+      return (await res.json()) as { repos: GitHubRepo[]; has_next_page: boolean };
+    },
+    enabled: !!connectionId && !!workspaceId,
+  });
+}
