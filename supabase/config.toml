@@ -68,3 +68,12 @@ verify_jwt = false
 
 [functions.compute-coverage]
 verify_jwt = false
+
+[functions.github-oauth-init]
+verify_jwt = false
+
+[functions.github-oauth-callback]
+verify_jwt = false
+
+[functions.github-disconnect]
+verify_jwt = false
