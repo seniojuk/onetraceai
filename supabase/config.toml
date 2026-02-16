@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.github-pull-prs]
 verify_jwt = false
+
+[functions.github-link-artifacts]
+verify_jwt = false

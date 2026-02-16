@@ -292,3 +292,42 @@ export function useGitHubPullPRs() {
     },
   });
 }
+
+// Link artifacts from parsed refs in commits/PRs
+export function useGitHubLinkArtifacts() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      repoLinkId,
+      workspaceId,
+      projectId,
+    }: {
+      repoLinkId: string;
+      workspaceId: string;
+      projectId: string;
+    }) => {
+      const response = await supabase.functions.invoke("github-link-artifacts", {
+        body: { repoLinkId, workspaceId, projectId },
+      });
+      if (response.error) throw new Error(response.error.message || "Failed to link artifacts");
+      return response.data as { edges_created: number; mappings_created: number };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["artifact-edges"] });
+      queryClient.invalidateQueries({ queryKey: ["github-issue-mappings"] });
+      toast({
+        title: "Artifacts Linked",
+        description: `Created ${data.edges_created} new edges from ${data.mappings_created} references.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Linking Failed",
+        description: error instanceof Error ? error.message : "Failed to link artifacts",
+        variant: "destructive",
+      });
+    },
+  });
+}
