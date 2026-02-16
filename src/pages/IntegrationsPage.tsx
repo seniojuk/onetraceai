@@ -31,6 +31,8 @@ import { JiraSetupWizard, JiraConfigurationDialog, JiraConflictList } from "@/co
 import { IntegrationUpgradeDialog } from "@/components/integrations/IntegrationUpgradeDialog";
 import { useUIStore } from "@/store/uiStore";
 import { useIntegrationPermissions, isFeatureAvailable } from "@/hooks/useIntegrationPermissions";
+import { useGitHubConnection, useGitHubOAuthInit, useGitHubDisconnect } from "@/hooks/useGitHubConnection";
+import { GitHubSetupWizard, GitHubConfigPanel } from "@/components/integrations/github";
 
 interface Integration {
   id: string;
@@ -103,6 +105,8 @@ const IntegrationsPage = () => {
   const [showJiraConfig, setShowJiraConfig] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [upgradeIntegrationName, setUpgradeIntegrationName] = useState("");
+  const [showGitHubConfig, setShowGitHubConfig] = useState(false);
+  const [showGitHubRepoPicker, setShowGitHubRepoPicker] = useState(false);
 
   // Get workspace and project context
   const { currentWorkspaceId, currentProjectId } = useUIStore();
@@ -116,10 +120,23 @@ const IntegrationsPage = () => {
   // Permission checks
   const permissions = useIntegrationPermissions(activeWorkspaceId);
 
-  // Jira connection state
+   // Jira connection state
   const { data: jiraConnection, isLoading: jiraLoading, refetch: refetchJiraConnection } = useJiraConnection(activeWorkspaceId);
   const { data: jiraProjectLink } = useJiraProjectLink(activeProjectId);
   const jiraDisconnect = useJiraDisconnect();
+
+  // GitHub connection state
+  const { data: githubConnection, isLoading: githubLoading, refetch: refetchGitHubConnection } = useGitHubConnection(activeProjectId);
+  const { initiateOAuth, isInitiating: githubOAuthInitiating } = useGitHubOAuthInit();
+  const githubDisconnect = useGitHubDisconnect();
+
+  const getGitHubStatus = (): "connected" | "disconnected" | "degraded" => {
+    if (!githubConnection) return "disconnected";
+    if (githubConnection.status === "connected") return "connected";
+    if (githubConnection.status === "degraded") return "degraded";
+    return "disconnected";
+  };
+  const githubStatus = getGitHubStatus();
 
   // Derive Jira status from actual connection
   const getJiraStatus = (): "connected" | "disconnected" | "degraded" => {
@@ -183,6 +200,24 @@ const IntegrationsPage = () => {
       return;
     }
 
+    // Special handling for GitHub
+    if (integration.id === "github") {
+      if (!activeWorkspaceId || !activeProjectId) {
+        toast({
+          title: "Select a Project",
+          description: "Please select a workspace and project before connecting GitHub.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (githubConnection) {
+        setShowGitHubConfig(true);
+      } else {
+        initiateOAuth(activeWorkspaceId, activeProjectId);
+      }
+      return;
+    }
+
     setSelectedIntegration(integration);
     setShowConfigDialog(true);
   };
@@ -222,6 +257,21 @@ const IntegrationsPage = () => {
       return;
     }
 
+    if (integration.id === "github") {
+      if (!githubConnection || !activeWorkspaceId) return;
+      setConnectingId("github");
+      try {
+        await githubDisconnect.mutateAsync({
+          connectionId: githubConnection.id,
+          workspaceId: activeWorkspaceId,
+        });
+        refetchGitHubConnection();
+      } finally {
+        setConnectingId(null);
+      }
+      return;
+    }
+
     setConnectingId(integration.id);
     await new Promise(resolve => setTimeout(resolve, 1000));
     
@@ -240,13 +290,20 @@ const IntegrationsPage = () => {
     { id: "ai", label: "AI & ML" },
   ];
 
-  // Merge dynamic Jira status with static integrations
+  // Merge dynamic status with static integrations
   const getIntegrationWithStatus = (integration: Integration): Integration => {
     if (integration.id === "jira") {
       return {
         ...integration,
         status: jiraStatus === "degraded" ? "connected" : jiraStatus,
         lastSync: jiraConnection?.last_successful_sync || undefined,
+      };
+    }
+    if (integration.id === "github") {
+      return {
+        ...integration,
+        status: githubStatus === "degraded" ? "connected" : githubStatus,
+        lastSync: githubConnection?.last_successful_sync || undefined,
       };
     }
     return integration;
@@ -276,8 +333,10 @@ const IntegrationsPage = () => {
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {categoryIntegrations.map(integration => {
                       const isJira = integration.id === "jira";
-                      const isDegraded = isJira && jiraStatus === "degraded";
+                      const isGitHub = integration.id === "github";
+                      const isDegraded = (isJira && jiraStatus === "degraded") || (isGitHub && githubStatus === "degraded");
                       const needsUpgrade = requiresUpgrade(integration.id);
+                      const isLoadingConnection = (isJira && jiraLoading) || (isGitHub && (githubLoading || githubOAuthInitiating));
 
                       return (
                         <Card 
@@ -340,6 +399,12 @@ const IntegrationsPage = () => {
                                     )}
                                   </p>
                                 )}
+                                {/* GitHub-specific info */}
+                                {isGitHub && githubConnection && (
+                                  <p className="text-xs text-muted-foreground mb-2">
+                                    Connected as {githubConnection.github_username || "GitHub user"}
+                                  </p>
+                                )}
                                 {integration.lastSync && (
                                   <p className="text-xs text-muted-foreground mb-3">
                                     Last synced: {new Date(integration.lastSync).toLocaleString()}
@@ -352,7 +417,7 @@ const IntegrationsPage = () => {
                                         variant="outline" 
                                         size="sm"
                                         onClick={() => handleConnect(integration)}
-                                        disabled={jiraLoading}
+                                        disabled={isLoadingConnection}
                                       >
                                         <Settings className="w-4 h-4 mr-1" />
                                         Configure
@@ -374,13 +439,13 @@ const IntegrationsPage = () => {
                                     <Button 
                                       size="sm"
                                       onClick={() => handleConnect(integration)}
-                                      disabled={integration.status === "coming_soon" || connectingId === integration.id || jiraLoading}
+                                      disabled={integration.status === "coming_soon" || connectingId === integration.id || isLoadingConnection}
                                       className={cn(
                                         integration.status !== "coming_soon" && !needsUpgrade && "bg-accent hover:bg-accent/90"
                                       )}
                                       variant={needsUpgrade ? "outline" : "default"}
                                     >
-                                      {connectingId === integration.id || (isJira && jiraLoading) ? (
+                                      {connectingId === integration.id || isLoadingConnection ? (
                                         <Loader2 className="w-4 h-4 mr-1 animate-spin" />
                                       ) : needsUpgrade ? (
                                         <Lock className="w-4 h-4 mr-1" />
@@ -446,6 +511,28 @@ const IntegrationsPage = () => {
               }}
             />
           )}
+
+          {/* GitHub Config Panel */}
+          {activeWorkspaceId && githubConnection && (
+            <GitHubConfigPanel
+              open={showGitHubConfig}
+              onOpenChange={setShowGitHubConfig}
+              connection={githubConnection}
+              workspaceId={activeWorkspaceId}
+              projectId={activeProjectId}
+              onDisconnect={async () => {
+                setShowGitHubConfig(false);
+                if (githubConnection && activeWorkspaceId) {
+                  await githubDisconnect.mutateAsync({
+                    connectionId: githubConnection.id,
+                    workspaceId: activeWorkspaceId,
+                  });
+                  refetchGitHubConnection();
+                }
+              }}
+            />
+          )}
+
           <Dialog open={showConfigDialog} onOpenChange={setShowConfigDialog}>
             <DialogContent>
               <DialogHeader>
@@ -455,19 +542,6 @@ const IntegrationsPage = () => {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
-                {selectedIntegration?.id === "github" && (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground">
-                        You'll be redirected to GitHub to authorize OneTrace.
-                      </p>
-                    </div>
-                    <Button className="w-full">
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Authorize with GitHub
-                    </Button>
-                  </div>
-                )}
                 {selectedIntegration?.id === "openai" && (
                   <div className="space-y-4">
                     <div className="flex items-start gap-2 p-3 bg-success/10 rounded-lg border border-success/20">
