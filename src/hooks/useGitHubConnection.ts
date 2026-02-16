@@ -216,3 +216,79 @@ export function useGitHubRepos(
     enabled: !!connectionId && !!workspaceId,
   });
 }
+
+// Pull commits for a repo link
+export function useGitHubPullCommits() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      repoLinkId,
+      workspaceId,
+      projectId,
+    }: {
+      repoLinkId: string;
+      workspaceId: string;
+      projectId: string;
+    }) => {
+      const response = await supabase.functions.invoke("github-pull-commits", {
+        body: { repoLinkId, workspaceId, projectId },
+      });
+      if (response.error) throw new Error(response.error.message || "Failed to pull commits");
+      return response.data as { inserted: number; skipped: number; total_fetched: number };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["github-commits"] });
+      toast({
+        title: "Commits Synced",
+        description: `Fetched ${data.total_fetched} commits, ${data.inserted} new.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Sync Failed",
+        description: error instanceof Error ? error.message : "Failed to sync commits",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+// Pull PRs for a repo link
+export function useGitHubPullPRs() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      repoLinkId,
+      workspaceId,
+      projectId,
+    }: {
+      repoLinkId: string;
+      workspaceId: string;
+      projectId: string;
+    }) => {
+      const response = await supabase.functions.invoke("github-pull-prs", {
+        body: { repoLinkId, workspaceId, projectId },
+      });
+      if (response.error) throw new Error(response.error.message || "Failed to pull PRs");
+      return response.data as { upserted: number; total_fetched: number };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["github-prs"] });
+      toast({
+        title: "PRs Synced",
+        description: `Fetched ${data.total_fetched} PRs, ${data.upserted} updated.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Sync Failed",
+        description: error instanceof Error ? error.message : "Failed to sync PRs",
+        variant: "destructive",
+      });
+    },
+  });
+}
