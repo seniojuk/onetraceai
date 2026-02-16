@@ -788,6 +788,504 @@ export type Database = {
           },
         ]
       }
+      github_commits_shadow: {
+        Row: {
+          additions: number | null
+          author_email: string | null
+          author_login: string | null
+          author_name: string | null
+          commit_message: string | null
+          commit_sha: string
+          commit_url: string | null
+          committed_at: string | null
+          created_at: string | null
+          deletions: number | null
+          fetched_at: string | null
+          files_changed: number | null
+          id: string
+          parsed_artifact_refs: string[] | null
+          project_id: string
+          repo_link_id: string
+          workspace_id: string
+        }
+        Insert: {
+          additions?: number | null
+          author_email?: string | null
+          author_login?: string | null
+          author_name?: string | null
+          commit_message?: string | null
+          commit_sha: string
+          commit_url?: string | null
+          committed_at?: string | null
+          created_at?: string | null
+          deletions?: number | null
+          fetched_at?: string | null
+          files_changed?: number | null
+          id?: string
+          parsed_artifact_refs?: string[] | null
+          project_id: string
+          repo_link_id: string
+          workspace_id: string
+        }
+        Update: {
+          additions?: number | null
+          author_email?: string | null
+          author_login?: string | null
+          author_name?: string | null
+          commit_message?: string | null
+          commit_sha?: string
+          commit_url?: string | null
+          committed_at?: string | null
+          created_at?: string | null
+          deletions?: number | null
+          fetched_at?: string | null
+          files_changed?: number | null
+          id?: string
+          parsed_artifact_refs?: string[] | null
+          project_id?: string
+          repo_link_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_commits_shadow_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_commits_shadow_repo_link_id_fkey"
+            columns: ["repo_link_id"]
+            isOneToOne: false
+            referencedRelation: "github_repo_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_commits_shadow_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_commits_shadow_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      github_connections: {
+        Row: {
+          access_token: string
+          connected_by: string | null
+          created_at: string | null
+          failure_count: number | null
+          github_avatar_url: string | null
+          github_user_id: string | null
+          github_username: string | null
+          id: string
+          last_error_at: string | null
+          last_error_message: string | null
+          last_successful_sync: string | null
+          project_id: string
+          refresh_token: string | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          access_token: string
+          connected_by?: string | null
+          created_at?: string | null
+          failure_count?: number | null
+          github_avatar_url?: string | null
+          github_user_id?: string | null
+          github_username?: string | null
+          id?: string
+          last_error_at?: string | null
+          last_error_message?: string | null
+          last_successful_sync?: string | null
+          project_id: string
+          refresh_token?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          access_token?: string
+          connected_by?: string | null
+          created_at?: string | null
+          failure_count?: number | null
+          github_avatar_url?: string | null
+          github_user_id?: string | null
+          github_username?: string | null
+          id?: string
+          last_error_at?: string | null
+          last_error_message?: string | null
+          last_successful_sync?: string | null
+          project_id?: string
+          refresh_token?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_connections_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_connections_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_connections_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      github_issue_mappings: {
+        Row: {
+          artifact_id: string
+          created_at: string | null
+          created_by: string | null
+          edge_id: string | null
+          id: string
+          project_id: string
+          repo_link_id: string
+          source_id: string
+          source_ref: string | null
+          source_type: string
+          workspace_id: string
+        }
+        Insert: {
+          artifact_id: string
+          created_at?: string | null
+          created_by?: string | null
+          edge_id?: string | null
+          id?: string
+          project_id: string
+          repo_link_id: string
+          source_id: string
+          source_ref?: string | null
+          source_type: string
+          workspace_id: string
+        }
+        Update: {
+          artifact_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          edge_id?: string | null
+          id?: string
+          project_id?: string
+          repo_link_id?: string
+          source_id?: string
+          source_ref?: string | null
+          source_type?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_issue_mappings_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_issue_mappings_edge_id_fkey"
+            columns: ["edge_id"]
+            isOneToOne: false
+            referencedRelation: "artifact_edges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_issue_mappings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_issue_mappings_repo_link_id_fkey"
+            columns: ["repo_link_id"]
+            isOneToOne: false
+            referencedRelation: "github_repo_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_issue_mappings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_issue_mappings_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      github_prs_shadow: {
+        Row: {
+          author_login: string | null
+          base_branch: string | null
+          closed_at: string | null
+          created_at: string | null
+          fetched_at: string | null
+          head_branch: string | null
+          id: string
+          labels: Json | null
+          merged_at: string | null
+          parsed_artifact_refs: string[] | null
+          pr_body: string | null
+          pr_created_at: string | null
+          pr_number: number
+          pr_state: string | null
+          pr_title: string | null
+          pr_updated_at: string | null
+          pr_url: string | null
+          project_id: string
+          repo_link_id: string
+          workspace_id: string
+        }
+        Insert: {
+          author_login?: string | null
+          base_branch?: string | null
+          closed_at?: string | null
+          created_at?: string | null
+          fetched_at?: string | null
+          head_branch?: string | null
+          id?: string
+          labels?: Json | null
+          merged_at?: string | null
+          parsed_artifact_refs?: string[] | null
+          pr_body?: string | null
+          pr_created_at?: string | null
+          pr_number: number
+          pr_state?: string | null
+          pr_title?: string | null
+          pr_updated_at?: string | null
+          pr_url?: string | null
+          project_id: string
+          repo_link_id: string
+          workspace_id: string
+        }
+        Update: {
+          author_login?: string | null
+          base_branch?: string | null
+          closed_at?: string | null
+          created_at?: string | null
+          fetched_at?: string | null
+          head_branch?: string | null
+          id?: string
+          labels?: Json | null
+          merged_at?: string | null
+          parsed_artifact_refs?: string[] | null
+          pr_body?: string | null
+          pr_created_at?: string | null
+          pr_number?: number
+          pr_state?: string | null
+          pr_title?: string | null
+          pr_updated_at?: string | null
+          pr_url?: string | null
+          project_id?: string
+          repo_link_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_prs_shadow_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_prs_shadow_repo_link_id_fkey"
+            columns: ["repo_link_id"]
+            isOneToOne: false
+            referencedRelation: "github_repo_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_prs_shadow_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_prs_shadow_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      github_repo_links: {
+        Row: {
+          connection_id: string
+          created_at: string | null
+          created_by: string | null
+          default_branch: string | null
+          id: string
+          last_commit_sha: string | null
+          last_pull_at: string | null
+          last_pull_status: string | null
+          project_id: string
+          repo_full_name: string
+          repo_name: string
+          repo_owner: string
+          repo_url: string | null
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string | null
+          created_by?: string | null
+          default_branch?: string | null
+          id?: string
+          last_commit_sha?: string | null
+          last_pull_at?: string | null
+          last_pull_status?: string | null
+          project_id: string
+          repo_full_name: string
+          repo_name: string
+          repo_owner: string
+          repo_url?: string | null
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          default_branch?: string | null
+          id?: string
+          last_commit_sha?: string | null
+          last_pull_at?: string | null
+          last_pull_status?: string | null
+          project_id?: string
+          repo_full_name?: string
+          repo_name?: string
+          repo_owner?: string
+          repo_url?: string | null
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_repo_links_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "github_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_repo_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_repo_links_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_repo_links_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      github_webhook_events: {
+        Row: {
+          action: string | null
+          connection_id: string | null
+          event_type: string
+          id: string
+          payload: Json
+          processed: boolean | null
+          processed_at: string | null
+          processing_error: string | null
+          received_at: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          action?: string | null
+          connection_id?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          processed?: boolean | null
+          processed_at?: string | null
+          processing_error?: string | null
+          received_at?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          action?: string | null
+          connection_id?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed?: boolean | null
+          processed_at?: string | null
+          processing_error?: string | null
+          received_at?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "github_webhook_events_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "github_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_webhook_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "github_webhook_events_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces_admin_metrics_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount_due: number
