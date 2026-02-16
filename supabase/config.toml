@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.github-disconnect]
 verify_jwt = false
+
+[functions.github-list-repos]
+verify_jwt = false
