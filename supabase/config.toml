@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.github-link-artifacts]
 verify_jwt = false
+
+[functions.github-webhook]
+verify_jwt = false
