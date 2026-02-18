@@ -540,6 +540,45 @@ export type Database = {
           },
         ]
       }
+      ci_coverage_tokens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          last_used_at: string | null
+          project_id: string
+          revoked_at: string | null
+          token_hash: string
+          token_prefix: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          last_used_at?: string | null
+          project_id: string
+          revoked_at?: string | null
+          token_hash: string
+          token_prefix: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          last_used_at?: string | null
+          project_id?: string
+          revoked_at?: string | null
+          token_hash?: string
+          token_prefix?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       coverage_snapshots: {
         Row: {
           artifact_id: string

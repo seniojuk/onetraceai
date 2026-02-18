@@ -32,7 +32,7 @@ import { IntegrationUpgradeDialog } from "@/components/integrations/IntegrationU
 import { useUIStore } from "@/store/uiStore";
 import { useIntegrationPermissions, isFeatureAvailable } from "@/hooks/useIntegrationPermissions";
 import { useGitHubConnection, useGitHubOAuthInit, useGitHubDisconnect } from "@/hooks/useGitHubConnection";
-import { GitHubSetupWizard, GitHubConfigPanel, GitHubActivityFeed } from "@/components/integrations/github";
+import { GitHubSetupWizard, GitHubConfigPanel, GitHubActivityFeed, CICoveragePanel } from "@/components/integrations/github";
 import { useGitHubRepoLinks } from "@/hooks/useGitHubRepoLinks";
 
 interface Integration {
@@ -483,6 +483,16 @@ const IntegrationsPage = () => {
               <GitHubActivityFeed
                 projectId={activeProjectId}
                 repoLinks={githubRepoLinks}
+              />
+            </div>
+          )}
+
+          {/* CI Coverage Panel */}
+          {githubConnection && activeProjectId && activeWorkspaceId && (
+            <div className="mt-6">
+              <CICoveragePanel
+                workspaceId={activeWorkspaceId}
+                projectId={activeProjectId}
               />
             </div>
           )}
