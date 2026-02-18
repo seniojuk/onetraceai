@@ -32,7 +32,8 @@ import { IntegrationUpgradeDialog } from "@/components/integrations/IntegrationU
 import { useUIStore } from "@/store/uiStore";
 import { useIntegrationPermissions, isFeatureAvailable } from "@/hooks/useIntegrationPermissions";
 import { useGitHubConnection, useGitHubOAuthInit, useGitHubDisconnect } from "@/hooks/useGitHubConnection";
-import { GitHubSetupWizard, GitHubConfigPanel } from "@/components/integrations/github";
+import { GitHubSetupWizard, GitHubConfigPanel, GitHubActivityFeed } from "@/components/integrations/github";
+import { useGitHubRepoLinks } from "@/hooks/useGitHubRepoLinks";
 
 interface Integration {
   id: string;
@@ -129,6 +130,7 @@ const IntegrationsPage = () => {
   const { data: githubConnection, isLoading: githubLoading, refetch: refetchGitHubConnection } = useGitHubConnection(activeProjectId);
   const { initiateOAuth, isInitiating: githubOAuthInitiating } = useGitHubOAuthInit();
   const githubDisconnect = useGitHubDisconnect();
+  const { data: githubRepoLinks = [] } = useGitHubRepoLinks(activeProjectId);
 
   const getGitHubStatus = (): "connected" | "disconnected" | "degraded" => {
     if (!githubConnection) return "disconnected";
@@ -472,6 +474,16 @@ const IntegrationsPage = () => {
           {jiraConnection && activeProjectId && (
             <div className="mt-8">
               <JiraConflictList projectId={activeProjectId} workspaceId={activeWorkspaceId} />
+            </div>
+          )}
+
+          {/* GitHub Activity Feed */}
+          {githubConnection && activeProjectId && (
+            <div className="mt-8">
+              <GitHubActivityFeed
+                projectId={activeProjectId}
+                repoLinks={githubRepoLinks}
+              />
             </div>
           )}
 
