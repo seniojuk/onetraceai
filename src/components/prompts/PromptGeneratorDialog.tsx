@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Loader2,
   Wand2,
@@ -54,7 +54,19 @@ import {
   type ContextConfig,
   type DetailLevel,
 } from "@/hooks/usePromptGenerator";
-import { useProjectTechStack, formatTechStackForPrompt } from "@/hooks/useTechStackProfiles";
+import {
+  useProjectTechStack,
+  useTechStackProfiles,
+  formatTechStackForPrompt,
+  type TechStackProfile,
+} from "@/hooks/useTechStackProfiles";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Artifact } from "@/hooks/useArtifacts";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/uiStore";
@@ -80,12 +92,13 @@ export function PromptGeneratorDialog({
   artifact,
 }: PromptGeneratorDialogProps) {
   const { toast } = useToast();
-  const { currentProjectId } = useUIStore();
+  const { currentProjectId, currentWorkspaceId } = useUIStore();
   const { data: tools, isLoading: toolsLoading } = usePromptTools();
   const generatePrompt = useGeneratePrompt();
   const savePrompt = useSaveGeneratedPrompt();
   const { data: savedPrompts } = useGeneratedPrompts(artifact.id);
   const { data: projectTechStack } = useProjectTechStack(currentProjectId || undefined);
+  const { data: allProfiles } = useTechStackProfiles(currentWorkspaceId || undefined);
 
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [generatedPrompt, setGeneratedPrompt] = useState<string | null>(null);
@@ -95,6 +108,21 @@ export function PromptGeneratorDialog({
   const [showContextConfig, setShowContextConfig] = useState(false);
   const [activeTab, setActiveTab] = useState<"generate" | "history">("generate");
   const [includeTechStack, setIncludeTechStack] = useState(true);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
+
+  // Auto-select once profiles load: project-assigned → workspace default → first
+  useEffect(() => {
+    if (!allProfiles || allProfiles.length === 0) return;
+    if (selectedProfileId !== null) return; // already chosen by user
+    const initial =
+      allProfiles.find((p) => p.id === projectTechStack?.id) ??
+      allProfiles.find((p) => p.is_default) ??
+      allProfiles[0];
+    if (initial) setSelectedProfileId(initial.id);
+  }, [allProfiles, projectTechStack, selectedProfileId]);
+
+  const effectiveProfile: TechStackProfile | null =
+    allProfiles?.find((p) => p.id === selectedProfileId) ?? null;
 
   const [contextConfig, setContextConfig] = useState<ContextConfig>({
     includeParents: true,
@@ -137,8 +165,8 @@ export function PromptGeneratorDialog({
     if (!selectedTool) return;
 
     // Build tech stack text if enabled and available
-    const techStackText = (includeTechStack && projectTechStack)
-      ? formatTechStackForPrompt(projectTechStack)
+    const techStackText = (includeTechStack && effectiveProfile)
+      ? formatTechStackForPrompt(effectiveProfile)
       : undefined;
 
     try {
@@ -286,7 +314,10 @@ export function PromptGeneratorDialog({
                 isTypeIncluded={isTypeIncluded}
                 onToggleType={handleToggleType}
                 selectedToolData={selectedToolData}
-                projectTechStack={projectTechStack}
+                allProfiles={allProfiles}
+                selectedProfileId={selectedProfileId}
+                onSelectProfileId={setSelectedProfileId}
+                effectiveProfile={effectiveProfile}
                 includeTechStack={includeTechStack}
                 onIncludeTechStackChange={setIncludeTechStack}
               />
@@ -473,7 +504,10 @@ function ToolSelectionView({
   isTypeIncluded,
   onToggleType,
   selectedToolData,
-  projectTechStack,
+  allProfiles,
+  selectedProfileId,
+  onSelectProfileId,
+  effectiveProfile,
   includeTechStack,
   onIncludeTechStackChange,
 }: {
@@ -488,10 +522,15 @@ function ToolSelectionView({
   isTypeIncluded: (type: string) => boolean;
   onToggleType: (type: string, checked: boolean) => void;
   selectedToolData: any;
-  projectTechStack: any | null | undefined;
+  allProfiles: TechStackProfile[] | undefined;
+  selectedProfileId: string | null;
+  onSelectProfileId: (id: string) => void;
+  effectiveProfile: TechStackProfile | null;
   includeTechStack: boolean;
   onIncludeTechStackChange: (v: boolean) => void;
 }) {
+  const hasProfiles = allProfiles && allProfiles.length > 0;
+
   return (
     <div className="space-y-6">
       {/* Tool grid */}
@@ -545,33 +584,64 @@ function ToolSelectionView({
       </div>
 
       {/* Tech Stack Profile */}
-      <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
-        <div className="flex-1 min-w-0">
+      <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Layers className="w-4 h-4 text-muted-foreground" />
-            {projectTechStack ? (
-              <span className="text-sm font-medium">Tech Stack: {projectTechStack.name}</span>
-            ) : (
-              <span className="text-sm text-muted-foreground">No tech stack profile assigned to this project</span>
-            )}
+            <Label className="text-sm">Tech Stack</Label>
           </div>
-          {projectTechStack && (
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-              {[...projectTechStack.frontend, ...projectTechStack.backend, ...projectTechStack.database].slice(0, 5).join(", ")}
-              {[...projectTechStack.frontend, ...projectTechStack.backend, ...projectTechStack.database].length > 5 && "…"}
-            </p>
-          )}
-          {!projectTechStack && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Assign one in Settings → Manage to include tech stack context in prompts
-            </p>
+          {hasProfiles && (
+            <Switch
+              checked={includeTechStack}
+              onCheckedChange={onIncludeTechStackChange}
+            />
           )}
         </div>
-        {projectTechStack && (
-          <Switch
-            checked={includeTechStack}
-            onCheckedChange={onIncludeTechStackChange}
-          />
+
+        {hasProfiles ? (
+          <>
+            <Select
+              value={selectedProfileId ?? ""}
+              onValueChange={onSelectProfileId}
+              disabled={!includeTechStack}
+            >
+              <SelectTrigger className="w-full bg-background">
+                <SelectValue placeholder="Select a tech stack profile…" />
+              </SelectTrigger>
+              <SelectContent>
+                {allProfiles!.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    <span className="flex items-center gap-2">
+                      {p.name}
+                      {p.is_default && (
+                        <Badge variant="secondary" className="text-xs">default</Badge>
+                      )}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {effectiveProfile && includeTechStack && (
+              <p className="text-xs text-muted-foreground line-clamp-1">
+                {[
+                  ...effectiveProfile.frontend,
+                  ...effectiveProfile.backend,
+                  ...effectiveProfile.database,
+                ]
+                  .slice(0, 6)
+                  .join(", ")}
+                {[
+                  ...effectiveProfile.frontend,
+                  ...effectiveProfile.backend,
+                  ...effectiveProfile.database,
+                ].length > 6 && "…"}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            No tech stack profiles found. Add one in Settings → Tech Stack to include stack context in prompts.
+          </p>
         )}
       </div>
 
