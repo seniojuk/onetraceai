@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     }
 
     // Always use /user/repos to include private repos; filter by name client-side if searching
-    const ghUrl = `${GITHUB_API}/user/repos?sort=updated&direction=desc&per_page=100&page=${page}&type=all&affiliation=owner,collaborator,organization_member`;
+    const ghUrl = `${GITHUB_API}/user/repos?sort=updated&direction=desc&per_page=100&page=${page}&affiliation=owner,collaborator,organization_member`;
 
     const ghResponse = await fetch(ghUrl, {
       headers: {
