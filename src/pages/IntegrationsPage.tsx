@@ -166,6 +166,11 @@ const IntegrationsPage = () => {
       return;
     }
 
+    // Wait for permissions to load before checking
+    if (permissions.isLoading) {
+      return;
+    }
+
     // Check if plan upgrade is required for this integration
     if (requiresUpgrade(integration.id)) {
       setUpgradeIntegrationName(integration.name);
