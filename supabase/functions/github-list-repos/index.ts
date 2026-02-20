@@ -88,15 +88,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch repos from GitHub
-    let ghUrl: string;
-    if (search) {
-      // Use search API for filtering
-      ghUrl = `${GITHUB_API}/search/repositories?q=${encodeURIComponent(search)}+in:name+fork:true&sort=updated&per_page=${perPage}&page=${page}`;
-    } else {
-      // List user repos sorted by recently updated
-      ghUrl = `${GITHUB_API}/user/repos?sort=updated&direction=desc&per_page=${perPage}&page=${page}&type=all`;
-    }
+    // Always use /user/repos to include private repos; filter by name client-side if searching
+    const ghUrl = `${GITHUB_API}/user/repos?sort=updated&direction=desc&per_page=100&page=${page}&type=all&affiliation=owner,collaborator,organization_member`;
 
     const ghResponse = await fetch(ghUrl, {
       headers: {
@@ -133,7 +126,17 @@ Deno.serve(async (req) => {
     }
 
     const ghData = await ghResponse.json();
-    const repos = search ? ghData.items : ghData;
+    // Filter by search term if provided (case-insensitive match on name or full_name)
+    let repos = ghData;
+    if (search) {
+      const lowerSearch = search.toLowerCase();
+      repos = ghData.filter((repo: Record<string, unknown>) => {
+        const name = (repo.name as string || "").toLowerCase();
+        const fullName = (repo.full_name as string || "").toLowerCase();
+        const desc = (repo.description as string || "").toLowerCase();
+        return name.includes(lowerSearch) || fullName.includes(lowerSearch) || desc.includes(lowerSearch);
+      });
+    }
 
     // Map to a clean shape
     const mappedRepos = (repos || []).map((repo: Record<string, unknown>) => ({
