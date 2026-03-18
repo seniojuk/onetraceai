@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DOMPurify from "dompurify";
 import { Eye, Download, Maximize2, Loader2, FileText, Image as ImageIcon, FileCode, FileJson, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -241,7 +242,7 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
     return (
       <div 
         className="p-6 prose prose-sm dark:prose-invert max-w-none docx-preview"
-        dangerouslySetInnerHTML={{ __html: docxHtml }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(docxHtml) }}
         style={{
           // Basic styling for Word document elements
           lineHeight: 1.6,
