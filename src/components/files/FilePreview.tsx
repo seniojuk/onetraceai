@@ -242,7 +242,7 @@ export function FilePreview({ file, trigger }: FilePreviewProps) {
     return (
       <div 
         className="p-6 prose prose-sm dark:prose-invert max-w-none docx-preview"
-        dangerouslySetInnerHTML={{ __html: docxHtml }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(docxHtml) }}
         style={{
           // Basic styling for Word document elements
           lineHeight: 1.6,
