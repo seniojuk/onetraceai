@@ -51,15 +51,14 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: authData, error: userError } = await supabase.auth.getClaims(token);
-    if (userError || !authData?.claims) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const userId = authData.claims.sub;
+    const userId = user.id;
 
     const { artifactId, toolName, contextConfig, detailLevel: rawDetailLevel, techStackText } = await req.json();
     const detailLevel = contextConfig?.detailLevel || rawDetailLevel || "standard";
