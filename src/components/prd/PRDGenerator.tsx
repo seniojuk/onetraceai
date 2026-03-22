@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import { useCreateArtifact, useArtifacts, Artifact } from "@/hooks/useArtifacts";
 import { useCreateArtifactEdge } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
@@ -131,31 +132,22 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
     conversationHistory: ConversationMessage[],
     action?: string
   ) => {
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-prd`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          idea: ideaText,
-          conversationHistory: conversationHistory.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          action,
-        }),
-      }
-    );
+    const { data, error } = await supabase.functions.invoke("generate-prd", {
+      body: {
+        idea: ideaText,
+        conversationHistory: conversationHistory.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        action,
+      },
+    });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to generate PRD");
+    if (error) {
+      throw new Error(error.message || "Failed to generate PRD");
     }
 
-    return response.json();
+    return data;
   };
 
   const handleSubmitIdea = async () => {

@@ -347,24 +347,15 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
       requestBody.parentPrdFiles = parentPrdFileContents;
     }
 
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-stories`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify(requestBody),
-      }
-    );
+    const { data, error } = await supabase.functions.invoke("generate-stories", {
+      body: requestBody,
+    });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to generate stories");
+    if (error) {
+      throw new Error(error.message || "Failed to generate stories");
     }
 
-    return response.json();
+    return data;
   };
 
   const handleSubmitPrd = async () => {
@@ -929,24 +920,13 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
         requestBody.prdContent = prdText;
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-stories`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      const { data, error } = await supabase.functions.invoke("generate-stories", {
+        body: requestBody,
+      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to refine story");
+      if (error) {
+        throw new Error(error.message || "Failed to refine story");
       }
-
-      const data = await response.json();
 
       if (data.refinedStory) {
         // Update the story at the refining index

@@ -164,33 +164,24 @@ export const IdeaEnhancer = ({ artifact, onComplete, onCancel }: IdeaEnhancerPro
     conversationHistory: ConversationMessage[],
     action?: string
   ) => {
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enhance-idea`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          existingIdea: artifact.content_markdown || artifact.title,
-          enhancementDetails: enhancementDetails,
-          attachedFiles: attachedFileContents,
-          conversationHistory: conversationHistory.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          action,
-        }),
-      }
-    );
+    const { data, error } = await supabase.functions.invoke("enhance-idea", {
+      body: {
+        existingIdea: artifact.content_markdown || artifact.title,
+        enhancementDetails: enhancementDetails,
+        attachedFiles: attachedFileContents,
+        conversationHistory: conversationHistory.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        action,
+      },
+    });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to enhance idea");
+    if (error) {
+      throw new Error(error.message || "Failed to enhance idea");
     }
 
-    return response.json();
+    return data;
   };
 
   const handleSubmitEnhancement = async () => {
