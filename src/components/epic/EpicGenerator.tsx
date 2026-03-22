@@ -195,32 +195,23 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
     conversationHistory: ConversationMessage[],
     action?: string
   ) => {
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-epics`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          prdContent: prd,
-          conversationHistory: conversationHistory.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          action,
-          attachedFiles: attachedFileContents,
-        }),
-      }
-    );
+    const { data, error } = await supabase.functions.invoke("generate-epics", {
+      body: {
+        prdContent: prd,
+        conversationHistory: conversationHistory.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        action,
+        attachedFiles: attachedFileContents,
+      },
+    });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to generate epics");
+    if (error) {
+      throw new Error(error.message || "Failed to generate epics");
     }
 
-    return response.json();
+    return data;
   };
 
   const handleSubmitPrd = async () => {

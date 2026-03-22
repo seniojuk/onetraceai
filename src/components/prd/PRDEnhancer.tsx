@@ -157,33 +157,24 @@ export const PRDEnhancer = ({ artifact, onComplete, onCancel }: PRDEnhancerProps
     conversationHistory: ConversationMessage[],
     action?: string
   ) => {
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enhance-prd`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          existingPrd: artifact.content_markdown,
-          enhancementDetails: enhancementDetails,
-          conversationHistory: conversationHistory.map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          action,
-          attachedFiles: attachedFileContents,
-        }),
-      }
-    );
+    const { data, error } = await supabase.functions.invoke("enhance-prd", {
+      body: {
+        existingPrd: artifact.content_markdown,
+        enhancementDetails: enhancementDetails,
+        conversationHistory: conversationHistory.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        action,
+        attachedFiles: attachedFileContents,
+      },
+    });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to enhance PRD");
+    if (error) {
+      throw new Error(error.message || "Failed to enhance PRD");
     }
 
-    return response.json();
+    return data;
   };
 
   const handleSubmitEnhancement = async () => {
