@@ -38,10 +38,11 @@ const AuthPage = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const from = (location.state as any)?.from || "/dashboard";
+      const nextParam = searchParams.get("next");
+      const from = nextParam || (location.state as any)?.from || "/dashboard";
       navigate(from, { replace: true });
     }
-  }, [user, navigate, location]);
+  }, [user, navigate, location, searchParams]);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string; confirmPassword?: string } = {};

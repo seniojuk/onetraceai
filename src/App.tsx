@@ -27,6 +27,8 @@ import SettingsPage from "./pages/SettingsPage";
 import PlatformAdminPage from "./pages/PlatformAdminPage";
 import NotFound from "./pages/NotFound";
 import PromptGeneratorPage from "./pages/PromptGeneratorPage";
+import AcceptInvitePage from "./pages/AcceptInvitePage";
+import UnsubscribePage from "./pages/UnsubscribePage";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +62,8 @@ const App = () => (
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/admin" element={<PlatformAdminPage />} />
           <Route path="/prompt-generator" element={<PromptGeneratorPage />} />
+          <Route path="/invite/accept" element={<AcceptInvitePage />} />
+          <Route path="/unsubscribe" element={<UnsubscribePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

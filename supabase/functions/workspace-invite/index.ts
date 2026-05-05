@@ -6,6 +6,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+function jsonResponse(body: Record<string, unknown>, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function generateToken(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -14,38 +27,29 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-    
-    // Get user from JWT
+
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "No authorization header" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!authHeader) return jsonResponse({ error: "No authorization header" }, 401);
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (authError || !user) return jsonResponse({ error: "Invalid token" }, 401);
 
     const { workspaceId, email, role } = await req.json();
-
     if (!workspaceId || !email || !role) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Missing required fields" }, 400);
     }
 
-    // Check if current user is OWNER or ADMIN
+    const normalizedEmail = String(email).trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      return jsonResponse({ error: "Invalid email address" }, 400);
+    }
+    if (!["ADMIN", "MEMBER", "VIEWER"].includes(role)) {
+      return jsonResponse({ error: "Invalid role" }, 400);
+    }
+
+    // Verify caller is OWNER or ADMIN
     const { data: membership } = await supabaseAdmin
       .from("workspace_members")
       .select("role")
@@ -54,84 +58,113 @@ serve(async (req) => {
       .maybeSingle();
 
     if (!membership || !["OWNER", "ADMIN"].includes(membership.role)) {
-      return new Response(JSON.stringify({ error: "Access denied. Only owners and admins can invite members." }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "Only owners and admins can invite members." }, 403);
+    }
+    if (membership.role !== "OWNER" && role === "ADMIN") {
+      return jsonResponse({ error: "Only owners can assign the ADMIN role" }, 403);
     }
 
-    // Prevent non-owners from assigning OWNER or ADMIN roles
-    if (membership.role !== "OWNER" && (role === "OWNER" || role === "ADMIN")) {
-      return new Response(JSON.stringify({ error: "Only owners can assign OWNER or ADMIN roles" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Workspace lookup (for email)
+    const { data: workspace } = await supabaseAdmin
+      .from("workspaces")
+      .select("id, name")
+      .eq("id", workspaceId)
+      .maybeSingle();
+    if (!workspace) return jsonResponse({ error: "Workspace not found" }, 404);
+
+    // Check if user already exists
+    const { data: { users }, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
+    if (listErr) throw listErr;
+    const existingUser = users.find((u) => u.email?.toLowerCase() === normalizedEmail);
+
+    // If they exist AND are already a member, short-circuit
+    if (existingUser) {
+      const { data: alreadyMember } = await supabaseAdmin
+        .from("workspace_members")
+        .select("user_id")
+        .eq("workspace_id", workspaceId)
+        .eq("user_id", existingUser.id)
+        .maybeSingle();
+      if (alreadyMember) {
+        return jsonResponse({ error: "User is already a member of this workspace" }, 400);
+      }
     }
 
-    // Find user by email
-    const { data: { users }, error: userSearchError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (userSearchError) {
-      throw userSearchError;
-    }
-
-    const invitedUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-
-    if (!invitedUser) {
-      return new Response(JSON.stringify({ 
-        error: "User not found. They must sign up first before being invited." 
-      }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Check if already a member
-    const { data: existingMember } = await supabaseAdmin
-      .from("workspace_members")
-      .select("user_id")
-      .eq("workspace_id", workspaceId)
-      .eq("user_id", invitedUser.id)
+    // Inviter profile (for email body)
+    const { data: inviterProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
       .maybeSingle();
 
-    if (existingMember) {
-      return new Response(JSON.stringify({ error: "User is already a member of this workspace" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Create or refresh pending invitation
+    const inviteToken = generateToken();
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Add member
-    const { data: newMember, error: insertError } = await supabaseAdmin
-      .from("workspace_members")
+    // Revoke any existing PENDING invite for same workspace+email, then insert fresh
+    await supabaseAdmin
+      .from("workspace_invitations")
+      .update({ status: "REVOKED" })
+      .eq("workspace_id", workspaceId)
+      .eq("status", "PENDING")
+      .ilike("email", normalizedEmail);
+
+    const { data: invitation, error: inviteErr } = await supabaseAdmin
+      .from("workspace_invitations")
       .insert({
         workspace_id: workspaceId,
-        user_id: invitedUser.id,
-        role: role,
+        email: normalizedEmail,
+        role,
+        token: inviteToken,
         invited_by: user.id,
-        invited_at: new Date().toISOString(),
-        accepted_at: new Date().toISOString(), // Auto-accept for now
+        expires_at: expiresAt,
       })
       .select()
       .single();
+    if (inviteErr) throw inviteErr;
 
-    if (insertError) throw insertError;
+    // Build accept URL — use Origin header if available, fall back to published URL
+    const origin = req.headers.get("origin") || req.headers.get("referer")?.replace(/\/$/, "") || "https://onetrace.ai";
+    const cleanOrigin = origin.replace(/\/+$/, "").split("/").slice(0, 3).join("/");
+    const acceptUrl = `${cleanOrigin}/invite/accept?token=${inviteToken}`;
 
-    return new Response(JSON.stringify({ 
-      success: true, 
-      member: newMember,
-      message: `Successfully invited ${email} as ${role}` 
-    }), {
-      status: 201,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Send invitation email via transactional pipeline
+    const emailResp = await fetch(`${supabaseUrl}/functions/v1/send-transactional-email`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${supabaseServiceKey}`,
+      },
+      body: JSON.stringify({
+        templateName: "workspace-invite",
+        recipientEmail: normalizedEmail,
+        idempotencyKey: `ws-invite-${invitation.id}`,
+        templateData: {
+          workspaceName: workspace.name,
+          inviterName: inviterProfile?.display_name || null,
+          inviterEmail: user.email,
+          role,
+          acceptUrl,
+          isNewUser: !existingUser,
+        },
+      }),
     });
 
+    let emailQueued = emailResp.ok;
+    if (!emailResp.ok) {
+      const text = await emailResp.text();
+      console.error("Failed to enqueue invite email", emailResp.status, text);
+    }
+
+    return jsonResponse({
+      success: true,
+      invitation,
+      emailQueued,
+      message: `Invitation sent to ${normalizedEmail}`,
+    }, 201);
   } catch (error: unknown) {
-    console.error("Error:", error);
+    console.error("workspace-invite error:", error);
     const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: message }, 500);
   }
 });

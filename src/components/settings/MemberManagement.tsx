@@ -54,6 +54,11 @@ import {
   useTransferOwnership,
   type WorkspaceMember,
 } from "@/hooks/useWorkspaces";
+import {
+  useWorkspaceInvitations,
+  useResendInvitation,
+  useRevokeInvitation,
+} from "@/hooks/useWorkspaceInvitations";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 
@@ -91,9 +96,12 @@ type MemberWithProfile = WorkspaceMember & {
 export function MemberManagement({ workspaceId, workspaceName, userRole }: MemberManagementProps) {
   const { user } = useAuth();
   const { data: members, isLoading } = useWorkspaceMembers(workspaceId);
+  const { data: pendingInvites } = useWorkspaceInvitations(workspaceId);
   const updateRole = useUpdateMemberRole();
   const removeMember = useRemoveMember();
   const inviteMember = useInviteMember();
+  const resendInvite = useResendInvitation();
+  const revokeInvite = useRevokeInvitation();
   const transferOwnership = useTransferOwnership();
 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
@@ -126,7 +134,7 @@ export function MemberManagement({ workspaceId, workspaceName, userRole }: Membe
         email: inviteEmail.trim(),
         role: inviteRole,
       });
-      toast.success(`Invited ${inviteEmail} as ${inviteRole}`);
+      toast.success(`Invitation email sent to ${inviteEmail}`);
       setInviteDialogOpen(false);
       setInviteEmail("");
       setInviteRole("MEMBER");
@@ -366,6 +374,85 @@ export function MemberManagement({ workspaceId, workspaceName, userRole }: Membe
           )}
         </CardContent>
       </Card>
+
+      {/* Pending Invitations */}
+      {canManageMembers && pendingInvites && pendingInvites.length > 0 && (
+        <Card className="mt-4">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Mail className="w-4 h-4 text-accent" />
+              Pending Invitations ({pendingInvites.length})
+            </CardTitle>
+            <CardDescription>
+              Invitations awaiting acceptance. Links expire 7 days after sending.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {pendingInvites.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="flex items-center gap-3 p-3 rounded-lg border"
+                >
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{inv.email}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Invited as {inv.role} ·{" "}
+                      {formatDistanceToNow(new Date(inv.created_at), { addSuffix: true })}
+                    </div>
+                  </div>
+                  <Badge variant="outline">Pending</Badge>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={resendInvite.isPending}
+                    onClick={async () => {
+                      try {
+                        await resendInvite.mutateAsync({
+                          workspaceId,
+                          email: inv.email,
+                          role: inv.role,
+                        });
+                        toast.success(`Invitation resent to ${inv.email}`);
+                      } catch (e) {
+                        toast.error("Failed to resend", {
+                          description: e instanceof Error ? e.message : "Unknown error",
+                        });
+                      }
+                    }}
+                  >
+                    Resend
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive"
+                    disabled={revokeInvite.isPending}
+                    onClick={async () => {
+                      try {
+                        await revokeInvite.mutateAsync({
+                          invitationId: inv.id,
+                          workspaceId,
+                        });
+                        toast.success("Invitation revoked");
+                      } catch (e) {
+                        toast.error("Failed to revoke", {
+                          description: e instanceof Error ? e.message : "Unknown error",
+                        });
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Invite Dialog */}
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
