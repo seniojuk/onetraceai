@@ -134,7 +134,7 @@ export function MemberManagement({ workspaceId, workspaceName, userRole }: Membe
         email: inviteEmail.trim(),
         role: inviteRole,
       });
-      toast.success(`Invited ${inviteEmail} as ${inviteRole}`);
+      toast.success(`Invitation email sent to ${inviteEmail}`);
       setInviteDialogOpen(false);
       setInviteEmail("");
       setInviteRole("MEMBER");
