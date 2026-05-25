@@ -1,112 +1,79 @@
 project_id = "gwanafrslggzqsxpchfw"
 
-[functions.generate-stories]
-verify_jwt = false
-
-[functions.generate-acceptance-criteria]
-verify_jwt = false
-
-[functions.generate-test-cases]
-verify_jwt = false
-
-[functions.generate-prd]
-verify_jwt = false
-
-[functions.enhance-prd]
-verify_jwt = false
-
-[functions.invoke-agent]
-verify_jwt = false
-
-[functions.send-billing-email]
-verify_jwt = false
-
-[functions.stripe-webhook]
-verify_jwt = false
-
-[functions.jira-oauth-init]
-verify_jwt = false
-
-[functions.jira-oauth-callback]
-verify_jwt = false
-
-[functions.jira-refresh-token]
-verify_jwt = false
-
-[functions.jira-disconnect]
-verify_jwt = false
-
-[functions.jira-get-projects]
-verify_jwt = false
-
-[functions.jira-push-artifact]
-verify_jwt = false
-
-[functions.jira-push-bulk]
-verify_jwt = false
-
-[functions.jira-pull-issue]
-verify_jwt = false
-
-[functions.jira-pull-sync]
-verify_jwt = false
-
-[functions.jira-resolve-conflict]
-verify_jwt = false
-
-[functions.manage-platform-admins]
-verify_jwt = false
-
-[functions.workspaces]
-verify_jwt = false
-
-[functions.delete-project]
-verify_jwt = false
-
-[functions.generate-meta-prompt]
-verify_jwt = false
-
-[functions.compute-coverage]
-verify_jwt = false
-
-[functions.github-oauth-init]
-verify_jwt = false
-
-[functions.github-oauth-callback]
-verify_jwt = false
-
-[functions.github-disconnect]
-verify_jwt = false
-
-[functions.github-list-repos]
-verify_jwt = false
-
-[functions.github-pull-commits]
-verify_jwt = false
-
-[functions.github-pull-prs]
-verify_jwt = false
-
-[functions.github-link-artifacts]
-verify_jwt = false
-
-[functions.github-webhook]
-verify_jwt = false
-
-[functions.process-email-queue]
-verify_jwt = true
-
-[functions.send-transactional-email]
-verify_jwt = true
-
-[functions.preview-transactional-email]
-verify_jwt = false
-
-[functions.handle-email-unsubscribe]
-verify_jwt = false
-
-[functions.handle-email-suppression]
-verify_jwt = false
-
-[functions.workspace-invite-accept]
-verify_jwt = false
+[functions]
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.compute-coverage]
+    verify_jwt = false
+  [functions.delete-project]
+    verify_jwt = false
+  [functions.enhance-prd]
+    verify_jwt = false
+  [functions.generate-acceptance-criteria]
+    verify_jwt = false
+  [functions.generate-meta-prompt]
+    verify_jwt = false
+  [functions.generate-prd]
+    verify_jwt = false
+  [functions.generate-stories]
+    verify_jwt = false
+  [functions.generate-test-cases]
+    verify_jwt = false
+  [functions.github-disconnect]
+    verify_jwt = false
+  [functions.github-link-artifacts]
+    verify_jwt = false
+  [functions.github-list-repos]
+    verify_jwt = false
+  [functions.github-oauth-callback]
+    verify_jwt = false
+  [functions.github-oauth-init]
+    verify_jwt = false
+  [functions.github-pull-commits]
+    verify_jwt = false
+  [functions.github-pull-prs]
+    verify_jwt = false
+  [functions.github-webhook]
+    verify_jwt = false
+  [functions.handle-email-suppression]
+    verify_jwt = false
+  [functions.handle-email-unsubscribe]
+    verify_jwt = false
+  [functions.invoke-agent]
+    verify_jwt = false
+  [functions.jira-disconnect]
+    verify_jwt = false
+  [functions.jira-get-projects]
+    verify_jwt = false
+  [functions.jira-oauth-callback]
+    verify_jwt = false
+  [functions.jira-oauth-init]
+    verify_jwt = false
+  [functions.jira-pull-issue]
+    verify_jwt = false
+  [functions.jira-pull-sync]
+    verify_jwt = false
+  [functions.jira-push-artifact]
+    verify_jwt = false
+  [functions.jira-push-bulk]
+    verify_jwt = false
+  [functions.jira-refresh-token]
+    verify_jwt = false
+  [functions.jira-resolve-conflict]
+    verify_jwt = false
+  [functions.manage-platform-admins]
+    verify_jwt = false
+  [functions.preview-transactional-email]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.send-billing-email]
+    verify_jwt = false
+  [functions.send-transactional-email]
+    verify_jwt = true
+  [functions.stripe-webhook]
+    verify_jwt = false
+  [functions.workspace-invite-accept]
+    verify_jwt = false
+  [functions.workspaces]
+    verify_jwt = false
