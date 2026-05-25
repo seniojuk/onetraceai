@@ -22,7 +22,7 @@ serve(async (req) => {
     const admin = createClient(supabaseUrl, supabaseServiceKey);
 
     const url = new URL(req.url);
-    const action = url.searchParams.get("action") || "info";
+    const action = url.searchParams.get("action");
 
     let token: string | null = url.searchParams.get("token");
     if (req.method === "POST") {
@@ -54,7 +54,7 @@ serve(async (req) => {
       return jsonResponse({ error: "This invitation has expired" }, 410);
     }
 
-    // GET / info action: return public details
+    // GET / info action: return public details. POST must continue to accept.
     if (req.method === "GET" || action === "info") {
       return jsonResponse({
         valid: true,
