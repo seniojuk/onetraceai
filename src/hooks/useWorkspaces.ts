@@ -223,7 +223,6 @@ export function useRemoveMember() {
 
 export function useInviteMember() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({ 
@@ -235,28 +234,15 @@ export function useInviteMember() {
       email: string; 
       role: "ADMIN" | "MEMBER" | "VIEWER";
     }) => {
-      // Call edge function to handle invite
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/workspace-invite`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${session.access_token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ workspaceId, email, role }),
-        }
-      );
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to invite member");
+      const { data, error } = await supabase.functions.invoke("workspace-invite", {
+        body: { workspaceId, email, role },
+      });
+      if (error) throw error;
       return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["workspace-members", variables.workspaceId] });
+      queryClient.invalidateQueries({ queryKey: ["workspace-invitations", variables.workspaceId] });
     },
   });
 }
