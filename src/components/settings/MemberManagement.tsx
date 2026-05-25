@@ -482,7 +482,7 @@ export function MemberManagement({ workspaceId, workspaceName, userRole }: Membe
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                The user must have an existing account
+                They can accept after signing in or creating an account.
               </p>
             </div>
 
