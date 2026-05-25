@@ -223,7 +223,6 @@ export function useRemoveMember() {
 
 export function useInviteMember() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({ 
