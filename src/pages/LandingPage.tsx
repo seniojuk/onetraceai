@@ -173,7 +173,7 @@ function Nav() {
 function Hero() {
   return (
     <section className="relative overflow-hidden border-b border-border bg-background">
-      {/* Very subtle top vignette — Linear keeps it nearly black */}
+      {/* Very subtle top vignette. Linear keeps it nearly black. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[420px]"
