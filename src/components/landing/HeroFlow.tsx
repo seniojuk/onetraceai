@@ -57,8 +57,8 @@ function ArtifactNode({ data }: NodeProps<Node<FlowNodeData>>) {
           : "border-border"
       }`}
     >
-      <Handle type="target" position={Position.Left} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
-      <Handle type="target" position={Position.Top} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
+      <Handle id="l" type="target" position={Position.Left} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
+      <Handle id="t" type="target" position={Position.Top} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Icon className={`h-3 w-3 ${meta.tone}`} />
