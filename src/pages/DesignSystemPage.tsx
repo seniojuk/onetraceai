@@ -49,11 +49,11 @@ export default function DesignSystemPage() {
             Inspired by Linear, Vercel, and Resend — dense, precise, and quietly opinionated.
           </p>
           <div className="mt-8 flex items-center gap-3">
-            <button className="group inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-zinc-200">
+            <button className="btn-3d btn-3d-primary group inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium">
               View components
               <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </button>
-            <button className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-zinc-300 transition hover:bg-white/[0.06]">
+            <button className="btn-3d btn-3d-secondary inline-flex items-center gap-1.5 px-4 py-2 text-sm">
               Read principles
             </button>
           </div>
