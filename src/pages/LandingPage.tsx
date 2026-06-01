@@ -105,7 +105,7 @@ function Nav() {
             to="/auth?mode=signup"
             className="btn-3d btn-3d-primary inline-flex h-8 items-center gap-1.5 px-3 text-[13px] font-medium"
           >
-            Get Started <ArrowUpRight className="h-3.5 w-3.5" />
+            Start free <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
