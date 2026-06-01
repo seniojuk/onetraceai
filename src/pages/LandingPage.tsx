@@ -723,7 +723,7 @@ function Footer() {
               <span className="font-medium tracking-tight text-foreground">OneTrace</span>
             </div>
             <p className="mt-4 max-w-xs text-[12.5px] leading-relaxed text-muted-foreground">
-              The traceability layer for AI-built software. PRDs → Stories → Jira → Git → Tests, connected in one living
+              The traceability layer for AI-built software. PRDs, Stories, Jira, Git, and Tests connected in one living
               graph.
             </p>
           </div>
