@@ -577,9 +577,9 @@ function CoverageShowcase() {
 function IntegrationsRow() {
   return (
     <div className="mx-auto max-w-6xl px-6">
-      <Section id="integrations" eyebrow="05 — Integrations" title="Connects to your existing workflow.">
+      <Section id="integrations" eyebrow="05 / Integrations" title="Fits your existing workflow.">
         <p className="-mt-4 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-          OneTrace doesn't replace your tools — it connects them.
+          OneTrace doesn't replace your tools. It connects them.
         </p>
         <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
           {INTEGRATIONS.map((i, idx) => (
