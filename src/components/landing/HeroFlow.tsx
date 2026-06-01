@@ -10,6 +10,7 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   FileText,
   Layers,
