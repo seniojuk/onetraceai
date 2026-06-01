@@ -225,13 +225,13 @@ const mobileNodes: Node<FlowNodeData>[] = [
 ];
 
 const mobileEdges: Edge[] = [
-  { id: "e1", source: "prd", target: "epic", ...edgeBase },
-  { id: "e2", source: "epic", target: "story-1", ...edgeBase },
-  { id: "e3", source: "epic", target: "story-2", ...edgeBase },
-  { id: "e4", source: "story-1", target: "jira", ...edgeBase },
-  { id: "e5", source: "story-1", target: "pr", ...edgeBase },
-  { id: "e6", source: "story-2", target: "pr", ...edgeBase },
-  { id: "e7", source: "story-2", target: "test", ...edgeBase },
+  { id: "e1", source: "prd", sourceHandle: "b", target: "epic", targetHandle: "t", ...edgeBase },
+  { id: "e2", source: "epic", sourceHandle: "b", target: "story-1", targetHandle: "t", ...edgeBase },
+  { id: "e3", source: "epic", sourceHandle: "b", target: "story-2", targetHandle: "t", ...edgeBase },
+  { id: "e4", source: "story-1", sourceHandle: "b", target: "jira", targetHandle: "t", ...edgeBase },
+  { id: "e5", source: "story-1", sourceHandle: "b", target: "pr", targetHandle: "t", ...edgeBase },
+  { id: "e6", source: "story-2", sourceHandle: "b", target: "pr", targetHandle: "t", ...edgeBase },
+  { id: "e7", source: "story-2", sourceHandle: "b", target: "test", targetHandle: "t", ...edgeBase },
 ];
 
 export function HeroFlow() {
