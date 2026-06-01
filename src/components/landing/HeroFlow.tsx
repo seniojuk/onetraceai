@@ -247,15 +247,15 @@ function Stat({
   tone?: "ok" | "warn";
 }) {
   return (
-    <div className="bg-card px-3 py-3">
-      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+    <div className="bg-card px-2 py-2">
+      <div className="font-mono text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">
         {label}
       </div>
-      <div className="mt-1 font-geist text-[16px] sm:text-[18px] font-medium tracking-tight text-foreground">
+      <div className="mt-0.5 font-geist text-[13px] font-medium tracking-tight text-foreground">
         {value}
       </div>
       <div
-        className={`font-mono text-[10px] ${
+        className={`font-mono text-[8.5px] ${
           tone === "warn" ? "text-amber-500" : "text-accent"
         }`}
       >
