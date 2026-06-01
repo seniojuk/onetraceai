@@ -612,7 +612,7 @@ function IntegrationsRow() {
 function PricingSection() {
   return (
     <div className="mx-auto max-w-6xl px-6">
-      <Section id="pricing" eyebrow="06 — Pricing" title="Start free. Scale when you're ready.">
+      <Section id="pricing" eyebrow="06 / Pricing" title="Start free. Upgrade when you're ready.">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {PLANS.map((p, idx) => (
             <Reveal key={p.name} delay={idx * 100}>
