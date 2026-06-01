@@ -54,7 +54,6 @@ function Nav() {
             OT
           </div>
           <span className="font-medium tracking-tight text-foreground">OneTrace</span>
-          <span className="text-muted-foreground/70">/</span>
           <span className="text-muted-foreground">AI</span>
         </div>
         <nav className="hidden items-center gap-8 text-[13px] text-muted-foreground md:flex">
@@ -62,7 +61,6 @@ function Nav() {
           <a href="#solution" className="transition-colors hover:text-foreground">Solution</a>
           <a href="#how" className="transition-colors hover:text-foreground">How it works</a>
           <a href="#pricing" className="transition-colors hover:text-foreground">Pricing</a>
-          <Link to="/design" className="transition-colors hover:text-foreground">Design</Link>
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -102,31 +100,14 @@ function Hero() {
           Ship AI-built software with confidence
         </h1>
 
-        {/* Subhead row: left subhead, right small announcement */}
-        <div className="mt-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-10">
-          <p className="max-w-md text-[15px] leading-relaxed text-muted-foreground">
-            Purpose-built for planning, building, and proving AI-generated
-            software. Designed for the agent era.
-          </p>
-
-          <Link
-            to="/auth?mode=signup"
-            className="group inline-flex items-center gap-2 text-[14px] text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70 opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
-            </span>
-            <span className="font-medium text-foreground">
-              Drift is the new bug
-            </span>
-            <span className="text-muted-foreground/70">onetrace.ai/why</span>
-            <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
-        </div>
+        {/* Subhead */}
+        <p className="mt-8 max-w-md text-[15px] leading-relaxed text-muted-foreground">
+          Purpose-built for planning, building, and proving AI-generated
+          software. Designed for the agent era.
+        </p>
 
         {/* Product visual — full bleed panel below, Linear-style */}
-        <div className="relative mt-20 md:mt-28">
+        <div className="relative mt-10 md:mt-14">
           <div
             aria-hidden
             className="pointer-events-none absolute -inset-x-10 -top-10 bottom-0 -z-10 rounded-[32px] bg-[radial-gradient(60%_50%_at_50%_0%,hsl(var(--accent)/0.10),transparent_70%)] blur-2xl"
