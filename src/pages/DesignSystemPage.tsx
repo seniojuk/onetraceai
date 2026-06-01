@@ -30,7 +30,7 @@ export default function DesignSystemPage() {
             <div className="grid h-6 w-6 place-items-center rounded-md bg-gradient-to-br from-teal-400 to-teal-600 text-[10px] font-semibold text-black">
               OT
             </div>
-            <span className="font-medium tracking-tight">OneTrace</span>
+            <span className="font-medium tracking-tight text-zinc-100">OneTrace</span>
             <span className="text-zinc-500">/</span>
             <span className="text-zinc-400">Design</span>
           </div>
