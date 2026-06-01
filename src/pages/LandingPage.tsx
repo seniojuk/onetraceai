@@ -168,6 +168,7 @@ function Nav() {
           </Sheet>
         </div>
       </div>
+      <ScrollProgress />
     </header>
   );
 }
