@@ -493,8 +493,13 @@ function IntegrationsRow() {
         <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
           {INTEGRATIONS.map((i) => (
             <div key={i.name} className="group bg-card p-6 transition-colors hover:bg-muted/30">
-              <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 font-mono text-[11px] text-foreground/80 transition-colors group-hover:border-accent/40 group-hover:text-accent">
-                {i.short}
+              <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 transition-colors group-hover:border-accent/40">
+                <img
+                  src={`https://cdn.simpleicons.org/${i.slug}`}
+                  alt={`${i.name} logo`}
+                  className="h-5 w-5"
+                  loading="lazy"
+                />
               </div>
               <h4 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{i.name}</h4>
               <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{i.body}</p>
@@ -760,10 +765,10 @@ const STEPS = [
 ];
 
 const INTEGRATIONS = [
-  { name: "Jira Cloud", short: "JC", body: "Two-way sync with full-fidelity field mapping." },
-  { name: "GitHub", short: "GH", body: "Commits, PRs, and webhook-driven coverage." },
-  { name: "OpenAI", short: "AI", body: "GPT-4 and o-series for intelligent agents." },
-  { name: "Anthropic", short: "AN", body: "Claude for deep reasoning over your graph." },
+  { name: "Jira Cloud", slug: "jira", body: "Two-way sync with full-fidelity field mapping." },
+  { name: "GitHub", slug: "github", body: "Commits, PRs, and webhook-driven coverage." },
+  { name: "OpenAI", slug: "openai", body: "GPT-4 and o-series for intelligent agents." },
+  { name: "Anthropic", slug: "anthropic", body: "Claude for deep reasoning over your graph." },
 ];
 
 const PLANS = [
