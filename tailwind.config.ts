@@ -15,10 +15,24 @@ export default {
     extend: {
       colors: {
         border: "hsl(var(--border))",
+        hairline: "hsl(var(--hairline))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          elevated: "hsl(var(--surface-elevated))",
+          sunken: "hsl(var(--surface-sunken))",
+        },
+        status: {
+          prd: { DEFAULT: "hsl(var(--status-prd))", fg: "hsl(var(--status-prd-fg))" },
+          epic: { DEFAULT: "hsl(var(--status-epic))", fg: "hsl(var(--status-epic-fg))" },
+          story: { DEFAULT: "hsl(var(--status-story))", fg: "hsl(var(--status-story-fg))" },
+          ac: { DEFAULT: "hsl(var(--status-ac))", fg: "hsl(var(--status-ac-fg))" },
+          test: { DEFAULT: "hsl(var(--status-test))", fg: "hsl(var(--status-test-fg))" },
+          commit: { DEFAULT: "hsl(var(--status-commit))", fg: "hsl(var(--status-commit-fg))" },
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
