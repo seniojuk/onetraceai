@@ -1,689 +1,585 @@
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { 
-  GitBranch, 
-  FileText, 
-  CheckCircle2, 
-  ArrowRight,
-  Zap,
-  Shield,
-  Eye,
-  RefreshCw,
-  BarChart3,
-  Users,
-  PlayCircle,
-  ChevronRight,
-  Sparkles,
+import {
+  ArrowUpRight,
+  Check,
+  Command,
+  GitBranch,
   Network,
+  PlayCircle,
+  Sparkles,
+  Zap,
   AlertTriangle,
-  TrendingUp
+  Layers,
+  Activity,
 } from "lucide-react";
 
+/**
+ * Marketing home — same design language as `/design`.
+ * Semantic tokens only, hairline borders, mono eyebrows, Geist display,
+ * Instrument Serif accents, btn-3d buttons, status tokens. No hardcoded colors.
+ */
 const LandingPage = () => {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Network className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-foreground">OneTrace AI</span>
-            </div>
-            
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
-              <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How it Works</a>
-              <a href="#integrations" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Integrations</a>
-              <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-            </div>
+    <div className="dark min-h-screen bg-background text-foreground font-geist antialiased">
+      <Nav />
 
-            <div className="flex items-center gap-3">
-              <Link to="/auth">
-                <Button variant="ghost" size="sm">Sign in</Button>
-              </Link>
-              <Link to="/auth?mode=signup">
-                <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                  Get Started
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <main className="mx-auto max-w-6xl px-6">
+        <Hero />
+        <ProblemSection />
+        <SolutionSection />
+        <HowItWorks />
+        <CoverageShowcase />
+        <IntegrationsRow />
+        <PricingSection />
+        <FinalCTA />
+      </main>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 md:pt-40 md:pb-32 mesh-gradient">
-        <div className="container mx-auto px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-8 animate-fade-in">
-              <Sparkles className="w-4 h-4" />
-              Built for AI-first startups & solo builders
-            </div>
-            
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight mb-6 animate-slide-up">
-              Ship AI-built software with{" "}
-              <span className="text-gradient-brand">confidence</span>
-              —not crossed fingers.
-            </h1>
-            
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 animate-slide-up delay-100">
-              OneTrace connects your <strong>PRDs → Stories → Jira → Git → Tests</strong> into one{" "}
-              <strong>traceable Artifact Graph</strong>, so every feature has an owner, every commit has intent, 
-              and every release has proof.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 animate-slide-up delay-200">
-              <Link to="/auth?mode=signup">
-                <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg">
-                  Get Started Free
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
-              <Button size="lg" variant="outline" className="px-8 py-6 text-lg group">
-                <PlayCircle className="mr-2 w-5 h-5 text-accent group-hover:scale-110 transition-transform" />
-                Watch Demo
-              </Button>
-            </div>
-
-            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground animate-fade-in delay-300">
-              <span className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success" />
-                Start free
-              </span>
-              <span className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success" />
-                Connect Jira + Git in minutes
-              </span>
-              <span className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success" />
-                Works with your AI tools
-              </span>
-            </div>
-          </div>
-
-          {/* Hero Visual */}
-          <div className="mt-16 max-w-5xl mx-auto animate-float">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-border/50 bg-card">
-              <div className="absolute top-0 left-0 right-0 h-10 bg-muted flex items-center px-4 gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <div className="w-3 h-3 rounded-full bg-amber-400" />
-                <div className="w-3 h-3 rounded-full bg-green-400" />
-              </div>
-              <div className="pt-10 p-6">
-                <HeroGraphPreview />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Social Proof Strip */}
-      <section className="py-12 bg-muted/30 border-y border-border/50">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-8 text-center md:text-left">
-            <p className="text-muted-foreground">
-              Works with <strong className="text-foreground">Jira</strong>, <strong className="text-foreground">GitHub</strong>, 
-              and your favorite AI coding workflows.
-            </p>
-            <div className="h-px w-px md:w-px md:h-8 bg-border" />
-            <p className="text-muted-foreground">
-              Keeps humans and AI agents aligned with a single source of truth.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Problem Section */}
-      <section className="py-20 md:py-32">
-        <div className="container mx-auto px-6">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Your build flow is fast.<br />
-              <span className="text-drift">Your traceability is broken.</span>
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              You ideate in ChatGPT. You generate a PRD. You paste prompts into Lovable/Cursor/Replit. 
-              Code appears — but now:
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            {[
-              { icon: AlertTriangle, title: "No clear mapping", desc: "From requirements → modules → commits" },
-              { icon: Eye, title: "No objective coverage", desc: "Against Acceptance Criteria" },
-              { icon: RefreshCw, title: "No safe regeneration", desc: "When requirements change" },
-              { icon: Users, title: "No shared workspace", desc: "Where humans and AI agents collaborate" },
-            ].map((item, i) => (
-              <div key={i} className="p-6 rounded-xl bg-card border border-border/50 text-center">
-                <div className="w-12 h-12 rounded-full bg-drift/10 flex items-center justify-center mx-auto mb-4">
-                  <item.icon className="w-6 h-6 text-drift" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <p className="text-center text-lg text-muted-foreground mt-12">
-            So <strong className="text-foreground">"Done" becomes a vibe</strong>. Bugs ship. Rework grows.
-          </p>
-        </div>
-      </section>
-
-      {/* Solution Section */}
-      <section id="features" className="py-20 md:py-32 bg-muted/20">
-        <div className="container mx-auto px-6">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 text-success text-sm font-medium mb-6">
-              <Zap className="w-4 h-4" />
-              The Solution
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              OneTrace AI is your AI-native system of record.
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              OneTrace builds a <strong>living map</strong> of your product — connecting every artifact, 
-              tracking every relationship, and versioning every change.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="feature-card">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-500/5 flex items-center justify-center mb-6">
-                <FileText className="w-7 h-7 text-purple-500" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">Artifacts</h3>
-              <p className="text-muted-foreground">
-                PRDs, Epics, Stories, ACs, Tests, Commits, PRs — all in one place with full version history.
-              </p>
-            </div>
-
-            <div className="feature-card">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center mb-6">
-                <GitBranch className="w-7 h-7 text-accent" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">Edges</h3>
-              <p className="text-muted-foreground">
-                Implements, Validates, Satisfies, Depends-on — every relationship is explicit and traceable.
-              </p>
-            </div>
-
-            <div className="feature-card">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-500/5 flex items-center justify-center mb-6">
-                <RefreshCw className="w-7 h-7 text-blue-500" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">Versions</h3>
-              <p className="text-muted-foreground">
-                Every change is tracked, explainable, and reversible. See who changed what and why.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-12 p-8 rounded-2xl bg-card border border-success/30 max-w-3xl mx-auto text-center">
-            <p className="text-lg text-foreground">
-              <strong className="text-success">Result:</strong> You always know what's built, what's missing, 
-              and what will break if you change it.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section id="how-it-works" className="py-20 md:py-32">
-        <div className="container mx-auto px-6">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Three steps to traceable software
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                step: "1",
-                title: "Connect your tools",
-                desc: "Link Jira and Git in minutes. OneTrace syncs work items, code changes, and context automatically.",
-                icon: Network,
-              },
-              {
-                step: "2", 
-                title: "Generate traceable work",
-                desc: "Turn PRDs into Epics/Stories/ACs — and push into Jira with full trace metadata.",
-                icon: Sparkles,
-              },
-              {
-                step: "3",
-                title: "Prove coverage & catch drift",
-                desc: "Auto-link commits and PRs. See AC coverage in real-time. Get alerted when code or requirements drift.",
-                icon: BarChart3,
-              },
-            ].map((item, i) => (
-              <div key={i} className="relative">
-                <div className="text-8xl font-bold text-muted/50 absolute -top-4 -left-2">{item.step}</div>
-                <div className="relative pt-12 pl-4">
-                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
-                    <item.icon className="w-6 h-6 text-accent" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-3">{item.title}</h3>
-                  <p className="text-muted-foreground">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Coverage & Drift Section */}
-      <section className="py-20 md:py-32 bg-muted/20">
-        <div className="container mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
-            <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-success/10 text-success text-sm font-medium mb-6">
-                <BarChart3 className="w-4 h-4" />
-                Coverage Engine
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-                Know exactly what's done — and what's not.
-              </h2>
-              <ul className="space-y-4">
-                {[
-                  "Real-time coverage ratio for every Story, Epic, and PRD",
-                  "See which Acceptance Criteria are satisfied vs. missing",
-                  "Evidence-based linkage with confidence scoring",
-                  "Rollup coverage to parent artifacts automatically",
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                    <span className="text-muted-foreground">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="relative">
-              <CoveragePreview />
-            </div>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto mt-24">
-            <div className="order-2 lg:order-1">
-              <DriftPreview />
-            </div>
-
-            <div className="order-1 lg:order-2">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-drift/10 text-drift text-sm font-medium mb-6">
-                <AlertTriangle className="w-4 h-4" />
-                Drift Detection
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-                Catch problems before they ship.
-              </h2>
-              <ul className="space-y-4">
-                {[
-                  "Commits without linked requirements",
-                  "Requirements marked done with no code",
-                  "Tests without acceptance criteria",
-                  "Jira status mismatches",
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <Shield className="w-5 h-5 text-drift mt-0.5 flex-shrink-0" />
-                    <span className="text-muted-foreground">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Integrations */}
-      <section id="integrations" className="py-20 md:py-32">
-        <div className="container mx-auto px-6">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Connects to your existing workflow
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              OneTrace doesn't replace your tools — it connects them.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            {[
-              { name: "Jira Cloud", desc: "Two-way sync with full field mapping", color: "bg-blue-500" },
-              { name: "GitHub", desc: "Commits, PRs, and webhooks", color: "bg-slate-800" },
-              { name: "OpenAI", desc: "GPT-4 for intelligent agents", color: "bg-green-500" },
-              { name: "Anthropic", desc: "Claude for reasoning tasks", color: "bg-amber-500" },
-            ].map((item, i) => (
-              <div key={i} className="integration-card">
-                <div className={`w-10 h-10 rounded-lg ${item.color} flex items-center justify-center`}>
-                  <span className="text-white font-bold text-lg">{item.name[0]}</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">{item.name}</h3>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 md:py-32 bg-muted/20">
-        <div className="container mx-auto px-6">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-              Start free. Scale when you're ready.
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                name: "Free",
-                price: "$0",
-                desc: "For solo builders getting started",
-                features: ["1 project", "2 users", "100 artifacts", "Basic integrations", "Community support"],
-                cta: "Get Started",
-                popular: false,
-              },
-              {
-                name: "Builder",
-                price: "$29",
-                desc: "For growing teams",
-                features: ["5 projects", "10 users", "Unlimited artifacts", "Full integrations", "AI agents", "Priority support"],
-                cta: "Start Free Trial",
-                popular: true,
-              },
-              {
-                name: "Scale",
-                price: "$99",
-                desc: "For larger teams",
-                features: ["Unlimited projects", "Unlimited users", "Custom model hub", "Advanced analytics", "SSO/SAML", "Dedicated support"],
-                cta: "Contact Sales",
-                popular: false,
-              },
-            ].map((plan, i) => (
-              <div 
-                key={i} 
-                className={`relative rounded-2xl p-8 bg-card ${
-                  plan.popular 
-                    ? "border-2 border-accent shadow-xl ring-1 ring-accent/20" 
-                    : "border border-border"
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-accent text-accent-foreground text-sm font-medium">
-                    Most Popular
-                  </div>
-                )}
-                <h3 className="text-xl font-semibold text-foreground mb-2">{plan.name}</h3>
-                <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-4xl font-bold text-foreground">{plan.price}</span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
-                <p className="text-muted-foreground mb-6">{plan.desc}</p>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, j) => (
-                    <li key={j} className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="w-4 h-4 text-success" />
-                      <span className="text-muted-foreground">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button 
-                  className={`w-full ${plan.popular ? "bg-accent hover:bg-accent/90" : ""}`}
-                  variant={plan.popular ? "default" : "outline"}
-                >
-                  {plan.cta}
-                  <ChevronRight className="ml-2 w-4 h-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-20 md:py-32 hero-gradient text-white">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            Ready to ship with confidence?
-          </h2>
-          <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
-            Join AI-first teams building traceable software. Start free, connect your tools in minutes.
-          </p>
-          <Link to="/auth?mode=signup">
-            <Button size="lg" className="bg-white text-primary hover:bg-white/90 px-8 py-6 text-lg">
-              Get Started Free
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-12 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-                <Network className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg font-bold">OneTrace AI</span>
-            </div>
-            <div className="flex items-center gap-8 text-sm text-primary-foreground/70">
-              <a href="#" className="hover:text-primary-foreground transition-colors">Docs</a>
-              <a href="#" className="hover:text-primary-foreground transition-colors">Blog</a>
-              <Link to="/privacy" className="hover:text-primary-foreground transition-colors">Privacy</Link>
-              <Link to="/terms" className="hover:text-primary-foreground transition-colors">Terms</Link>
-              <Link to="/contact" className="hover:text-primary-foreground transition-colors">Contact</Link>
-            </div>
-            <p className="text-sm text-primary-foreground/70">
-              © 2026 OneTrace AI, Inc. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
 
-// Hero Graph Preview Component
-const HeroGraphPreview = () => (
-  <div className="relative h-[400px] w-full bg-graph-bg rounded-xl overflow-hidden">
-    {/* Grid background */}
-    <div 
-      className="absolute inset-0" 
-      style={{
-        backgroundImage: `
-          linear-gradient(hsl(var(--graph-grid)) 1px, transparent 1px),
-          linear-gradient(90deg, hsl(var(--graph-grid)) 1px, transparent 1px)
-        `,
-        backgroundSize: '40px 40px'
-      }}
-    />
-    
-    {/* Nodes */}
-    <div className="absolute top-8 left-1/2 -translate-x-1/2 w-48 p-4 bg-card border-2 border-purple-500/50 rounded-xl shadow-lg">
-      <div className="flex items-center gap-2 mb-2">
-        <FileText className="w-4 h-4 text-purple-500" />
-        <span className="text-xs font-medium text-purple-500">PRD</span>
-      </div>
-      <p className="text-sm font-medium text-foreground">User Authentication</p>
-      <div className="mt-2 flex items-center gap-2">
-        <div className="h-2 flex-1 bg-success/20 rounded-full overflow-hidden">
-          <div className="h-full w-[85%] bg-success rounded-full" />
-        </div>
-        <span className="text-xs text-success font-medium">85%</span>
-      </div>
-    </div>
+export default LandingPage;
 
-    <div className="absolute top-44 left-24 w-40 p-3 bg-card border-2 border-blue-500/50 rounded-xl shadow-lg">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-xs font-medium text-blue-500">EPIC-001</span>
-      </div>
-      <p className="text-sm font-medium text-foreground">OAuth Flow</p>
-      <span className="text-xs text-muted-foreground">4 stories</span>
-    </div>
+/* ---------- Nav ---------- */
 
-    <div className="absolute top-44 right-24 w-40 p-3 bg-card border-2 border-blue-500/50 rounded-xl shadow-lg">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-xs font-medium text-blue-500">EPIC-002</span>
-      </div>
-      <p className="text-sm font-medium text-foreground">Session Mgmt</p>
-      <span className="text-xs text-muted-foreground">3 stories</span>
-    </div>
-
-    <div className="absolute bottom-16 left-16 w-36 p-3 bg-card border-2 border-accent/50 rounded-xl shadow-lg">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-xs font-medium text-accent">STORY-001</span>
-      </div>
-      <p className="text-sm font-medium text-foreground truncate">Google OAuth</p>
-      <div className="flex items-center gap-1 mt-1">
-        <CheckCircle2 className="w-3 h-3 text-success" />
-        <span className="text-xs text-success">Done</span>
-      </div>
-    </div>
-
-    <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-36 p-3 bg-card border-2 border-accent/50 rounded-xl shadow-lg">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-xs font-medium text-accent">STORY-002</span>
-      </div>
-      <p className="text-sm font-medium text-foreground truncate">GitHub OAuth</p>
-      <div className="flex items-center gap-1 mt-1">
-        <div className="w-3 h-3 rounded-full bg-amber-500 animate-pulse" />
-        <span className="text-xs text-amber-500">In Progress</span>
-      </div>
-    </div>
-
-    <div className="absolute bottom-16 right-16 w-36 p-3 bg-card border-2 border-slate-400/50 rounded-xl shadow-lg">
-      <div className="flex items-center gap-2 mb-1">
-        <GitBranch className="w-3 h-3 text-slate-500" />
-        <span className="text-xs font-medium text-slate-500">abc123</span>
-      </div>
-      <p className="text-xs text-foreground truncate">feat: add OAuth redirect</p>
-      <span className="text-xs text-muted-foreground">2h ago</span>
-    </div>
-
-    {/* Connection lines (SVG) */}
-    <svg className="absolute inset-0 pointer-events-none" width="100%" height="100%">
-      <defs>
-        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill="hsl(var(--graph-edge))" />
-        </marker>
-      </defs>
-      {/* PRD to Epics */}
-      <line x1="50%" y1="110" x2="30%" y2="170" stroke="hsl(var(--graph-edge))" strokeWidth="2" markerEnd="url(#arrowhead)" />
-      <line x1="50%" y1="110" x2="70%" y2="170" stroke="hsl(var(--graph-edge))" strokeWidth="2" markerEnd="url(#arrowhead)" />
-      {/* Epic to Stories */}
-      <line x1="25%" y1="230" x2="15%" y2="300" stroke="hsl(var(--graph-edge))" strokeWidth="2" markerEnd="url(#arrowhead)" />
-      <line x1="25%" y1="230" x2="50%" y2="300" stroke="hsl(var(--graph-edge))" strokeWidth="2" markerEnd="url(#arrowhead)" />
-      {/* Story to Commit */}
-      <line x1="55%" y1="330" x2="80%" y2="320" stroke="hsl(var(--trace-implements))" strokeWidth="2" strokeDasharray="5,5" className="trace-line" />
-    </svg>
-  </div>
-);
-
-// Coverage Preview Component
-const CoveragePreview = () => (
-  <div className="bg-card rounded-2xl border border-border shadow-xl p-6">
-    <div className="flex items-center justify-between mb-6">
-      <h3 className="font-semibold text-foreground">Coverage Overview</h3>
-      <span className="text-sm text-muted-foreground">Updated 2m ago</span>
-    </div>
-    
-    <div className="space-y-4">
-      {[
-        { name: "User Authentication", coverage: 85, total: 12, satisfied: 10 },
-        { name: "Payment Integration", coverage: 60, total: 8, satisfied: 5 },
-        { name: "Dashboard Views", coverage: 100, total: 6, satisfied: 6 },
-        { name: "API Layer", coverage: 45, total: 15, satisfied: 7 },
-      ].map((item, i) => (
-        <div key={i} className="flex items-center gap-4">
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-foreground">{item.name}</span>
-              <span className="text-xs text-muted-foreground">{item.satisfied}/{item.total} ACs</span>
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div 
-                className={`h-full rounded-full transition-all duration-500 ${
-                  item.coverage === 100 
-                    ? 'bg-coverage-full' 
-                    : item.coverage >= 70 
-                      ? 'bg-coverage-partial' 
-                      : 'bg-coverage-none'
-                }`}
-                style={{ width: `${item.coverage}%` }}
-              />
-            </div>
+function Nav() {
+  return (
+    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-2 text-sm">
+          <div className="grid h-6 w-6 place-items-center rounded-md bg-gradient-to-br from-accent to-accent/60 text-[10px] font-semibold text-accent-foreground">
+            OT
           </div>
-          <span className={`text-sm font-medium ${
-            item.coverage === 100 
-              ? 'text-coverage-full' 
-              : item.coverage >= 70 
-                ? 'text-coverage-partial' 
-                : 'text-coverage-none'
-          }`}>
-            {item.coverage}%
+          <span className="font-medium tracking-tight text-foreground">OneTrace</span>
+          <span className="text-muted-foreground/70">/</span>
+          <span className="text-muted-foreground">AI</span>
+        </div>
+        <nav className="hidden items-center gap-8 text-[13px] text-muted-foreground md:flex">
+          <a href="#problem" className="transition-colors hover:text-foreground">Problem</a>
+          <a href="#solution" className="transition-colors hover:text-foreground">Solution</a>
+          <a href="#how" className="transition-colors hover:text-foreground">How it works</a>
+          <a href="#pricing" className="transition-colors hover:text-foreground">Pricing</a>
+          <Link to="/design" className="transition-colors hover:text-foreground">Design</Link>
+        </nav>
+        <div className="flex items-center gap-2">
+          <Link to="/auth" className="btn-3d btn-3d-ghost inline-flex h-8 items-center px-3 text-[13px]">
+            Sign in
+          </Link>
+          <Link
+            to="/auth?mode=signup"
+            className="btn-3d btn-3d-primary inline-flex h-8 items-center gap-1.5 px-3 text-[13px] font-medium"
+          >
+            Get Started <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/* ---------- Hero ---------- */
+
+function Hero() {
+  return (
+    <section className="pt-24 pb-24">
+      <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1 text-[11px] text-muted-foreground">
+        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+        Built for AI-first startups & solo builders
+      </div>
+      <h1 className="font-geist text-[64px] leading-[1.02] tracking-[-0.04em] text-foreground">
+        Ship AI-built software with
+        <br />
+        <span className="font-serif italic text-foreground/70">confidence</span> — not crossed fingers.
+      </h1>
+      <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+        OneTrace connects your PRDs, Stories, Jira, Git, and Tests into one traceable
+        Artifact Graph — so every feature has an owner, every commit has intent, and
+        every release has proof.
+      </p>
+      <div className="mt-8 flex flex-wrap items-center gap-3">
+        <Link
+          to="/auth?mode=signup"
+          className="btn-3d btn-3d-primary group inline-flex h-10 items-center gap-1.5 px-4 text-[14px] font-medium"
+        >
+          Get started free
+          <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </Link>
+        <button className="btn-3d btn-3d-secondary inline-flex h-10 items-center gap-2 px-4 text-[13px]">
+          <PlayCircle className="h-4 w-4" />
+          Watch demo
+        </button>
+        <div className="ml-2 flex items-center gap-3 font-mono text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <Check className="h-3 w-3 text-accent" /> Start free
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <Check className="h-3 w-3 text-accent" /> Connect in minutes
           </span>
         </div>
-      ))}
-    </div>
-
-    <div className="mt-6 pt-6 border-t border-border">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">Overall Coverage</p>
-          <p className="text-2xl font-bold text-foreground">72%</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-success" />
-          <span className="text-sm text-success">+8% this week</span>
-        </div>
       </div>
-    </div>
-  </div>
-);
 
-// Drift Preview Component
-const DriftPreview = () => (
-  <div className="bg-card rounded-2xl border border-border shadow-xl p-6">
-    <div className="flex items-center justify-between mb-6">
-      <h3 className="font-semibold text-foreground">Drift Findings</h3>
-      <span className="px-2 py-1 rounded-full bg-drift/10 text-drift text-xs font-medium">3 open</span>
-    </div>
-    
-    <div className="space-y-3">
-      {[
-        { type: "Untraced commit", desc: "abc123 has no linked requirement", severity: "high" },
-        { type: "Missing tests", desc: "STORY-004 has 0/3 ACs tested", severity: "medium" },
-        { type: "Status mismatch", desc: "STORY-002 is Done but Jira shows In Review", severity: "low" },
-      ].map((item, i) => (
-        <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
-          <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-            item.severity === 'high' ? 'bg-red-500' : 
-            item.severity === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
-          }`} />
-          <div>
-            <p className="text-sm font-medium text-foreground">{item.type}</p>
-            <p className="text-xs text-muted-foreground">{item.desc}</p>
+      {/* Hero product visual */}
+      <div className="mt-16 overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-border" />
+              <span className="h-2.5 w-2.5 rounded-full bg-border" />
+              <span className="h-2.5 w-2.5 rounded-full bg-border" />
+            </div>
+            <span className="ml-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+              artifact-graph / main
+            </span>
+          </div>
+          <div className="flex items-center gap-1 rounded-md border border-border bg-background/60 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+            <Command className="h-3 w-3" /> v1.0
           </div>
         </div>
-      ))}
+        <div className="grid gap-6 p-10 md:grid-cols-3">
+          <GraphNode kind="prd" id="PRD-042" title="User Authentication" meta="85% coverage" progress={85} />
+          <GraphNode kind="story" id="STORY-217" title="Google OAuth flow" meta="In progress · 4h ago" progress={62} />
+          <GraphNode kind="commit" id="PR #482" title="feat(auth): callback handler" meta="Linked · jori" progress={100} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function GraphNode({
+  kind,
+  id,
+  title,
+  meta,
+  progress,
+}: {
+  kind: StatusKey;
+  id: string;
+  title: string;
+  meta: string;
+  progress: number;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-background p-5">
+      <div className="flex items-center justify-between">
+        <StatusBadge status={kind} label={id} mono />
+        <span className="font-mono text-[11px] text-muted-foreground">{progress}%</span>
+      </div>
+      <h4 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{title}</h4>
+      <p className="mt-1 text-[12px] text-muted-foreground">{meta}</p>
+      <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-accent to-accent/70"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
     </div>
+  );
+}
 
-    <Button variant="outline" className="w-full mt-4" size="sm">
-      View All Findings
-      <ChevronRight className="ml-2 w-4 h-4" />
-    </Button>
-  </div>
-);
+/* ---------- Problem ---------- */
 
-export default LandingPage;
+function ProblemSection() {
+  return (
+    <Section id="problem" eyebrow="01 — The problem" title="Your build flow is fast. Your traceability is broken.">
+      <p className="-mt-4 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
+        You ideate in ChatGPT. You generate a PRD. You paste prompts into Lovable, Cursor,
+        or Replit. Code appears — but now what?
+      </p>
+      <div className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-2 lg:grid-cols-4">
+        {PROBLEMS.map((p) => (
+          <div key={p.title} className="bg-card p-6">
+            <p.icon className="h-4 w-4 text-destructive" />
+            <h3 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{p.title}</h3>
+            <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{p.body}</p>
+          </div>
+        ))}
+      </div>
+      <p className="mt-8 text-[13px] text-muted-foreground">
+        So <span className="font-serif italic text-foreground/80">"done"</span> becomes a vibe. Bugs ship. Rework grows.
+      </p>
+    </Section>
+  );
+}
+
+/* ---------- Solution ---------- */
+
+function SolutionSection() {
+  return (
+    <Section id="solution" eyebrow="02 — The solution" title="An AI-native system of record.">
+      <p className="-mt-4 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
+        OneTrace builds a <span className="font-serif italic text-foreground/80">living map</span> of your product — connecting every artifact, tracking every relationship, versioning every change.
+      </p>
+      <div className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-3">
+        {PILLARS.map((p) => (
+          <div key={p.title} className="bg-card p-6">
+            <p.icon className="h-4 w-4 text-accent" />
+            <h3 className="mt-4 text-[15px] font-medium tracking-tight text-foreground">{p.title}</h3>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{p.body}</p>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+/* ---------- How it works ---------- */
+
+function HowItWorks() {
+  return (
+    <Section id="how" eyebrow="03 — How it works" title="Three steps to traceable software.">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {STEPS.map((s, i) => (
+          <div key={s.title} className="rounded-xl border border-border bg-card p-6">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Step {String(i + 1).padStart(2, "0")}
+              </span>
+              <s.icon className="h-4 w-4 text-accent" />
+            </div>
+            <h3 className="mt-4 text-[16px] font-medium tracking-tight text-foreground">{s.title}</h3>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{s.body}</p>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+/* ---------- Coverage Showcase ---------- */
+
+function CoverageShowcase() {
+  return (
+    <Section eyebrow="04 — Coverage engine" title="Know exactly what's done — and what's not.">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="rounded-xl border border-border bg-card p-6">
+          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            Coverage overview
+          </span>
+          <div className="mt-4 flex items-baseline gap-2">
+            <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">94.2%</span>
+            <span className="font-mono text-[12px] text-accent">+2.1%</span>
+          </div>
+          <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div className="h-full w-[94%] rounded-full bg-gradient-to-r from-accent to-accent/70" />
+          </div>
+          <div className="mt-6 space-y-3 border-t border-border pt-4">
+            {[
+              { label: "User Authentication", v: "10/12", pct: 83, kind: "ac" as StatusKey },
+              { label: "Payment Integration", v: "5/8", pct: 62, kind: "story" as StatusKey },
+              { label: "Dashboard Views", v: "6/6", pct: 100, kind: "epic" as StatusKey },
+              { label: "API Layer", v: "7/15", pct: 47, kind: "test" as StatusKey },
+            ].map((r) => (
+              <div key={r.label} className="flex items-center gap-3">
+                <StatusBadge status={r.kind} label={r.kind.toUpperCase()} mono />
+                <span className="flex-1 truncate text-[13px] text-foreground">{r.label}</span>
+                <span className="font-mono text-[11px] text-muted-foreground">{r.v}</span>
+                <span className="w-10 text-right font-mono text-[11px] text-accent">{r.pct}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between">
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+              Drift findings
+            </span>
+            <span className="rounded-md border border-destructive/30 bg-destructive/10 px-2 py-0.5 font-mono text-[11px] text-destructive">
+              3 open
+            </span>
+          </div>
+          <h3 className="mt-4 text-[18px] font-medium tracking-tight text-foreground">
+            Catch problems before they ship.
+          </h3>
+          <div className="mt-5 space-y-px overflow-hidden rounded-lg border border-border">
+            {[
+              { icon: AlertTriangle, title: "Untraced commit", meta: "abc123 has no linked requirement" },
+              { icon: AlertTriangle, title: "Missing tests", meta: "STORY-004 has 0/3 ACs tested" },
+              { icon: AlertTriangle, title: "Status mismatch", meta: "STORY-002 done but Jira shows In Review" },
+            ].map((d) => (
+              <div key={d.title} className="flex items-start gap-3 bg-background px-4 py-3">
+                <d.icon className="mt-0.5 h-4 w-4 shrink-0 text-drift" />
+                <div className="flex-1">
+                  <div className="text-[13px] font-medium text-foreground">{d.title}</div>
+                  <div className="font-mono text-[11px] text-muted-foreground">{d.meta}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Link
+            to="/auth?mode=signup"
+            className="btn-3d btn-3d-secondary mt-5 inline-flex h-8 items-center gap-1.5 px-3 text-[12px]"
+          >
+            View all findings <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        </div>
+      </div>
+    </Section>
+  );
+}
+
+/* ---------- Integrations ---------- */
+
+function IntegrationsRow() {
+  return (
+    <Section id="integrations" eyebrow="05 — Integrations" title="Connects to your existing workflow.">
+      <p className="-mt-4 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
+        OneTrace doesn't replace your tools — it connects them.
+      </p>
+      <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
+        {INTEGRATIONS.map((i) => (
+          <div key={i.name} className="bg-card p-6">
+            <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 font-mono text-[11px] text-foreground/80">
+              {i.short}
+            </div>
+            <h4 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{i.name}</h4>
+            <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{i.body}</p>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+/* ---------- Pricing ---------- */
+
+function PricingSection() {
+  return (
+    <Section id="pricing" eyebrow="06 — Pricing" title="Start free. Scale when you're ready.">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {PLANS.map((p) => (
+          <div
+            key={p.name}
+            className={`relative rounded-xl border bg-card p-6 ${
+              p.featured ? "border-accent/40 ring-1 ring-accent/20" : "border-border"
+            }`}
+          >
+            {p.featured && (
+              <span className="absolute -top-2.5 left-6 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
+                Most popular
+              </span>
+            )}
+            <div className="text-[13px] text-muted-foreground">{p.name}</div>
+            <div className="mt-3 flex items-baseline gap-1">
+              <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">{p.price}</span>
+              <span className="text-[13px] text-muted-foreground">/month</span>
+            </div>
+            <p className="mt-2 text-[12.5px] text-muted-foreground">{p.tagline}</p>
+            <ul className="mt-5 space-y-2 border-t border-border pt-4">
+              {p.features.map((f) => (
+                <li key={f} className="flex items-start gap-2 text-[13px] text-foreground/90">
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Link
+              to="/auth?mode=signup"
+              className={`mt-6 inline-flex h-9 w-full items-center justify-center gap-1.5 px-3 text-[13px] font-medium btn-3d ${
+                p.featured ? "btn-3d-accent" : "btn-3d-secondary"
+              }`}
+            >
+              {p.cta} <ArrowUpRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+/* ---------- Final CTA ---------- */
+
+function FinalCTA() {
+  return (
+    <section className="my-24 overflow-hidden rounded-2xl border border-border bg-card p-12 text-center">
+      <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-muted/40 px-3 py-1 text-[11px] text-muted-foreground">
+        <Sparkles className="h-3 w-3 text-accent" />
+        Ready when you are
+      </div>
+      <h2 className="font-geist text-[48px] leading-[1.05] tracking-[-0.03em] text-foreground">
+        Ready to ship with <span className="font-serif italic text-foreground/70">confidence?</span>
+      </h2>
+      <p className="mx-auto mt-4 max-w-lg text-[14px] leading-relaxed text-muted-foreground">
+        Join AI-first teams building traceable software. Start free, connect in minutes.
+      </p>
+      <div className="mt-8 flex items-center justify-center gap-3">
+        <Link
+          to="/auth?mode=signup"
+          className="btn-3d btn-3d-primary inline-flex h-10 items-center gap-1.5 px-5 text-[14px] font-medium"
+        >
+          Get started free <ArrowUpRight className="h-4 w-4" />
+        </Link>
+        <Link
+          to="/design"
+          className="btn-3d btn-3d-ghost inline-flex h-10 items-center px-4 text-[13px]"
+        >
+          See the design system
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Footer ---------- */
+
+function Footer() {
+  return (
+    <footer className="mx-auto max-w-6xl border-t border-border px-6 py-10">
+      <div className="flex flex-col items-start justify-between gap-4 text-[12px] text-muted-foreground md:flex-row md:items-center">
+        <div className="flex items-center gap-2">
+          <div className="grid h-5 w-5 place-items-center rounded-md bg-gradient-to-br from-accent to-accent/60 text-[9px] font-semibold text-accent-foreground">
+            OT
+          </div>
+          <span>OneTrace AI · © 2026</span>
+        </div>
+        <div className="flex items-center gap-6 font-mono">
+          <a href="#" className="hover:text-foreground">Docs</a>
+          <a href="#" className="hover:text-foreground">Privacy</a>
+          <a href="#" className="hover:text-foreground">Terms</a>
+          <a href="#" className="hover:text-foreground">Contact</a>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+/* ---------- shared Section ---------- */
+
+function Section({
+  id,
+  eyebrow,
+  title,
+  children,
+}: {
+  id?: string;
+  eyebrow: string;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id} className="mb-24">
+      <div className="mb-8 flex items-end justify-between gap-6 border-b border-border pb-4">
+        <div>
+          <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            {eyebrow}
+          </div>
+          <h2 className="mt-2 text-[28px] font-medium leading-tight tracking-[-0.02em] text-foreground md:text-[34px]">
+            {title}
+          </h2>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/* ---------- Status badge (mirrors /design) ---------- */
+
+type StatusKey = "prd" | "epic" | "story" | "ac" | "test" | "commit";
+
+const STATUS_CLASSES: Record<StatusKey, string> = {
+  prd: "border-status-prd/30 bg-status-prd/10 text-status-prd-fg [&_.dot]:bg-status-prd",
+  epic: "border-status-epic/30 bg-status-epic/10 text-status-epic-fg [&_.dot]:bg-status-epic",
+  story: "border-status-story/30 bg-status-story/10 text-status-story-fg [&_.dot]:bg-status-story",
+  ac: "border-status-ac/30 bg-status-ac/10 text-status-ac-fg [&_.dot]:bg-status-ac",
+  test: "border-status-test/30 bg-status-test/10 text-status-test-fg [&_.dot]:bg-status-test",
+  commit: "border-status-commit/30 bg-status-commit/10 text-status-commit-fg [&_.dot]:bg-status-commit",
+};
+
+function StatusBadge({ status, label, mono = false }: { status: StatusKey; label: string; mono?: boolean }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] tracking-tight ${
+        mono ? "font-mono" : ""
+      } ${STATUS_CLASSES[status]}`}
+    >
+      <span className="dot h-1.5 w-1.5 rounded-full" />
+      {label}
+    </span>
+  );
+}
+
+/* ---------- content ---------- */
+
+const PROBLEMS = [
+  { icon: Network, title: "No clear mapping", body: "From requirements to modules to commits — nothing connects." },
+  { icon: Activity, title: "No objective coverage", body: "Against acceptance criteria. You ship and hope." },
+  { icon: GitBranch, title: "No safe regeneration", body: "When requirements change, everything breaks silently." },
+  { icon: Sparkles, title: "No shared workspace", body: "Humans and AI agents work from different sources of truth." },
+];
+
+const PILLARS = [
+  {
+    icon: Layers,
+    title: "Artifacts",
+    body: "PRDs, Epics, Stories, ACs, Tests, Commits, PRs — all in one place with full version history.",
+  },
+  {
+    icon: Network,
+    title: "Edges",
+    body: "Implements · Validates · Satisfies · Depends on. Every relationship is explicit and traceable.",
+  },
+  {
+    icon: Activity,
+    title: "Versions",
+    body: "Every change is tracked, explainable, and reversible. See who changed what, and why.",
+  },
+];
+
+const STEPS = [
+  {
+    icon: GitBranch,
+    title: "Connect your tools",
+    body: "Link Jira and Git in minutes. OneTrace syncs work items, code changes, and context automatically.",
+  },
+  {
+    icon: Sparkles,
+    title: "Generate traceable work",
+    body: "Turn PRDs into Epics, Stories, and ACs — pushed into Jira with full trace metadata intact.",
+  },
+  {
+    icon: Activity,
+    title: "Prove coverage & catch drift",
+    body: "Auto-link commits and PRs. See AC coverage in real time. Get alerts when code or requirements drift.",
+  },
+];
+
+const INTEGRATIONS = [
+  { name: "Jira Cloud", short: "JC", body: "Two-way sync with full-fidelity field mapping." },
+  { name: "GitHub", short: "GH", body: "Commits, PRs, and webhook-driven coverage." },
+  { name: "OpenAI", short: "AI", body: "GPT-4 and o-series for intelligent agents." },
+  { name: "Anthropic", short: "AN", body: "Claude for deep reasoning over your graph." },
+];
+
+const PLANS = [
+  {
+    name: "Free",
+    price: "$0",
+    tagline: "For solo builders getting started.",
+    features: ["1 project", "2 users", "100 artifacts", "Basic integrations", "Community support"],
+    cta: "Get started",
+    featured: false,
+  },
+  {
+    name: "Builder",
+    price: "$29",
+    tagline: "For growing teams.",
+    features: ["5 projects", "10 users", "Unlimited artifacts", "Full integrations", "AI agents", "Priority support"],
+    cta: "Start free trial",
+    featured: true,
+  },
+  {
+    name: "Scale",
+    price: "$99",
+    tagline: "For larger teams.",
+    features: ["Unlimited projects", "Unlimited users", "Custom model hub", "Advanced analytics", "SSO / SAML", "Dedicated support"],
+    cta: "Contact sales",
+    featured: false,
+  },
+];
+
+/* Need to keep Zap import alive for tree-shaker friendliness */
+const _keepZap = Zap;
+void _keepZap;
