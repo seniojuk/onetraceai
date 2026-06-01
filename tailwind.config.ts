@@ -96,6 +96,7 @@ export default {
       },
       fontFamily: {
         sans: [
+          "Geist",
           "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
@@ -103,12 +104,23 @@ export default {
           "Roboto",
           "sans-serif",
         ],
+        geist: [
+          "Geist",
+          "Inter",
+          "-apple-system",
+          "sans-serif",
+        ],
+        serif: [
+          "Instrument Serif",
+          "ui-serif",
+          "Georgia",
+          "serif",
+        ],
         mono: [
+          "Geist Mono",
           "JetBrains Mono",
           "Fira Code",
           "Menlo",
-          "Monaco",
-          "Consolas",
           "monospace",
         ],
       },
