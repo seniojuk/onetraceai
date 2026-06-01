@@ -831,7 +831,7 @@ const PILLARS = [
   {
     icon: Layers,
     title: "Artifacts",
-    body: "PRDs, Epics, Stories, ACs, Tests, Commits, PRs — all in one place with full version history.",
+    body: "PRDs, Epics, Stories, ACs, Tests, Commits, and PRs in one place with full version history.",
   },
   {
     icon: Workflow,
