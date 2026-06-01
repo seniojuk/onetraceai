@@ -863,7 +863,7 @@ const STEPS = [
   },
 ];
 
-const INTEGRATIONS = [
+const INTEGRATIONS: { name: string; body: string; viewBox: string; path: string; color?: string }[] = [
   {
     name: "Jira Cloud",
     body: "Two-way sync with full-fidelity field mapping.",
