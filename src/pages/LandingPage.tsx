@@ -765,10 +765,10 @@ const STEPS = [
 ];
 
 const INTEGRATIONS = [
-  { name: "Jira Cloud", short: "JC", body: "Two-way sync with full-fidelity field mapping." },
-  { name: "GitHub", short: "GH", body: "Commits, PRs, and webhook-driven coverage." },
-  { name: "OpenAI", short: "AI", body: "GPT-4 and o-series for intelligent agents." },
-  { name: "Anthropic", short: "AN", body: "Claude for deep reasoning over your graph." },
+  { name: "Jira Cloud", slug: "jira", body: "Two-way sync with full-fidelity field mapping." },
+  { name: "GitHub", slug: "github", body: "Commits, PRs, and webhook-driven coverage." },
+  { name: "OpenAI", slug: "openai", body: "GPT-4 and o-series for intelligent agents." },
+  { name: "Anthropic", slug: "anthropic", body: "Claude for deep reasoning over your graph." },
 ];
 
 const PLANS = [
