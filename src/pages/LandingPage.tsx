@@ -585,15 +585,15 @@ function IntegrationsRow() {
           {INTEGRATIONS.map((i, idx) => (
             <Reveal key={i.name} delay={idx * 60}>
               <div className="group h-full bg-card p-6 lift hover:bg-muted/30">
-                <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-foreground/80 transition-colors group-hover:border-accent/40 group-hover:text-accent">
+                <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-card transition-colors group-hover:border-accent/40">
                   <svg
                     viewBox={i.viewBox}
-                    className="h-5 w-5 fill-current"
+                    className={`h-5 w-5 ${i.color ? "" : "fill-foreground"}`}
                     xmlns="http://www.w3.org/2000/svg"
                     aria-label={`${i.name} logo`}
                     role="img"
                   >
-                    <path d={i.path} />
+                    <path d={i.path} fill={i.color ?? "currentColor"} />
                   </svg>
                 </div>
                 <h4 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{i.name}</h4>
