@@ -183,7 +183,7 @@ function Hero() {
       />
 
       <div className="relative mx-auto max-w-7xl px-8 pt-32 pb-16 md:pt-40 md:pb-20">
-        {/* Headline — left aligned, oversized, tight */}
+        {/* Headline. Left aligned, oversized, tight. */}
         <Reveal
           as="h1"
           y={20}
