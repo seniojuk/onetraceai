@@ -365,12 +365,14 @@ function ProblemSection() {
           but now what?
         </p>
         <div className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-2 lg:grid-cols-4">
-          {PROBLEMS.map((p) => (
-            <div key={p.title} className="group bg-card p-6 transition-colors hover:bg-muted/30">
-              <p.icon className="h-4 w-4 text-destructive" />
-              <h3 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{p.title}</h3>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{p.body}</p>
-            </div>
+          {PROBLEMS.map((p, idx) => (
+            <Reveal key={p.title} delay={idx * 70}>
+              <div className="group h-full bg-card p-6 lift hover:bg-muted/30">
+                <p.icon className="h-4 w-4 text-destructive icon-pop" />
+                <h3 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{p.title}</h3>
+                <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{p.body}</p>
+              </div>
+            </Reveal>
           ))}
         </div>
         <p className="mt-8 text-[13px] text-muted-foreground">
@@ -425,14 +427,16 @@ function SolutionSection() {
           </div>
           <div className="lg:col-span-7">
             <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3">
-              {PILLARS.map((p) => (
-                <div key={p.title} className="bg-card p-6">
-                  <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-accent">
-                    <p.icon className="h-4 w-4" />
+              {PILLARS.map((p, idx) => (
+                <Reveal key={p.title} delay={idx * 80}>
+                  <div className="group h-full bg-card p-6 lift">
+                    <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-accent">
+                      <p.icon className="h-4 w-4 icon-pop" />
+                    </div>
+                    <h3 className="mt-5 text-[15px] font-medium tracking-tight text-foreground">{p.title}</h3>
+                    <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{p.body}</p>
                   </div>
-                  <h3 className="mt-5 text-[15px] font-medium tracking-tight text-foreground">{p.title}</h3>
-                  <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{p.body}</p>
-                </div>
+                </Reveal>
               ))}
             </div>
           </div>
