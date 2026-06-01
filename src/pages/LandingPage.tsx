@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { HeroFlow } from "@/components/landing/HeroFlow";
+import { Reveal, ScrollProgress, useActiveSection } from "@/components/landing/motion";
 
 /**
  * Marketing home — Architectural density direction.
@@ -60,22 +61,25 @@ function Nav() {
   }, []);
 
   const links = [
-    { href: "#problem", label: "Problem" },
-    { href: "#solution", label: "Solution" },
-    { href: "#how", label: "How it works" },
-    { href: "#pricing", label: "Pricing" },
+    { href: "#problem", id: "problem", label: "Problem" },
+    { href: "#solution", id: "solution", label: "Solution" },
+    { href: "#how", id: "how", label: "How it works" },
+    { href: "#pricing", id: "pricing", label: "Pricing" },
   ];
+  const active = useActiveSection(links.map((l) => l.id));
 
   return (
     <header
-      className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-colors ${
-        scrolled ? "border-border bg-background/85" : "border-transparent bg-background/60"
+      className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 ${
+        scrolled
+          ? "border-border bg-background/85 shadow-[0_1px_0_0_hsl(var(--border)),0_10px_30px_-20px_hsl(var(--foreground)/0.15)]"
+          : "border-transparent bg-background/60"
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 text-sm">
-          <div className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-accent to-accent/60 text-[11px] font-semibold text-accent-foreground">
+        <Link to="/" className="group flex items-center gap-2 text-sm">
+          <div className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-accent to-accent/60 text-[11px] font-semibold text-accent-foreground transition-transform duration-300 group-hover:rotate-[-4deg] group-hover:scale-105">
             OT
           </div>
           <span className="font-semibold tracking-tight text-foreground">OneTrace</span>
@@ -85,7 +89,12 @@ function Nav() {
         {/* Desktop nav */}
         <nav className="hidden items-center gap-8 text-[13px] text-muted-foreground md:flex">
           {links.map((l) => (
-            <a key={l.href} href={l.href} className="transition-colors hover:text-foreground">
+            <a
+              key={l.href}
+              href={l.href}
+              data-active={active === l.id}
+              className="nav-link hover:text-foreground"
+            >
               {l.label}
             </a>
           ))}
