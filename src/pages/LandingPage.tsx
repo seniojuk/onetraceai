@@ -89,12 +89,7 @@ function Nav() {
         {/* Desktop nav */}
         <nav className="hidden items-center gap-8 text-[13px] text-muted-foreground md:flex">
           {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              data-active={active === l.id}
-              className="nav-link hover:text-foreground"
-            >
+            <a key={l.href} href={l.href} data-active={active === l.id} className="nav-link hover:text-foreground">
               {l.label}
             </a>
           ))}
@@ -189,7 +184,11 @@ function Hero() {
 
       <div className="relative mx-auto max-w-7xl px-8 pt-32 pb-16 md:pt-40 md:pb-20">
         {/* Headline — left aligned, oversized, tight */}
-        <Reveal as="h1" y={20} className="max-w-[18ch] font-geist text-[40px] font-medium leading-[1.06] tracking-[-0.04em] text-foreground sm:text-[52px] md:text-[64px] lg:text-[72px]">
+        <Reveal
+          as="h1"
+          y={20}
+          className="max-w-[18ch] font-geist text-[40px] font-medium leading-[1.06] tracking-[-0.04em] text-foreground sm:text-[52px] md:text-[64px] lg:text-[72px]"
+        >
           Ship AI-built software with <span className="text-accent">confidence</span>
         </Reveal>
 
@@ -631,7 +630,9 @@ function PricingSection() {
                 )}
                 <div className="text-[13px] text-muted-foreground">{p.name}</div>
                 <div className="mt-3 flex items-baseline gap-1">
-                  <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">{p.price}</span>
+                  <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">
+                    {p.price}
+                  </span>
                   <span className="text-[13px] text-muted-foreground">/month</span>
                 </div>
                 <p className="mt-2 text-[12.5px] text-muted-foreground">{p.tagline}</p>
@@ -926,7 +927,7 @@ const PLANS = [
 const FOOTER_COLS = [
   { title: "Product", links: ["Artifact Graph", "Coverage", "Drift", "Integrations", "Pricing"] },
   { title: "Company", links: ["About", "Blog", "Careers", "Contact"] },
-  { title: "Resources", links: ["Docs", "Changelog", "Design system", "Support"] },
+  { title: "Resources", links: ["Docs", "Changelog", "Support"] },
 ];
 
 /* Keep tree-shaker friendly */
