@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   Check,
@@ -14,8 +15,14 @@ import {
   CircleDot,
   Workflow,
   ShieldCheck,
+  Terminal,
+  Image as ImageIcon,
+  Waves,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
+
+type HeroVariant = "graph" | "product" | "aurora" | "console";
+const HERO_KEY = "onetrace-hero-variant";
 
 /**
  * Marketing home — Architectural density direction.
