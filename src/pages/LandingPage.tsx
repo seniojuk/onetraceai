@@ -197,7 +197,7 @@ function Hero() {
           Plan, build, and prove every line of AI-generated software.
         </Reveal>
 
-        {/* Product visual — full bleed panel below, Linear-style */}
+        {/* Product visual. Full-bleed panel below, Linear-style. */}
         <Reveal delay={220} y={28} className="relative mt-10 md:mt-14">
           <div
             aria-hidden
