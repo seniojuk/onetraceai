@@ -401,22 +401,34 @@
 
 @layer components {
   /*
-   * 3D press buttons — CDPlayer recipe.
-   * Resting: faint fill + 0 1px 0 outer drop shadow + inset 0 1px 0 top highlight (raised).
-   * Hover:   fill darkens slightly.
-   * Active:  outer drop shadow is replaced by inset shadow falling inward (depressed),
-   *          and the button translates down 1px.
-   * Transitions: background/box-shadow 150ms, transform 80ms.
+   * Motion tokens — Emil Kowalski's design engineering philosophy.
+   * Custom cubic-bezier curves; built-in CSS easings lack the punch.
+   */
+  :root {
+    --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+    --dur-press: 140ms;
+    --dur-hover: 180ms;
+    --dur-popover: 200ms;
+  }
+
+  /*
+   * 3D press buttons — CDPlayer shadow-flip recipe + Emil's press feedback.
+   * Resting: faint fill + outer drop shadow + inset top highlight (raised).
+   * Hover:   fill darkens.
+   * Active:  outer shadow flips inward (depressed), translateY(1px) + scale(0.98)
+   *          for the "interface heard you" feedback. Custom ease-out curve, 140ms.
    */
   .btn-3d {
     position: relative;
     border-radius: 7px;
     border: 0;
     transition:
-      background-color 150ms ease-out,
-      box-shadow 150ms ease-out,
-      transform 80ms ease-out,
-      color 150ms ease-out;
+      background-color var(--dur-hover) var(--ease-out-strong),
+      box-shadow var(--dur-hover) var(--ease-out-strong),
+      transform var(--dur-press) var(--ease-out-strong),
+      color var(--dur-hover) var(--ease-out-strong);
     cursor: pointer;
     user-select: none;
   }
