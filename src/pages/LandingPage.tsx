@@ -86,68 +86,72 @@ function Nav() {
 function Hero() {
   return (
     <section className="relative overflow-hidden border-b border-border">
-      {/* Dot grid background */}
+      {/* Linear-style ambient gradient */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.45] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[760px] [mask-image:radial-gradient(ellipse_at_top,black_40%,transparent_75%)]"
         style={{
-          backgroundImage:
-            "radial-gradient(hsl(var(--border)) 1px, transparent 1px)",
-          backgroundSize: "22px 22px",
+          background:
+            "radial-gradient(60% 50% at 50% 0%, hsl(var(--accent) / 0.18) 0%, transparent 60%), radial-gradient(40% 35% at 80% 8%, hsl(var(--primary) / 0.12) 0%, transparent 70%), radial-gradient(40% 35% at 20% 8%, hsl(var(--accent) / 0.10) 0%, transparent 70%)",
         }}
       />
-      <div className="relative mx-auto max-w-6xl px-6 pt-20 pb-24">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
-          {/* Left column — copy */}
-          <div className="lg:col-span-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-[11px] text-muted-foreground backdrop-blur">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70 opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
-              </span>
-              Built for AI-first startups & solo builders
-            </div>
-            <h1 className="mt-6 font-geist text-[56px] leading-[1.02] tracking-[-0.04em] text-foreground md:text-[68px]">
-              Ship AI-built software with{" "}
-              <span className="font-serif italic text-foreground/70">confidence</span>
-              {" "}— not crossed fingers.
-            </h1>
-            <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-              OneTrace connects your PRDs, Stories, Jira, Git, and Tests into one
-              traceable <span className="font-serif italic text-foreground/80">Artifact Graph</span> — so
-              every feature has an owner, every commit has intent, and every release
-              has proof.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link
-                to="/auth?mode=signup"
-                className="btn-3d btn-3d-primary group inline-flex h-10 items-center gap-1.5 px-4 text-[14px] font-medium"
-              >
-                Get started free
-                <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
-              <button className="btn-3d btn-3d-secondary inline-flex h-10 items-center gap-2 px-4 text-[13px]">
-                <PlayCircle className="h-4 w-4" />
-                Watch demo
-              </button>
-            </div>
-            <div className="mt-5 flex items-center gap-4 font-mono text-[11px] text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="h-3 w-3 text-accent" /> Start free
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="h-3 w-3 text-accent" /> Connect in minutes
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="h-3 w-3 text-accent" /> No credit card
-              </span>
-            </div>
-          </div>
+      {/* Subtle line grid */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.22] [mask-image:radial-gradient(ellipse_at_top,black_20%,transparent_70%)]"
+        style={{
+          backgroundImage:
+            "linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)",
+          backgroundSize: "56px 56px",
+        }}
+      />
 
-          {/* Right column — live artifact graph */}
-          <div className="lg:col-span-6">
-            <HeroGraph />
-          </div>
+      <div className="relative mx-auto max-w-5xl px-6 pt-24 pb-20 text-center">
+        {/* Eyebrow pill */}
+        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-[11px] text-muted-foreground backdrop-blur">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70 opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
+          </span>
+          <span className="text-foreground/80">New</span>
+          <span className="text-border">·</span>
+          <span>Artifact Graph for AI-built software</span>
+          <ArrowUpRight className="h-3 w-3" />
+        </div>
+
+        {/* Headline */}
+        <h1 className="mx-auto mt-7 max-w-4xl font-geist text-[52px] font-medium leading-[1.02] tracking-[-0.045em] text-foreground md:text-[80px]">
+          Ship AI-built software
+          <br />
+          with confidence
+        </h1>
+
+        <p className="mx-auto mt-6 max-w-xl text-[17px] leading-relaxed text-muted-foreground">
+          OneTrace connects PRDs, Stories, Jira, Git, and Tests into one
+          traceable graph — so every release ships with proof.
+        </p>
+
+        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/auth?mode=signup"
+            className="btn-3d btn-3d-primary group inline-flex h-10 items-center gap-1.5 px-4 text-[14px] font-medium"
+          >
+            Get started free
+            <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </Link>
+          <button className="btn-3d btn-3d-secondary inline-flex h-10 items-center gap-2 px-4 text-[13px]">
+            <PlayCircle className="h-4 w-4" />
+            Watch demo
+          </button>
+        </div>
+
+        {/* Product visual */}
+        <div className="relative mx-auto mt-16 max-w-5xl text-left">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -inset-x-10 -top-10 bottom-0 -z-10 rounded-[32px] bg-[radial-gradient(60%_50%_at_50%_0%,hsl(var(--accent)/0.18),transparent_70%)] blur-2xl"
+          />
+          <HeroGraph />
         </div>
       </div>
     </section>
