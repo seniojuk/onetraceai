@@ -583,22 +583,24 @@ function IntegrationsRow() {
           OneTrace doesn't replace your tools — it connects them.
         </p>
         <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
-          {INTEGRATIONS.map((i) => (
-            <div key={i.name} className="group bg-card p-6 transition-colors hover:bg-muted/30">
-              <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-foreground/80 transition-colors group-hover:border-accent/40 group-hover:text-accent">
-                <svg
-                  viewBox={i.viewBox}
-                  className="h-5 w-5 fill-current"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-label={`${i.name} logo`}
-                  role="img"
-                >
-                  <path d={i.path} />
-                </svg>
+          {INTEGRATIONS.map((i, idx) => (
+            <Reveal key={i.name} delay={idx * 60}>
+              <div className="group h-full bg-card p-6 lift hover:bg-muted/30">
+                <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-foreground/80 transition-colors group-hover:border-accent/40 group-hover:text-accent">
+                  <svg
+                    viewBox={i.viewBox}
+                    className="h-5 w-5 fill-current icon-pop"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-label={`${i.name} logo`}
+                    role="img"
+                  >
+                    <path d={i.path} />
+                  </svg>
+                </div>
+                <h4 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{i.name}</h4>
+                <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{i.body}</p>
               </div>
-              <h4 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{i.name}</h4>
-              <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{i.body}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </Section>
@@ -613,43 +615,44 @@ function PricingSection() {
     <div className="mx-auto max-w-6xl px-6">
       <Section id="pricing" eyebrow="06 — Pricing" title="Start free. Scale when you're ready.">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {PLANS.map((p) => (
-            <div
-              key={p.name}
-              className={`relative rounded-xl border bg-card p-6 ${
-                p.featured
-                  ? "border-accent/40 ring-1 ring-accent/20 shadow-[0_20px_60px_-30px_hsl(var(--accent)/0.4)]"
-                  : "border-border"
-              }`}
-            >
-              {p.featured && (
-                <span className="absolute -top-2.5 left-6 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
-                  Most popular
-                </span>
-              )}
-              <div className="text-[13px] text-muted-foreground">{p.name}</div>
-              <div className="mt-3 flex items-baseline gap-1">
-                <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">{p.price}</span>
-                <span className="text-[13px] text-muted-foreground">/month</span>
-              </div>
-              <p className="mt-2 text-[12.5px] text-muted-foreground">{p.tagline}</p>
-              <ul className="mt-5 space-y-2 border-t border-border pt-4">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-[13px] text-foreground/90">
-                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                to="/auth?mode=signup"
-                className={`mt-6 inline-flex h-9 w-full items-center justify-center gap-1.5 px-3 text-[13px] font-medium btn-3d ${
-                  p.featured ? "btn-3d-accent" : "btn-3d-secondary"
+          {PLANS.map((p, idx) => (
+            <Reveal key={p.name} delay={idx * 100}>
+              <div
+                className={`relative h-full rounded-xl border bg-card p-6 lift ${
+                  p.featured
+                    ? "border-accent/40 ring-1 ring-accent/20 shadow-[0_20px_60px_-30px_hsl(var(--accent)/0.4)]"
+                    : "border-border"
                 }`}
               >
-                {p.cta} <ArrowUpRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
+                {p.featured && (
+                  <span className="absolute -top-2.5 left-6 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
+                    Most popular
+                  </span>
+                )}
+                <div className="text-[13px] text-muted-foreground">{p.name}</div>
+                <div className="mt-3 flex items-baseline gap-1">
+                  <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">{p.price}</span>
+                  <span className="text-[13px] text-muted-foreground">/month</span>
+                </div>
+                <p className="mt-2 text-[12.5px] text-muted-foreground">{p.tagline}</p>
+                <ul className="mt-5 space-y-2 border-t border-border pt-4">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-[13px] text-foreground/90">
+                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to="/auth?mode=signup"
+                  className={`mt-6 inline-flex h-9 w-full items-center justify-center gap-1.5 px-3 text-[13px] font-medium btn-3d ${
+                    p.featured ? "btn-3d-accent" : "btn-3d-secondary"
+                  }`}
+                >
+                  {p.cta} <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </Reveal>
           ))}
         </div>
       </Section>
