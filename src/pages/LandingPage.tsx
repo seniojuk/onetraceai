@@ -16,6 +16,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
+import { HeroFlow } from "@/components/landing/HeroFlow";
 
 /**
  * Marketing home — Architectural density direction.
