@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   Check,
@@ -14,8 +15,14 @@ import {
   CircleDot,
   Workflow,
   ShieldCheck,
+  Terminal,
+  Image as ImageIcon,
+  Waves,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
+
+type HeroVariant = "graph" | "product" | "aurora" | "console";
+const HERO_KEY = "onetrace-hero-variant";
 
 /**
  * Marketing home — Architectural density direction.
@@ -84,22 +91,43 @@ function Nav() {
 /* ---------- Hero ---------- */
 
 function Hero() {
+  const [variant, setVariant] = useState<HeroVariant>("graph");
+
+  useEffect(() => {
+    const saved = localStorage.getItem(HERO_KEY) as HeroVariant | null;
+    if (saved) setVariant(saved);
+  }, []);
+
+  const choose = (v: HeroVariant) => {
+    setVariant(v);
+    localStorage.setItem(HERO_KEY, v);
+  };
+
+  const isAurora = variant === "aurora";
+
   return (
     <section className="relative overflow-hidden border-b border-border">
-      {/* Dot grid background */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.45] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]"
-        style={{
-          backgroundImage:
-            "radial-gradient(hsl(var(--border)) 1px, transparent 1px)",
-          backgroundSize: "22px 22px",
-        }}
-      />
-      <div className="relative mx-auto max-w-6xl px-6 pt-20 pb-24">
-        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
-          {/* Left column — copy */}
-          <div className="lg:col-span-6">
+      {/* Background: aurora variant gets a full-bleed shader, others get the dot grid */}
+      {isAurora ? <AuroraBackdrop /> : (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.45] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]"
+          style={{
+            backgroundImage: "radial-gradient(hsl(var(--border)) 1px, transparent 1px)",
+            backgroundSize: "22px 22px",
+          }}
+        />
+      )}
+
+      {/* Variant switcher */}
+      <div className="relative mx-auto max-w-6xl px-6 pt-6">
+        <HeroVariantSwitcher value={variant} onChange={choose} />
+      </div>
+
+      <div className="relative mx-auto max-w-6xl px-6 pt-10 pb-24">
+        {isAurora ? (
+          /* Aurora: centered editorial hero */
+          <div className="mx-auto max-w-3xl text-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-[11px] text-muted-foreground backdrop-blur">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70 opacity-75" />
@@ -107,50 +135,264 @@ function Hero() {
               </span>
               Built for AI-first startups & solo builders
             </div>
-            <h1 className="mt-6 font-geist text-[56px] leading-[1.02] tracking-[-0.04em] text-foreground md:text-[68px]">
-              Ship AI-built software with{" "}
-              <span className="font-serif italic text-foreground/70">confidence</span>
-              {" "}— not crossed fingers.
+            <h1 className="mt-6 font-geist text-[64px] leading-[1.02] tracking-[-0.04em] text-foreground md:text-[84px]">
+              Ship with{" "}
+              <span className="font-serif italic text-foreground/70">confidence</span>.
+              Not crossed fingers.
             </h1>
-            <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
-              OneTrace connects your PRDs, Stories, Jira, Git, and Tests into one
-              traceable <span className="font-serif italic text-foreground/80">Artifact Graph</span> — so
-              every feature has an owner, every commit has intent, and every release
-              has proof.
+            <p className="mx-auto mt-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+              The traceability layer for AI-built software. PRDs, stories, tests, and
+              commits — woven into one living <span className="font-serif italic text-foreground/80">Artifact Graph</span>.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link
-                to="/auth?mode=signup"
-                className="btn-3d btn-3d-primary group inline-flex h-10 items-center gap-1.5 px-4 text-[14px] font-medium"
-              >
-                Get started free
-                <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
-              <button className="btn-3d btn-3d-secondary inline-flex h-10 items-center gap-2 px-4 text-[13px]">
-                <PlayCircle className="h-4 w-4" />
-                Watch demo
-              </button>
+            <HeroCTAs />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
+            <div className="lg:col-span-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-[11px] text-muted-foreground backdrop-blur">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
+                </span>
+                Built for AI-first startups & solo builders
+              </div>
+              <h1 className="mt-6 font-geist text-[56px] leading-[1.02] tracking-[-0.04em] text-foreground md:text-[68px]">
+                Ship AI-built software with{" "}
+                <span className="font-serif italic text-foreground/70">confidence</span>
+                {" "}— not crossed fingers.
+              </h1>
+              <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+                OneTrace connects your PRDs, Stories, Jira, Git, and Tests into one
+                traceable <span className="font-serif italic text-foreground/80">Artifact Graph</span> — so
+                every feature has an owner, every commit has intent, and every release
+                has proof.
+              </p>
+              <HeroCTAs />
             </div>
-            <div className="mt-5 flex items-center gap-4 font-mono text-[11px] text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="h-3 w-3 text-accent" /> Start free
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="h-3 w-3 text-accent" /> Connect in minutes
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Check className="h-3 w-3 text-accent" /> No credit card
-              </span>
+
+            <div className="lg:col-span-6">
+              {variant === "graph" && <HeroGraph />}
+              {variant === "product" && <HeroProduct />}
+              {variant === "console" && <HeroConsole />}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function HeroCTAs() {
+  return (
+    <>
+      <div className="mt-8 flex flex-wrap items-center gap-3 justify-start data-[center=true]:justify-center">
+        <Link
+          to="/auth?mode=signup"
+          className="btn-3d btn-3d-primary group inline-flex h-10 items-center gap-1.5 px-4 text-[14px] font-medium"
+        >
+          Get started free
+          <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </Link>
+        <button className="btn-3d btn-3d-secondary inline-flex h-10 items-center gap-2 px-4 text-[13px]">
+          <PlayCircle className="h-4 w-4" />
+          Watch demo
+        </button>
+      </div>
+      <div className="mt-5 flex flex-wrap items-center gap-4 font-mono text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5"><Check className="h-3 w-3 text-accent" /> Start free</span>
+        <span className="inline-flex items-center gap-1.5"><Check className="h-3 w-3 text-accent" /> Connect in minutes</span>
+        <span className="inline-flex items-center gap-1.5"><Check className="h-3 w-3 text-accent" /> No credit card</span>
+      </div>
+    </>
+  );
+}
+
+function HeroVariantSwitcher({
+  value,
+  onChange,
+}: {
+  value: HeroVariant;
+  onChange: (v: HeroVariant) => void;
+}) {
+  const items: { key: HeroVariant; label: string; icon: typeof Network }[] = [
+    { key: "graph", label: "Lineage", icon: Network },
+    { key: "product", label: "Product", icon: ImageIcon },
+    { key: "console", label: "Console", icon: Terminal },
+    { key: "aurora", label: "Aurora", icon: Waves },
+  ];
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        Hero direction · preview
+      </span>
+      <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card/70 p-1 backdrop-blur">
+        {items.map((it) => {
+          const active = it.key === value;
+          return (
+            <button
+              key={it.key}
+              onClick={() => onChange(it.key)}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium transition ${
+                active
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <it.icon className="h-3 w-3" />
+              {it.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Hero visual variants ---------- */
+
+function AuroraBackdrop() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute -top-40 left-1/2 h-[680px] w-[1100px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,hsl(var(--accent)/0.35),transparent_70%)] blur-3xl animate-[pulse_8s_ease-in-out_infinite]" />
+      <div className="absolute top-20 left-[10%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(closest-side,hsl(var(--status-prd)/0.35),transparent_70%)] blur-3xl animate-[pulse_11s_ease-in-out_infinite]" />
+      <div className="absolute top-40 right-[5%] h-[480px] w-[480px] rounded-full bg-[radial-gradient(closest-side,hsl(var(--status-story)/0.30),transparent_70%)] blur-3xl animate-[pulse_9s_ease-in-out_infinite]" />
+      <div className="absolute bottom-0 left-[30%] h-[380px] w-[380px] rounded-full bg-[radial-gradient(closest-side,hsl(var(--status-epic)/0.30),transparent_70%)] blur-3xl animate-[pulse_13s_ease-in-out_infinite]" />
+      <div
+        className="absolute inset-0 opacity-[0.25] [mask-image:radial-gradient(ellipse_at_top,black_40%,transparent_80%)]"
+        style={{
+          backgroundImage: "radial-gradient(hsl(var(--border)) 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
+        }}
+      />
+    </div>
+  );
+}
+
+function HeroProduct() {
+  return (
+    <div className="relative rounded-2xl border border-border bg-card shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.25)]">
+      <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-border" />
+            <span className="h-2.5 w-2.5 rounded-full bg-border" />
+            <span className="h-2.5 w-2.5 rounded-full bg-border" />
+          </div>
+          <span className="ml-3 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            onetrace.ai / coverage
+          </span>
+        </div>
+        <div className="font-mono text-[10px] text-muted-foreground">⌘K</div>
+      </div>
+
+      <div className="grid grid-cols-12 gap-0">
+        {/* Sidebar */}
+        <aside className="col-span-3 border-r border-border bg-muted/20 p-3">
+          {["Dashboard","Artifacts","Coverage","Lineage","Drift","Integrations"].map((l, i) => (
+            <div key={l} className={`mb-0.5 rounded-md px-2 py-1.5 text-[11px] ${i===2 ? "bg-foreground/10 text-foreground" : "text-muted-foreground"}`}>
+              {l}
+            </div>
+          ))}
+        </aside>
+
+        {/* Main */}
+        <div className="col-span-9 p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Coverage</div>
+              <div className="mt-1 font-geist text-[32px] tracking-tight">94.2<span className="text-muted-foreground">%</span></div>
+            </div>
+            <div className="text-right">
+              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Drift</div>
+              <div className="mt-1 font-geist text-[32px] tracking-tight text-drift">3</div>
             </div>
           </div>
 
-          {/* Right column — live artifact graph */}
-          <div className="lg:col-span-6">
-            <HeroGraph />
+          <div className="mt-5 space-y-2.5">
+            {[
+              { k: "prd" as StatusKey, label: "PRD-042 · Auth", pct: 96 },
+              { k: "epic" as StatusKey, label: "EPIC-014 · Onboarding", pct: 78 },
+              { k: "story" as StatusKey, label: "STORY-217 · OAuth", pct: 62 },
+              { k: "test" as StatusKey, label: "TEST-091 · Callback", pct: 100 },
+            ].map((r) => (
+              <div key={r.label} className="flex items-center gap-3">
+                <StatusBadge status={r.k} label={r.k.toUpperCase()} mono />
+                <span className="flex-1 truncate text-[12px] text-foreground">{r.label}</span>
+                <span className="font-mono text-[10px] text-muted-foreground w-9 text-right">{r.pct}%</span>
+                <div className="h-1 w-28 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-gradient-to-r from-accent to-accent/60" style={{ width: `${r.pct}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-5 rounded-lg border border-border bg-background p-3">
+            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">Recent drift</div>
+            <div className="space-y-1.5">
+              {["PR #482 merged without linked test","STORY-203 has no AC","EPIC-009 missing PRD"].map((d) => (
+                <div key={d} className="flex items-center gap-2 text-[11.5px] text-foreground/80">
+                  <AlertTriangle className="h-3 w-3 text-drift" /> {d}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  );
+}
+
+function HeroConsole() {
+  const lines = [
+    { t: "10:42:01", k: "prd", msg: "PRD-042 'User Authentication' created" },
+    { t: "10:42:08", k: "epic", msg: "EPIC-014 generated from PRD-042" },
+    { t: "10:43:11", k: "story", msg: "STORY-217 'Google OAuth flow' assigned → jori" },
+    { t: "10:44:22", k: "test", msg: "TEST-091 callback spec ✓ 3/3 passing" },
+    { t: "10:45:03", k: "commit", msg: "PR #482 linked → STORY-217 · merged" },
+    { t: "10:45:04", k: "ok", msg: "coverage 92.1% → 94.2%  (+2.1%)" },
+    { t: "10:45:09", k: "warn", msg: "drift: PR #486 missing test reference" },
+  ];
+  const toneFor = (k: string) => {
+    if (k === "ok") return "text-accent";
+    if (k === "warn") return "text-drift";
+    return `text-status-${k}-fg`;
+  };
+  return (
+    <div className="relative rounded-2xl border border-border bg-card shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.2)]">
+      <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+            onetrace · live event stream
+          </span>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" /> streaming
+        </span>
+      </div>
+      <div className="p-5 font-mono text-[11.5px] leading-relaxed">
+        {lines.map((l, i) => (
+          <div
+            key={i}
+            className="flex gap-3 opacity-0 animate-[fade-in_0.4s_ease-out_forwards]"
+            style={{ animationDelay: `${i * 220}ms` }}
+          >
+            <span className="text-muted-foreground/60">{l.t}</span>
+            <span className={`w-14 shrink-0 uppercase ${toneFor(l.k)}`}>{l.k}</span>
+            <span className="text-foreground/85">{l.msg}</span>
+          </div>
+        ))}
+        <div className="mt-3 flex items-center gap-2 text-muted-foreground">
+          <span className="text-accent">›</span>
+          <span className="h-3 w-2 animate-pulse bg-foreground/70" />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-px overflow-hidden rounded-b-2xl border-t border-border bg-border text-center">
+        <Stat label="Coverage" value="94.2%" trend="+2.1%" />
+        <Stat label="Drift" value="3" trend="open" tone="warn" />
+        <Stat label="Velocity" value="12/wk" trend="+18%" />
+      </div>
+    </div>
   );
 }
 
