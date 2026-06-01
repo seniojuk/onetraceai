@@ -260,14 +260,14 @@ export function HeroFlow() {
         </span>
       </div>
 
-      {/* Responsive aspect-ratio canvas: taller on mobile, wider on desktop */}
-      <div className="relative w-full aspect-[3/2] sm:aspect-[16/9] lg:aspect-[21/9]">
+      {/* Responsive aspect-ratio canvas: portrait on mobile, wider on desktop */}
+      <div className="relative w-full aspect-[4/5] sm:aspect-[16/9] lg:aspect-[21/9]">
         <ReactFlow
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
           fitView
-          fitViewOptions={{ padding: 0.12, minZoom: 0.4, maxZoom: 1.1 }}
+          fitViewOptions={{ padding: 0.15, minZoom: 0.3, maxZoom: 1.1 }}
           minZoom={0.3}
           maxZoom={1.5}
           panOnDrag={false}
