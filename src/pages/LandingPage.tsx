@@ -854,7 +854,7 @@ const STEPS = [
   {
     icon: Sparkles,
     title: "Generate traceable work",
-    body: "Turn PRDs into Epics, Stories, and ACs — pushed into Jira with full trace metadata intact.",
+    body: "Turn PRDs into Epics, Stories, and ACs. Push them to Jira with full trace metadata intact.",
   },
   {
     icon: Activity,
