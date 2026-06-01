@@ -50,47 +50,47 @@ function ArtifactNode({ data }: NodeProps<Node<FlowNodeData>>) {
 
   return (
     <div
-      className={`group relative w-[130px] rounded-md border bg-card/95 px-2 py-1.5 shadow-[0_2px_8px_-4px_hsl(var(--foreground)/0.12)] backdrop-blur transition ${
+      className={`group relative w-[176px] rounded-lg border bg-card/95 px-3 py-2.5 shadow-[0_4px_14px_-6px_hsl(var(--foreground)/0.12)] backdrop-blur transition ${
         isStory
-          ? "border-accent/50 shadow-[0_0_0_2px_hsl(var(--accent)/0.10),0_2px_8px_-4px_hsl(var(--accent)/0.25)]"
+          ? "border-accent/50 shadow-[0_0_0_3px_hsl(var(--accent)/0.10),0_4px_14px_-6px_hsl(var(--accent)/0.25)]"
           : "border-border"
       }`}
     >
       <Handle
         type="target"
         position={Position.Left}
-        className="!h-1 !w-1 !border-0 !bg-border"
+        className="!h-1.5 !w-1.5 !border-0 !bg-border"
       />
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <Icon className={`h-2.5 w-2.5 ${meta.tone}`} />
-          <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-muted-foreground">
+        <div className="flex items-center gap-1.5">
+          <Icon className={`h-3 w-3 ${meta.tone}`} />
+          <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">
             {meta.label}
           </span>
         </div>
         {data.status === "done" && (
-          <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500" />
+          <CheckCircle2 className="h-3 w-3 text-emerald-500" />
         )}
         {data.status === "active" && (
-          <span className="relative flex h-1 w-1">
+          <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-70" />
-            <span className="relative inline-flex h-1 w-1 rounded-full bg-accent" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
           </span>
         )}
         {data.status === "open" && (
-          <span className="h-1 w-1 rounded-full bg-amber-500" />
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
         )}
       </div>
-      <div className="mt-1 truncate text-[10px] font-medium tracking-tight text-foreground">
+      <div className="mt-1.5 truncate text-[12px] font-medium tracking-tight text-foreground">
         {data.title}
       </div>
-      <div className="mt-0.5 truncate font-mono text-[8.5px] text-muted-foreground">
+      <div className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">
         {data.id} · {data.meta}
       </div>
       <Handle
         type="source"
         position={Position.Right}
-        className="!h-1 !w-1 !border-0 !bg-border"
+        className="!h-1.5 !w-1.5 !border-0 !bg-border"
       />
     </div>
   );
@@ -100,32 +100,32 @@ const nodeTypes = { artifact: ArtifactNode };
 
 // Horizontal left-to-right flow.
 // Columns: PRD | EPIC | STORIES (2) | JIRA + PR + TEST (3)
-const COL = { prd: 0, epic: 160, story: 330, exec: 520 };
+const COL = { prd: 0, epic: 220, story: 460, exec: 720 };
 
 const initialNodes: Node<FlowNodeData>[] = [
   {
     id: "prd",
     type: "artifact",
-    position: { x: COL.prd, y: 90 },
-    data: { kind: "prd", id: "PRD-042", title: "User auth", meta: "4 ACs", status: "done" },
+    position: { x: COL.prd, y: 130 },
+    data: { kind: "prd", id: "PRD-042", title: "User authentication", meta: "4 ACs", status: "done" },
   },
   {
     id: "epic",
     type: "artifact",
-    position: { x: COL.epic, y: 90 },
+    position: { x: COL.epic, y: 130 },
     data: { kind: "epic", id: "EPIC-014", title: "Onboarding v2", meta: "3 stories", status: "active" },
   },
   {
     id: "story-1",
     type: "artifact",
-    position: { x: COL.story, y: 25 },
-    data: { kind: "story", id: "STORY-217", title: "Google OAuth", meta: "in progress", status: "active" },
+    position: { x: COL.story, y: 40 },
+    data: { kind: "story", id: "STORY-217", title: "Google OAuth flow", meta: "in progress", status: "active" },
   },
   {
     id: "story-2",
     type: "artifact",
-    position: { x: COL.story, y: 155 },
-    data: { kind: "story", id: "STORY-218", title: "Magic link", meta: "in review", status: "active" },
+    position: { x: COL.story, y: 220 },
+    data: { kind: "story", id: "STORY-218", title: "Email magic link", meta: "in review", status: "active" },
   },
   {
     id: "jira",
@@ -136,14 +136,14 @@ const initialNodes: Node<FlowNodeData>[] = [
   {
     id: "pr",
     type: "artifact",
-    position: { x: COL.exec, y: 90 },
+    position: { x: COL.exec, y: 130 },
     data: { kind: "pr", id: "#482", title: "feat(auth): handler", meta: "merged", status: "done" },
   },
   {
     id: "test",
     type: "artifact",
-    position: { x: COL.exec, y: 180 },
-    data: { kind: "test", id: "TEST-091", title: "OAuth callback", meta: "3/3 passing", status: "done" },
+    position: { x: COL.exec, y: 260 },
+    data: { kind: "test", id: "TEST-091", title: "OAuth callback spec", meta: "3/3 passing", status: "done" },
   },
 ];
 
@@ -169,33 +169,33 @@ export function HeroFlow() {
   const edges = useMemo(() => initialEdges, []);
 
   return (
-    <div className="relative mx-auto max-w-3xl w-full overflow-hidden rounded-xl border border-border bg-card shadow-[0_16px_40px_-16px_hsl(var(--foreground)/0.14)]">
+    <div className="relative w-full overflow-hidden rounded-2xl border border-border bg-card shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.18)]">
       {/* Window chrome */}
-      <div className="flex items-center justify-between border-b border-border bg-muted/40 px-3 py-1.5">
+      <div className="flex items-center justify-between border-b border-border bg-muted/40 px-3 py-2 sm:px-4 sm:py-2.5">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex gap-1">
-            <span className="h-2 w-2 rounded-full bg-border" />
-            <span className="h-2 w-2 rounded-full bg-border" />
-            <span className="h-2 w-2 rounded-full bg-border" />
+          <div className="flex gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-border" />
+            <span className="h-2.5 w-2.5 rounded-full bg-border" />
+            <span className="h-2.5 w-2.5 rounded-full bg-border" />
           </div>
-          <span className="ml-2 truncate font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+          <span className="ml-2 truncate font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
             artifact-graph / onboarding-v2
           </span>
         </div>
-        <span className="ml-2 shrink-0 rounded border border-border bg-background/60 px-1.5 py-px font-mono text-[9px] text-muted-foreground">
-          <span className="mr-1 inline-block h-1 w-1 translate-y-[-1px] rounded-full bg-emerald-500 align-middle" />
+        <span className="ml-2 shrink-0 rounded-md border border-border bg-background/60 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+          <span className="mr-1 inline-block h-1.5 w-1.5 translate-y-[-1px] rounded-full bg-emerald-500 align-middle" />
           live
         </span>
       </div>
 
-      {/* Compact aspect-ratio canvas */}
-      <div className="relative w-full aspect-[3/4] sm:aspect-[4/3] lg:aspect-[16/10]">
+      {/* Responsive aspect-ratio canvas: taller on mobile, wider on desktop */}
+      <div className="relative w-full aspect-[4/5] sm:aspect-[3/2] lg:aspect-[16/9]">
         <ReactFlow
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
           fitView
-          fitViewOptions={{ padding: 0.1, minZoom: 0.4, maxZoom: 1.1 }}
+          fitViewOptions={{ padding: 0.12, minZoom: 0.4, maxZoom: 1.1 }}
           minZoom={0.3}
           maxZoom={1.5}
           panOnDrag={false}
@@ -209,19 +209,19 @@ export function HeroFlow() {
         >
           <Background
             variant={BackgroundVariant.Dots}
-            gap={14}
-            size={0.8}
+            gap={18}
+            size={1}
             color="hsl(var(--border))"
           />
         </ReactFlow>
         {/* Edge fades */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-card to-transparent"
+          className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-card to-transparent"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-card to-transparent"
+          className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-card to-transparent"
         />
       </div>
 
@@ -247,15 +247,15 @@ function Stat({
   tone?: "ok" | "warn";
 }) {
   return (
-    <div className="bg-card px-2 py-2">
-      <div className="font-mono text-[8.5px] uppercase tracking-[0.16em] text-muted-foreground">
+    <div className="bg-card px-3 py-3">
+      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </div>
-      <div className="mt-0.5 font-geist text-[13px] font-medium tracking-tight text-foreground">
+      <div className="mt-1 font-geist text-[16px] sm:text-[18px] font-medium tracking-tight text-foreground">
         {value}
       </div>
       <div
-        className={`font-mono text-[8.5px] ${
+        className={`font-mono text-[10px] ${
           tone === "warn" ? "text-amber-500" : "text-accent"
         }`}
       >
