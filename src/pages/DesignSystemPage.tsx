@@ -491,14 +491,14 @@ function DesignSystemThemeStyles() {
         background: hsl(173 80% 38%);
         color: #ffffff;
         box-shadow:
-          inset 0 0 0 1px hsl(173 90% 24%),
+          inset 0 0 0 1px hsl(173 60% 30% / 0.4),
           inset 0 1px 0 rgba(255,255,255,0.22);
       }
       [data-ds-theme="light"] .btn-3d-accent:hover { background: hsl(173 80% 34%); }
       [data-ds-theme="light"] .btn-3d-accent:active {
         background: hsl(173 82% 30%);
         box-shadow:
-          inset 0 0 0 1px hsl(173 90% 20%),
+          inset 0 0 0 1px hsl(173 60% 26% / 0.5),
           inset 0 2px 3px rgba(0,0,0,0.28);
       }
 
