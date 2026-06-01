@@ -482,7 +482,7 @@ function HowItWorks() {
 function CoverageShowcase() {
   return (
     <div className="mx-auto max-w-6xl px-6">
-      <Section eyebrow="04 — Coverage engine" title="Know exactly what's done — and what's not.">
+      <Section eyebrow="04 / Coverage engine" title="Know exactly what's done. And what's not.">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
           {/* Oversized data viz */}
           <div className="rounded-xl border border-border bg-card p-6 lg:col-span-3">
