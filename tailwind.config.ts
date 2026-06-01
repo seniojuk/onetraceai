@@ -110,19 +110,29 @@ export default {
       },
       fontFamily: {
         sans: [
-          "Inter",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
-          "Roboto",
-          "sans-serif",
+          "Aleo",
+          "ui-serif",
+          "Georgia",
+          "serif",
         ],
         geist: [
-          "Inter",
-          "-apple-system",
-          "sans-serif",
+          "Aleo",
+          "ui-serif",
+          "serif",
         ],
         serif: [
+          "Aleo",
+          "ui-serif",
+          "Georgia",
+          "serif",
+        ],
+        display: [
+          "Aleo",
+          "ui-serif",
+          "Georgia",
+          "serif",
+        ],
+        body: [
           "Aleo",
           "ui-serif",
           "Georgia",
