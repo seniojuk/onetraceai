@@ -235,20 +235,47 @@ export default function DesignSystemPage() {
         </Section>
 
         {/* Motion */}
-        <Section eyebrow="07 — Motion" title="120ms ease-out. Nothing showy.">
-          <div className="rounded-xl border border-white/[0.08] bg-[#0E0E0E] p-10">
-            <div className="grid grid-cols-1 gap-6 text-[13px] md:grid-cols-3">
-              {[
-                ["Micro", "120ms · ease-out", "Hovers, focus, presses"],
-                ["Standard", "200ms · cubic(.32,.72,0,1)", "Panels, popovers, tabs"],
-                ["Spatial", "340ms · cubic(.32,.72,0,1)", "Drawers, sheets, layouts"],
-              ].map(([k, v, d]) => (
-                <div key={k} className="rounded-lg border border-white/[0.06] bg-black/30 p-4">
-                  <div className="font-medium text-white">{k}</div>
-                  <div className="mt-1 font-mono text-[11px] text-teal-300">{v}</div>
-                  <div className="mt-2 text-zinc-500">{d}</div>
+        <Section eyebrow="07 — Motion" title="Custom curves. Animate with purpose.">
+          <p className="-mt-4 max-w-2xl text-[13px] leading-relaxed text-zinc-500">
+            Built-in CSS easings lack punch. We use stronger cubic-beziers, keep UI under
+            300ms, and never animate keyboard-triggered actions. Every motion answers
+            <em className="font-serif text-zinc-300"> why does this animate?</em>
+          </p>
+          <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+            {[
+              { k: "Press", v: "140ms", curve: "(0.23, 1, 0.32, 1)", d: "Buttons, taps. Instant feedback the UI heard you." },
+              { k: "Hover / Popover", v: "180–200ms", curve: "(0.23, 1, 0.32, 1)", d: "Tooltips, dropdowns, color shifts." },
+              { k: "Spatial", v: "340ms", curve: "(0.32, 0.72, 0, 1)", d: "Drawers, sheets. iOS-like drawer curve." },
+            ].map((t) => (
+              <div key={t.k} className="rounded-xl border border-white/[0.06] bg-[#0E0E0E] p-5">
+                <div className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">{t.k}</div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="font-geist text-[22px] font-medium tracking-tight text-white">{t.v}</span>
+                  <span className="font-mono text-[11px] text-teal-300">{t.curve}</span>
                 </div>
-              ))}
+                <p className="mt-2 text-[12px] leading-relaxed text-zinc-500">{t.d}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 gap-6 rounded-xl border border-white/[0.08] bg-[#0E0E0E] p-6 md:grid-cols-2">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">Frequency rule</div>
+              <ul className="mt-3 space-y-2 text-[13px] text-zinc-400">
+                <li className="flex gap-2"><span className="text-zinc-600">·</span> 100×/day → no animation, ever</li>
+                <li className="flex gap-2"><span className="text-zinc-600">·</span> 10×/day → reduce drastically</li>
+                <li className="flex gap-2"><span className="text-zinc-600">·</span> Occasional → standard motion</li>
+                <li className="flex gap-2"><span className="text-zinc-600">·</span> Rare → can add delight</li>
+              </ul>
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">Non-negotiables</div>
+              <ul className="mt-3 space-y-2 text-[13px] text-zinc-400">
+                <li className="flex gap-2"><span className="text-zinc-600">·</span> Never <code className="font-mono text-zinc-300">transition: all</code></li>
+                <li className="flex gap-2"><span className="text-zinc-600">·</span> Never animate from <code className="font-mono text-zinc-300">scale(0)</code> — start at 0.95</li>
+                <li className="flex gap-2"><span className="text-zinc-600">·</span> Never <code className="font-mono text-zinc-300">ease-in</code> on UI</li>
+                <li className="flex gap-2"><span className="text-zinc-600">·</span> Popovers scale from trigger origin, not center</li>
+              </ul>
             </div>
           </div>
         </Section>
