@@ -488,13 +488,22 @@ function IntegrationsRow() {
     <div className="mx-auto max-w-6xl px-6">
       <Section id="integrations" eyebrow="05 — Integrations" title="Connects to your existing workflow.">
         <p className="-mt-4 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-          OneTrace doesn't replace your tools — it connects them.
+          OneTrace doesn't replace your tools — it connects them. Sits quietly at the center of your stack.
         </p>
-        <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
-          {INTEGRATIONS.map((i) => (
-            <div key={i.name} className="group bg-card p-6 transition-colors hover:bg-muted/30">
-              <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 font-mono text-[11px] text-foreground/80 transition-colors group-hover:border-accent/40 group-hover:text-accent">
-                {i.short}
+
+        <IntegrationsOrbit />
+
+        {/* Detail strip below the orbit */}
+        <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
+          {INTEGRATIONS.filter((i) => i.featured).map((i) => (
+            <div key={i.name} className="group bg-card p-5 transition-colors hover:bg-muted/30">
+              <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 p-1.5 transition-colors group-hover:border-accent/40">
+                <img
+                  src={i.logo}
+                  alt={`${i.name} logo`}
+                  className="h-full w-full object-contain opacity-80 group-hover:opacity-100"
+                  loading="lazy"
+                />
               </div>
               <h4 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{i.name}</h4>
               <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{i.body}</p>
@@ -505,6 +514,132 @@ function IntegrationsRow() {
     </div>
   );
 }
+
+/* ---------- Integrations orbit ---------- */
+
+function IntegrationsOrbit() {
+  // Inner ring (primary integrations) and outer ring (supporting)
+  const inner = INTEGRATIONS.filter((i) => i.ring === "inner");
+  const outer = INTEGRATIONS.filter((i) => i.ring === "outer");
+
+  return (
+    <div className="relative mt-10 w-full">
+      <div className="relative mx-auto aspect-square w-full max-w-[520px]">
+        {/* Concentric guide rings */}
+        <div className="absolute inset-[18%] rounded-full border border-dashed border-border/70" />
+        <div className="absolute inset-[2%] rounded-full border border-dashed border-border/40" />
+
+        {/* Animated sweeping conic glow */}
+        <div
+          className="absolute inset-[2%] rounded-full opacity-70"
+          style={{
+            background:
+              "conic-gradient(from 0deg, transparent 0deg, hsl(var(--accent)/0.18) 60deg, transparent 120deg, transparent 360deg)",
+            animation: "spin 14s linear infinite",
+            maskImage: "radial-gradient(circle, transparent 55%, black 56%, black 99%, transparent 100%)",
+            WebkitMaskImage:
+              "radial-gradient(circle, transparent 55%, black 56%, black 99%, transparent 100%)",
+          }}
+          aria-hidden
+        />
+
+        {/* Spokes (SVG) connecting hub to inner ring */}
+        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" aria-hidden>
+          {inner.map((_, idx) => {
+            const angle = (idx / inner.length) * Math.PI * 2 - Math.PI / 2;
+            const r = 32; // inner ring radius (percent)
+            const x = 50 + Math.cos(angle) * r;
+            const y = 50 + Math.sin(angle) * r;
+            return (
+              <line
+                key={idx}
+                x1="50"
+                y1="50"
+                x2={x}
+                y2={y}
+                stroke="hsl(var(--accent))"
+                strokeWidth="0.25"
+                strokeDasharray="0.8 0.8"
+                opacity="0.5"
+              />
+            );
+          })}
+        </svg>
+
+        {/* Hub */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="relative grid h-20 w-20 place-items-center rounded-2xl border border-accent/40 bg-card shadow-[0_0_0_6px_hsl(var(--accent)/0.06),0_20px_60px_-20px_hsl(var(--accent)/0.45)]">
+            <span className="absolute inset-0 rounded-2xl bg-gradient-to-br from-accent/15 to-transparent" />
+            <span className="relative font-serif text-[18px] font-medium tracking-tight text-foreground">
+              OneTrace
+            </span>
+          </div>
+          <div className="mt-2 text-center font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+            traceability hub
+          </div>
+        </div>
+
+        {/* Inner ring logos */}
+        {inner.map((i, idx) => {
+          const angle = (idx / inner.length) * 360 - 90;
+          return (
+            <OrbitLogo key={i.name} integration={i} angle={angle} radiusPct={32} size="lg" />
+          );
+        })}
+
+        {/* Outer ring logos */}
+        {outer.map((i, idx) => {
+          const angle = (idx / outer.length) * 360 - 90 + 360 / outer.length / 2;
+          return (
+            <OrbitLogo key={i.name} integration={i} angle={angle} radiusPct={48} size="sm" />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function OrbitLogo({
+  integration,
+  angle,
+  radiusPct,
+  size,
+}: {
+  integration: { name: string; logo: string; brand?: string };
+  angle: number;
+  radiusPct: number;
+  size: "lg" | "sm";
+}) {
+  const rad = (angle * Math.PI) / 180;
+  const x = 50 + Math.cos(rad) * radiusPct;
+  const y = 50 + Math.sin(rad) * radiusPct;
+  const dim = size === "lg" ? "h-12 w-12" : "h-9 w-9";
+  const pad = size === "lg" ? "p-2.5" : "p-2";
+
+  return (
+    <div
+      className="group absolute -translate-x-1/2 -translate-y-1/2"
+      style={{ left: `${x}%`, top: `${y}%` }}
+    >
+      <div
+        className={`${dim} ${pad} grid place-items-center rounded-xl border border-border bg-card shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.25)] transition-all hover:border-accent/50 hover:shadow-[0_0_0_4px_hsl(var(--accent)/0.10),0_10px_28px_-12px_hsl(var(--accent)/0.5)]`}
+      >
+        <img
+          src={integration.logo}
+          alt={`${integration.name} logo`}
+          className="h-full w-full object-contain opacity-85 transition-opacity group-hover:opacity-100"
+          loading="lazy"
+        />
+      </div>
+      {size === "lg" && (
+        <div className="pointer-events-none absolute left-1/2 top-full mt-1.5 -translate-x-1/2 whitespace-nowrap text-center font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
+          {integration.name}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 /* ---------- Pricing ---------- */
 
