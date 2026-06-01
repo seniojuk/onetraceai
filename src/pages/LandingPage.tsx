@@ -189,23 +189,23 @@ function Hero() {
 
       <div className="relative mx-auto max-w-7xl px-8 pt-32 pb-16 md:pt-40 md:pb-20">
         {/* Headline — left aligned, oversized, tight */}
-        <h1 className="max-w-[18ch] font-geist text-[40px] font-medium leading-[1.06] tracking-[-0.04em] text-foreground sm:text-[52px] md:text-[64px] lg:text-[72px]">
+        <Reveal as="h1" y={20} className="max-w-[18ch] font-geist text-[40px] font-medium leading-[1.06] tracking-[-0.04em] text-foreground sm:text-[52px] md:text-[64px] lg:text-[72px]">
           Ship AI-built software with confidence
-        </h1>
+        </Reveal>
 
         {/* Subhead */}
-        <p className="mt-8 max-w-md text-[15px] leading-relaxed text-muted-foreground">
+        <Reveal as="p" delay={120} className="mt-8 max-w-md text-[15px] leading-relaxed text-muted-foreground">
           Built for planning, building, and proving AI-generated software.
-        </p>
+        </Reveal>
 
         {/* Product visual — full bleed panel below, Linear-style */}
-        <div className="relative mt-10 md:mt-14">
+        <Reveal delay={220} y={28} className="relative mt-10 md:mt-14">
           <div
             aria-hidden
             className="pointer-events-none absolute -inset-x-10 -top-10 bottom-0 -z-10 rounded-[32px] bg-[radial-gradient(60%_50%_at_50%_0%,hsl(var(--accent)/0.10),transparent_70%)] blur-2xl"
           />
           <HeroFlow />
-        </div>
+        </Reveal>
       </div>
     </section>
   );
