@@ -1,20 +1,28 @@
-import { useEffect } from "react";
-import { ArrowUpRight, Check, Command, GitBranch, Sparkles, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowUpRight, Check, Command, GitBranch, Moon, Sparkles, Sun, Zap } from "lucide-react";
 
 /**
  * /design — OneTrace Design System
  * Linear / Vercel / Resend / Lovable inspired.
- * Keeps the existing OneTrace palette (navy + teal accent),
- * refines typography (Geist + Instrument Serif), and introduces
- * the surface, border, and motion language used in the app refresh.
+ * Dark + light, toggleable. Light overrides are scoped to [data-ds-theme="light"]
+ * so they don't bleed into the rest of the app.
  */
 export default function DesignSystemPage() {
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
   useEffect(() => {
     document.title = "Design System — OneTrace";
   }, []);
 
+  const isLight = theme === "light";
+
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-zinc-100 font-geist antialiased">
+    <div
+      data-ds-theme={theme}
+      className="min-h-screen bg-[#0A0A0A] text-zinc-100 font-geist antialiased"
+    >
+      <DesignSystemThemeStyles />
+
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#0A0A0A]/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -26,11 +34,22 @@ export default function DesignSystemPage() {
             <span className="text-zinc-500">/</span>
             <span className="text-zinc-400">Design</span>
           </div>
-          <div className="flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-zinc-400 font-mono">
-            <Command className="h-3 w-3" /> v1.0
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setTheme(isLight ? "dark" : "light")}
+              aria-label={`Switch to ${isLight ? "dark" : "light"} mode`}
+              className="btn-3d btn-3d-secondary inline-flex h-8 w-8 items-center justify-center"
+            >
+              {isLight ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
+            </button>
+            <div className="flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-zinc-400 font-mono">
+              <Command className="h-3 w-3" /> v1.0
+            </div>
           </div>
         </div>
       </header>
+
 
       <main className="mx-auto max-w-6xl px-6 py-20">
         {/* Hero */}
