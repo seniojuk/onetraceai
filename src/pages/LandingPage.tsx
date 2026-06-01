@@ -113,7 +113,7 @@ function Hero() {
             aria-hidden
             className="pointer-events-none absolute -inset-x-10 -top-10 bottom-0 -z-10 rounded-[32px] bg-[radial-gradient(60%_50%_at_50%_0%,hsl(var(--accent)/0.10),transparent_70%)] blur-2xl"
           />
-          <HeroGraph />
+          <HeroFlow />
         </div>
       </div>
     </section>
