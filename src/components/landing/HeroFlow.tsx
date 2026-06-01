@@ -278,6 +278,7 @@ export function HeroFlow() {
           nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable={false}
+          preventScrolling={false}
           proOptions={{ hideAttribution: true }}
         >
           <Background
