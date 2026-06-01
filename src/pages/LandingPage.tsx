@@ -608,12 +608,12 @@ function FinalCTA() {
             >
               Get started free <ArrowUpRight className="h-4 w-4" />
             </Link>
-            <Link
-              to="/design"
+            <a
+              href="#pricing"
               className="btn-3d btn-3d-ghost inline-flex h-10 items-center px-4 text-[13px]"
             >
-              See the design system
-            </Link>
+              See pricing
+            </a>
           </div>
         </div>
       </section>
@@ -634,8 +634,6 @@ function Footer() {
                 OT
               </div>
               <span className="font-medium tracking-tight text-foreground">OneTrace</span>
-              <span className="text-muted-foreground/70">/</span>
-              <span className="text-muted-foreground">AI</span>
             </div>
             <p className="mt-4 max-w-xs text-[12.5px] leading-relaxed text-muted-foreground">
               The traceability layer for AI-built software. PRDs → Stories → Jira → Git → Tests,
