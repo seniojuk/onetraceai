@@ -99,11 +99,11 @@ function ArtifactNode({ data }: NodeProps<Node<FlowNodeData>>) {
 
 const nodeTypes = { artifact: ArtifactNode };
 
-// Horizontal left-to-right flow.
+// Horizontal left-to-right flow (desktop/tablet).
 // Columns: PRD | EPIC | STORIES (2) | JIRA + PR + TEST (3)
 const COL = { prd: 0, epic: 220, story: 460, exec: 720 };
 
-const initialNodes: Node<FlowNodeData>[] = [
+const desktopNodes: Node<FlowNodeData>[] = [
   {
     id: "prd",
     type: "artifact",
@@ -154,7 +154,7 @@ const edgeBase = {
   style: { stroke: "hsl(var(--accent))", strokeWidth: 1.25, opacity: 0.55 },
 };
 
-const initialEdges: Edge[] = [
+const desktopEdges: Edge[] = [
   { id: "e1", source: "prd", target: "epic", ...edgeBase },
   { id: "e2", source: "epic", target: "story-1", ...edgeBase },
   { id: "e3", source: "epic", target: "story-2", ...edgeBase },
@@ -165,9 +165,85 @@ const initialEdges: Edge[] = [
   { id: "e8", source: "story-2", target: "test", ...edgeBase },
 ];
 
+// Vertical top-to-bottom flow (mobile).
+// Rows: PRD -> EPIC -> STORIES (2 side-by-side) -> JIRA/PR/TEST (3 side-by-side)
+const MROW = { prd: 0, epic: 110, story: 220, exec: 360 };
+const MCOL = { left: 0, mid: 100, right: 200, center: 100 };
+
+const mobileNodes: Node<FlowNodeData>[] = [
+  {
+    id: "prd",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: MCOL.center, y: MROW.prd },
+    data: { kind: "prd", id: "PRD-042", title: "User authentication", meta: "4 ACs", status: "done" },
+  },
+  {
+    id: "epic",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: MCOL.center, y: MROW.epic },
+    data: { kind: "epic", id: "EPIC-014", title: "Onboarding v2", meta: "3 stories", status: "active" },
+  },
+  {
+    id: "story-1",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: 0, y: MROW.story },
+    data: { kind: "story", id: "STORY-217", title: "Google OAuth", meta: "in progress", status: "active" },
+  },
+  {
+    id: "story-2",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: 200, y: MROW.story },
+    data: { kind: "story", id: "STORY-218", title: "Magic link", meta: "in review", status: "active" },
+  },
+  {
+    id: "jira",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: -10, y: MROW.exec },
+    data: { kind: "jira", id: "OT-1284", title: "Implement OAuth", meta: "in progress", status: "active" },
+  },
+  {
+    id: "pr",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: 195, y: MROW.exec },
+    data: { kind: "pr", id: "#482", title: "feat(auth): handler", meta: "merged", status: "done" },
+  },
+  {
+    id: "test",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: 400, y: MROW.exec },
+    data: { kind: "test", id: "TEST-091", title: "OAuth spec", meta: "3/3 passing", status: "done" },
+  },
+];
+
+const mobileEdges: Edge[] = [
+  { id: "e1", source: "prd", target: "epic", ...edgeBase },
+  { id: "e2", source: "epic", target: "story-1", ...edgeBase },
+  { id: "e3", source: "epic", target: "story-2", ...edgeBase },
+  { id: "e4", source: "story-1", target: "jira", ...edgeBase },
+  { id: "e5", source: "story-1", target: "pr", ...edgeBase },
+  { id: "e6", source: "story-2", target: "pr", ...edgeBase },
+  { id: "e7", source: "story-2", target: "test", ...edgeBase },
+];
+
 export function HeroFlow() {
-  const nodes = useMemo(() => initialNodes, []);
-  const edges = useMemo(() => initialEdges, []);
+  const isMobile = useIsMobile();
+  const nodes = useMemo(() => (isMobile ? mobileNodes : desktopNodes), [isMobile]);
+  const edges = useMemo(() => (isMobile ? mobileEdges : desktopEdges), [isMobile]);
+
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl border border-border bg-card shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.18)]">
