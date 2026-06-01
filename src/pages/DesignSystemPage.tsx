@@ -203,19 +203,19 @@ export default function DesignSystemPage() {
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2 rounded-xl border border-white/[0.08] bg-[#0E0E0E] p-6">
               {[
-                ["PRD", "violet"],
-                ["EPIC", "blue"],
-                ["STORY", "teal"],
-                ["AC", "emerald"],
-                ["TEST", "amber"],
-                ["COMMIT", "zinc"],
-              ].map(([label, color]) => (
+                { label: "PRD", cls: "border-violet-400/20 bg-violet-400/10 text-violet-300", dot: "bg-violet-400" },
+                { label: "EPIC", cls: "border-blue-400/20 bg-blue-400/10 text-blue-300", dot: "bg-blue-400" },
+                { label: "STORY", cls: "border-teal-400/20 bg-teal-400/10 text-teal-300", dot: "bg-teal-400" },
+                { label: "AC", cls: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300", dot: "bg-emerald-400" },
+                { label: "TEST", cls: "border-amber-400/20 bg-amber-400/10 text-amber-300", dot: "bg-amber-400" },
+                { label: "COMMIT", cls: "border-zinc-400/20 bg-zinc-400/10 text-zinc-300", dot: "bg-zinc-400" },
+              ].map((b) => (
                 <span
-                  key={label}
-                  className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-[11px] tracking-tight border-${color}-400/20 bg-${color}-400/10 text-${color}-300`}
+                  key={b.label}
+                  className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 font-mono text-[11px] tracking-tight ${b.cls}`}
                 >
-                  <span className={`h-1.5 w-1.5 rounded-full bg-${color}-400`} />
-                  {label}
+                  <span className={`h-1.5 w-1.5 rounded-full ${b.dot}`} />
+                  {b.label}
                 </span>
               ))}
             </div>
