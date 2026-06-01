@@ -185,7 +185,7 @@ function Hero() {
 
         {/* Subhead */}
         <p className="mt-8 max-w-md text-[15px] leading-relaxed text-muted-foreground">
-          Purpose-built for planning, building, and proving AI-generated software. Designed for the agent era.
+          Built for planning, building, and proving AI-generated software.
         </p>
 
         {/* Product visual — full bleed panel below, Linear-style */}
@@ -570,7 +570,13 @@ function IntegrationsRow() {
           {INTEGRATIONS.map((i) => (
             <div key={i.name} className="group bg-card p-6 transition-colors hover:bg-muted/30">
               <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-foreground/80 transition-colors group-hover:border-accent/40 group-hover:text-accent">
-                <svg viewBox={i.viewBox} className="h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg" aria-label={`${i.name} logo`} role="img">
+                <svg
+                  viewBox={i.viewBox}
+                  className="h-5 w-5 fill-current"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-label={`${i.name} logo`}
+                  role="img"
+                >
                   <path d={i.path} />
                 </svg>
               </div>
