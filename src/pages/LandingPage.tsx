@@ -821,9 +821,9 @@ function StatusBadge({ status, label, mono = false }: { status: StatusKey; label
 /* ---------- content ---------- */
 
 const PROBLEMS = [
-  { icon: Network, title: "No clear mapping", body: "From requirements to modules to commits — nothing connects." },
-  { icon: Activity, title: "No objective coverage", body: "Against acceptance criteria. You ship and hope." },
-  { icon: GitBranch, title: "No safe regeneration", body: "When requirements change, everything breaks silently." },
+  { icon: Network, title: "No clear mapping", body: "Requirements, modules, and commits never link up." },
+  { icon: Activity, title: "No objective coverage", body: "You can't prove acceptance criteria are met. You ship and hope." },
+  { icon: GitBranch, title: "No safe regeneration", body: "When requirements change, things break silently." },
   { icon: Sparkles, title: "No shared workspace", body: "Humans and AI agents work from different sources of truth." },
 ];
 
