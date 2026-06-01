@@ -470,17 +470,51 @@ function DesignSystemThemeStyles() {
         background: rgba(0,0,0,0.06);
         box-shadow: inset 0 2px 3px rgba(0,0,0,0.1);
       }
+      /* Solid buttons in light mode — clean fills, no outer drop shadow,
+         just a single hairline border + crisp top highlight. */
       [data-ds-theme="light"] .btn-3d-primary {
         background: #0A0A0A;
         color: #FAFAFA;
         box-shadow:
-          0 2px 0 rgba(0,0,0,0.25),
-          inset 0 1px 0 rgba(255,255,255,0.12);
+          inset 0 0 0 1px #000000,
+          inset 0 1px 0 rgba(255,255,255,0.14);
       }
       [data-ds-theme="light"] .btn-3d-primary:hover { background: #18181B; }
       [data-ds-theme="light"] .btn-3d-primary:active {
-        background: #27272A;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.45);
+        background: #000000;
+        box-shadow:
+          inset 0 0 0 1px #000000,
+          inset 0 2px 3px rgba(0,0,0,0.5);
+      }
+
+      [data-ds-theme="light"] .btn-3d-accent {
+        background: hsl(173 80% 38%);
+        color: #ffffff;
+        box-shadow:
+          inset 0 0 0 1px hsl(173 90% 24%),
+          inset 0 1px 0 rgba(255,255,255,0.22);
+      }
+      [data-ds-theme="light"] .btn-3d-accent:hover { background: hsl(173 80% 34%); }
+      [data-ds-theme="light"] .btn-3d-accent:active {
+        background: hsl(173 82% 30%);
+        box-shadow:
+          inset 0 0 0 1px hsl(173 90% 20%),
+          inset 0 2px 3px rgba(0,0,0,0.28);
+      }
+
+      [data-ds-theme="light"] .btn-3d-destructive {
+        background: #fff1f1;
+        color: #b91c1c;
+        box-shadow:
+          inset 0 0 0 1px rgba(220,38,38,0.3),
+          inset 0 1px 0 rgba(255,255,255,0.6);
+      }
+      [data-ds-theme="light"] .btn-3d-destructive:hover { background: #ffe4e4; color: #991b1b; }
+      [data-ds-theme="light"] .btn-3d-destructive:active {
+        background: #ffd6d6;
+        box-shadow:
+          inset 0 0 0 1px rgba(220,38,38,0.35),
+          inset 0 2px 3px rgba(220,38,38,0.18);
       }
     `}</style>
   );
