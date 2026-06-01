@@ -428,6 +428,50 @@
   .delay-300 { animation-delay: 300ms; }
   .delay-400 { animation-delay: 400ms; }
   .delay-500 { animation-delay: 500ms; }
+
+  /* Micro-interactions */
+  .lift {
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 280ms ease,
+                box-shadow 280ms ease,
+                background-color 280ms ease;
+    will-change: transform;
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    border-color: hsl(var(--foreground) / 0.18);
+    box-shadow: 0 18px 40px -24px hsl(var(--foreground) / 0.25);
+  }
+
+  .icon-pop { transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .group:hover .icon-pop { transform: translate(2px, -2px); }
+
+  /* Underline sweep for nav links */
+  .nav-link { position: relative; transition: color 200ms ease; }
+  .nav-link::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -6px;
+    height: 1px;
+    background: hsl(var(--foreground));
+    transform: scaleX(0);
+    transform-origin: right center;
+    transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .nav-link:hover::after,
+  .nav-link[data-active="true"]::after {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+  .nav-link[data-active="true"] { color: hsl(var(--foreground)); }
+
+  /* Smooth scroll + reduced motion */
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .lift, .icon-pop, .nav-link::after { transition: none !important; }
+    .lift:hover { transform: none; }
+  }
 }
 
 @layer components {

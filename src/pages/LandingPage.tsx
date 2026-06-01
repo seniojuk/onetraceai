@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { HeroFlow } from "@/components/landing/HeroFlow";
+import { Reveal, ScrollProgress, useActiveSection } from "@/components/landing/motion";
 
 /**
  * Marketing home — Architectural density direction.
@@ -60,22 +61,25 @@ function Nav() {
   }, []);
 
   const links = [
-    { href: "#problem", label: "Problem" },
-    { href: "#solution", label: "Solution" },
-    { href: "#how", label: "How it works" },
-    { href: "#pricing", label: "Pricing" },
+    { href: "#problem", id: "problem", label: "Problem" },
+    { href: "#solution", id: "solution", label: "Solution" },
+    { href: "#how", id: "how", label: "How it works" },
+    { href: "#pricing", id: "pricing", label: "Pricing" },
   ];
+  const active = useActiveSection(links.map((l) => l.id));
 
   return (
     <header
-      className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-colors ${
-        scrolled ? "border-border bg-background/85" : "border-transparent bg-background/60"
+      className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 ${
+        scrolled
+          ? "border-border bg-background/85 shadow-[0_1px_0_0_hsl(var(--border)),0_10px_30px_-20px_hsl(var(--foreground)/0.15)]"
+          : "border-transparent bg-background/60"
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 text-sm">
-          <div className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-accent to-accent/60 text-[11px] font-semibold text-accent-foreground">
+        <Link to="/" className="group flex items-center gap-2 text-sm">
+          <div className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-accent to-accent/60 text-[11px] font-semibold text-accent-foreground transition-transform duration-300 group-hover:rotate-[-4deg] group-hover:scale-105">
             OT
           </div>
           <span className="font-semibold tracking-tight text-foreground">OneTrace</span>
@@ -85,7 +89,12 @@ function Nav() {
         {/* Desktop nav */}
         <nav className="hidden items-center gap-8 text-[13px] text-muted-foreground md:flex">
           {links.map((l) => (
-            <a key={l.href} href={l.href} className="transition-colors hover:text-foreground">
+            <a
+              key={l.href}
+              href={l.href}
+              data-active={active === l.id}
+              className="nav-link hover:text-foreground"
+            >
               {l.label}
             </a>
           ))}
@@ -159,6 +168,7 @@ function Nav() {
           </Sheet>
         </div>
       </div>
+      <ScrollProgress />
     </header>
   );
 }
@@ -179,23 +189,23 @@ function Hero() {
 
       <div className="relative mx-auto max-w-7xl px-8 pt-32 pb-16 md:pt-40 md:pb-20">
         {/* Headline — left aligned, oversized, tight */}
-        <h1 className="max-w-[18ch] font-geist text-[40px] font-medium leading-[1.06] tracking-[-0.04em] text-foreground sm:text-[52px] md:text-[64px] lg:text-[72px]">
+        <Reveal as="h1" y={20} className="max-w-[18ch] font-geist text-[40px] font-medium leading-[1.06] tracking-[-0.04em] text-foreground sm:text-[52px] md:text-[64px] lg:text-[72px]">
           Ship AI-built software with confidence
-        </h1>
+        </Reveal>
 
         {/* Subhead */}
-        <p className="mt-8 max-w-md text-[15px] leading-relaxed text-muted-foreground">
+        <Reveal as="p" delay={120} className="mt-8 max-w-md text-[15px] leading-relaxed text-muted-foreground">
           Built for planning, building, and proving AI-generated software.
-        </p>
+        </Reveal>
 
         {/* Product visual — full bleed panel below, Linear-style */}
-        <div className="relative mt-10 md:mt-14">
+        <Reveal delay={220} y={28} className="relative mt-10 md:mt-14">
           <div
             aria-hidden
             className="pointer-events-none absolute -inset-x-10 -top-10 bottom-0 -z-10 rounded-[32px] bg-[radial-gradient(60%_50%_at_50%_0%,hsl(var(--accent)/0.10),transparent_70%)] blur-2xl"
           />
           <HeroFlow />
-        </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -355,12 +365,14 @@ function ProblemSection() {
           but now what?
         </p>
         <div className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-2 lg:grid-cols-4">
-          {PROBLEMS.map((p) => (
-            <div key={p.title} className="group bg-card p-6 transition-colors hover:bg-muted/30">
-              <p.icon className="h-4 w-4 text-destructive" />
-              <h3 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{p.title}</h3>
-              <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{p.body}</p>
-            </div>
+          {PROBLEMS.map((p, idx) => (
+            <Reveal key={p.title} delay={idx * 70}>
+              <div className="group h-full bg-card p-6 lift hover:bg-muted/30">
+                <p.icon className="h-4 w-4 text-destructive icon-pop" />
+                <h3 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{p.title}</h3>
+                <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{p.body}</p>
+              </div>
+            </Reveal>
           ))}
         </div>
         <p className="mt-8 text-[13px] text-muted-foreground">
@@ -415,14 +427,16 @@ function SolutionSection() {
           </div>
           <div className="lg:col-span-7">
             <div className="grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3">
-              {PILLARS.map((p) => (
-                <div key={p.title} className="bg-card p-6">
-                  <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-accent">
-                    <p.icon className="h-4 w-4" />
+              {PILLARS.map((p, idx) => (
+                <Reveal key={p.title} delay={idx * 80}>
+                  <div className="group h-full bg-card p-6 lift">
+                    <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-accent">
+                      <p.icon className="h-4 w-4 icon-pop" />
+                    </div>
+                    <h3 className="mt-5 text-[15px] font-medium tracking-tight text-foreground">{p.title}</h3>
+                    <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{p.body}</p>
                   </div>
-                  <h3 className="mt-5 text-[15px] font-medium tracking-tight text-foreground">{p.title}</h3>
-                  <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{p.body}</p>
-                </div>
+                </Reveal>
               ))}
             </div>
           </div>
@@ -445,16 +459,18 @@ function HowItWorks() {
             className="pointer-events-none absolute left-0 right-0 top-12 hidden h-px bg-gradient-to-r from-transparent via-border to-transparent md:block"
           />
           {STEPS.map((s, i) => (
-            <div key={s.title} className="relative rounded-xl border border-border bg-card p-6">
-              <div className="flex items-center justify-between">
-                <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Step {String(i + 1).padStart(2, "0")}
-                </span>
-                <s.icon className="h-4 w-4 text-accent" />
+            <Reveal key={s.title} delay={i * 100}>
+              <div className="group relative h-full rounded-xl border border-border bg-card p-6 lift">
+                <div className="flex items-center justify-between">
+                  <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Step {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <s.icon className="h-4 w-4 text-accent icon-pop" />
+                </div>
+                <h3 className="mt-5 text-[16px] font-medium tracking-tight text-foreground">{s.title}</h3>
+                <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{s.body}</p>
               </div>
-              <h3 className="mt-5 text-[16px] font-medium tracking-tight text-foreground">{s.title}</h3>
-              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{s.body}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </Section>
@@ -567,22 +583,24 @@ function IntegrationsRow() {
           OneTrace doesn't replace your tools — it connects them.
         </p>
         <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
-          {INTEGRATIONS.map((i) => (
-            <div key={i.name} className="group bg-card p-6 transition-colors hover:bg-muted/30">
-              <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-foreground/80 transition-colors group-hover:border-accent/40 group-hover:text-accent">
-                <svg
-                  viewBox={i.viewBox}
-                  className="h-5 w-5 fill-current"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-label={`${i.name} logo`}
-                  role="img"
-                >
-                  <path d={i.path} />
-                </svg>
+          {INTEGRATIONS.map((i, idx) => (
+            <Reveal key={i.name} delay={idx * 60}>
+              <div className="group h-full bg-card p-6 lift hover:bg-muted/30">
+                <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-foreground/80 transition-colors group-hover:border-accent/40 group-hover:text-accent">
+                  <svg
+                    viewBox={i.viewBox}
+                    className="h-5 w-5 fill-current icon-pop"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-label={`${i.name} logo`}
+                    role="img"
+                  >
+                    <path d={i.path} />
+                  </svg>
+                </div>
+                <h4 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{i.name}</h4>
+                <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{i.body}</p>
               </div>
-              <h4 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{i.name}</h4>
-              <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{i.body}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </Section>
@@ -597,43 +615,44 @@ function PricingSection() {
     <div className="mx-auto max-w-6xl px-6">
       <Section id="pricing" eyebrow="06 — Pricing" title="Start free. Scale when you're ready.">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {PLANS.map((p) => (
-            <div
-              key={p.name}
-              className={`relative rounded-xl border bg-card p-6 ${
-                p.featured
-                  ? "border-accent/40 ring-1 ring-accent/20 shadow-[0_20px_60px_-30px_hsl(var(--accent)/0.4)]"
-                  : "border-border"
-              }`}
-            >
-              {p.featured && (
-                <span className="absolute -top-2.5 left-6 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
-                  Most popular
-                </span>
-              )}
-              <div className="text-[13px] text-muted-foreground">{p.name}</div>
-              <div className="mt-3 flex items-baseline gap-1">
-                <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">{p.price}</span>
-                <span className="text-[13px] text-muted-foreground">/month</span>
-              </div>
-              <p className="mt-2 text-[12.5px] text-muted-foreground">{p.tagline}</p>
-              <ul className="mt-5 space-y-2 border-t border-border pt-4">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-[13px] text-foreground/90">
-                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                to="/auth?mode=signup"
-                className={`mt-6 inline-flex h-9 w-full items-center justify-center gap-1.5 px-3 text-[13px] font-medium btn-3d ${
-                  p.featured ? "btn-3d-accent" : "btn-3d-secondary"
+          {PLANS.map((p, idx) => (
+            <Reveal key={p.name} delay={idx * 100}>
+              <div
+                className={`relative h-full rounded-xl border bg-card p-6 lift ${
+                  p.featured
+                    ? "border-accent/40 ring-1 ring-accent/20 shadow-[0_20px_60px_-30px_hsl(var(--accent)/0.4)]"
+                    : "border-border"
                 }`}
               >
-                {p.cta} <ArrowUpRight className="h-3.5 w-3.5" />
-              </Link>
-            </div>
+                {p.featured && (
+                  <span className="absolute -top-2.5 left-6 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
+                    Most popular
+                  </span>
+                )}
+                <div className="text-[13px] text-muted-foreground">{p.name}</div>
+                <div className="mt-3 flex items-baseline gap-1">
+                  <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">{p.price}</span>
+                  <span className="text-[13px] text-muted-foreground">/month</span>
+                </div>
+                <p className="mt-2 text-[12.5px] text-muted-foreground">{p.tagline}</p>
+                <ul className="mt-5 space-y-2 border-t border-border pt-4">
+                  {p.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-[13px] text-foreground/90">
+                      <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to="/auth?mode=signup"
+                  className={`mt-6 inline-flex h-9 w-full items-center justify-center gap-1.5 px-3 text-[13px] font-medium btn-3d ${
+                    p.featured ? "btn-3d-accent" : "btn-3d-secondary"
+                  }`}
+                >
+                  {p.cta} <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </Reveal>
           ))}
         </div>
       </Section>
@@ -758,16 +777,16 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="py-24">
-      <div className="mb-8 flex items-end justify-between gap-6 border-b border-border pb-4">
+    <section id={id} className="scroll-mt-24 py-24">
+      <Reveal className="mb-8 flex items-end justify-between gap-6 border-b border-border pb-4">
         <div>
           <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{eyebrow}</div>
           <h2 className="mt-2 text-[28px] font-medium leading-tight tracking-[-0.02em] text-foreground md:text-[34px]">
             {title}
           </h2>
         </div>
-      </div>
-      {children}
+      </Reveal>
+      <Reveal delay={120}>{children}</Reveal>
     </section>
   );
 }
