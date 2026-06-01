@@ -65,6 +65,7 @@ const App = () => (
           <Route path="/prompt-generator" element={<PromptGeneratorPage />} />
           <Route path="/invite/accept" element={<AcceptInvitePage />} />
           <Route path="/unsubscribe" element={<UnsubscribePage />} />
+          <Route path="/design" element={<DesignSystemPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
