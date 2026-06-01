@@ -10,6 +10,7 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   FileText,
   Layers,
@@ -50,17 +51,14 @@ function ArtifactNode({ data }: NodeProps<Node<FlowNodeData>>) {
 
   return (
     <div
-      className={`group relative w-[176px] rounded-lg border bg-card/95 px-3 py-2.5 shadow-[0_4px_14px_-6px_hsl(var(--foreground)/0.12)] backdrop-blur transition ${
+      className={`group relative w-[150px] sm:w-[176px] rounded-lg border bg-card/95 px-2.5 py-2 sm:px-3 sm:py-2.5 shadow-[0_4px_14px_-6px_hsl(var(--foreground)/0.12)] backdrop-blur transition ${
         isStory
           ? "border-accent/50 shadow-[0_0_0_3px_hsl(var(--accent)/0.10),0_4px_14px_-6px_hsl(var(--accent)/0.25)]"
           : "border-border"
       }`}
     >
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!h-1.5 !w-1.5 !border-0 !bg-border"
-      />
+      <Handle id="l" type="target" position={Position.Left} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
+      <Handle id="t" type="target" position={Position.Top} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Icon className={`h-3 w-3 ${meta.tone}`} />
@@ -81,28 +79,26 @@ function ArtifactNode({ data }: NodeProps<Node<FlowNodeData>>) {
           <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
         )}
       </div>
-      <div className="mt-1.5 truncate text-[12px] font-medium tracking-tight text-foreground">
+      <div className="mt-1.5 truncate text-[11px] sm:text-[12px] font-medium tracking-tight text-foreground">
         {data.title}
       </div>
-      <div className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">
+      <div className="mt-0.5 truncate font-mono text-[9.5px] sm:text-[10px] text-muted-foreground">
         {data.id} · {data.meta}
       </div>
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!h-1.5 !w-1.5 !border-0 !bg-border"
-      />
+      <Handle id="r" type="source" position={Position.Right} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
+      <Handle id="b" type="source" position={Position.Bottom} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
     </div>
   );
 }
 
+
 const nodeTypes = { artifact: ArtifactNode };
 
-// Horizontal left-to-right flow.
+// Horizontal left-to-right flow (desktop/tablet).
 // Columns: PRD | EPIC | STORIES (2) | JIRA + PR + TEST (3)
 const COL = { prd: 0, epic: 220, story: 460, exec: 720 };
 
-const initialNodes: Node<FlowNodeData>[] = [
+const desktopNodes: Node<FlowNodeData>[] = [
   {
     id: "prd",
     type: "artifact",
@@ -153,20 +149,96 @@ const edgeBase = {
   style: { stroke: "hsl(var(--accent))", strokeWidth: 1.25, opacity: 0.55 },
 };
 
-const initialEdges: Edge[] = [
-  { id: "e1", source: "prd", target: "epic", ...edgeBase },
-  { id: "e2", source: "epic", target: "story-1", ...edgeBase },
-  { id: "e3", source: "epic", target: "story-2", ...edgeBase },
-  { id: "e4", source: "story-1", target: "jira", ...edgeBase },
-  { id: "e5", source: "story-1", target: "pr", ...edgeBase },
-  { id: "e6", source: "story-2", target: "pr", ...edgeBase },
-  { id: "e7", source: "story-1", target: "test", ...edgeBase },
-  { id: "e8", source: "story-2", target: "test", ...edgeBase },
+const desktopEdges: Edge[] = [
+  { id: "e1", source: "prd", sourceHandle: "r", target: "epic", targetHandle: "l", ...edgeBase },
+  { id: "e2", source: "epic", sourceHandle: "r", target: "story-1", targetHandle: "l", ...edgeBase },
+  { id: "e3", source: "epic", sourceHandle: "r", target: "story-2", targetHandle: "l", ...edgeBase },
+  { id: "e4", source: "story-1", sourceHandle: "r", target: "jira", targetHandle: "l", ...edgeBase },
+  { id: "e5", source: "story-1", sourceHandle: "r", target: "pr", targetHandle: "l", ...edgeBase },
+  { id: "e6", source: "story-2", sourceHandle: "r", target: "pr", targetHandle: "l", ...edgeBase },
+  { id: "e7", source: "story-1", sourceHandle: "r", target: "test", targetHandle: "l", ...edgeBase },
+  { id: "e8", source: "story-2", sourceHandle: "r", target: "test", targetHandle: "l", ...edgeBase },
+];
+
+// Vertical top-to-bottom flow (mobile).
+// Rows: PRD -> EPIC -> STORIES (2 side-by-side) -> JIRA/PR/TEST (3 side-by-side)
+const MROW = { prd: 0, epic: 110, story: 220, exec: 360 };
+const MCOL = { left: 0, mid: 100, right: 200, center: 100 };
+
+const mobileNodes: Node<FlowNodeData>[] = [
+  {
+    id: "prd",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: MCOL.center, y: MROW.prd },
+    data: { kind: "prd", id: "PRD-042", title: "User authentication", meta: "4 ACs", status: "done" },
+  },
+  {
+    id: "epic",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: MCOL.center, y: MROW.epic },
+    data: { kind: "epic", id: "EPIC-014", title: "Onboarding v2", meta: "3 stories", status: "active" },
+  },
+  {
+    id: "story-1",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: 0, y: MROW.story },
+    data: { kind: "story", id: "STORY-217", title: "Google OAuth", meta: "in progress", status: "active" },
+  },
+  {
+    id: "story-2",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: 200, y: MROW.story },
+    data: { kind: "story", id: "STORY-218", title: "Magic link", meta: "in review", status: "active" },
+  },
+  {
+    id: "jira",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: -10, y: MROW.exec },
+    data: { kind: "jira", id: "OT-1284", title: "Implement OAuth", meta: "in progress", status: "active" },
+  },
+  {
+    id: "pr",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: 195, y: MROW.exec },
+    data: { kind: "pr", id: "#482", title: "feat(auth): handler", meta: "merged", status: "done" },
+  },
+  {
+    id: "test",
+    type: "artifact",
+    sourcePosition: Position.Bottom,
+    targetPosition: Position.Top,
+    position: { x: 400, y: MROW.exec },
+    data: { kind: "test", id: "TEST-091", title: "OAuth spec", meta: "3/3 passing", status: "done" },
+  },
+];
+
+const mobileEdges: Edge[] = [
+  { id: "e1", source: "prd", sourceHandle: "b", target: "epic", targetHandle: "t", ...edgeBase },
+  { id: "e2", source: "epic", sourceHandle: "b", target: "story-1", targetHandle: "t", ...edgeBase },
+  { id: "e3", source: "epic", sourceHandle: "b", target: "story-2", targetHandle: "t", ...edgeBase },
+  { id: "e4", source: "story-1", sourceHandle: "b", target: "jira", targetHandle: "t", ...edgeBase },
+  { id: "e5", source: "story-1", sourceHandle: "b", target: "pr", targetHandle: "t", ...edgeBase },
+  { id: "e6", source: "story-2", sourceHandle: "b", target: "pr", targetHandle: "t", ...edgeBase },
+  { id: "e7", source: "story-2", sourceHandle: "b", target: "test", targetHandle: "t", ...edgeBase },
 ];
 
 export function HeroFlow() {
-  const nodes = useMemo(() => initialNodes, []);
-  const edges = useMemo(() => initialEdges, []);
+  const isMobile = useIsMobile();
+  const nodes = useMemo(() => (isMobile ? mobileNodes : desktopNodes), [isMobile]);
+  const edges = useMemo(() => (isMobile ? mobileEdges : desktopEdges), [isMobile]);
+
 
   return (
     <div className="relative w-full overflow-hidden rounded-2xl border border-border bg-card shadow-[0_30px_80px_-30px_hsl(var(--foreground)/0.18)]">
@@ -188,14 +260,15 @@ export function HeroFlow() {
         </span>
       </div>
 
-      {/* Responsive aspect-ratio canvas: taller on mobile, wider on desktop */}
-      <div className="relative w-full aspect-[3/2] sm:aspect-[16/9] lg:aspect-[21/9]">
+      {/* Responsive aspect-ratio canvas: portrait on mobile, wider on desktop */}
+      <div className="relative w-full aspect-[4/5] sm:aspect-[16/9] lg:aspect-[21/9]">
         <ReactFlow
+          key={isMobile ? "mobile" : "desktop"}
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
           fitView
-          fitViewOptions={{ padding: 0.12, minZoom: 0.4, maxZoom: 1.1 }}
+          fitViewOptions={{ padding: 0.15, minZoom: 0.3, maxZoom: 1.1 }}
           minZoom={0.3}
           maxZoom={1.5}
           panOnDrag={false}
