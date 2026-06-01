@@ -608,12 +608,12 @@ function FinalCTA() {
             >
               Get started free <ArrowUpRight className="h-4 w-4" />
             </Link>
-            <Link
-              to="/design"
+            <a
+              href="#pricing"
               className="btn-3d btn-3d-ghost inline-flex h-10 items-center px-4 text-[13px]"
             >
-              See the design system
-            </Link>
+              See pricing
+            </a>
           </div>
         </div>
       </section>
