@@ -122,31 +122,32 @@ export default function DesignSystemPage() {
         <Section eyebrow="04 — Buttons" title="Four variants. No more.">
           <div className="rounded-xl border border-white/[0.08] bg-[#0E0E0E] p-10">
             <div className="flex flex-wrap items-center gap-3">
-              <button className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-white px-3.5 text-[13px] font-medium text-black shadow-[inset_0_1px_0_0_rgba(255,255,255,0.4)] transition hover:bg-zinc-200">
+              <button className="btn-3d btn-3d-primary inline-flex h-9 items-center gap-1.5 px-3.5 text-[13px] font-medium">
                 Primary <ArrowUpRight className="h-3.5 w-3.5" />
               </button>
-              <button className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3.5 text-[13px] font-medium text-zinc-100 transition hover:bg-white/[0.08]">
+              <button className="btn-3d btn-3d-secondary inline-flex h-9 items-center gap-1.5 px-3.5 text-[13px] font-medium">
                 Secondary
               </button>
-              <button className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3.5 text-[13px] font-medium text-zinc-400 transition hover:bg-white/[0.05] hover:text-white">
+              <button className="btn-3d btn-3d-ghost inline-flex h-9 items-center gap-1.5 px-3.5 text-[13px] font-medium">
                 Ghost
               </button>
-              <button className="group relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-lg bg-teal-500 px-3.5 text-[13px] font-medium text-black shadow-[0_0_0_1px_rgba(255,255,255,0.1)_inset,0_8px_24px_-8px_rgba(45,212,191,0.6)] transition hover:bg-teal-400">
+              <button className="btn-3d btn-3d-accent inline-flex h-9 items-center gap-1.5 px-3.5 text-[13px] font-medium">
                 <Sparkles className="h-3.5 w-3.5" />
                 Accent
               </button>
-              <button className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 text-[13px] font-medium text-red-300 transition hover:bg-red-500/20">
+              <button className="btn-3d btn-3d-destructive inline-flex h-9 items-center gap-1.5 px-3.5 text-[13px] font-medium">
                 Destructive
               </button>
             </div>
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <button className="inline-flex h-7 items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.04] px-2.5 text-[12px] text-zinc-300 hover:bg-white/[0.08]">
+              <button className="btn-3d btn-3d-secondary inline-flex h-7 items-center gap-1.5 px-2.5 text-[12px]">
                 Small
               </button>
-              <button className="inline-flex h-11 items-center gap-2 rounded-lg bg-white px-5 text-[14px] font-medium text-black hover:bg-zinc-200">
+              <button className="btn-3d btn-3d-primary inline-flex h-11 items-center gap-2 px-5 text-[14px] font-medium">
                 Large action <ArrowUpRight className="h-4 w-4" />
               </button>
             </div>
+            <p className="mt-6 text-[11px] uppercase tracking-[0.14em] text-zinc-600">Press any button — physical depth, 80ms snap.</p>
           </div>
         </Section>
 
