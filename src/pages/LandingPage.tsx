@@ -358,10 +358,10 @@ function GraphNode({
 function ProblemSection() {
   return (
     <div className="mx-auto max-w-6xl px-6">
-      <Section id="problem" eyebrow="01 — The problem" title="Your build flow is fast. Your traceability is broken.">
+      <Section id="problem" eyebrow="01 / The problem" title="Your build flow is fast. Your traceability is broken.">
         <p className="-mt-4 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-          You ideate in ChatGPT. You generate a PRD. You paste prompts into Lovable, Cursor, or Replit. Code appears —
-          but now what?
+          You ideate in ChatGPT. You generate a PRD. You paste prompts into Lovable, Cursor, or Replit. Code appears.
+          Then what?
         </p>
         <div className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-2 lg:grid-cols-4">
           {PROBLEMS.map((p, idx) => (
