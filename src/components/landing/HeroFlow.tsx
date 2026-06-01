@@ -150,14 +150,14 @@ const edgeBase = {
 };
 
 const desktopEdges: Edge[] = [
-  { id: "e1", source: "prd", target: "epic", ...edgeBase },
-  { id: "e2", source: "epic", target: "story-1", ...edgeBase },
-  { id: "e3", source: "epic", target: "story-2", ...edgeBase },
-  { id: "e4", source: "story-1", target: "jira", ...edgeBase },
-  { id: "e5", source: "story-1", target: "pr", ...edgeBase },
-  { id: "e6", source: "story-2", target: "pr", ...edgeBase },
-  { id: "e7", source: "story-1", target: "test", ...edgeBase },
-  { id: "e8", source: "story-2", target: "test", ...edgeBase },
+  { id: "e1", source: "prd", sourceHandle: "r", target: "epic", targetHandle: "l", ...edgeBase },
+  { id: "e2", source: "epic", sourceHandle: "r", target: "story-1", targetHandle: "l", ...edgeBase },
+  { id: "e3", source: "epic", sourceHandle: "r", target: "story-2", targetHandle: "l", ...edgeBase },
+  { id: "e4", source: "story-1", sourceHandle: "r", target: "jira", targetHandle: "l", ...edgeBase },
+  { id: "e5", source: "story-1", sourceHandle: "r", target: "pr", targetHandle: "l", ...edgeBase },
+  { id: "e6", source: "story-2", sourceHandle: "r", target: "pr", targetHandle: "l", ...edgeBase },
+  { id: "e7", source: "story-1", sourceHandle: "r", target: "test", targetHandle: "l", ...edgeBase },
+  { id: "e8", source: "story-2", sourceHandle: "r", target: "test", targetHandle: "l", ...edgeBase },
 ];
 
 // Vertical top-to-bottom flow (mobile).
