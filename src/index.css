@@ -79,6 +79,21 @@
     --sidebar-accent-foreground: 210 20% 90%;
     --sidebar-border: 222 30% 20%;
     --sidebar-ring: 173 80% 40%;
+
+    /* ---- Design system extension (used by /design and shared surfaces) ---- */
+    /* Surface elevation scale — page < surface < elevated < sunken (input wells) */
+    --surface: 0 0% 100%;
+    --surface-elevated: 0 0% 100%;
+    --surface-sunken: 220 15% 96%;
+    --hairline: 220 13% 88%;
+
+    /* Status / artifact palette (light mode — AA on white) */
+    --status-prd: 262 70% 50%;       --status-prd-fg: 262 70% 38%;
+    --status-epic: 222 78% 50%;      --status-epic-fg: 222 78% 42%;
+    --status-story: 173 75% 36%;     --status-story-fg: 173 75% 28%;
+    --status-ac: 152 65% 36%;        --status-ac-fg: 152 70% 28%;
+    --status-test: 30 90% 42%;       --status-test-fg: 28 90% 36%;
+    --status-commit: 220 9% 46%;     --status-commit-fg: 220 12% 32%;
   }
 
   .dark {
@@ -133,6 +148,20 @@
     --sidebar-accent-foreground: 210 20% 85%;
     --sidebar-border: 222 30% 15%;
     --sidebar-ring: 173 80% 45%;
+
+    /* ---- Design system extension (dark) ---- */
+    --surface: 0 0% 4%;             /* page bg layer (#0A0A0A-ish) */
+    --surface-elevated: 0 0% 5.5%;  /* cards (#0E0E0E) */
+    --surface-sunken: 0 0% 7%;      /* input wells (#111111) */
+    --hairline: 0 0% 100%;          /* used at low alpha — alpha applied in tailwind */
+
+    /* Status palette — dark mode (brighter tints) */
+    --status-prd: 262 83% 70%;      --status-prd-fg: 262 90% 78%;
+    --status-epic: 222 90% 68%;     --status-epic-fg: 222 95% 78%;
+    --status-story: 173 80% 50%;    --status-story-fg: 173 80% 65%;
+    --status-ac: 152 70% 50%;       --status-ac-fg: 152 70% 65%;
+    --status-test: 38 92% 58%;      --status-test-fg: 38 95% 70%;
+    --status-commit: 220 9% 60%;    --status-commit-fg: 220 12% 75%;
   }
 }
 
@@ -453,96 +482,168 @@
     justify-content: center;
   }
 
-  /* ---------- Subtle (ghost-fill) variants — direct CDPlayer recipe ---------- */
+  /* ============================================================
+   * btn-3d variants — light defaults; .dark ancestor flips to dark.
+   * Light recipe: hairline border + crisp inset highlight, no outer
+   * drop shadow. Dark recipe: raised pill with soft outer shadow.
+   * ============================================================ */
 
-  /* Secondary — light-on-dark ghost pill */
+  /* ---------- Secondary ---------- */
   .btn-3d-secondary {
+    background: rgba(0, 0, 0, 0.04);
+    color: #18181B;
+    box-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+  }
+  .btn-3d-secondary:hover { background: rgba(0, 0, 0, 0.07); color: #09090B; }
+  .btn-3d-secondary:active {
+    transform: translateY(1px) scale(0.98);
+    background: rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.12);
+  }
+  .dark .btn-3d-secondary {
     background: rgba(255, 255, 255, 0.04);
     color: #e7e7e6;
     box-shadow:
       0 1px 0 rgba(0, 0, 0, 0.4),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
-  .btn-3d-secondary:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fafafa;
-  }
-  .btn-3d-secondary:active {
-    transform: translateY(1px) scale(0.98);
+  .dark .btn-3d-secondary:hover { background: rgba(255, 255, 255, 0.08); color: #fafafa; }
+  .dark .btn-3d-secondary:active {
     background: rgba(255, 255, 255, 0.06);
     box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.45);
   }
 
-  /* Ghost — no resting shadow at all, presses with inward shadow */
+  /* ---------- Ghost ---------- */
   .btn-3d-ghost {
     background: transparent;
-    color: #a1a1aa;
+    color: #52525B;
     box-shadow: none;
   }
-  .btn-3d-ghost:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: #fafafa;
-  }
+  .btn-3d-ghost:hover { background: rgba(0, 0, 0, 0.04); color: #09090B; }
   .btn-3d-ghost:active {
     transform: translateY(1px) scale(0.98);
+    background: rgba(0, 0, 0, 0.06);
+    box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.1);
+  }
+  .dark .btn-3d-ghost { color: #a1a1aa; }
+  .dark .btn-3d-ghost:hover { background: rgba(255, 255, 255, 0.05); color: #fafafa; }
+  .dark .btn-3d-ghost:active {
     background: rgba(255, 255, 255, 0.04);
     box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.2);
   }
 
-  /* Outline — transparent fill, hairline border, no shadow */
+  /* ---------- Outline ---------- */
   .btn-3d-outline {
     background: transparent;
+    color: #18181B;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14);
+  }
+  .btn-3d-outline:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: #09090B;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.22);
+  }
+  .btn-3d-outline:active {
+    transform: translateY(1px) scale(0.98);
+    background: rgba(0, 0, 0, 0.05);
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 0, 0, 0.18),
+      inset 0 2px 3px rgba(0, 0, 0, 0.12);
+  }
+  .dark .btn-3d-outline {
     color: #e4e4e7;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
   }
-  .btn-3d-outline:hover {
+  .dark .btn-3d-outline:hover {
     background: rgba(255, 255, 255, 0.04);
     color: #fafafa;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
   }
-  .btn-3d-outline:active {
-    transform: translateY(1px) scale(0.98);
+  .dark .btn-3d-outline:active {
     background: rgba(255, 255, 255, 0.03);
     box-shadow:
       inset 0 0 0 1px rgba(255, 255, 255, 0.16),
       inset 0 2px 3px rgba(0, 0, 0, 0.25);
   }
 
-
-  /* ---------- Solid variants — same recipe, heavier shadow like .cdp-btn--play ---------- */
-
-  /* Primary — solid white */
+  /* ---------- Primary ---------- */
   .btn-3d-primary {
+    background: #0A0A0A;
+    color: #FAFAFA;
+    box-shadow:
+      inset 0 0 0 1px #000000,
+      inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+  .btn-3d-primary:hover { background: #18181B; }
+  .btn-3d-primary:active {
+    transform: translateY(1px) scale(0.98);
+    background: #000000;
+    box-shadow:
+      inset 0 0 0 1px #000000,
+      inset 0 2px 3px rgba(0, 0, 0, 0.5);
+  }
+  .dark .btn-3d-primary {
     background: #fafafa;
     color: #0a0a0a;
     box-shadow:
       0 2px 0 rgba(0, 0, 0, 0.35),
       inset 0 1px 0 rgba(255, 255, 255, 0.8);
   }
-  .btn-3d-primary:hover { background: #ffffff; }
-  .btn-3d-primary:active {
-    transform: translateY(1px) scale(0.98);
+  .dark .btn-3d-primary:hover { background: #ffffff; }
+  .dark .btn-3d-primary:active {
     background: #ebebeb;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.22);
   }
 
-  /* Accent — teal, the primary action */
+  /* ---------- Accent (teal) ---------- */
   .btn-3d-accent {
+    background: hsl(173 80% 38%);
+    color: #ffffff;
+    box-shadow:
+      inset 0 0 0 1px hsl(173 60% 30% / 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+  .btn-3d-accent:hover { background: hsl(173 80% 34%); }
+  .btn-3d-accent:active {
+    transform: translateY(1px) scale(0.98);
+    background: hsl(173 82% 30%);
+    box-shadow:
+      inset 0 0 0 1px hsl(173 60% 26% / 0.5),
+      inset 0 2px 3px rgba(0, 0, 0, 0.28);
+  }
+  .dark .btn-3d-accent {
     background: hsl(173 80% 40%);
     color: #042f2e;
     box-shadow:
       0 2px 0 rgba(0, 0, 0, 0.45),
       inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
-  .btn-3d-accent:hover { background: hsl(173 80% 44%); }
-  .btn-3d-accent:active {
-    transform: translateY(1px) scale(0.98);
+  .dark .btn-3d-accent:hover { background: hsl(173 80% 44%); }
+  .dark .btn-3d-accent:active {
     background: hsl(173 82% 34%);
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
   }
 
-  /* Destructive */
+  /* ---------- Destructive ---------- */
   .btn-3d-destructive {
+    background: #fff1f1;
+    color: #b91c1c;
+    box-shadow:
+      inset 0 0 0 1px rgba(220, 38, 38, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+  .btn-3d-destructive:hover { background: #ffe4e4; color: #991b1b; }
+  .btn-3d-destructive:active {
+    transform: translateY(1px) scale(0.98);
+    background: #ffd6d6;
+    box-shadow:
+      inset 0 0 0 1px rgba(220, 38, 38, 0.35),
+      inset 0 2px 3px rgba(220, 38, 38, 0.18);
+  }
+  .dark .btn-3d-destructive {
     background: rgba(239, 68, 68, 0.1);
     color: #fca5a5;
     box-shadow:
@@ -550,12 +651,8 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.05),
       inset 0 0 0 1px rgba(239, 68, 68, 0.25);
   }
-  .btn-3d-destructive:hover {
-    background: rgba(239, 68, 68, 0.16);
-    color: #fecaca;
-  }
-  .btn-3d-destructive:active {
-    transform: translateY(1px) scale(0.98);
+  .dark .btn-3d-destructive:hover { background: rgba(239, 68, 68, 0.16); color: #fecaca; }
+  .dark .btn-3d-destructive:active {
     background: rgba(239, 68, 68, 0.12);
     box-shadow:
       inset 0 2px 3px rgba(0, 0, 0, 0.4),
