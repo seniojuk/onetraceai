@@ -23,7 +23,7 @@ import { HeroFlow } from "@/components/landing/HeroFlow";
 import { Reveal, ScrollProgress, useActiveSection } from "@/components/landing/motion";
 
 /**
- * Marketing home — Architectural density direction.
+ * Marketing home. Architectural density direction.
  * Locked design system: Geist + Instrument Serif italic accents,
  * hairline borders, semantic tokens, status palette, btn-3d buttons.
  * No hardcoded colors. Full-bleed dark band for narrative rhythm.
