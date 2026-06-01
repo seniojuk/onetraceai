@@ -421,7 +421,7 @@ function SolutionSection() {
               to="/auth?mode=signup"
               className="btn-3d btn-3d-accent mt-8 inline-flex h-10 items-center gap-1.5 px-4 text-[13px] font-medium"
             >
-              Explore the graph <ArrowUpRight className="h-4 w-4" />
+              See the graph <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="lg:col-span-7">
