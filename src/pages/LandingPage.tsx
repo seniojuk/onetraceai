@@ -23,7 +23,7 @@ import { HeroFlow } from "@/components/landing/HeroFlow";
 import { Reveal, ScrollProgress, useActiveSection } from "@/components/landing/motion";
 
 /**
- * Marketing home — Architectural density direction.
+ * Marketing home. Architectural density direction.
  * Locked design system: Geist + Instrument Serif italic accents,
  * hairline borders, semantic tokens, status palette, btn-3d buttons.
  * No hardcoded colors. Full-bleed dark band for narrative rhythm.
@@ -105,7 +105,7 @@ function Nav() {
             to="/auth?mode=signup"
             className="btn-3d btn-3d-primary inline-flex h-8 items-center gap-1.5 px-3 text-[13px] font-medium"
           >
-            Get Started <ArrowUpRight className="h-3.5 w-3.5" />
+            Start free <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
@@ -156,7 +156,7 @@ function Nav() {
                   onClick={() => setOpen(false)}
                   className="btn-3d btn-3d-primary inline-flex h-10 items-center justify-center gap-1.5 px-3 text-sm font-medium"
                 >
-                  Get Started <ArrowUpRight className="h-4 w-4" />
+                  Start free <ArrowUpRight className="h-4 w-4" />
                 </Link>
               </div>
             </SheetContent>
@@ -173,7 +173,7 @@ function Nav() {
 function Hero() {
   return (
     <section className="relative overflow-hidden border-b border-border bg-background">
-      {/* Very subtle top vignette — Linear keeps it nearly black */}
+      {/* Very subtle top vignette. Linear keeps it nearly black. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[420px]"
@@ -183,7 +183,7 @@ function Hero() {
       />
 
       <div className="relative mx-auto max-w-7xl px-8 pt-32 pb-16 md:pt-40 md:pb-20">
-        {/* Headline — left aligned, oversized, tight */}
+        {/* Headline. Left aligned, oversized, tight. */}
         <Reveal
           as="h1"
           y={20}
@@ -194,10 +194,10 @@ function Hero() {
 
         {/* Subhead */}
         <Reveal as="p" delay={120} className="mt-8 max-w-md text-[15px] leading-relaxed text-muted-foreground">
-          Built for planning, building, and proving AI-generated software.
+          Plan, build, and prove every line of AI-generated software.
         </Reveal>
 
-        {/* Product visual — full bleed panel below, Linear-style */}
+        {/* Product visual. Full-bleed panel below, Linear-style. */}
         <Reveal delay={220} y={28} className="relative mt-10 md:mt-14">
           <div
             aria-hidden
@@ -358,10 +358,10 @@ function GraphNode({
 function ProblemSection() {
   return (
     <div className="mx-auto max-w-6xl px-6">
-      <Section id="problem" eyebrow="01 — The problem" title="Your build flow is fast. Your traceability is broken.">
+      <Section id="problem" eyebrow="01 / The problem" title="Your build flow is fast. Your traceability is broken.">
         <p className="-mt-4 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-          You ideate in ChatGPT. You generate a PRD. You paste prompts into Lovable, Cursor, or Replit. Code appears —
-          but now what?
+          You ideate in ChatGPT. You generate a PRD. You paste prompts into Lovable, Cursor, or Replit. Code appears.
+          Then what?
         </p>
         <div className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-2 lg:grid-cols-4">
           {PROBLEMS.map((p, idx) => (
@@ -383,7 +383,7 @@ function ProblemSection() {
   );
 }
 
-/* ---------- Solution — full-bleed dark band ---------- */
+/* ---------- Solution: full-bleed dark band ---------- */
 
 function SolutionSection() {
   return (
@@ -408,20 +408,20 @@ function SolutionSection() {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              02 — The solution
+              02 / The solution
             </div>
             <h2 className="mt-3 font-geist text-[36px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[44px]">
               An AI-native <span className="font-serif italic text-foreground/70">system of record.</span>
             </h2>
             <p className="mt-6 max-w-md text-[14px] leading-relaxed text-muted-foreground">
-              OneTrace builds a <span className="font-serif italic text-foreground/80">living map</span> of your product
-              — connecting every artifact, tracking every relationship, versioning every change.
+              OneTrace builds a <span className="font-serif italic text-foreground/80">living map</span> of your product.
+              It connects every artifact, tracks every relationship, and versions every change.
             </p>
             <Link
               to="/auth?mode=signup"
               className="btn-3d btn-3d-accent mt-8 inline-flex h-10 items-center gap-1.5 px-4 text-[13px] font-medium"
             >
-              Explore the graph <ArrowUpRight className="h-4 w-4" />
+              See the graph <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="lg:col-span-7">
@@ -450,7 +450,7 @@ function SolutionSection() {
 function HowItWorks() {
   return (
     <div className="mx-auto max-w-6xl px-6">
-      <Section id="how" eyebrow="03 — How it works" title="Three steps to traceable software.">
+      <Section id="how" eyebrow="03 / How it works" title="Three steps to traceable software.">
         <div className="relative grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* Connecting line */}
           <div
@@ -482,7 +482,7 @@ function HowItWorks() {
 function CoverageShowcase() {
   return (
     <div className="mx-auto max-w-6xl px-6">
-      <Section eyebrow="04 — Coverage engine" title="Know exactly what's done — and what's not.">
+      <Section eyebrow="04 / Coverage engine" title="Know exactly what's done. And what's not.">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
           {/* Oversized data viz */}
           <div className="rounded-xl border border-border bg-card p-6 lg:col-span-3">
@@ -577,9 +577,9 @@ function CoverageShowcase() {
 function IntegrationsRow() {
   return (
     <div className="mx-auto max-w-6xl px-6">
-      <Section id="integrations" eyebrow="05 — Integrations" title="Connects to your existing workflow.">
+      <Section id="integrations" eyebrow="05 / Integrations" title="Fits your existing workflow.">
         <p className="-mt-4 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-          OneTrace doesn't replace your tools — it connects them.
+          OneTrace doesn't replace your tools. It connects them.
         </p>
         <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
           {INTEGRATIONS.map((i, idx) => (
@@ -612,7 +612,7 @@ function IntegrationsRow() {
 function PricingSection() {
   return (
     <div className="mx-auto max-w-6xl px-6">
-      <Section id="pricing" eyebrow="06 — Pricing" title="Start free. Scale when you're ready.">
+      <Section id="pricing" eyebrow="06 / Pricing" title="Start free. Upgrade when you're ready.">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {PLANS.map((p, idx) => (
             <Reveal key={p.name} delay={idx * 100}>
@@ -689,14 +689,14 @@ function FinalCTA() {
             Ready to ship with <span className="font-serif italic text-foreground/70">confidence?</span>
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-[14px] leading-relaxed text-muted-foreground">
-            Join AI-first teams building traceable software. Start free, connect in minutes.
+            Join AI-first teams shipping traceable software. Free to start. Connect in minutes.
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link
               to="/auth?mode=signup"
               className="btn-3d btn-3d-primary inline-flex h-10 items-center gap-1.5 px-5 text-[14px] font-medium"
             >
-              Get started free <ArrowUpRight className="h-4 w-4" />
+              Start free <ArrowUpRight className="h-4 w-4" />
             </Link>
             <a href="#pricing" className="btn-3d btn-3d-ghost inline-flex h-10 items-center px-4 text-[13px]">
               See pricing
@@ -723,7 +723,7 @@ function Footer() {
               <span className="font-medium tracking-tight text-foreground">OneTrace</span>
             </div>
             <p className="mt-4 max-w-xs text-[12.5px] leading-relaxed text-muted-foreground">
-              The traceability layer for AI-built software. PRDs → Stories → Jira → Git → Tests, connected in one living
+              The traceability layer for AI-built software. PRDs, Stories, Jira, Git, and Tests connected in one living
               graph.
             </p>
           </div>
@@ -821,9 +821,9 @@ function StatusBadge({ status, label, mono = false }: { status: StatusKey; label
 /* ---------- content ---------- */
 
 const PROBLEMS = [
-  { icon: Network, title: "No clear mapping", body: "From requirements to modules to commits — nothing connects." },
-  { icon: Activity, title: "No objective coverage", body: "Against acceptance criteria. You ship and hope." },
-  { icon: GitBranch, title: "No safe regeneration", body: "When requirements change, everything breaks silently." },
+  { icon: Network, title: "No clear mapping", body: "Requirements, modules, and commits never link up." },
+  { icon: Activity, title: "No objective coverage", body: "You can't prove acceptance criteria are met. You ship and hope." },
+  { icon: GitBranch, title: "No safe regeneration", body: "When requirements change, things break silently." },
   { icon: Sparkles, title: "No shared workspace", body: "Humans and AI agents work from different sources of truth." },
 ];
 
@@ -831,7 +831,7 @@ const PILLARS = [
   {
     icon: Layers,
     title: "Artifacts",
-    body: "PRDs, Epics, Stories, ACs, Tests, Commits, PRs — all in one place with full version history.",
+    body: "PRDs, Epics, Stories, ACs, Tests, Commits, and PRs in one place with full version history.",
   },
   {
     icon: Workflow,
@@ -854,7 +854,7 @@ const STEPS = [
   {
     icon: Sparkles,
     title: "Generate traceable work",
-    body: "Turn PRDs into Epics, Stories, and ACs — pushed into Jira with full trace metadata intact.",
+    body: "Turn PRDs into Epics, Stories, and ACs. Push them to Jira with full trace metadata intact.",
   },
   {
     icon: Activity,
