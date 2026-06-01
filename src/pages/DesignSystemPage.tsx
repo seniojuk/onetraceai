@@ -147,6 +147,9 @@ export default function DesignSystemPage() {
               <button className="btn-3d btn-3d-secondary inline-flex h-9 items-center gap-1.5 px-3.5 text-[13px] font-medium">
                 Secondary
               </button>
+              <button className="btn-3d btn-3d-outline inline-flex h-9 items-center gap-1.5 px-3.5 text-[13px] font-medium">
+                Outline
+              </button>
               <button className="btn-3d btn-3d-ghost inline-flex h-9 items-center gap-1.5 px-3.5 text-[13px] font-medium">
                 Ghost
               </button>
