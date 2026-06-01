@@ -450,7 +450,7 @@ function SolutionSection() {
 function HowItWorks() {
   return (
     <div className="mx-auto max-w-6xl px-6">
-      <Section id="how" eyebrow="03 — How it works" title="Three steps to traceable software.">
+      <Section id="how" eyebrow="03 / How it works" title="Three steps to traceable software.">
         <div className="relative grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* Connecting line */}
           <div
