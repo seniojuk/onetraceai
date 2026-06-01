@@ -367,7 +367,7 @@ function ProblemSection() {
           {PROBLEMS.map((p, idx) => (
             <Reveal key={p.title} delay={idx * 70}>
               <div className="group h-full bg-card p-6 lift hover:bg-muted/30">
-                <p.icon className="h-4 w-4 text-destructive icon-pop" />
+                <p.icon className="h-4 w-4 text-destructive" />
                 <h3 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{p.title}</h3>
                 <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{p.body}</p>
               </div>
@@ -430,7 +430,7 @@ function SolutionSection() {
                 <Reveal key={p.title} delay={idx * 80}>
                   <div className="group h-full bg-card p-6 lift">
                     <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-accent">
-                      <p.icon className="h-4 w-4 icon-pop" />
+                      <p.icon className="h-4 w-4" />
                     </div>
                     <h3 className="mt-5 text-[15px] font-medium tracking-tight text-foreground">{p.title}</h3>
                     <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">{p.body}</p>
@@ -464,7 +464,7 @@ function HowItWorks() {
                   <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     Step {String(i + 1).padStart(2, "0")}
                   </span>
-                  <s.icon className="h-4 w-4 text-accent icon-pop" />
+                  <s.icon className="h-4 w-4 text-accent" />
                 </div>
                 <h3 className="mt-5 text-[16px] font-medium tracking-tight text-foreground">{s.title}</h3>
                 <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{s.body}</p>
@@ -588,7 +588,7 @@ function IntegrationsRow() {
                 <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-foreground/80 transition-colors group-hover:border-accent/40 group-hover:text-accent">
                   <svg
                     viewBox={i.viewBox}
-                    className="h-5 w-5 fill-current icon-pop"
+                    className="h-5 w-5 fill-current"
                     xmlns="http://www.w3.org/2000/svg"
                     aria-label={`${i.name} logo`}
                     role="img"
