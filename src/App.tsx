@@ -29,6 +29,7 @@ import NotFound from "./pages/NotFound";
 import PromptGeneratorPage from "./pages/PromptGeneratorPage";
 import AcceptInvitePage from "./pages/AcceptInvitePage";
 import UnsubscribePage from "./pages/UnsubscribePage";
+import DesignSystemPage from "./pages/DesignSystemPage";
 
 const queryClient = new QueryClient();
 
