@@ -98,7 +98,7 @@ function Hero() {
 
       <div className="relative mx-auto max-w-7xl px-8 pt-32 pb-16 md:pt-40 md:pb-20">
         {/* Headline — left aligned, oversized, tight */}
-        <h1 className="max-w-[18ch] font-geist text-[44px] font-medium leading-[1.04] tracking-[-0.045em] text-foreground sm:text-[64px] md:text-[88px] lg:text-[104px]">
+        <h1 className="max-w-[18ch] font-geist text-[40px] font-medium leading-[1.06] tracking-[-0.04em] text-foreground sm:text-[52px] md:text-[64px] lg:text-[72px]">
           Ship AI-built software with confidence
         </h1>
 
