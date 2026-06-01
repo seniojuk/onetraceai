@@ -85,71 +85,51 @@ function Nav() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-border">
-      {/* Linear-style ambient gradient */}
+    <section className="relative overflow-hidden border-b border-border bg-background">
+      {/* Very subtle top vignette — Linear keeps it nearly black */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[760px] [mask-image:radial-gradient(ellipse_at_top,black_40%,transparent_75%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[420px]"
         style={{
           background:
-            "radial-gradient(60% 50% at 50% 0%, hsl(var(--accent) / 0.18) 0%, transparent 60%), radial-gradient(40% 35% at 80% 8%, hsl(var(--primary) / 0.12) 0%, transparent 70%), radial-gradient(40% 35% at 20% 8%, hsl(var(--accent) / 0.10) 0%, transparent 70%)",
-        }}
-      />
-      {/* Subtle line grid */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.22] [mask-image:radial-gradient(ellipse_at_top,black_20%,transparent_70%)]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)",
-          backgroundSize: "56px 56px",
+            "radial-gradient(60% 60% at 50% -10%, hsl(var(--foreground) / 0.05) 0%, transparent 70%)",
         }}
       />
 
-      <div className="relative mx-auto max-w-5xl px-6 pt-24 pb-20 text-center">
-        {/* Eyebrow pill */}
-        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-[11px] text-muted-foreground backdrop-blur">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70 opacity-75" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
-          </span>
-          <span className="text-foreground/80">New</span>
-          <span className="text-border">·</span>
-          <span>Artifact Graph for AI-built software</span>
-          <ArrowUpRight className="h-3 w-3" />
-        </div>
-
-        {/* Headline */}
-        <h1 className="mx-auto mt-7 max-w-4xl font-geist text-[52px] font-medium leading-[1.02] tracking-[-0.045em] text-foreground md:text-[80px]">
-          Ship AI-built software
-          <br />
-          with confidence
+      <div className="relative mx-auto max-w-7xl px-8 pt-32 pb-16 md:pt-40 md:pb-20">
+        {/* Headline — left aligned, oversized, tight */}
+        <h1 className="max-w-[18ch] font-geist text-[44px] font-medium leading-[1.04] tracking-[-0.045em] text-foreground sm:text-[64px] md:text-[88px] lg:text-[104px]">
+          Ship AI-built software with confidence
         </h1>
 
-        <p className="mx-auto mt-6 max-w-xl text-[17px] leading-relaxed text-muted-foreground">
-          OneTrace connects PRDs, Stories, Jira, Git, and Tests into one
-          traceable graph — so every release ships with proof.
-        </p>
+        {/* Subhead row: left subhead, right small announcement */}
+        <div className="mt-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-10">
+          <p className="max-w-md text-[15px] leading-relaxed text-muted-foreground">
+            Purpose-built for planning, building, and proving AI-generated
+            software. Designed for the agent era.
+          </p>
 
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link
             to="/auth?mode=signup"
-            className="btn-3d btn-3d-primary group inline-flex h-10 items-center gap-1.5 px-4 text-[14px] font-medium"
+            className="group inline-flex items-center gap-2 text-[14px] text-muted-foreground transition-colors hover:text-foreground"
           >
-            Get started free
-            <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
+            </span>
+            <span className="font-medium text-foreground">
+              Drift is the new bug
+            </span>
+            <span className="text-muted-foreground/70">onetrace.ai/why</span>
+            <ArrowUpRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
-          <button className="btn-3d btn-3d-secondary inline-flex h-10 items-center gap-2 px-4 text-[13px]">
-            <PlayCircle className="h-4 w-4" />
-            Watch demo
-          </button>
         </div>
 
-        {/* Product visual */}
-        <div className="relative mx-auto mt-16 max-w-5xl text-left">
+        {/* Product visual — full bleed panel below, Linear-style */}
+        <div className="relative mt-20 md:mt-28">
           <div
             aria-hidden
-            className="pointer-events-none absolute -inset-x-10 -top-10 bottom-0 -z-10 rounded-[32px] bg-[radial-gradient(60%_50%_at_50%_0%,hsl(var(--accent)/0.18),transparent_70%)] blur-2xl"
+            className="pointer-events-none absolute -inset-x-10 -top-10 bottom-0 -z-10 rounded-[32px] bg-[radial-gradient(60%_50%_at_50%_0%,hsl(var(--accent)/0.10),transparent_70%)] blur-2xl"
           />
           <HeroGraph />
         </div>
