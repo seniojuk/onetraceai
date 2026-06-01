@@ -1,20 +1,28 @@
-import { useEffect } from "react";
-import { ArrowUpRight, Check, Command, GitBranch, Sparkles, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowUpRight, Check, Command, GitBranch, Moon, Sparkles, Sun, Zap } from "lucide-react";
 
 /**
  * /design — OneTrace Design System
  * Linear / Vercel / Resend / Lovable inspired.
- * Keeps the existing OneTrace palette (navy + teal accent),
- * refines typography (Geist + Instrument Serif), and introduces
- * the surface, border, and motion language used in the app refresh.
+ * Dark + light, toggleable. Light overrides are scoped to [data-ds-theme="light"]
+ * so they don't bleed into the rest of the app.
  */
 export default function DesignSystemPage() {
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
   useEffect(() => {
     document.title = "Design System — OneTrace";
   }, []);
 
+  const isLight = theme === "light";
+
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-zinc-100 font-geist antialiased">
+    <div
+      data-ds-theme={theme}
+      className="min-h-screen bg-[#0A0A0A] text-zinc-100 font-geist antialiased"
+    >
+      <DesignSystemThemeStyles />
+
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#0A0A0A]/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -26,11 +34,22 @@ export default function DesignSystemPage() {
             <span className="text-zinc-500">/</span>
             <span className="text-zinc-400">Design</span>
           </div>
-          <div className="flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-zinc-400 font-mono">
-            <Command className="h-3 w-3" /> v1.0
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setTheme(isLight ? "dark" : "light")}
+              aria-label={`Switch to ${isLight ? "dark" : "light"} mode`}
+              className="btn-3d btn-3d-secondary inline-flex h-8 w-8 items-center justify-center"
+            >
+              {isLight ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
+            </button>
+            <div className="flex items-center gap-1 rounded-md border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-zinc-400 font-mono">
+              <Command className="h-3 w-3" /> v1.0
+            </div>
           </div>
         </div>
       </header>
+
 
       <main className="mx-auto max-w-6xl px-6 py-20">
         {/* Hero */}
@@ -379,3 +398,90 @@ const PRINCIPLES = [
     body: "Density without noise. Show the right insight, in the right place, at the right moment.",
   },
 ];
+
+/**
+ * Scoped light-mode overrides for the /design page only.
+ * Targets every dark utility actually used on the page and
+ * remaps it to a light equivalent. Scoped via [data-ds-theme="light"]
+ * so nothing leaks into the rest of the app.
+ */
+function DesignSystemThemeStyles() {
+  return (
+    <style>{`
+      [data-ds-theme="light"] {
+        color-scheme: light;
+      }
+
+      /* Surfaces */
+      [data-ds-theme="light"].bg-\\[\\#0A0A0A\\],
+      [data-ds-theme="light"] .bg-\\[\\#0A0A0A\\] { background-color: #FAFAF7 !important; }
+      [data-ds-theme="light"] .bg-\\[\\#0E0E0E\\] { background-color: #FFFFFF !important; }
+      [data-ds-theme="light"] .bg-\\[\\#111111\\] { background-color: #F4F4F2 !important; }
+      [data-ds-theme="light"] .bg-\\[\\#171717\\] { background-color: #EDEDEA !important; }
+
+      /* Translucent dark fills → translucent black on light */
+      [data-ds-theme="light"] .bg-white\\/\\[0\\.03\\] { background-color: rgba(0,0,0,0.025) !important; }
+      [data-ds-theme="light"] .bg-white\\/\\[0\\.05\\] { background-color: rgba(0,0,0,0.04) !important; }
+      [data-ds-theme="light"] .bg-white\\/\\[0\\.06\\] { background-color: rgba(0,0,0,0.05) !important; }
+      [data-ds-theme="light"] .bg-white\\/\\[0\\.08\\] { background-color: rgba(0,0,0,0.07) !important; }
+      [data-ds-theme="light"] .bg-black\\/40 { background-color: rgba(0,0,0,0.04) !important; }
+
+      /* Borders */
+      [data-ds-theme="light"] .border-white\\/10 { border-color: rgba(0,0,0,0.1) !important; }
+      [data-ds-theme="light"] .border-white\\/20 { border-color: rgba(0,0,0,0.18) !important; }
+      [data-ds-theme="light"] .border-white\\/\\[0\\.06\\] { border-color: rgba(0,0,0,0.07) !important; }
+      [data-ds-theme="light"] .border-white\\/\\[0\\.08\\] { border-color: rgba(0,0,0,0.09) !important; }
+      [data-ds-theme="light"] .border-white\\/\\[0\\.14\\] { border-color: rgba(0,0,0,0.15) !important; }
+
+      /* Text — invert the zinc scale */
+      [data-ds-theme="light"] .text-white { color: #0A0A0A !important; }
+      [data-ds-theme="light"] .text-zinc-100 { color: #18181B !important; }
+      [data-ds-theme="light"] .text-zinc-200 { color: #27272A !important; }
+      [data-ds-theme="light"] .text-zinc-300 { color: #3F3F46 !important; }
+      [data-ds-theme="light"] .text-zinc-400 { color: #52525B !important; }
+      [data-ds-theme="light"] .text-zinc-500 { color: #71717A !important; }
+      [data-ds-theme="light"] .text-zinc-600 { color: #A1A1AA !important; }
+
+      /* Color swatch demos that show literal scale values — keep them readable */
+      [data-ds-theme="light"] .bg-zinc-50 { background-color: #FAFAFA !important; }
+      [data-ds-theme="light"] .bg-zinc-400 { background-color: #A1A1AA !important; }
+      [data-ds-theme="light"] .bg-zinc-500 { background-color: #71717A !important; }
+
+      /* Sticky header backdrop */
+      [data-ds-theme="light"] header.bg-\\[\\#0A0A0A\\]\\/80 { background-color: rgba(250,250,247,0.8) !important; }
+
+      /* Light-mode buttons: invert the dark recipe */
+      [data-ds-theme="light"] .btn-3d-secondary {
+        background: rgba(0,0,0,0.04);
+        color: #18181B;
+        box-shadow:
+          0 1px 0 rgba(0,0,0,0.08),
+          inset 0 1px 0 rgba(255,255,255,0.9),
+          inset 0 0 0 1px rgba(0,0,0,0.06);
+      }
+      [data-ds-theme="light"] .btn-3d-secondary:hover { background: rgba(0,0,0,0.07); color: #09090B; }
+      [data-ds-theme="light"] .btn-3d-secondary:active {
+        background: rgba(0,0,0,0.05);
+        box-shadow: inset 0 2px 3px rgba(0,0,0,0.12);
+      }
+      [data-ds-theme="light"] .btn-3d-ghost { color: #52525B; }
+      [data-ds-theme="light"] .btn-3d-ghost:hover { background: rgba(0,0,0,0.04); color: #09090B; }
+      [data-ds-theme="light"] .btn-3d-ghost:active {
+        background: rgba(0,0,0,0.06);
+        box-shadow: inset 0 2px 3px rgba(0,0,0,0.1);
+      }
+      [data-ds-theme="light"] .btn-3d-primary {
+        background: #0A0A0A;
+        color: #FAFAFA;
+        box-shadow:
+          0 2px 0 rgba(0,0,0,0.25),
+          inset 0 1px 0 rgba(255,255,255,0.12);
+      }
+      [data-ds-theme="light"] .btn-3d-primary:hover { background: #18181B; }
+      [data-ds-theme="light"] .btn-3d-primary:active {
+        background: #27272A;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.45);
+      }
+    `}</style>
+  );
+}
