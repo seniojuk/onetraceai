@@ -495,7 +495,7 @@ function IntegrationsRow() {
             <div key={i.name} className="group bg-card p-6 transition-colors hover:bg-muted/30">
               <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 transition-colors group-hover:border-accent/40">
                 <img
-                  src={`https://cdn.simpleicons.org/${i.slug}`}
+                  src={i.icon}
                   alt={`${i.name} logo`}
                   className="h-5 w-5"
                   loading="lazy"
