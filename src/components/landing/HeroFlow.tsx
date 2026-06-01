@@ -100,32 +100,32 @@ const nodeTypes = { artifact: ArtifactNode };
 
 // Horizontal left-to-right flow.
 // Columns: PRD | EPIC | STORIES (2) | JIRA + PR + TEST (3)
-const COL = { prd: 0, epic: 220, story: 460, exec: 720 };
+const COL = { prd: 0, epic: 160, story: 330, exec: 520 };
 
 const initialNodes: Node<FlowNodeData>[] = [
   {
     id: "prd",
     type: "artifact",
-    position: { x: COL.prd, y: 130 },
-    data: { kind: "prd", id: "PRD-042", title: "User authentication", meta: "4 ACs", status: "done" },
+    position: { x: COL.prd, y: 90 },
+    data: { kind: "prd", id: "PRD-042", title: "User auth", meta: "4 ACs", status: "done" },
   },
   {
     id: "epic",
     type: "artifact",
-    position: { x: COL.epic, y: 130 },
+    position: { x: COL.epic, y: 90 },
     data: { kind: "epic", id: "EPIC-014", title: "Onboarding v2", meta: "3 stories", status: "active" },
   },
   {
     id: "story-1",
     type: "artifact",
-    position: { x: COL.story, y: 40 },
-    data: { kind: "story", id: "STORY-217", title: "Google OAuth flow", meta: "in progress", status: "active" },
+    position: { x: COL.story, y: 25 },
+    data: { kind: "story", id: "STORY-217", title: "Google OAuth", meta: "in progress", status: "active" },
   },
   {
     id: "story-2",
     type: "artifact",
-    position: { x: COL.story, y: 220 },
-    data: { kind: "story", id: "STORY-218", title: "Email magic link", meta: "in review", status: "active" },
+    position: { x: COL.story, y: 155 },
+    data: { kind: "story", id: "STORY-218", title: "Magic link", meta: "in review", status: "active" },
   },
   {
     id: "jira",
@@ -136,14 +136,14 @@ const initialNodes: Node<FlowNodeData>[] = [
   {
     id: "pr",
     type: "artifact",
-    position: { x: COL.exec, y: 130 },
+    position: { x: COL.exec, y: 90 },
     data: { kind: "pr", id: "#482", title: "feat(auth): handler", meta: "merged", status: "done" },
   },
   {
     id: "test",
     type: "artifact",
-    position: { x: COL.exec, y: 260 },
-    data: { kind: "test", id: "TEST-091", title: "OAuth callback spec", meta: "3/3 passing", status: "done" },
+    position: { x: COL.exec, y: 180 },
+    data: { kind: "test", id: "TEST-091", title: "OAuth callback", meta: "3/3 passing", status: "done" },
   },
 ];
 
