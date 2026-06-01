@@ -894,12 +894,62 @@ const STEPS = [
   },
 ];
 
-const INTEGRATIONS = [
-  { name: "Jira Cloud", short: "JC", body: "Two-way sync with full-fidelity field mapping." },
-  { name: "GitHub", short: "GH", body: "Commits, PRs, and webhook-driven coverage." },
-  { name: "OpenAI", short: "AI", body: "GPT-4 and o-series for intelligent agents." },
-  { name: "Anthropic", short: "AN", body: "Claude for deep reasoning over your graph." },
+// Logos served from simple-icons CDN (auto-colored by brand).
+const SI = (slug: string, color = "currentColor") =>
+  `https://cdn.simpleicons.org/${slug}/${color}`;
+
+const INTEGRATIONS: {
+  name: string;
+  short: string;
+  body: string;
+  logo: string;
+  ring: "inner" | "outer";
+  featured?: boolean;
+}[] = [
+  // Inner ring — primary integrations (shown in the detail strip too)
+  {
+    name: "Jira",
+    short: "JC",
+    body: "Two-way sync with full-fidelity field mapping.",
+    logo: SI("jira", "0052CC"),
+    ring: "inner",
+    featured: true,
+  },
+  {
+    name: "GitHub",
+    short: "GH",
+    body: "Commits, PRs, and webhook-driven coverage.",
+    logo: SI("github"),
+    ring: "inner",
+    featured: true,
+  },
+  {
+    name: "OpenAI",
+    short: "AI",
+    body: "GPT-4 and o-series for intelligent agents.",
+    logo: SI("openai"),
+    ring: "inner",
+    featured: true,
+  },
+  {
+    name: "Anthropic",
+    short: "AN",
+    body: "Claude for deep reasoning over your graph.",
+    logo: SI("anthropic", "D97757"),
+    ring: "inner",
+    featured: true,
+  },
+  // Outer ring — supporting tools (logos only, no detail row)
+  { name: "Linear", short: "LN", body: "", logo: SI("linear", "5E6AD2"), ring: "outer" },
+  { name: "GitLab", short: "GL", body: "", logo: SI("gitlab", "FC6D26"), ring: "outer" },
+  { name: "Slack", short: "SL", body: "", logo: SI("slack", "4A154B"), ring: "outer" },
+  { name: "Notion", short: "NT", body: "", logo: SI("notion"), ring: "outer" },
+  { name: "Figma", short: "FG", body: "", logo: SI("figma", "F24E1E"), ring: "outer" },
+  { name: "Google", short: "GG", body: "", logo: SI("google", "4285F4"), ring: "outer" },
+  { name: "Confluence", short: "CF", body: "", logo: SI("confluence", "172B4D"), ring: "outer" },
+  { name: "Vercel", short: "VC", body: "", logo: SI("vercel"), ring: "outer" },
 ];
+
 
 const PLANS = [
   {
