@@ -51,17 +51,14 @@ function ArtifactNode({ data }: NodeProps<Node<FlowNodeData>>) {
 
   return (
     <div
-      className={`group relative w-[176px] rounded-lg border bg-card/95 px-3 py-2.5 shadow-[0_4px_14px_-6px_hsl(var(--foreground)/0.12)] backdrop-blur transition ${
+      className={`group relative w-[150px] sm:w-[176px] rounded-lg border bg-card/95 px-2.5 py-2 sm:px-3 sm:py-2.5 shadow-[0_4px_14px_-6px_hsl(var(--foreground)/0.12)] backdrop-blur transition ${
         isStory
           ? "border-accent/50 shadow-[0_0_0_3px_hsl(var(--accent)/0.10),0_4px_14px_-6px_hsl(var(--accent)/0.25)]"
           : "border-border"
       }`}
     >
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!h-1.5 !w-1.5 !border-0 !bg-border"
-      />
+      <Handle type="target" position={Position.Left} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
+      <Handle type="target" position={Position.Top} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Icon className={`h-3 w-3 ${meta.tone}`} />
@@ -82,20 +79,18 @@ function ArtifactNode({ data }: NodeProps<Node<FlowNodeData>>) {
           <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
         )}
       </div>
-      <div className="mt-1.5 truncate text-[12px] font-medium tracking-tight text-foreground">
+      <div className="mt-1.5 truncate text-[11px] sm:text-[12px] font-medium tracking-tight text-foreground">
         {data.title}
       </div>
-      <div className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">
+      <div className="mt-0.5 truncate font-mono text-[9.5px] sm:text-[10px] text-muted-foreground">
         {data.id} · {data.meta}
       </div>
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!h-1.5 !w-1.5 !border-0 !bg-border"
-      />
+      <Handle type="source" position={Position.Right} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
+      <Handle type="source" position={Position.Bottom} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
     </div>
   );
 }
+
 
 const nodeTypes = { artifact: ArtifactNode };
 
