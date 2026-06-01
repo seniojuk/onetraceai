@@ -125,7 +125,7 @@ export default {
           "sans-serif",
         ],
         serif: [
-          "Instrument Serif",
+          "Fraunces",
           "ui-serif",
           "Georgia",
           "serif",
