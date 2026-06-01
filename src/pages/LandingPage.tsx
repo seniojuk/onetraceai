@@ -634,8 +634,6 @@ function Footer() {
                 OT
               </div>
               <span className="font-medium tracking-tight text-foreground">OneTrace</span>
-              <span className="text-muted-foreground/70">/</span>
-              <span className="text-muted-foreground">AI</span>
             </div>
             <p className="mt-4 max-w-xs text-[12.5px] leading-relaxed text-muted-foreground">
               The traceability layer for AI-built software. PRDs → Stories → Jira → Git → Tests,
