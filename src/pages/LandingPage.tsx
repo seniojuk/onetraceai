@@ -16,7 +16,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
-import { HeroFlow } from "@/components/landing/HeroFlow";
 
 /**
  * Marketing home — Architectural density direction.
@@ -29,7 +28,6 @@ const LandingPage = () => {
     <div className="min-h-screen bg-background text-foreground font-geist antialiased selection:bg-accent/20">
       <Nav />
       <Hero />
-      <TrustBand />
       <ProblemSection />
       <SolutionSection />
       <HowItWorks />
@@ -55,13 +53,25 @@ function Nav() {
             OT
           </div>
           <span className="font-medium tracking-tight text-foreground">OneTrace</span>
+          <span className="text-muted-foreground/70">/</span>
           <span className="text-muted-foreground">AI</span>
         </div>
         <nav className="hidden items-center gap-8 text-[13px] text-muted-foreground md:flex">
-          <a href="#problem" className="transition-colors hover:text-foreground">Problem</a>
-          <a href="#solution" className="transition-colors hover:text-foreground">Solution</a>
-          <a href="#how" className="transition-colors hover:text-foreground">How it works</a>
-          <a href="#pricing" className="transition-colors hover:text-foreground">Pricing</a>
+          <a href="#problem" className="transition-colors hover:text-foreground">
+            Problem
+          </a>
+          <a href="#solution" className="transition-colors hover:text-foreground">
+            Solution
+          </a>
+          <a href="#how" className="transition-colors hover:text-foreground">
+            How it works
+          </a>
+          <a href="#pricing" className="transition-colors hover:text-foreground">
+            Pricing
+          </a>
+          <Link to="/design" className="transition-colors hover:text-foreground">
+            Design
+          </Link>
         </nav>
         <div className="flex items-center gap-2">
           <ThemeToggle />
@@ -84,36 +94,66 @@ function Nav() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-border bg-background">
-      {/* Very subtle top vignette — Linear keeps it nearly black */}
+    <section className="relative overflow-hidden border-b border-border">
+      {/* Dot grid background */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[420px]"
+        className="pointer-events-none absolute inset-0 opacity-[0.45] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]"
         style={{
-          background:
-            "radial-gradient(60% 60% at 50% -10%, hsl(var(--foreground) / 0.05) 0%, transparent 70%)",
+          backgroundImage: "radial-gradient(hsl(var(--border)) 1px, transparent 1px)",
+          backgroundSize: "22px 22px",
         }}
       />
+      <div className="relative mx-auto max-w-6xl px-6 pt-20 pb-24">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
+          {/* Left column — copy */}
+          <div className="lg:col-span-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-[11px] text-muted-foreground backdrop-blur">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/70 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
+              </span>
+              Built for AI-first startups & solo builders
+            </div>
+            <h1 className="mt-6 font-geist text-[56px] leading-[1.02] tracking-[-0.04em] text-foreground md:text-[68px]">
+              Ship AI-built software with <span className="font-serif italic text-foreground/70">confidence</span> — not
+              crossed fingers.
+            </h1>
+            <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+              OneTrace connects your PRDs, Stories, Jira, Git, and Tests into one traceable{" "}
+              <span className="font-serif italic text-foreground/80">Artifact Graph</span> — so every feature has an
+              owner, every commit has intent, and every release has proof.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                to="/auth?mode=signup"
+                className="btn-3d btn-3d-primary group inline-flex h-10 items-center gap-1.5 px-4 text-[14px] font-medium"
+              >
+                Get started free
+                <ArrowUpRight className="h-4 w-4 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </Link>
+              <button className="btn-3d btn-3d-secondary inline-flex h-10 items-center gap-2 px-4 text-[13px]">
+                <PlayCircle className="h-4 w-4" />
+                Watch demo
+              </button>
+            </div>
+            <div className="mt-5 flex items-center gap-4 font-mono text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <Check className="h-3 w-3 text-accent" /> Start free
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Check className="h-3 w-3 text-accent" /> Connect in minutes
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Check className="h-3 w-3 text-accent" /> No credit card
+              </span>
+            </div>
+          </div>
 
-      <div className="relative mx-auto max-w-7xl px-8 pt-32 pb-16 md:pt-40 md:pb-20">
-        {/* Headline — left aligned, oversized, tight */}
-        <h1 className="max-w-[18ch] font-geist text-[40px] font-medium leading-[1.06] tracking-[-0.04em] text-foreground sm:text-[52px] md:text-[64px] lg:text-[72px]">
-          Ship AI-built software with confidence
-        </h1>
-
-        {/* Subhead */}
-        <p className="mt-8 max-w-md text-[15px] leading-relaxed text-muted-foreground">
-          Purpose-built for planning, building, and proving AI-generated
-          software. Designed for the agent era.
-        </p>
-
-        {/* Product visual — full bleed panel below, Linear-style */}
-        <div className="relative mt-10 md:mt-14">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -inset-x-10 -top-10 bottom-0 -z-10 rounded-[32px] bg-[radial-gradient(60%_50%_at_50%_0%,hsl(var(--accent)/0.10),transparent_70%)] blur-2xl"
-          />
-          <HeroFlow />
+          {/* Right column — live artifact graph */}
+          <div className="lg:col-span-6">
+            <HeroGraph />
+          </div>
         </div>
       </div>
     </section>
@@ -154,10 +194,22 @@ function HeroGraph() {
               <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0.05" />
             </linearGradient>
           </defs>
-          <path d="M70 70 C 170 70, 170 180, 270 180" stroke="url(#edge)" strokeWidth="1" fill="none" strokeDasharray="3 4">
+          <path
+            d="M70 70 C 170 70, 170 180, 270 180"
+            stroke="url(#edge)"
+            strokeWidth="1"
+            fill="none"
+            strokeDasharray="3 4"
+          >
             <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="1.6s" repeatCount="indefinite" />
           </path>
-          <path d="M70 290 C 170 290, 170 180, 270 180" stroke="url(#edge)" strokeWidth="1" fill="none" strokeDasharray="3 4">
+          <path
+            d="M70 290 C 170 290, 170 180, 270 180"
+            stroke="url(#edge)"
+            strokeWidth="1"
+            fill="none"
+            strokeDasharray="3 4"
+          >
             <animate attributeName="stroke-dashoffset" from="0" to="-14" dur="2.1s" repeatCount="indefinite" />
           </path>
         </svg>
@@ -205,19 +257,9 @@ function Stat({
 }) {
   return (
     <div className="bg-card px-3 py-3">
-      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-        {label}
-      </div>
-      <div className="mt-1 font-geist text-[18px] font-medium tracking-tight text-foreground">
-        {value}
-      </div>
-      <div
-        className={`font-mono text-[10px] ${
-          tone === "warn" ? "text-drift" : "text-accent"
-        }`}
-      >
-        {trend}
-      </div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{label}</div>
+      <div className="mt-1 font-geist text-[18px] font-medium tracking-tight text-foreground">{value}</div>
+      <div className={`font-mono text-[10px] ${tone === "warn" ? "text-drift" : "text-accent"}`}>{trend}</div>
     </div>
   );
 }
@@ -249,9 +291,7 @@ function GraphNode({
         <StatusBadge status={kind} label={id} mono />
         <span className="font-mono text-[11px] text-muted-foreground">{progress}%</span>
       </div>
-      <h4 className="mt-3 truncate text-[13px] font-medium tracking-tight text-foreground">
-        {title}
-      </h4>
+      <h4 className="mt-3 truncate text-[13px] font-medium tracking-tight text-foreground">{title}</h4>
       <p className="mt-0.5 truncate font-mono text-[10.5px] text-muted-foreground">{meta}</p>
       <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-muted">
         <div
@@ -263,27 +303,6 @@ function GraphNode({
   );
 }
 
-/* ---------- Trust band ---------- */
-
-function TrustBand() {
-  return (
-    <section className="border-b border-border bg-muted/20">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-6 py-10 md:flex-row md:justify-between">
-        <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-          Trusted by AI-first builders shipping with traceability
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-[13px] font-medium text-muted-foreground/80">
-          {["LOVABLE", "CURSOR", "REPLIT", "VERCEL", "LINEAR", "ATTIO"].map((b) => (
-            <span key={b} className="tracking-[0.25em] transition-colors hover:text-foreground">
-              {b}
-            </span>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* ---------- Problem ---------- */
 
 function ProblemSection() {
@@ -291,8 +310,8 @@ function ProblemSection() {
     <div className="mx-auto max-w-6xl px-6">
       <Section id="problem" eyebrow="01 — The problem" title="Your build flow is fast. Your traceability is broken.">
         <p className="-mt-4 max-w-2xl text-[14px] leading-relaxed text-muted-foreground">
-          You ideate in ChatGPT. You generate a PRD. You paste prompts into Lovable, Cursor,
-          or Replit. Code appears — but now what?
+          You ideate in ChatGPT. You generate a PRD. You paste prompts into Lovable, Cursor, or Replit. Code appears —
+          but now what?
         </p>
         <div className="mt-8 grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-2 lg:grid-cols-4">
           {PROBLEMS.map((p) => (
@@ -304,7 +323,8 @@ function ProblemSection() {
           ))}
         </div>
         <p className="mt-8 text-[13px] text-muted-foreground">
-          So <span className="font-serif italic text-foreground/80">"done"</span> becomes a vibe. Bugs ship. Rework grows.
+          So <span className="font-serif italic text-foreground/80">"done"</span> becomes a vibe. Bugs ship. Rework
+          grows.
         </p>
       </Section>
     </div>
@@ -315,13 +335,15 @@ function ProblemSection() {
 
 function SolutionSection() {
   return (
-    <section id="solution" className="dark relative overflow-hidden border-y border-border bg-background text-foreground">
+    <section
+      id="solution"
+      className="dark relative overflow-hidden border-y border-border bg-background text-foreground"
+    >
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-40"
         style={{
-          backgroundImage:
-            "radial-gradient(hsl(var(--border)) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(hsl(var(--border)) 1px, transparent 1px)",
           backgroundSize: "26px 26px",
           maskImage: "radial-gradient(ellipse at center, black 30%, transparent 75%)",
         }}
@@ -340,8 +362,8 @@ function SolutionSection() {
               An AI-native <span className="font-serif italic text-foreground/70">system of record.</span>
             </h2>
             <p className="mt-6 max-w-md text-[14px] leading-relaxed text-muted-foreground">
-              OneTrace builds a <span className="font-serif italic text-foreground/80">living map</span> of your product —
-              connecting every artifact, tracking every relationship, versioning every change.
+              OneTrace builds a <span className="font-serif italic text-foreground/80">living map</span> of your product
+              — connecting every artifact, tracking every relationship, versioning every change.
             </p>
             <Link
               to="/auth?mode=signup"
@@ -421,9 +443,7 @@ function CoverageShowcase() {
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Status
-                </div>
+                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Status</div>
                 <div className="mt-1 inline-flex items-center gap-1.5 text-[13px] font-medium text-accent">
                   <ShieldCheck className="h-3.5 w-3.5" /> Healthy
                 </div>
@@ -443,10 +463,7 @@ function CoverageShowcase() {
                   <StatusBadge status={r.kind} label={r.kind.toUpperCase()} mono />
                   <span className="flex-1 truncate text-[13px] text-foreground">{r.label}</span>
                   <div className="hidden h-1 w-28 overflow-hidden rounded-full bg-muted sm:block">
-                    <div
-                      className="h-full rounded-full bg-accent/70"
-                      style={{ width: `${r.pct}%` }}
-                    />
+                    <div className="h-full rounded-full bg-accent/70" style={{ width: `${r.pct}%` }} />
                   </div>
                   <span className="font-mono text-[11px] text-muted-foreground">{r.v}</span>
                   <span className="w-10 text-right font-mono text-[11px] text-accent">{r.pct}%</span>
@@ -474,7 +491,10 @@ function CoverageShowcase() {
                 { icon: AlertTriangle, title: "Missing tests", meta: "STORY-004 has 0/3 ACs tested" },
                 { icon: AlertTriangle, title: "Status mismatch", meta: "STORY-002 done but Jira shows In Review" },
               ].map((d) => (
-                <div key={d.title} className="flex items-start gap-3 bg-background px-4 py-3 transition-colors hover:bg-muted/40">
+                <div
+                  key={d.title}
+                  className="flex items-start gap-3 bg-background px-4 py-3 transition-colors hover:bg-muted/40"
+                >
                   <d.icon className="mt-0.5 h-4 w-4 shrink-0 text-drift" />
                   <div className="flex-1">
                     <div className="text-[13px] font-medium text-foreground">{d.title}</div>
@@ -532,7 +552,9 @@ function PricingSection() {
             <div
               key={p.name}
               className={`relative rounded-xl border bg-card p-6 ${
-                p.featured ? "border-accent/40 ring-1 ring-accent/20 shadow-[0_20px_60px_-30px_hsl(var(--accent)/0.4)]" : "border-border"
+                p.featured
+                  ? "border-accent/40 ring-1 ring-accent/20 shadow-[0_20px_60px_-30px_hsl(var(--accent)/0.4)]"
+                  : "border-border"
               }`}
             >
               {p.featured && (
@@ -580,11 +602,9 @@ function FinalCTA() {
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-60"
           style={{
-            backgroundImage:
-              "radial-gradient(hsl(var(--border)) 1px, transparent 1px)",
+            backgroundImage: "radial-gradient(hsl(var(--border)) 1px, transparent 1px)",
             backgroundSize: "20px 20px",
-            maskImage:
-              "radial-gradient(ellipse at center, black 30%, transparent 70%)",
+            maskImage: "radial-gradient(ellipse at center, black 30%, transparent 70%)",
           }}
         />
         <div
@@ -609,12 +629,9 @@ function FinalCTA() {
             >
               Get started free <ArrowUpRight className="h-4 w-4" />
             </Link>
-            <a
-              href="#pricing"
-              className="btn-3d btn-3d-ghost inline-flex h-10 items-center px-4 text-[13px]"
-            >
-              See pricing
-            </a>
+            <Link to="/design" className="btn-3d btn-3d-ghost inline-flex h-10 items-center px-4 text-[13px]">
+              See the design system
+            </Link>
           </div>
         </div>
       </section>
@@ -635,17 +652,17 @@ function Footer() {
                 OT
               </div>
               <span className="font-medium tracking-tight text-foreground">OneTrace</span>
+              <span className="text-muted-foreground/70">/</span>
+              <span className="text-muted-foreground">AI</span>
             </div>
             <p className="mt-4 max-w-xs text-[12.5px] leading-relaxed text-muted-foreground">
-              The traceability layer for AI-built software. PRDs → Stories → Jira → Git → Tests,
-              connected in one living graph.
+              The traceability layer for AI-built software. PRDs → Stories → Jira → Git → Tests, connected in one living
+              graph.
             </p>
           </div>
           {FOOTER_COLS.map((c) => (
             <div key={c.title}>
-              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {c.title}
-              </div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{c.title}</div>
               <ul className="mt-4 space-y-2.5 text-[13px]">
                 {c.links.map((l) => (
                   <li key={l}>
@@ -661,10 +678,18 @@ function Footer() {
         <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-border pt-6 text-[12px] text-muted-foreground md:flex-row md:items-center">
           <span>OneTrace AI · © 2026 · All rights reserved.</span>
           <div className="flex items-center gap-5 font-mono">
-            <a href="#" className="hover:text-foreground">Privacy</a>
-            <a href="#" className="hover:text-foreground">Terms</a>
-            <a href="#" className="hover:text-foreground">Security</a>
-            <a href="#" className="hover:text-foreground">Status</a>
+            <a href="#" className="hover:text-foreground">
+              Privacy
+            </a>
+            <a href="#" className="hover:text-foreground">
+              Terms
+            </a>
+            <a href="#" className="hover:text-foreground">
+              Security
+            </a>
+            <a href="#" className="hover:text-foreground">
+              Status
+            </a>
           </div>
         </div>
       </div>
@@ -689,9 +714,7 @@ function Section({
     <section id={id} className="py-24">
       <div className="mb-8 flex items-end justify-between gap-6 border-b border-border pb-4">
         <div>
-          <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            {eyebrow}
-          </div>
+          <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{eyebrow}</div>
           <h2 className="mt-2 text-[28px] font-medium leading-tight tracking-[-0.02em] text-foreground md:text-[34px]">
             {title}
           </h2>
@@ -738,15 +761,39 @@ const PROBLEMS = [
 ];
 
 const PILLARS = [
-  { icon: Layers, title: "Artifacts", body: "PRDs, Epics, Stories, ACs, Tests, Commits, PRs — all in one place with full version history." },
-  { icon: Workflow, title: "Edges", body: "Implements · Validates · Satisfies · Depends on. Every relationship is explicit and traceable." },
-  { icon: CircleDot, title: "Versions", body: "Every change is tracked, explainable, and reversible. See who changed what, and why." },
+  {
+    icon: Layers,
+    title: "Artifacts",
+    body: "PRDs, Epics, Stories, ACs, Tests, Commits, PRs — all in one place with full version history.",
+  },
+  {
+    icon: Workflow,
+    title: "Edges",
+    body: "Implements · Validates · Satisfies · Depends on. Every relationship is explicit and traceable.",
+  },
+  {
+    icon: CircleDot,
+    title: "Versions",
+    body: "Every change is tracked, explainable, and reversible. See who changed what, and why.",
+  },
 ];
 
 const STEPS = [
-  { icon: GitBranch, title: "Connect your tools", body: "Link Jira and Git in minutes. OneTrace syncs work items, code changes, and context automatically." },
-  { icon: Sparkles, title: "Generate traceable work", body: "Turn PRDs into Epics, Stories, and ACs — pushed into Jira with full trace metadata intact." },
-  { icon: Activity, title: "Prove coverage & catch drift", body: "Auto-link commits and PRs. See AC coverage in real time. Get alerts when code or requirements drift." },
+  {
+    icon: GitBranch,
+    title: "Connect your tools",
+    body: "Link Jira and Git in minutes. OneTrace syncs work items, code changes, and context automatically.",
+  },
+  {
+    icon: Sparkles,
+    title: "Generate traceable work",
+    body: "Turn PRDs into Epics, Stories, and ACs — pushed into Jira with full trace metadata intact.",
+  },
+  {
+    icon: Activity,
+    title: "Prove coverage & catch drift",
+    body: "Auto-link commits and PRs. See AC coverage in real time. Get alerts when code or requirements drift.",
+  },
 ];
 
 const INTEGRATIONS = [
@@ -777,7 +824,14 @@ const PLANS = [
     name: "Scale",
     price: "$99",
     tagline: "For larger teams.",
-    features: ["Unlimited projects", "Unlimited users", "Custom model hub", "Advanced analytics", "SSO / SAML", "Dedicated support"],
+    features: [
+      "Unlimited projects",
+      "Unlimited users",
+      "Custom model hub",
+      "Advanced analytics",
+      "SSO / SAML",
+      "Dedicated support",
+    ],
     cta: "Contact sales",
     featured: false,
   },
