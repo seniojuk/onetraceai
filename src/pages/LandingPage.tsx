@@ -689,14 +689,14 @@ function FinalCTA() {
             Ready to ship with <span className="font-serif italic text-foreground/70">confidence?</span>
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-[14px] leading-relaxed text-muted-foreground">
-            Join AI-first teams building traceable software. Start free, connect in minutes.
+            Join AI-first teams shipping traceable software. Free to start. Connect in minutes.
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link
               to="/auth?mode=signup"
               className="btn-3d btn-3d-primary inline-flex h-10 items-center gap-1.5 px-5 text-[14px] font-medium"
             >
-              Get started free <ArrowUpRight className="h-4 w-4" />
+              Start free <ArrowUpRight className="h-4 w-4" />
             </Link>
             <a href="#pricing" className="btn-3d btn-3d-ghost inline-flex h-10 items-center px-4 text-[13px]">
               See pricing
