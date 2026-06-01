@@ -768,16 +768,16 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="py-24">
-      <div className="mb-8 flex items-end justify-between gap-6 border-b border-border pb-4">
+    <section id={id} className="scroll-mt-24 py-24">
+      <Reveal className="mb-8 flex items-end justify-between gap-6 border-b border-border pb-4">
         <div>
           <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{eyebrow}</div>
           <h2 className="mt-2 text-[28px] font-medium leading-tight tracking-[-0.02em] text-foreground md:text-[34px]">
             {title}
           </h2>
         </div>
-      </div>
-      {children}
+      </Reveal>
+      <Reveal delay={120}>{children}</Reveal>
     </section>
   );
 }
