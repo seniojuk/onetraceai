@@ -85,8 +85,8 @@ function ArtifactNode({ data }: NodeProps<Node<FlowNodeData>>) {
       <div className="mt-0.5 truncate font-mono text-[9.5px] sm:text-[10px] text-muted-foreground">
         {data.id} · {data.meta}
       </div>
-      <Handle type="source" position={Position.Right} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
-      <Handle type="source" position={Position.Bottom} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
+      <Handle id="r" type="source" position={Position.Right} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
+      <Handle id="b" type="source" position={Position.Bottom} className="!h-1.5 !w-1.5 !border-0 !bg-border" />
     </div>
   );
 }
