@@ -50,47 +50,47 @@ function ArtifactNode({ data }: NodeProps<Node<FlowNodeData>>) {
 
   return (
     <div
-      className={`group relative w-[176px] rounded-lg border bg-card/95 px-3 py-2.5 shadow-[0_4px_14px_-6px_hsl(var(--foreground)/0.12)] backdrop-blur transition ${
+      className={`group relative w-[130px] rounded-md border bg-card/95 px-2 py-1.5 shadow-[0_2px_8px_-4px_hsl(var(--foreground)/0.12)] backdrop-blur transition ${
         isStory
-          ? "border-accent/50 shadow-[0_0_0_3px_hsl(var(--accent)/0.10),0_4px_14px_-6px_hsl(var(--accent)/0.25)]"
+          ? "border-accent/50 shadow-[0_0_0_2px_hsl(var(--accent)/0.10),0_2px_8px_-4px_hsl(var(--accent)/0.25)]"
           : "border-border"
       }`}
     >
       <Handle
         type="target"
         position={Position.Left}
-        className="!h-1.5 !w-1.5 !border-0 !bg-border"
+        className="!h-1 !w-1 !border-0 !bg-border"
       />
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <Icon className={`h-3 w-3 ${meta.tone}`} />
-          <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">
+        <div className="flex items-center gap-1">
+          <Icon className={`h-2.5 w-2.5 ${meta.tone}`} />
+          <span className="font-mono text-[8px] uppercase tracking-[0.14em] text-muted-foreground">
             {meta.label}
           </span>
         </div>
         {data.status === "done" && (
-          <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+          <CheckCircle2 className="h-2.5 w-2.5 text-emerald-500" />
         )}
         {data.status === "active" && (
-          <span className="relative flex h-1.5 w-1.5">
+          <span className="relative flex h-1 w-1">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-70" />
-            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
+            <span className="relative inline-flex h-1 w-1 rounded-full bg-accent" />
           </span>
         )}
         {data.status === "open" && (
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+          <span className="h-1 w-1 rounded-full bg-amber-500" />
         )}
       </div>
-      <div className="mt-1.5 truncate text-[12px] font-medium tracking-tight text-foreground">
+      <div className="mt-1 truncate text-[10px] font-medium tracking-tight text-foreground">
         {data.title}
       </div>
-      <div className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">
+      <div className="mt-0.5 truncate font-mono text-[8.5px] text-muted-foreground">
         {data.id} · {data.meta}
       </div>
       <Handle
         type="source"
         position={Position.Right}
-        className="!h-1.5 !w-1.5 !border-0 !bg-border"
+        className="!h-1 !w-1 !border-0 !bg-border"
       />
     </div>
   );
