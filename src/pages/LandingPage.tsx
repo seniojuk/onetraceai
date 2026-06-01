@@ -493,13 +493,10 @@ function IntegrationsRow() {
         <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-4">
           {INTEGRATIONS.map((i) => (
             <div key={i.name} className="group bg-card p-6 transition-colors hover:bg-muted/30">
-              <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 transition-colors group-hover:border-accent/40">
-                <img
-                  src={i.icon}
-                  alt={`${i.name} logo`}
-                  className="h-5 w-5"
-                  loading="lazy"
-                />
+              <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 text-foreground/80 transition-colors group-hover:border-accent/40 group-hover:text-accent">
+                <svg viewBox={i.viewBox} className="h-5 w-5 fill-current" xmlns="http://www.w3.org/2000/svg" aria-label={`${i.name} logo`} role="img">
+                  <path d={i.path} />
+                </svg>
               </div>
               <h4 className="mt-4 text-[14px] font-medium tracking-tight text-foreground">{i.name}</h4>
               <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{i.body}</p>
