@@ -408,14 +408,14 @@ function SolutionSection() {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              02 — The solution
+              02 / The solution
             </div>
             <h2 className="mt-3 font-geist text-[36px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[44px]">
               An AI-native <span className="font-serif italic text-foreground/70">system of record.</span>
             </h2>
             <p className="mt-6 max-w-md text-[14px] leading-relaxed text-muted-foreground">
-              OneTrace builds a <span className="font-serif italic text-foreground/80">living map</span> of your product
-              — connecting every artifact, tracking every relationship, versioning every change.
+              OneTrace builds a <span className="font-serif italic text-foreground/80">living map</span> of your product.
+              It connects every artifact, tracks every relationship, and versions every change.
             </p>
             <Link
               to="/auth?mode=signup"
