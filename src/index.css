@@ -468,7 +468,7 @@
     color: #fafafa;
   }
   .btn-3d-secondary:active {
-    transform: translateY(1px);
+    transform: translateY(1px) scale(0.98);
     background: rgba(255, 255, 255, 0.06);
     box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.45);
   }
@@ -484,7 +484,7 @@
     color: #fafafa;
   }
   .btn-3d-ghost:active {
-    transform: translateY(1px);
+    transform: translateY(1px) scale(0.98);
     background: rgba(255, 255, 255, 0.04);
     box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.2);
   }
@@ -501,7 +501,7 @@
   }
   .btn-3d-primary:hover { background: #ffffff; }
   .btn-3d-primary:active {
-    transform: translateY(1px);
+    transform: translateY(1px) scale(0.98);
     background: #ebebeb;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.22);
   }
@@ -516,7 +516,7 @@
   }
   .btn-3d-accent:hover { background: hsl(173 80% 44%); }
   .btn-3d-accent:active {
-    transform: translateY(1px);
+    transform: translateY(1px) scale(0.98);
     background: hsl(173 82% 34%);
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.45);
   }
@@ -535,7 +535,7 @@
     color: #fecaca;
   }
   .btn-3d-destructive:active {
-    transform: translateY(1px);
+    transform: translateY(1px) scale(0.98);
     background: rgba(239, 68, 68, 0.12);
     box-shadow:
       inset 0 2px 3px rgba(0, 0, 0, 0.4),
