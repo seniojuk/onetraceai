@@ -495,7 +495,7 @@ function IntegrationsRow() {
             <div key={i.name} className="group bg-card p-6 transition-colors hover:bg-muted/30">
               <div className="grid h-9 w-9 place-items-center rounded-md border border-border bg-muted/40 transition-colors group-hover:border-accent/40">
                 <img
-                  src={`https://cdn.simpleicons.org/${i.slug}`}
+                  src={i.icon}
                   alt={`${i.name} logo`}
                   className="h-5 w-5"
                   loading="lazy"
@@ -765,10 +765,10 @@ const STEPS = [
 ];
 
 const INTEGRATIONS = [
-  { name: "Jira Cloud", slug: "jira", body: "Two-way sync with full-fidelity field mapping." },
-  { name: "GitHub", slug: "github", body: "Commits, PRs, and webhook-driven coverage." },
-  { name: "OpenAI", slug: "openai", body: "GPT-4 and o-series for intelligent agents." },
-  { name: "Anthropic", slug: "anthropic", body: "Claude for deep reasoning over your graph." },
+  { name: "Jira Cloud", icon: "https://svgl.app/library/jira.svg", body: "Two-way sync with full-fidelity field mapping." },
+  { name: "GitHub", icon: "https://svgl.app/library/github_dark.svg", body: "Commits, PRs, and webhook-driven coverage." },
+  { name: "OpenAI", icon: "https://svgl.app/library/openai_dark.svg", body: "GPT-4 and o-series for intelligent agents." },
+  { name: "Anthropic", icon: "https://svgl.app/library/anthropic.svg", body: "Claude for deep reasoning over your graph." },
 ];
 
 const PLANS = [
