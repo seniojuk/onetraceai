@@ -383,7 +383,7 @@ function ProblemSection() {
   );
 }
 
-/* ---------- Solution — full-bleed dark band ---------- */
+/* ---------- Solution: full-bleed dark band ---------- */
 
 function SolutionSection() {
   return (
