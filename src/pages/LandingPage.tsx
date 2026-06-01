@@ -459,16 +459,18 @@ function HowItWorks() {
             className="pointer-events-none absolute left-0 right-0 top-12 hidden h-px bg-gradient-to-r from-transparent via-border to-transparent md:block"
           />
           {STEPS.map((s, i) => (
-            <div key={s.title} className="relative rounded-xl border border-border bg-card p-6">
-              <div className="flex items-center justify-between">
-                <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Step {String(i + 1).padStart(2, "0")}
-                </span>
-                <s.icon className="h-4 w-4 text-accent" />
+            <Reveal key={s.title} delay={i * 100}>
+              <div className="group relative h-full rounded-xl border border-border bg-card p-6 lift">
+                <div className="flex items-center justify-between">
+                  <span className="rounded-md border border-border bg-muted/40 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Step {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <s.icon className="h-4 w-4 text-accent icon-pop" />
+                </div>
+                <h3 className="mt-5 text-[16px] font-medium tracking-tight text-foreground">{s.title}</h3>
+                <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{s.body}</p>
               </div>
-              <h3 className="mt-5 text-[16px] font-medium tracking-tight text-foreground">{s.title}</h3>
-              <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{s.body}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </Section>
