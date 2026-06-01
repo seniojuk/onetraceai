@@ -8,86 +8,83 @@
 */
 
 @layer base {
+  /* ============================================================
+   * OneTrace tokens — warm neutral palette + teal accent.
+   * Light = off-white surfaces, near-black text. Dark = near-black
+   * surfaces, near-white text. Same accent (teal) in both modes.
+   * Every value is `H S% L%` so Tailwind can wrap it in hsl(var(--…)).
+   * ============================================================ */
   :root {
-    /* Core brand colors */
-    --background: 220 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Surfaces & text */
+    --background: 40 25% 98%;          /* #FAFAF7 — page bg */
+    --foreground: 0 0% 4%;             /* #0A0A0A — primary text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 0 0% 100%;                 /* #FFFFFF */
+    --card-foreground: 0 0% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 0 0% 4%;
 
-    /* Primary: Deep Navy - Trust & Authority */
-    --primary: 222 59% 18%;
-    --primary-foreground: 210 40% 98%;
+    /* Primary = brand near-black (Linear-style). Used by buttons,
+       focus rings on neutral elements, dense headings. */
+    --primary: 0 0% 4%;
+    --primary-foreground: 0 0% 98%;
 
-    /* Secondary: Slate - Professionalism */
-    --secondary: 215 25% 94%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 0 0% 96%;             /* hairline surface */
+    --secondary-foreground: 0 0% 9%;
 
-    /* Muted: Subtle backgrounds */
-    --muted: 220 15% 95%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 40 15% 95%;
+    --muted-foreground: 240 4% 36%;    /* zinc-600-ish */
 
-    /* Accent: Vibrant Teal - Innovation */
-    --accent: 173 80% 40%;
+    /* Accent = teal — the single colored brand action */
+    --accent: 173 80% 36%;
     --accent-foreground: 0 0% 100%;
 
-    /* Semantic colors */
-    --destructive: 0 72% 51%;
+    --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Coverage states */
-    --coverage-full: 152 76% 42%;
-    --coverage-partial: 45 93% 47%;
-    --coverage-none: 0 72% 51%;
+    --coverage-full: 152 65% 36%;
+    --coverage-partial: 38 92% 45%;
+    --coverage-none: 0 72% 45%;
 
-    /* Drift / Warning */
-    --drift: 25 95% 53%;
+    --drift: 25 90% 48%;
     --drift-foreground: 0 0% 100%;
 
-    /* Success / Validated */
-    --success: 152 76% 42%;
+    --success: 152 65% 36%;
     --success-foreground: 0 0% 100%;
 
-    /* Trace link colors */
-    --trace-implements: 222 59% 50%;
-    --trace-satisfies: 152 76% 42%;
-    --trace-validates: 262 83% 58%;
-    --trace-depends: 215 16% 47%;
+    --trace-implements: 222 78% 50%;
+    --trace-satisfies: 152 65% 36%;
+    --trace-validates: 262 70% 50%;
+    --trace-depends: 240 4% 46%;
 
-    /* UI elements */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 222 59% 18%;
+    --border: 0 0% 92%;
+    --input: 0 0% 92%;
+    --ring: 173 80% 36%;
     --radius: 0.625rem;
 
-    /* Graph canvas */
-    --graph-bg: 220 20% 97%;
-    --graph-grid: 220 15% 90%;
+    --graph-bg: 40 20% 97%;
+    --graph-grid: 40 15% 90%;
     --graph-node-bg: 0 0% 100%;
-    --graph-edge: 215 16% 70%;
+    --graph-edge: 240 4% 70%;
 
-    /* Sidebar */
-    --sidebar-background: 222 47% 11%;
-    --sidebar-foreground: 210 20% 90%;
+    /* Sidebar — flips to the dark recipe even in light mode (kept). */
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 88%;
     --sidebar-primary: 173 80% 40%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 40% 18%;
-    --sidebar-accent-foreground: 210 20% 90%;
-    --sidebar-border: 222 30% 20%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 88%;
+    --sidebar-border: 0 0% 16%;
     --sidebar-ring: 173 80% 40%;
 
-    /* ---- Design system extension (used by /design and shared surfaces) ---- */
-    /* Surface elevation scale — page < surface < elevated < sunken (input wells) */
+    /* ---- Design system extension ---- */
     --surface: 0 0% 100%;
     --surface-elevated: 0 0% 100%;
-    --surface-sunken: 220 15% 96%;
-    --hairline: 220 13% 88%;
+    --surface-sunken: 40 15% 96%;
+    --hairline: 0 0% 88%;
 
-    /* Status / artifact palette (light mode — AA on white) */
+    /* Status / artifact palette — tuned for AA on white */
     --status-prd: 262 70% 50%;       --status-prd-fg: 262 70% 38%;
     --status-epic: 222 78% 50%;      --status-epic-fg: 222 78% 42%;
     --status-story: 173 75% 36%;     --status-story-fg: 173 75% 28%;
@@ -97,65 +94,66 @@
   }
 
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 96%;
+    /* Warm near-black surfaces (Linear / Vercel style). No blue tint. */
+    --background: 0 0% 4%;             /* #0A0A0A */
+    --foreground: 0 0% 96%;            /* near-white */
 
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 96%;
+    --card: 0 0% 5.5%;                 /* #0E0E0E */
+    --card-foreground: 0 0% 96%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 96%;
+    --popover: 0 0% 5.5%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 173 80% 45%;
-    --primary-foreground: 222 47% 11%;
+    /* In dark mode, primary inverts to near-white (still the brand button). */
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 4%;
 
-    --secondary: 222 30% 18%;
-    --secondary-foreground: 210 40% 96%;
+    --secondary: 0 0% 11%;
+    --secondary-foreground: 0 0% 96%;
 
-    --muted: 222 30% 18%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 0 0% 9%;
+    --muted-foreground: 240 5% 65%;    /* zinc-400-ish */
 
     --accent: 173 80% 40%;
-    --accent-foreground: 0 0% 100%;
+    --accent-foreground: 173 90% 8%;
 
-    --destructive: 0 62% 40%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
 
-    --coverage-full: 152 76% 50%;
+    --coverage-full: 152 70% 50%;
     --coverage-partial: 45 93% 55%;
     --coverage-none: 0 72% 55%;
 
     --drift: 25 95% 60%;
     --drift-foreground: 0 0% 100%;
 
-    --success: 152 76% 50%;
+    --success: 152 70% 50%;
     --success-foreground: 0 0% 100%;
 
-    --border: 222 30% 20%;
-    --input: 222 30% 20%;
+    --border: 0 0% 14%;
+    --input: 0 0% 14%;
     --ring: 173 80% 45%;
 
-    --graph-bg: 222 47% 8%;
-    --graph-grid: 222 30% 15%;
-    --graph-node-bg: 222 47% 13%;
-    --graph-edge: 215 16% 50%;
+    --graph-bg: 0 0% 4%;
+    --graph-grid: 0 0% 10%;
+    --graph-node-bg: 0 0% 7%;
+    --graph-edge: 240 4% 35%;
 
-    --sidebar-background: 222 47% 6%;
-    --sidebar-foreground: 210 20% 85%;
+    --sidebar-background: 0 0% 3%;
+    --sidebar-foreground: 0 0% 85%;
     --sidebar-primary: 173 80% 45%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 222 40% 12%;
-    --sidebar-accent-foreground: 210 20% 85%;
-    --sidebar-border: 222 30% 15%;
+    --sidebar-primary-foreground: 0 0% 4%;
+    --sidebar-accent: 0 0% 8%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 0 0% 12%;
     --sidebar-ring: 173 80% 45%;
 
     /* ---- Design system extension (dark) ---- */
-    --surface: 0 0% 4%;             /* page bg layer (#0A0A0A-ish) */
-    --surface-elevated: 0 0% 5.5%;  /* cards (#0E0E0E) */
-    --surface-sunken: 0 0% 7%;      /* input wells (#111111) */
-    --hairline: 0 0% 100%;          /* used at low alpha — alpha applied in tailwind */
+    --surface: 0 0% 4%;
+    --surface-elevated: 0 0% 5.5%;
+    --surface-sunken: 0 0% 7%;
+    --hairline: 0 0% 100%;
 
-    /* Status palette — dark mode (brighter tints) */
     --status-prd: 262 83% 70%;      --status-prd-fg: 262 90% 78%;
     --status-epic: 222 90% 68%;     --status-epic-fg: 222 95% 78%;
     --status-story: 173 80% 50%;    --status-story-fg: 173 80% 65%;
