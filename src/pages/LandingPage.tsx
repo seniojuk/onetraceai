@@ -1,4 +1,7 @@
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Menu, X } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   ArrowUpRight,
   Check,
@@ -46,31 +49,50 @@ export default LandingPage;
 /* ---------- Nav ---------- */
 
 function Nav() {
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const links = [
+    { href: "#problem", label: "Problem" },
+    { href: "#solution", label: "Solution" },
+    { href: "#how", label: "How it works" },
+    { href: "#pricing", label: "Pricing" },
+  ];
+
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2 text-sm">
-          <div className="grid h-6 w-6 place-items-center rounded-md bg-gradient-to-br from-accent to-accent/60 text-[10px] font-semibold text-accent-foreground">
+    <header
+      className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-colors ${
+        scrolled ? "border-border bg-background/85" : "border-transparent bg-background/60"
+      }`}
+    >
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 text-sm">
+          <div className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-accent to-accent/60 text-[11px] font-semibold text-accent-foreground">
             OT
           </div>
-          <span className="font-medium tracking-tight text-foreground">OneTrace</span>
+          <span className="font-semibold tracking-tight text-foreground">OneTrace</span>
           <span className="text-muted-foreground">AI</span>
-        </div>
+        </Link>
+
+        {/* Desktop nav */}
         <nav className="hidden items-center gap-8 text-[13px] text-muted-foreground md:flex">
-          <a href="#problem" className="transition-colors hover:text-foreground">
-            Problem
-          </a>
-          <a href="#solution" className="transition-colors hover:text-foreground">
-            Solution
-          </a>
-          <a href="#how" className="transition-colors hover:text-foreground">
-            How it works
-          </a>
-          <a href="#pricing" className="transition-colors hover:text-foreground">
-            Pricing
-          </a>
+          {links.map((l) => (
+            <a key={l.href} href={l.href} className="transition-colors hover:text-foreground">
+              {l.label}
+            </a>
+          ))}
         </nav>
-        <div className="flex items-center gap-2">
+
+        {/* Desktop actions */}
+        <div className="hidden items-center gap-2 md:flex">
           <ThemeToggle />
           <Link to="/auth" className="btn-3d btn-3d-ghost inline-flex h-8 items-center px-3 text-[13px]">
             Sign in
@@ -81,6 +103,60 @@ function Nav() {
           >
             Get Started <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
+        </div>
+
+        {/* Mobile actions */}
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <button
+                aria-label="Open menu"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-foreground hover:bg-muted/50"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[85%] max-w-sm border-l border-border bg-background p-0">
+              <div className="flex items-center justify-between border-b border-border px-5 py-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <div className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-accent to-accent/60 text-[11px] font-semibold text-accent-foreground">
+                    OT
+                  </div>
+                  <span className="font-semibold tracking-tight">OneTrace</span>
+                  <span className="text-muted-foreground">AI</span>
+                </div>
+              </div>
+              <nav className="flex flex-col px-3 py-4">
+                {links.map((l) => (
+                  <a
+                    key={l.href}
+                    href={l.href}
+                    onClick={() => setOpen(false)}
+                    className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
+                  >
+                    {l.label}
+                  </a>
+                ))}
+              </nav>
+              <div className="mt-2 flex flex-col gap-2 border-t border-border px-5 py-4">
+                <Link
+                  to="/auth"
+                  onClick={() => setOpen(false)}
+                  className="btn-3d btn-3d-ghost inline-flex h-10 items-center justify-center px-3 text-sm"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  to="/auth?mode=signup"
+                  onClick={() => setOpen(false)}
+                  className="btn-3d btn-3d-primary inline-flex h-10 items-center justify-center gap-1.5 px-3 text-sm font-medium"
+                >
+                  Get Started <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
