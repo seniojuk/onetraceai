@@ -189,7 +189,7 @@ export function HeroFlow() {
       </div>
 
       {/* Responsive aspect-ratio canvas: taller on mobile, wider on desktop */}
-      <div className="relative w-full aspect-[4/5] sm:aspect-[3/2] lg:aspect-[16/9]">
+      <div className="relative w-full aspect-[3/2] sm:aspect-[16/9] lg:aspect-[21/9]">
         <ReactFlow
           nodes={nodes}
           edges={edges}
