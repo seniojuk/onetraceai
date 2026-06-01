@@ -110,7 +110,6 @@ export default {
       },
       fontFamily: {
         sans: [
-          "Geist",
           "Inter",
           "-apple-system",
           "BlinkMacSystemFont",
@@ -119,13 +118,12 @@ export default {
           "sans-serif",
         ],
         geist: [
-          "Geist",
           "Inter",
           "-apple-system",
           "sans-serif",
         ],
         serif: [
-          "Fraunces",
+          "Aleo",
           "ui-serif",
           "Georgia",
           "serif",
