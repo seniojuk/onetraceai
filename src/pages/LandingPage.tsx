@@ -156,7 +156,7 @@ function Nav() {
                   onClick={() => setOpen(false)}
                   className="btn-3d btn-3d-primary inline-flex h-10 items-center justify-center gap-1.5 px-3 text-sm font-medium"
                 >
-                  Get Started <ArrowUpRight className="h-4 w-4" />
+                  Start free <ArrowUpRight className="h-4 w-4" />
                 </Link>
               </div>
             </SheetContent>
