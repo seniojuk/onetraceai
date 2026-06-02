@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { PublicFooter } from "@/components/marketing/PublicFooter";
+import { PublicNav } from "@/components/marketing/PublicNav";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -33,7 +34,7 @@ import { AccentWord } from "@/components/marketing/AccentWord";
 const LandingPage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground font-geist antialiased selection:bg-accent/20">
-      <Nav />
+      <PublicNav />
       <Hero />
       <ProblemSection />
       <SolutionSection />
@@ -48,206 +49,8 @@ const LandingPage = () => {
 
 export default LandingPage;
 
-/* ---------- Nav ---------- */
+/* Nav now imported from shared PublicNav */
 
-function Nav() {
-  const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const productItems = [
-    {
-      href: "#problem",
-      id: "problem",
-      label: "The problem",
-      desc: "Why specs and code drift",
-      Icon: AlertTriangle,
-    },
-    {
-      href: "#solution",
-      id: "solution",
-      label: "The solution",
-      desc: "One source of truth, AI-kept in sync",
-      Icon: Sparkles,
-    },
-    {
-      href: "#how",
-      id: "how",
-      label: "How it works",
-      desc: "PRD → Epics → Stories → Code → Coverage",
-      Icon: Workflow,
-    },
-  ];
-  const active = useActiveSection(productItems.map((l) => l.id));
-  const productOpen = active === "problem" || active === "solution" || active === "how";
-
-  return (
-    <header
-      className={`sticky top-0 z-40 border-b backdrop-blur-xl transition-[background-color,border-color,box-shadow] duration-300 ${
-        scrolled
-          ? "border-border bg-background/85 shadow-[0_1px_0_0_hsl(var(--border)),0_10px_30px_-20px_hsl(var(--foreground)/0.15)]"
-          : "border-transparent bg-background/60"
-      }`}
-    >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
-        {/* Logo */}
-        <Link to="/" className="group flex items-center gap-2 text-sm">
-          <div className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-accent to-accent/60 text-[11px] font-semibold text-accent-foreground transition-transform duration-300 group-hover:rotate-[-4deg] group-hover:scale-105">
-            OT
-          </div>
-          <span className="font-semibold tracking-tight text-foreground">OneTrace</span>
-          <span className="text-muted-foreground">AI</span>
-        </Link>
-
-        {/* Desktop nav */}
-        <nav className="hidden items-center gap-8 text-[13px] text-muted-foreground md:flex">
-          {/* Product mega menu */}
-          <div className="group relative">
-            <button
-              type="button"
-              data-active={productOpen}
-              className="nav-link inline-flex items-center gap-1 hover:text-foreground"
-            >
-              Product
-              <svg
-                className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180"
-                viewBox="0 0 12 12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              >
-                <path d="M3 4.5L6 7.5L9 4.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <div
-              className="invisible absolute left-1/2 top-full z-50 w-[340px] -translate-x-1/2 pt-3 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100"
-            >
-              <div className="rounded-xl border border-border bg-popover p-2 shadow-[0_20px_50px_-20px_hsl(var(--foreground)/0.25)]">
-                {productItems.map(({ href, id, label, desc, Icon }) => (
-                  <a
-                    key={id}
-                    href={href}
-                    data-active={active === id}
-                    className="group/item flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-muted/60 data-[active=true]:bg-muted/40"
-                  >
-                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border bg-background text-muted-foreground group-hover/item:text-foreground">
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <span className="flex flex-col">
-                      <span className="text-[13px] font-medium text-foreground">{label}</span>
-                      <span className="text-[12px] leading-snug text-muted-foreground">{desc}</span>
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-          <Link to="/pricing" className="nav-link hover:text-foreground">
-            Pricing
-          </Link>
-          <Link to="/contact" className="nav-link hover:text-foreground">
-            Contact
-          </Link>
-        </nav>
-
-
-        {/* Desktop actions */}
-        <div className="hidden items-center gap-2 md:flex">
-          <ThemeToggle />
-          <Link to="/auth" className="btn-3d btn-3d-ghost inline-flex h-8 items-center px-3 text-[13px]">
-            Sign in
-          </Link>
-          <Link
-            to="/auth?mode=signup"
-            className="btn-3d btn-3d-primary inline-flex h-8 items-center gap-1.5 px-3 text-[13px] font-medium"
-          >
-            Start free <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-
-        {/* Mobile actions */}
-        <div className="flex items-center gap-1 md:hidden">
-          <ThemeToggle />
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-              <button
-                aria-label="Open menu"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-foreground hover:bg-muted/50"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[85%] max-w-sm border-l border-border bg-background p-0">
-              <div className="flex items-center justify-between border-b border-border px-5 py-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-accent to-accent/60 text-[11px] font-semibold text-accent-foreground">
-                    OT
-                  </div>
-                  <span className="font-semibold tracking-tight">OneTrace</span>
-                  <span className="text-muted-foreground">AI</span>
-                </div>
-              </div>
-              <nav className="flex flex-col px-3 py-4">
-                <div className="px-3 pb-2 pt-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                  Product
-                </div>
-                {productItems.map((l) => (
-                  <a
-                    key={l.href}
-                    href={l.href}
-                    onClick={() => setOpen(false)}
-                    className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
-                  >
-                    {l.label}
-                  </a>
-                ))}
-                <div className="my-2 border-t border-border" />
-                <Link
-                  to="/pricing"
-                  onClick={() => setOpen(false)}
-                  className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
-                >
-                  Pricing
-                </Link>
-                <Link
-                  to="/contact"
-                  onClick={() => setOpen(false)}
-                  className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
-                >
-                  Contact
-                </Link>
-              </nav>
-
-              <div className="mt-2 flex flex-col gap-2 border-t border-border px-5 py-4">
-                <Link
-                  to="/auth"
-                  onClick={() => setOpen(false)}
-                  className="btn-3d btn-3d-ghost inline-flex h-10 items-center justify-center px-3 text-sm"
-                >
-                  Sign in
-                </Link>
-                <Link
-                  to="/auth?mode=signup"
-                  onClick={() => setOpen(false)}
-                  className="btn-3d btn-3d-primary inline-flex h-10 items-center justify-center gap-1.5 px-3 text-sm font-medium"
-                >
-                  Start free <ArrowUpRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </div>
-      
-    </header>
-  );
-}
 
 /* ---------- Hero ---------- */
 

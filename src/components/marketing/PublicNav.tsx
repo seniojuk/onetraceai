@@ -1,23 +1,37 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowUpRight, Menu } from "lucide-react";
+import { ArrowUpRight, Menu, AlertTriangle, Sparkles, Workflow } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
 
-const SECTIONS = [
-  { id: "problem", label: "Problem" },
-  { id: "solution", label: "Solution" },
-  { id: "how", label: "How it works" },
+const PRODUCT_ITEMS = [
+  {
+    id: "problem",
+    label: "The problem",
+    desc: "Why specs and code drift",
+    Icon: AlertTriangle,
+  },
+  {
+    id: "solution",
+    label: "The solution",
+    desc: "One source of truth, AI-kept in sync",
+    Icon: Sparkles,
+  },
+  {
+    id: "how",
+    label: "How it works",
+    desc: "PRD → Epics → Stories → Code → Coverage",
+    Icon: Workflow,
+  },
 ];
 
 export function PublicNav() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const { pathname, hash } = useLocation();
+  const { pathname } = useLocation();
   const onHome = pathname === "/";
 
-  // Scroll-aware shrink/elevate
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
@@ -25,17 +39,15 @@ export function PublicNav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Active section observer (only on home)
   useEffect(() => {
     if (!onHome) {
       setActiveSection(null);
       return;
     }
-    const els = SECTIONS
+    const els = PRODUCT_ITEMS
       .map((s) => document.getElementById(s.id))
       .filter((el): el is HTMLElement => !!el);
     if (els.length === 0) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
@@ -47,16 +59,10 @@ export function PublicNav() {
     );
     els.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [onHome, hash]);
+  }, [onHome, pathname]);
 
-  const sectionLinkClass = (id: string) => {
-    const active = onHome && activeSection === id;
-    return `relative text-[13px] transition-colors ${
-      active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
-    } after:absolute after:left-0 after:-bottom-1 after:h-px after:bg-foreground after:transition-all ${
-      active ? "after:w-full" : "after:w-0 hover:after:w-full"
-    }`;
-  };
+  const productHref = (id: string) => (onHome ? `#${id}` : `/#${id}`);
+  const productActive = onHome && PRODUCT_ITEMS.some((p) => p.id === activeSection);
 
   const routeLinkClass = (active: boolean) =>
     `relative text-[13px] transition-colors ${
@@ -78,23 +84,77 @@ export function PublicNav() {
             : "max-w-6xl border-b border-border bg-background/85 px-4 py-3 backdrop-blur-xl sm:px-6 sm:py-4"
         }`}
       >
-        <Link to="/" className="flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-md bg-accent font-mono text-[11px] font-medium text-accent-foreground">
+        <Link to="/" className="group flex items-center gap-2 text-sm">
+          <div className="grid h-7 w-7 place-items-center rounded-md bg-gradient-to-br from-accent to-accent/60 text-[11px] font-semibold text-accent-foreground transition-transform duration-300 group-hover:rotate-[-4deg] group-hover:scale-105">
             OT
-          </span>
-          <span className="font-geist text-[15px] font-medium tracking-[-0.01em] text-foreground">
-            OneTrace <span className="text-muted-foreground">AI</span>
-          </span>
+          </div>
+          <span className="font-semibold tracking-tight text-foreground">OneTrace</span>
+          <span className="text-muted-foreground">AI</span>
         </Link>
 
-        <nav className="hidden items-center gap-7 md:flex">
-          {SECTIONS.map((s) => (
-            <Link key={s.id} to={`/#${s.id}`} className={sectionLinkClass(s.id)}>
-              {s.label}
-            </Link>
-          ))}
-          <Link to="/pricing" className={routeLinkClass(pathname === "/pricing")}>Pricing</Link>
-          <Link to="/contact" className={routeLinkClass(pathname === "/contact")}>Contact</Link>
+        <nav className="hidden items-center gap-7 text-[13px] text-muted-foreground md:flex">
+          {/* Product mega menu */}
+          <div className="group relative">
+            <button
+              type="button"
+              className={`relative inline-flex items-center gap-1 text-[13px] transition-colors ${
+                productActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Product
+              <svg
+                className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180"
+                viewBox="0 0 12 12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M3 4.5L6 7.5L9 4.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <div className="invisible absolute left-1/2 top-full z-50 w-[340px] -translate-x-1/2 pt-3 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
+              <div className="rounded-xl border border-border bg-popover p-2 shadow-[0_20px_50px_-20px_hsl(var(--foreground)/0.25)]">
+                {PRODUCT_ITEMS.map(({ id, label, desc, Icon }) =>
+                  onHome ? (
+                    <a
+                      key={id}
+                      href={`#${id}`}
+                      data-active={activeSection === id}
+                      className="group/item flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-muted/60 data-[active=true]:bg-muted/40"
+                    >
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border bg-background text-muted-foreground group-hover/item:text-foreground">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="flex flex-col">
+                        <span className="text-[13px] font-medium text-foreground">{label}</span>
+                        <span className="text-[12px] leading-snug text-muted-foreground">{desc}</span>
+                      </span>
+                    </a>
+                  ) : (
+                    <Link
+                      key={id}
+                      to={`/#${id}`}
+                      className="group/item flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-muted/60"
+                    >
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border bg-background text-muted-foreground group-hover/item:text-foreground">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="flex flex-col">
+                        <span className="text-[13px] font-medium text-foreground">{label}</span>
+                        <span className="text-[12px] leading-snug text-muted-foreground">{desc}</span>
+                      </span>
+                    </Link>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+          <Link to="/pricing" className={routeLinkClass(pathname === "/pricing")}>
+            Pricing
+          </Link>
+          <Link to="/contact" className={routeLinkClass(pathname === "/contact")}>
+            Contact
+          </Link>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -118,12 +178,35 @@ export function PublicNav() {
               </button>
             </SheetTrigger>
             <SheetContent>
-              <div className="mt-8 flex flex-col gap-4">
-                <Link to="/#problem" onClick={() => setOpen(false)}>Problem</Link>
-                <Link to="/#solution" onClick={() => setOpen(false)}>Solution</Link>
-                <Link to="/#how" onClick={() => setOpen(false)}>How it works</Link>
-                <Link to="/pricing" onClick={() => setOpen(false)}>Pricing</Link>
-                <Link to="/contact" onClick={() => setOpen(false)}>Contact</Link>
+              <div className="mt-8 flex flex-col gap-1">
+                <div className="px-1 pb-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Product
+                </div>
+                {PRODUCT_ITEMS.map((p) => (
+                  <Link
+                    key={p.id}
+                    to={productHref(p.id)}
+                    onClick={() => setOpen(false)}
+                    className="rounded-md px-2 py-2 text-base text-foreground/90 hover:bg-muted/50"
+                  >
+                    {p.label}
+                  </Link>
+                ))}
+                <div className="my-2 border-t border-border" />
+                <Link
+                  to="/pricing"
+                  onClick={() => setOpen(false)}
+                  className="rounded-md px-2 py-2 text-base text-foreground/90 hover:bg-muted/50"
+                >
+                  Pricing
+                </Link>
+                <Link
+                  to="/contact"
+                  onClick={() => setOpen(false)}
+                  className="rounded-md px-2 py-2 text-base text-foreground/90 hover:bg-muted/50"
+                >
+                  Contact
+                </Link>
               </div>
             </SheetContent>
           </Sheet>
