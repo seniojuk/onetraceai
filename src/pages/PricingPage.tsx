@@ -427,12 +427,8 @@ export default function PricingPage() {
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pt-20 pb-16 text-center">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-          Transparent pricing
-        </span>
         <h1 className="mx-auto mt-4 max-w-3xl font-geist text-[52px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[64px]">
-          Start free.{" "}
-          <AccentWord>Upgrade when you're ready.</AccentWord>
+          Start free. <AccentWord>Upgrade anytime.</AccentWord>
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-[14.5px] leading-relaxed text-muted-foreground">
           Flat-rate pricing for engineering teams. No per-seat creep, no hidden fees, no surprises on
