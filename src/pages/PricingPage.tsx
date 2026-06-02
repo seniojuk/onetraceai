@@ -426,7 +426,7 @@ function FinalCTA() {
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground font-geist antialiased selection:bg-accent/20">
-      <Nav />
+      <PublicNav />
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pt-20 pb-16 text-center">

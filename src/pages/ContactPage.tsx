@@ -106,7 +106,7 @@ const ContactPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground font-geist antialiased selection:bg-accent/20">
-      <Nav />
+      <PublicNav />
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-4 pt-12 pb-10 text-center sm:px-6 sm:pt-20 sm:pb-12">
