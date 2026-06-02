@@ -87,11 +87,17 @@ function Nav() {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-8 text-[13px] text-muted-foreground md:flex">
-          {links.map((l) => (
-            <a key={l.href} href={l.href} data-active={active === l.id} className="nav-link hover:text-foreground">
-              {l.label}
-            </a>
-          ))}
+          {links.map((l) =>
+            "route" in l && l.route ? (
+              <Link key={l.href} to={l.href} className="nav-link hover:text-foreground">
+                {l.label}
+              </Link>
+            ) : (
+              <a key={l.href} href={l.href} data-active={active === l.id} className="nav-link hover:text-foreground">
+                {l.label}
+              </a>
+            )
+          )}
         </nav>
 
         {/* Desktop actions */}
