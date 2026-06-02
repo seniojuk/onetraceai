@@ -330,8 +330,7 @@ function FinalCTA() {
         />
         <div className="relative flex flex-col items-center">
           <h2 className="max-w-3xl font-geist text-[44px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[60px]">
-            Start free.{" "}
-            <AccentWord>Upgrade when you're ready.</AccentWord>
+            Start free. <AccentWord>Upgrade anytime.</AccentWord>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
             Free forever for solo builders. No credit card required.
