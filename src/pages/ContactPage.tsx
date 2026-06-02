@@ -188,32 +188,8 @@ const ContactPage = () => {
       {/* Body: left rail + form */}
       <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 sm:pb-24">
         <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr] lg:gap-8">
-          {/* Left rail */}
-          <aside className="space-y-4">
-            {CHANNELS.map((c) => (
-              <ChannelRow key={c.email} {...c} />
-            ))}
-
-            <div className="rounded-xl border border-border bg-muted/30 p-5">
-              <div className="flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5 text-accent" />
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Response time
-                </span>
-              </div>
-              <p className="mt-3 text-[13px] leading-relaxed text-foreground/90">
-                We reply within <span className="font-medium text-foreground">24 hours</span> on
-                business days (Mon–Fri, 9am–6pm EST).
-              </p>
-              <p className="mt-3 text-[12.5px] leading-relaxed text-muted-foreground">
-                <span className="font-medium text-foreground">Priority support</span> ships with
-                Growth and Enterprise plans.
-              </p>
-            </div>
-          </aside>
-
-          {/* Form */}
-          <div className="rounded-2xl border border-border bg-card p-5 sm:p-7 md:p-9">
+          {/* Form — ordered first on mobile */}
+          <div className="order-1 rounded-2xl border border-border bg-card p-5 sm:p-7 md:p-9 lg:order-none">
             {isSubmitted ? (
               <div className="py-10 text-center">
                 <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent/10">
@@ -346,6 +322,30 @@ const ContactPage = () => {
               </form>
             )}
           </div>
+
+          {/* Left rail — ordered second on mobile */}
+          <aside className="order-2 space-y-4 lg:order-none">
+            {CHANNELS.map((c) => (
+              <ChannelRow key={c.email} {...c} />
+            ))}
+
+            <div className="rounded-xl border border-border bg-muted/30 p-5">
+              <div className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 text-accent" />
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Response time
+                </span>
+              </div>
+              <p className="mt-3 text-[13px] leading-relaxed text-foreground/90">
+                We reply within <span className="font-medium text-foreground">24 hours</span> on
+                business days (Mon–Fri, 9am–6pm EST).
+              </p>
+              <p className="mt-3 text-[12.5px] leading-relaxed text-muted-foreground">
+                <span className="font-medium text-foreground">Priority support</span> ships with
+                Growth and Enterprise plans.
+              </p>
+            </div>
+          </aside>
         </div>
       </section>
       <PublicFooter />
