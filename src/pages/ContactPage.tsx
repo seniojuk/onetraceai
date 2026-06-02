@@ -83,14 +83,14 @@ const CHANNELS = [
     eyebrow: "General",
     title: "Support",
     body: "Product questions, account help, anything else.",
-    email: "support@onetraceai.com",
+    email: "support@onetrace.ai",
   },
   {
     icon: MessageSquare,
     eyebrow: "Sales",
     title: "Enterprise & Growth",
     body: "Custom plans, security review, procurement.",
-    email: "sales@onetraceai.com",
+    email: "sales@onetrace.ai",
   },
 ];
 
@@ -124,8 +124,8 @@ function ChannelRow({
             {title}
           </div>
           <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">{body}</p>
-          <div className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-medium text-accent group-hover:underline">
-            {email} <ArrowUpRight className="h-3 w-3" />
+          <div className="mt-3 inline-flex max-w-full items-center gap-1 break-all text-[12.5px] font-medium text-accent group-hover:underline">
+            {email} <ArrowUpRight className="h-3 w-3 shrink-0" />
           </div>
         </div>
       </div>
@@ -170,22 +170,22 @@ const ContactPage = () => {
       <Nav />
 
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 pt-20 pb-12 text-center">
+      <section className="mx-auto max-w-6xl px-4 pt-12 pb-10 text-center sm:px-6 sm:pt-20 sm:pb-12">
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
           Get in touch
         </span>
-        <h1 className="mx-auto mt-4 max-w-2xl font-geist text-[48px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[60px]">
+        <h1 className="mx-auto mt-4 max-w-2xl font-geist text-[36px] leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[48px] md:text-[60px]">
           Talk to a <span className="font-serif italic text-foreground/70">human.</span>
         </h1>
-        <p className="mx-auto mt-5 max-w-xl text-[14.5px] leading-relaxed text-muted-foreground">
+        <p className="mx-auto mt-4 max-w-xl text-[13.5px] leading-relaxed text-muted-foreground sm:mt-5 sm:text-[14.5px]">
           Questions about a plan, a security review, or a custom integration — we read every
           message and reply within 24 hours.
         </p>
       </section>
 
       {/* Body: left rail + form */}
-      <section className="mx-auto max-w-6xl px-6 pb-24">
-        <div className="grid gap-8 lg:grid-cols-[1fr_1.4fr]">
+      <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 sm:pb-24">
+        <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr] lg:gap-8">
           {/* Left rail */}
           <aside className="space-y-4">
             {CHANNELS.map((c) => (
@@ -211,7 +211,7 @@ const ContactPage = () => {
           </aside>
 
           {/* Form */}
-          <div className="rounded-2xl border border-border bg-card p-7 md:p-9">
+          <div className="rounded-2xl border border-border bg-card p-5 sm:p-7 md:p-9">
             {isSubmitted ? (
               <div className="py-10 text-center">
                 <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent/10">
