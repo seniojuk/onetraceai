@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Github, Linkedin, Twitter } from "lucide-react";
+import { FooterWordmark } from "./FooterWordmark";
 
 /* ============================================================
    PublicFooter — editorial, footer.design-inspired.
@@ -83,15 +84,9 @@ export function PublicFooter() {
       </div>
 
 
-      {/* Oversized wordmark */}
-      <div
-        aria-hidden
-        className="mx-auto mt-16 max-w-[1400px] overflow-hidden px-4 sm:px-6"
-      >
-        <div className="select-none whitespace-nowrap font-geist text-[clamp(80px,18vw,260px)] font-medium leading-[0.85] tracking-[-0.06em] text-foreground/90">
-          OneTrace<span className="font-serif italic text-foreground/40">.ai</span>
-        </div>
-      </div>
+      {/* Oversized wordmark with interactive variants */}
+      <FooterWordmark />
+
 
       {/* Fine print rail */}
       <div className="border-t border-border">
