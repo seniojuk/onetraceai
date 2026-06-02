@@ -1,12 +1,14 @@
 import { useState } from "react";
 
-type Variant = "constellation" | "orbital" | "isometric" | "liquid";
+type Variant = "constellation" | "orbital" | "isometric" | "liquid" | "spotlight" | "gauge";
 
 const VARIANTS: { id: Variant; label: string; caption: string }[] = [
   { id: "constellation", label: "Lineage", caption: "Every artifact, every link — alive." },
   { id: "orbital", label: "Orbit", caption: "Systems in motion. Always in sync." },
   { id: "isometric", label: "Layers", caption: "Scan the stack. Top to bottom." },
   { id: "liquid", label: "Flux", caption: "Continuous. Fluid. Traceable." },
+  { id: "spotlight", label: "Focus", caption: "One source of truth, in focus." },
+  { id: "gauge", label: "Signal", caption: "Precision. Measured continuously." },
 ];
 
 /* ----------------------- 1. CONSTELLATION / LINEAGE ----------------------- */
