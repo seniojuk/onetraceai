@@ -72,6 +72,42 @@ serve(async (req) => {
       .maybeSingle();
     if (!workspace) return jsonResponse({ error: "Workspace not found" }, 404);
 
+    // Enforce per-plan seat limit (server-side gate)
+    const { data: sub } = await supabaseAdmin
+      .from("subscriptions")
+      .select("plan_id")
+      .eq("workspace_id", workspaceId)
+      .maybeSingle();
+    const planId = sub?.plan_id || "starter";
+
+    const { data: planLimit } = await supabaseAdmin
+      .from("plan_limits")
+      .select("max_users, plan_name")
+      .eq("plan_id", planId)
+      .maybeSingle();
+
+    const maxUsers = (planLimit as { max_users?: number | null } | null)?.max_users ?? null;
+    if (maxUsers !== null) {
+      const { count: memberCount } = await supabaseAdmin
+        .from("workspace_members")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId);
+      const { count: pendingCount } = await supabaseAdmin
+        .from("workspace_invitations")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId)
+        .eq("status", "PENDING");
+
+      const projectedSeats = (memberCount || 0) + (pendingCount || 0) + 1;
+      if (projectedSeats > maxUsers) {
+        return jsonResponse({
+          error: `Seat limit reached on the ${planLimit?.plan_name || planId} plan (${maxUsers} seats). Upgrade your plan to invite more teammates.`,
+          code: "SEAT_LIMIT_REACHED",
+        }, 402);
+      }
+    }
+
+
     // Check if user already exists
     const { data: { users }, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
     if (listErr) throw listErr;

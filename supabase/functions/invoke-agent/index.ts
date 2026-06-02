@@ -123,6 +123,46 @@ serve(async (req) => {
 
     // Create ai_run record to track this invocation
     const effectiveWorkspaceId = workspaceId || agent.workspace_id;
+
+    // ---- Server-side enforcement: monthly AI run limit ----
+    if (effectiveWorkspaceId) {
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .select("plan_id")
+        .eq("workspace_id", effectiveWorkspaceId)
+        .maybeSingle();
+      const planId = sub?.plan_id || "starter";
+
+      const { data: planLimit } = await supabase
+        .from("plan_limits")
+        .select("max_ai_runs_per_month, plan_name")
+        .eq("plan_id", planId)
+        .maybeSingle();
+
+      const maxRuns = planLimit?.max_ai_runs_per_month ?? null;
+      if (maxRuns !== null) {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const { count: runsThisMonth } = await supabase
+          .from("ai_runs")
+          .select("*", { count: "exact", head: true })
+          .eq("workspace_id", effectiveWorkspaceId)
+          .gte("created_at", startOfMonth.toISOString());
+
+        if ((runsThisMonth || 0) >= maxRuns) {
+          return new Response(
+            JSON.stringify({
+              error: `Monthly AI run limit reached on the ${planLimit?.plan_name || planId} plan (${maxRuns} runs). Upgrade your plan or wait until next month.`,
+              code: "AI_RUN_LIMIT_REACHED",
+            }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+    }
+
     let runId: string | null = null;
     if (effectiveWorkspaceId) {
       const { data: runData } = await supabase
