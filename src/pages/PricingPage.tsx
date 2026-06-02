@@ -9,9 +9,11 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 type Tier = {
   name: string;
+  eyebrow: string;
   price: string;
   priceSuffix?: string;
   tagline: string;
+  perUser?: { rate: string; seats: number };
   features: string[];
   cta: string;
   ctaHref: string;
@@ -21,8 +23,9 @@ type Tier = {
 const TIERS: Tier[] = [
   {
     name: "Starter",
+    eyebrow: "Individual",
     price: "$0",
-    priceSuffix: "/month",
+    priceSuffix: "/mo",
     tagline: "Kick the tires. See your first traced requirement.",
     features: ["1 project", "25 artifacts", "10 AI runs / month", "Jira + GitHub connect", "Community support"],
     cta: "Start free",
@@ -30,9 +33,11 @@ const TIERS: Tier[] = [
   },
   {
     name: "Team",
+    eyebrow: "Standard",
     price: "$149",
-    priceSuffix: "/month",
-    tagline: "For seed → Series A engineering teams.",
+    priceSuffix: "/mo",
+    tagline: "Flat-rate for engineering teams up to 10.",
+    perUser: { rate: "$14.90", seats: 10 },
     features: [
       "Up to 10 users",
       "Unlimited projects",
@@ -47,9 +52,11 @@ const TIERS: Tier[] = [
   },
   {
     name: "Growth",
+    eyebrow: "Scaling",
     price: "$399",
-    priceSuffix: "/month",
-    tagline: "Scaling engineering orgs.",
+    priceSuffix: "/mo",
+    tagline: "Power features for orgs scaling their trace graph.",
+    perUser: { rate: "$15.96", seats: 25 },
     features: [
       "Up to 25 users",
       "Unlimited AI runs",
@@ -62,6 +69,7 @@ const TIERS: Tier[] = [
   },
   {
     name: "Enterprise",
+    eyebrow: "Custom",
     price: "Custom",
     tagline: "Security, scale, and white-glove onboarding.",
     features: ["Unlimited users", "SSO / SAML + SCIM", "Custom model hub", "Dedicated CSM", "SLA + DPA"],
@@ -73,11 +81,6 @@ const TIERS: Tier[] = [
 const TRUST = [
   { icon: Check, label: "Cancel anytime" },
   { icon: Lock, label: "No card for free tier" },
-];
-
-const SEAT_MATH = [
-  { plan: "Team", seats: 10, monthly: 149 },
-  { plan: "Growth", seats: 25, monthly: 399 },
 ];
 
 type MatrixRow = { feature: string; values: (string | boolean)[] };
@@ -158,19 +161,6 @@ function MatrixCell({ v }: { v: string | boolean }) {
   return <span className="text-[12.5px] text-foreground/85">{v}</span>;
 }
 
-function TrustStrip() {
-  return (
-    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-      {TRUST.map(({ icon: Icon, label }) => (
-        <div key={label} className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
-          <Icon className="h-3.5 w-3.5 text-accent" />
-          <span>{label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function FaqAccordion({ items }: { items: typeof FAQ }) {
   const [open, setOpen] = useState<number | null>(0);
   return (
@@ -200,43 +190,68 @@ function FaqAccordion({ items }: { items: typeof FAQ }) {
 }
 
 function TierCard({ p }: { p: Tier }) {
+  const isFeatured = !!p.featured;
   return (
     <div
-      className={`relative h-full rounded-xl border bg-card p-6 lift ${
-        p.featured
-          ? "border-accent/60 ring-1 ring-accent/30 shadow-[0_20px_60px_-30px_hsl(var(--accent)/0.5)]"
-          : "border-border"
+      className={`relative flex h-full flex-col rounded-2xl border bg-card p-7 transition-colors ${
+        isFeatured
+          ? "border-accent/60 ring-1 ring-accent/30 shadow-[0_30px_80px_-40px_hsl(var(--accent)/0.5)] md:-translate-y-2"
+          : "border-border hover:border-foreground/15"
       }`}
     >
-      {p.featured && (
-        <span className="absolute -top-2.5 left-6 rounded-full bg-accent px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-accent-foreground shadow-sm">
+      {isFeatured && (
+        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-3 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-accent-foreground shadow-sm">
           Most popular
         </span>
       )}
-      <div className="text-[13px] text-muted-foreground">{p.name}</div>
-      <div className="mt-3 flex items-baseline gap-1">
-        <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">
-          {p.price}
-        </span>
+      <div
+        className={`font-mono text-[10px] uppercase tracking-[0.18em] ${
+          isFeatured ? "text-accent" : "text-muted-foreground"
+        }`}
+      >
+        {p.eyebrow}
+      </div>
+      <h3 className="mt-5 font-geist text-[20px] font-medium tracking-[-0.01em] text-foreground">{p.name}</h3>
+      <div className="mt-2 flex items-baseline gap-1">
+        <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">{p.price}</span>
         {p.priceSuffix && <span className="text-[13px] text-muted-foreground">{p.priceSuffix}</span>}
       </div>
-      <p className="mt-2 text-[12.5px] text-muted-foreground">{p.tagline}</p>
-      <ul className="mt-5 space-y-2 border-t border-border pt-4">
-        {p.features.map((f) => (
-          <li key={f} className="flex items-start gap-2 text-[13px] text-foreground/90">
-            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
-            {f}
-          </li>
-        ))}
-      </ul>
+
+      {/* Per-user proof badge — flat team math, in-context */}
+      {p.perUser ? (
+        <div
+          className={`mt-3 rounded-lg border px-3 py-2 ${
+            isFeatured ? "border-accent/30 bg-accent/8" : "border-border bg-muted/40"
+          }`}
+        >
+          <div className={`text-[12.5px] font-semibold ${isFeatured ? "text-accent" : "text-foreground/80"}`}>
+            ~{p.perUser.rate} per user
+          </div>
+          <div className="text-[10.5px] text-muted-foreground">Flat rate at {p.perUser.seats} seats</div>
+        </div>
+      ) : (
+        <div className="mt-3 h-[44px]" aria-hidden />
+      )}
+
+      <p className="mt-4 text-[12.5px] leading-relaxed text-muted-foreground">{p.tagline}</p>
+
       <Link
         to={p.ctaHref}
         className={`mt-6 inline-flex h-9 w-full items-center justify-center gap-1.5 px-3 text-[13px] font-medium btn-3d ${
-          p.featured ? "btn-3d-accent" : "btn-3d-secondary"
+          isFeatured ? "btn-3d-primary" : "btn-3d-secondary"
         }`}
       >
         {p.cta} <ArrowUpRight className="h-3.5 w-3.5" />
       </Link>
+
+      <ul className="mt-6 space-y-2.5 border-t border-border pt-5">
+        {p.features.map((f) => (
+          <li key={f} className="flex items-start gap-2 text-[13px] text-foreground/90">
+            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+            <span>{f}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -277,10 +292,7 @@ function ComparisonMatrix({ highlightCol = 1 }: { highlightCol?: number }) {
                 <tr key={r.feature} className="border-b border-border/70">
                   <td className="py-3 pr-4 text-[13px] text-foreground/90">{r.feature}</td>
                   {r.values.map((v, i) => (
-                    <td
-                      key={i}
-                      className={`py-3 text-center ${i === highlightCol ? "bg-accent/5" : ""}`}
-                    >
+                    <td key={i} className={`py-3 text-center ${i === highlightCol ? "bg-accent/5" : ""}`}>
                       <MatrixCell v={v} />
                     </td>
                   ))}
@@ -297,7 +309,7 @@ function ComparisonMatrix({ highlightCol = 1 }: { highlightCol?: number }) {
 function FinalCTA() {
   return (
     <div className="mx-auto max-w-6xl px-6">
-      <section className="relative my-24 overflow-hidden rounded-2xl border border-border bg-card p-12 text-center">
+      <section className="relative my-24 overflow-hidden rounded-3xl border border-border bg-card p-12 text-center">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-60"
@@ -326,10 +338,7 @@ function FinalCTA() {
             >
               Start free <ArrowUpRight className="h-4 w-4" />
             </Link>
-            <Link
-              to="/contact"
-              className="btn-3d btn-3d-ghost inline-flex h-10 items-center px-4 text-[13px]"
-            >
+            <Link to="/contact" className="btn-3d btn-3d-ghost inline-flex h-10 items-center px-4 text-[13px]">
               Talk to sales
             </Link>
           </div>
@@ -410,63 +419,31 @@ export default function PricingPage() {
       <Nav />
 
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">
+      <section className="mx-auto max-w-6xl px-6 pt-20 pb-16 text-center">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
+          Transparent pricing
+        </span>
         <h1 className="mx-auto mt-4 max-w-3xl font-geist text-[52px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[64px]">
           Start free.{" "}
           <span className="font-serif italic text-foreground/70">Upgrade when you're ready.</span>
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-[14.5px] leading-relaxed text-muted-foreground">
-          Transparent pricing for engineering teams. No hidden fees, no seat-sniping, no surprises
-          on renewal.
+          Flat-rate pricing for engineering teams. No per-seat creep, no hidden fees, no surprises on
+          renewal.
         </p>
-        <div className="mx-auto mt-10 max-w-3xl border-y border-border py-5">
-          <TrustStrip />
+        <div className="mx-auto mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+          {TRUST.map(({ icon: Icon, label }) => (
+            <div key={label} className="flex items-center gap-2 text-[12.5px] text-muted-foreground">
+              <Icon className="h-3.5 w-3.5 text-accent" />
+              <span>{label}</span>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Per-seat math anchor */}
-      <section className="mx-auto max-w-6xl px-6 mt-6">
-        <div className="rounded-2xl border border-border bg-muted/30 p-6 md:p-8">
-          <div className="grid items-end gap-6 md:grid-cols-[1.2fr_1fr]">
-            <div>
-              <h2 className="font-geist text-[28px] leading-tight tracking-[-0.02em] md:text-[32px]">
-                Flat team pricing.{" "}
-                <span className="font-serif italic text-foreground/70">No per-seat creep.</span>
-              </h2>
-              <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">
-                Bring your whole engineering team without watching the bill climb.
-              </p>
-            </div>
-            <div className="grid gap-3">
-              {SEAT_MATH.map((m) => (
-                <div
-                  key={m.plan}
-                  className="flex items-center justify-between rounded-xl border border-border bg-card p-4"
-                >
-                  <div>
-                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                      {m.plan} plan
-                    </div>
-                    <div className="mt-1 font-geist text-[16px] tracking-[-0.02em]">
-                      ${m.monthly}/mo ÷ {m.seats} users
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-geist text-[28px] tracking-[-0.03em] text-accent">
-                      ${(m.monthly / m.seats).toFixed(2)}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground">per user / mo</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Tier cards */}
-      <section className="mx-auto max-w-6xl px-6 mt-16">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Tier cards — Team is anchored, flat-rate math lives inside Team & Growth */}
+      <section className="mx-auto max-w-6xl px-6">
+        <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 lg:grid-cols-4">
           {TIERS.map((p, idx) => (
             <Reveal key={p.name} delay={idx * 80}>
               <TierCard p={p} />
@@ -479,24 +456,23 @@ export default function PricingPage() {
       </section>
 
       {/* What counts */}
-      <section className="mx-auto mt-24 max-w-4xl px-6">
-        <div className="rounded-2xl border border-border bg-muted/30 p-10">
-          <div className="grid gap-10 md:grid-cols-2">
+      <section className="mx-auto mt-24 max-w-5xl px-6">
+        <div className="rounded-2xl border border-border bg-muted/30 p-8 md:p-10">
+          <div className="grid gap-10 md:grid-cols-[1fr_2fr]">
             <div>
-              <h2 className="font-geist text-[28px] leading-tight tracking-[-0.02em]">
-                What counts as a{" "}
-                <span className="font-serif italic text-foreground/70">unit?</span>
+              <h2 className="font-geist text-[26px] leading-tight tracking-[-0.02em] md:text-[30px]">
+                What counts as a <span className="font-serif italic text-foreground/70">unit?</span>
               </h2>
               <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">
                 We charge for value created, not characters typed.
               </p>
             </div>
-            <div className="space-y-6">
+            <div className="grid gap-8 sm:grid-cols-2">
               <div>
                 <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
                   Artifact
                 </div>
-                <p className="mt-1 text-[13.5px] text-foreground/90">
+                <p className="mt-2 text-[13px] leading-relaxed text-foreground/90">
                   Any node in your trace graph: PRD, epic, story, AC, test, or commit-link.
                 </p>
               </div>
@@ -504,7 +480,7 @@ export default function PricingPage() {
                 <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
                   AI run
                 </div>
-                <p className="mt-1 text-[13.5px] text-foreground/90">
+                <p className="mt-2 text-[13px] leading-relaxed text-foreground/90">
                   One generation or auto-trace call. Browsing your graph never costs a run.
                 </p>
               </div>
@@ -532,7 +508,6 @@ export default function PricingPage() {
         </div>
         <FaqAccordion items={FAQ} />
       </section>
-
 
       <FinalCTA />
     </div>
