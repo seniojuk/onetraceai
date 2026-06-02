@@ -1,195 +1,183 @@
-import { Link } from "react-router-dom";
-import { Network, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  LegalLayout,
+  LegalSection,
+  LegalSubheading,
+  LegalList,
+  LegalCallout,
+} from "@/components/marketing/LegalLayout";
+
+const SECTIONS = [
+  { id: "intro", label: "Introduction" },
+  { id: "collect", label: "Information we collect" },
+  { id: "use", label: "How we use it" },
+  { id: "share", label: "Sharing & disclosure" },
+  { id: "security", label: "Data security" },
+  { id: "gdpr", label: "GDPR rights" },
+  { id: "retention", label: "Data retention" },
+  { id: "thirdparty", label: "Third-party services" },
+  { id: "children", label: "Children's privacy" },
+  { id: "changes", label: "Changes to this policy" },
+  { id: "contact", label: "Contact us" },
+];
 
 const PrivacyPolicyPage = () => {
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Network className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-foreground">OneTrace AI</span>
-            </Link>
-            
-            <Link to="/">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
-              </Button>
-            </Link>
+    <LegalLayout
+      eyebrow="Legal"
+      title="Privacy"
+      flourish="policy."
+      updated="January 31, 2026"
+      sections={SECTIONS}
+    >
+      <LegalSection id="intro" index={1} title="Introduction">
+        <p>
+          OneTrace AI, Inc. ("OneTrace AI," "we," "us," or "our") is committed to protecting your
+          privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your
+          information when you use our software-as-a-service platform and related services
+          (collectively, the "Service").
+        </p>
+        <p>
+          By accessing or using the Service, you agree to this Privacy Policy. If you do not agree
+          with the terms of this Privacy Policy, please do not access the Service.
+        </p>
+      </LegalSection>
+
+      <LegalSection id="collect" index={2} title="Information we collect">
+        <LegalSubheading>2.1 Information you provide</LegalSubheading>
+        <LegalList
+          items={[
+            <><strong className="text-foreground">Account information:</strong> Name, email address, company name, and password when you create an account.</>,
+            <><strong className="text-foreground">Payment information:</strong> Billing address and payment details processed through our secure payment provider.</>,
+            <><strong className="text-foreground">Workspace data:</strong> PRDs, user stories, epics, and other artifacts you create within the Service.</>,
+            <><strong className="text-foreground">Integration data:</strong> Data synchronized from third-party services like Jira and GitHub that you connect to OneTrace AI.</>,
+            <><strong className="text-foreground">Communications:</strong> Information you provide when contacting our support team.</>,
+          ]}
+        />
+        <LegalSubheading>2.2 Automatically collected information</LegalSubheading>
+        <LegalList
+          items={[
+            <><strong className="text-foreground">Usage data:</strong> How you interact with the Service, including features used and time spent.</>,
+            <><strong className="text-foreground">Device information:</strong> Browser type, operating system, and device identifiers.</>,
+            <><strong className="text-foreground">Log data:</strong> IP addresses, access times, and pages viewed.</>,
+            <><strong className="text-foreground">Cookies:</strong> We use cookies and similar technologies to enhance your experience and analyze usage patterns.</>,
+          ]}
+        />
+      </LegalSection>
+
+      <LegalSection id="use" index={3} title="How we use your information">
+        <p>We use the information we collect to:</p>
+        <LegalList
+          items={[
+            "Provide, maintain, and improve the Service",
+            "Process transactions and send related information",
+            "Send administrative information, updates, and security alerts",
+            "Respond to your comments, questions, and support requests",
+            "Analyze usage patterns to improve user experience",
+            "Detect, prevent, and address technical issues and security threats",
+            "Power AI features that enhance your workflow (with your explicit consent)",
+          ]}
+        />
+      </LegalSection>
+
+      <LegalSection id="share" index={4} title="Data sharing and disclosure">
+        <p>
+          We do not sell your personal information. We may share your information in the following
+          circumstances:
+        </p>
+        <LegalList
+          items={[
+            <><strong className="text-foreground">Service providers:</strong> With trusted third parties who help us operate the Service (hosting, analytics, payments).</>,
+            <><strong className="text-foreground">Integrations:</strong> With third-party services you choose to connect (e.g., Jira, GitHub).</>,
+            <><strong className="text-foreground">Legal requirements:</strong> When required by law or to protect our rights, safety, or property.</>,
+            <><strong className="text-foreground">Business transfers:</strong> In connection with a merger, acquisition, or sale of assets.</>,
+            <><strong className="text-foreground">With your consent:</strong> For any other purpose with your explicit consent.</>,
+          ]}
+        />
+      </LegalSection>
+
+      <LegalSection id="security" index={5} title="Data security">
+        <p>We implement industry-standard security measures to protect your information:</p>
+        <LegalList
+          items={[
+            "Encryption of data in transit (TLS 1.3) and at rest (AES-256)",
+            "Regular security audits and vulnerability assessments",
+            "Access controls and authentication mechanisms",
+            "Secure data centers with physical security measures",
+          ]}
+        />
+        <p>
+          However, no method of transmission over the Internet is 100% secure. We cannot guarantee
+          absolute security.
+        </p>
+      </LegalSection>
+
+      <LegalSection id="gdpr" index={6} title="GDPR compliance (for EU users)">
+        <p>
+          If you are located in the European Economic Area, you have certain rights under the GDPR:
+        </p>
+        <LegalList
+          items={[
+            <><strong className="text-foreground">Right of access:</strong> Request a copy of your personal data.</>,
+            <><strong className="text-foreground">Right to rectification:</strong> Request correction of inaccurate data.</>,
+            <><strong className="text-foreground">Right to erasure:</strong> Request deletion of your personal data.</>,
+            <><strong className="text-foreground">Right to restrict processing:</strong> Request limitation of data processing.</>,
+            <><strong className="text-foreground">Right to data portability:</strong> Receive your data in a structured, machine-readable format.</>,
+            <><strong className="text-foreground">Right to object:</strong> Object to processing based on legitimate interests.</>,
+            <><strong className="text-foreground">Right to withdraw consent:</strong> Withdraw consent at any time where processing is based on consent.</>,
+          ]}
+        />
+        <p>
+          To exercise these rights, email{" "}
+          <a href="mailto:privacy@onetrace.ai" className="text-accent hover:underline">
+            privacy@onetrace.ai
+          </a>
+          .
+        </p>
+      </LegalSection>
+
+      <LegalSection id="retention" index={7} title="Data retention">
+        <p>
+          We retain your information for as long as your account is active or as needed to provide
+          the Service. Upon account deletion, we delete or anonymize your data within 30 days,
+          except where retention is required by law or for legitimate business purposes.
+        </p>
+      </LegalSection>
+
+      <LegalSection id="thirdparty" index={8} title="Third-party services">
+        <p>
+          The Service may link to or integrate with third-party services. We are not responsible
+          for their privacy practices. Review their policies before sharing personal information.
+        </p>
+      </LegalSection>
+
+      <LegalSection id="children" index={9} title="Children's privacy">
+        <p>
+          The Service is not intended for individuals under 16. We do not knowingly collect
+          personal information from children. If we learn that we have, we will delete it.
+        </p>
+      </LegalSection>
+
+      <LegalSection id="changes" index={10} title="Changes to this Privacy Policy">
+        <p>
+          We may update this Privacy Policy from time to time. Material changes will be posted
+          here with an updated date. Continued use of the Service after changes constitutes
+          acceptance of the updated policy.
+        </p>
+      </LegalSection>
+
+      <LegalSection id="contact" index={11} title="Contact us">
+        <p>If you have questions about this Privacy Policy or our privacy practices:</p>
+        <LegalCallout label="Privacy contact">
+          <div className="font-medium text-foreground">OneTrace AI, Inc.</div>
+          <div className="mt-1 text-muted-foreground">
+            Email:{" "}
+            <a href="mailto:privacy@onetrace.ai" className="text-accent hover:underline">
+              privacy@onetrace.ai
+            </a>
           </div>
-        </div>
-      </nav>
-
-      {/* Content */}
-      <main className="pt-32 pb-20">
-        <div className="container mx-auto px-6 max-w-4xl">
-          <h1 className="text-4xl font-bold text-foreground mb-4">Privacy Policy</h1>
-          <p className="text-muted-foreground mb-8">Last updated: January 31, 2026</p>
-
-          <div className="prose prose-slate dark:prose-invert max-w-none space-y-8">
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">1. Introduction</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                OneTrace AI, Inc. ("OneTrace AI," "we," "us," or "our") is committed to protecting your privacy. 
-                This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you 
-                use our software-as-a-service platform and related services (collectively, the "Service").
-              </p>
-              <p className="text-muted-foreground leading-relaxed mt-4">
-                By accessing or using the Service, you agree to this Privacy Policy. If you do not agree with the 
-                terms of this Privacy Policy, please do not access the Service.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">2. Information We Collect</h2>
-              
-              <h3 className="text-xl font-medium text-foreground mt-6 mb-3">2.1 Information You Provide</h3>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                <li><strong>Account Information:</strong> Name, email address, company name, and password when you create an account.</li>
-                <li><strong>Payment Information:</strong> Billing address and payment details processed through our secure payment provider.</li>
-                <li><strong>Workspace Data:</strong> Project requirements documents (PRDs), user stories, epics, and other artifacts you create within the Service.</li>
-                <li><strong>Integration Data:</strong> Data synchronized from third-party services like Jira and GitHub that you connect to OneTrace AI.</li>
-                <li><strong>Communications:</strong> Information you provide when contacting our support team.</li>
-              </ul>
-
-              <h3 className="text-xl font-medium text-foreground mt-6 mb-3">2.2 Automatically Collected Information</h3>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                <li><strong>Usage Data:</strong> Information about how you interact with the Service, including features used and time spent.</li>
-                <li><strong>Device Information:</strong> Browser type, operating system, and device identifiers.</li>
-                <li><strong>Log Data:</strong> IP addresses, access times, and pages viewed.</li>
-                <li><strong>Cookies:</strong> We use cookies and similar technologies to enhance your experience and analyze usage patterns.</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">3. How We Use Your Information</h2>
-              <p className="text-muted-foreground leading-relaxed">We use the information we collect to:</p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-4">
-                <li>Provide, maintain, and improve the Service</li>
-                <li>Process transactions and send related information</li>
-                <li>Send administrative information, updates, and security alerts</li>
-                <li>Respond to your comments, questions, and support requests</li>
-                <li>Analyze usage patterns to improve user experience</li>
-                <li>Detect, prevent, and address technical issues and security threats</li>
-                <li>Power AI features that enhance your workflow (with your explicit consent)</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">4. Data Sharing and Disclosure</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                We do not sell your personal information. We may share your information in the following circumstances:
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-4">
-                <li><strong>Service Providers:</strong> With trusted third parties who assist us in operating the Service (e.g., hosting, analytics, payment processing).</li>
-                <li><strong>Integrations:</strong> With third-party services you choose to connect (e.g., Jira, GitHub) to enable synchronization features.</li>
-                <li><strong>Legal Requirements:</strong> When required by law or to protect our rights, safety, or property.</li>
-                <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets.</li>
-                <li><strong>With Your Consent:</strong> For any other purpose with your explicit consent.</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">5. Data Security</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                We implement industry-standard security measures to protect your information, including:
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-4">
-                <li>Encryption of data in transit (TLS 1.3) and at rest (AES-256)</li>
-                <li>Regular security audits and vulnerability assessments</li>
-                <li>Access controls and authentication mechanisms</li>
-                <li>Secure data centers with physical security measures</li>
-              </ul>
-              <p className="text-muted-foreground leading-relaxed mt-4">
-                However, no method of transmission over the Internet is 100% secure. We cannot guarantee absolute security.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">6. GDPR Compliance (For EU Users)</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                If you are located in the European Economic Area (EEA), you have certain rights under the General Data 
-                Protection Regulation (GDPR):
-              </p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2 mt-4">
-                <li><strong>Right of Access:</strong> Request a copy of your personal data.</li>
-                <li><strong>Right to Rectification:</strong> Request correction of inaccurate data.</li>
-                <li><strong>Right to Erasure:</strong> Request deletion of your personal data ("right to be forgotten").</li>
-                <li><strong>Right to Restrict Processing:</strong> Request limitation of data processing.</li>
-                <li><strong>Right to Data Portability:</strong> Receive your data in a structured, machine-readable format.</li>
-                <li><strong>Right to Object:</strong> Object to processing based on legitimate interests.</li>
-                <li><strong>Right to Withdraw Consent:</strong> Withdraw consent at any time where processing is based on consent.</li>
-              </ul>
-              <p className="text-muted-foreground leading-relaxed mt-4">
-                To exercise these rights, please contact us at <a href="mailto:privacy@onetraceai.com" className="text-accent hover:underline">privacy@onetraceai.com</a>.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">7. Data Retention</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                We retain your information for as long as your account is active or as needed to provide the Service. 
-                Upon account deletion, we will delete or anonymize your data within 30 days, except where retention is 
-                required by law or for legitimate business purposes (e.g., audit trails, legal compliance).
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">8. Third-Party Services</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                The Service may contain links to third-party websites or integrate with third-party services. We are not 
-                responsible for the privacy practices of these third parties. We encourage you to review their privacy 
-                policies before providing any personal information.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">9. Children's Privacy</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                The Service is not intended for individuals under 16 years of age. We do not knowingly collect personal 
-                information from children. If we become aware that we have collected personal information from a child 
-                without parental consent, we will take steps to delete that information.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">10. Changes to This Privacy Policy</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                We may update this Privacy Policy from time to time. We will notify you of any material changes by posting 
-                the new Privacy Policy on this page and updating the "Last updated" date. Your continued use of the Service 
-                after any changes indicates your acceptance of the updated Privacy Policy.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold text-foreground mb-4">11. Contact Us</h2>
-              <p className="text-muted-foreground leading-relaxed">
-                If you have questions about this Privacy Policy or our privacy practices, please contact us at:
-              </p>
-              <div className="mt-4 p-4 bg-muted/30 rounded-lg">
-                <p className="text-foreground font-medium">OneTrace AI, Inc.</p>
-                <p className="text-muted-foreground">Email: <a href="mailto:privacy@onetraceai.com" className="text-accent hover:underline">privacy@onetraceai.com</a></p>
-              </div>
-            </section>
-          </div>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="py-8 bg-muted/30 border-t border-border/50">
-        <div className="container mx-auto px-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            © 2026 OneTrace AI, Inc. All rights reserved.
-          </p>
-        </div>
-      </footer>
-    </div>
+        </LegalCallout>
+      </LegalSection>
+    </LegalLayout>
   );
 };
 
