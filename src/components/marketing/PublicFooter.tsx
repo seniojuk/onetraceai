@@ -90,7 +90,7 @@ export function PublicFooter() {
       </div>
 
       {/* Copyright rail */}
-      <div className="border-t border-border">
+      <div>
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
           <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">
             © 2026 OneTrace AI, Inc.
@@ -99,7 +99,9 @@ export function PublicFooter() {
       </div>
 
       {/* Oversized wordmark with interactive variants — last thing on the page */}
-      <FooterWordmark />
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <FooterWordmark />
+      </div>
     </footer>
   );
 }
