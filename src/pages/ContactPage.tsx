@@ -83,14 +83,14 @@ const CHANNELS = [
     eyebrow: "General",
     title: "Support",
     body: "Product questions, account help, anything else.",
-    email: "support@onetraceai.com",
+    email: "support@onetrace.ai",
   },
   {
     icon: MessageSquare,
     eyebrow: "Sales",
     title: "Enterprise & Growth",
     body: "Custom plans, security review, procurement.",
-    email: "sales@onetraceai.com",
+    email: "sales@onetrace.ai",
   },
 ];
 
