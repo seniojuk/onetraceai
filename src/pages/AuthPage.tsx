@@ -15,6 +15,7 @@ import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { AccentWord } from "@/components/marketing/AccentWord";
+import { AuthVisualShowcase } from "@/components/auth/AuthVisualShowcase";
 
 const PROOF_POINTS = [
   "Connect Jira & GitHub in minutes",
