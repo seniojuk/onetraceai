@@ -1,5 +1,4 @@
 import { Link, useLocation } from "react-router-dom";
-import { Github, Linkedin, Twitter } from "lucide-react";
 import { FooterWordmark } from "./FooterWordmark";
 
 /* ============================================================
@@ -90,54 +89,18 @@ export function PublicFooter() {
         </div>
       </div>
 
-
-      {/* Oversized wordmark with interactive variants */}
-      <FooterWordmark />
-
-
-      {/* Fine print rail */}
+      {/* Copyright rail */}
       <div className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 sm:px-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">
-            <span>© 2026 OneTrace AI, Inc.</span>
-            <span className="hidden md:inline text-border">/</span>
-            <span>Built in Europe</span>
-            <span className="hidden md:inline text-border">/</span>
-            <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
-            <Link to="/terms" className="hover:text-foreground">Terms</Link>
-            <Link to="/contact" className="hover:text-foreground">Contact</Link>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <a
-              href="https://twitter.com"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Twitter"
-              className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-            >
-              <Twitter className="h-3.5 w-3.5" />
-            </a>
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="GitHub"
-              className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-            >
-              <Github className="h-3.5 w-3.5" />
-            </a>
-            <a
-              href="https://linkedin.com"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="LinkedIn"
-              className="grid h-8 w-8 place-items-center rounded-md border border-border text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-            >
-              <Linkedin className="h-3.5 w-3.5" />
-            </a>
-          </div>
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+          <span className="font-mono text-[10.5px] uppercase tracking-[0.16em] text-muted-foreground">
+            © 2026 OneTrace AI, Inc.
+          </span>
         </div>
       </div>
+
+      {/* Oversized wordmark with interactive variants — last thing on the page */}
+      <FooterWordmark />
     </footer>
   );
 }
+
