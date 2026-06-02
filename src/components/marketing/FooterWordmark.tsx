@@ -18,7 +18,7 @@ function Spotlight() {
       }}
       onMouseEnter={() => setActive(true)}
       onMouseLeave={() => setActive(false)}
-      className="relative select-none whitespace-nowrap font-geist text-[clamp(80px,18vw,260px)] font-medium leading-[0.85] tracking-[-0.06em]"
+      className="relative select-none whitespace-nowrap font-geist text-[clamp(32px,14vw,260px)] font-medium leading-[0.85] tracking-[-0.06em]"
     >
       {/* base muted */}
       <span className="text-foreground/15">
