@@ -1,5 +1,6 @@
 import { PublicNav } from "./PublicNav";
 import { PublicFooter } from "./PublicFooter";
+import { AccentWord } from "@/components/marketing/AccentWord";
 
 interface LegalLayoutProps {
   eyebrow: string;
@@ -22,7 +23,7 @@ export function LegalLayout({ eyebrow, title, flourish, updated, sections, child
         </span>
         <h1 className="mt-4 max-w-3xl font-geist text-[36px] leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[52px] md:text-[64px]">
           {title}{" "}
-          {flourish && <span className="font-serif italic text-foreground/70">{flourish}</span>}
+          {flourish && <AccentWord>{flourish}</AccentWord>}
         </h1>
         <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
           Last updated · {updated}

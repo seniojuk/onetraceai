@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight, Check, Command, GitBranch, Moon, Sparkles, Sun, Zap } from "lucide-react";
+import { AccentWord } from "@/components/marketing/AccentWord";
 
 /**
  * /design — OneTrace Design System
@@ -63,7 +64,7 @@ export default function DesignSystemPage() {
           <h1 className="font-geist text-[64px] leading-[1.02] tracking-[-0.04em] text-foreground">
             A system for shipping
             <br />
-            <span className="font-serif italic text-foreground/70">enterprise software</span> with taste.
+            <AccentWord>enterprise software</AccentWord> with taste.
           </h1>
           <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
             The OneTrace design language is engineered for B2B teams who care about craft.

@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { useToast } from "@/hooks/use-toast";
 import { PublicFooter } from "@/components/marketing/PublicFooter";
+import { AccentWord } from "@/components/marketing/AccentWord";
 
 /* ===================== Nav ===================== */
 
@@ -176,7 +177,7 @@ const ContactPage = () => {
           Get in touch
         </span>
         <h1 className="mx-auto mt-4 max-w-2xl font-geist text-[36px] leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[48px] md:text-[60px]">
-          Talk to a <span className="font-serif italic text-foreground/70">human.</span>
+          Talk to a <AccentWord>human.</AccentWord>
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-[13.5px] leading-relaxed text-muted-foreground sm:mt-5 sm:text-[14.5px]">
           Questions about a plan, a security review, or a custom integration — we read every
@@ -219,7 +220,7 @@ const ContactPage = () => {
                   <CheckCircle2 className="h-7 w-7 text-accent" />
                 </div>
                 <h2 className="mt-5 font-geist text-[28px] leading-tight tracking-[-0.02em] text-foreground">
-                  Message <span className="font-serif italic text-foreground/70">received.</span>
+                  Message <AccentWord>received.</AccentWord>
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-[13.5px] leading-relaxed text-muted-foreground">
                   Our team will review your request and get back to you within 24 hours.
