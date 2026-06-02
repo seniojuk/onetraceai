@@ -22,6 +22,7 @@ import {
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { HeroFlow } from "@/components/landing/HeroFlow";
 import { Reveal, ScrollProgress, useActiveSection } from "@/components/landing/motion";
+import { AccentWord } from "@/components/marketing/AccentWord";
 
 /**
  * Marketing home. Architectural density direction.
@@ -392,7 +393,7 @@ function ProblemSection() {
           ))}
         </div>
         <p className="mt-8 text-[13px] text-muted-foreground">
-          So <span className="font-serif italic text-foreground/80">"done"</span> becomes a vibe. Bugs ship. Rework
+          So <AccentWord>"done"</AccentWord> becomes a vibe. Bugs ship. Rework
           grows.
         </p>
       </Section>
@@ -428,10 +429,10 @@ function SolutionSection() {
               02 / The solution
             </div>
             <h2 className="mt-3 font-geist text-[36px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[44px]">
-              An AI-native <span className="font-serif italic text-foreground/70">system of record.</span>
+              An AI-native <AccentWord>system of record.</AccentWord>
             </h2>
             <p className="mt-6 max-w-md text-[14px] leading-relaxed text-muted-foreground">
-              OneTrace builds a <span className="font-serif italic text-foreground/80">living map</span> of your product.
+              OneTrace builds a <AccentWord>living map</AccentWord> of your product.
               It connects every artifact, tracks every relationship, and versions every change.
             </p>
             <Link
@@ -556,7 +557,7 @@ function CoverageShowcase() {
               </span>
             </div>
             <h3 className="mt-4 text-[18px] font-medium tracking-tight text-foreground">
-              Catch problems <span className="font-serif italic text-foreground/70">before</span> they ship.
+              Catch problems <AccentWord>before</AccentWord> they ship.
             </h3>
             <div className="mt-5 space-y-px overflow-hidden rounded-lg border border-border">
               {[
@@ -715,7 +716,7 @@ function FinalCTA() {
           </div>
           <h2 className="max-w-3xl font-geist text-[44px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[60px]">
             Ready to ship with{" "}
-            <span className="font-serif italic text-foreground/75">confidence?</span>
+            <AccentWord>confidence?</AccentWord>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
             Join AI-first teams shipping traceable software. Free to start. Connect in minutes.

@@ -5,6 +5,7 @@ import { Reveal } from "@/components/landing/motion";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { PublicFooter } from "@/components/marketing/PublicFooter";
+import { AccentWord } from "@/components/marketing/AccentWord";
 
 /* ===================== Data ===================== */
 
@@ -330,7 +331,7 @@ function FinalCTA() {
         <div className="relative flex flex-col items-center">
           <h2 className="max-w-3xl font-geist text-[44px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[60px]">
             Start free.{" "}
-            <span className="font-serif italic text-foreground/75">Upgrade when you're ready.</span>
+            <AccentWord>Upgrade when you're ready.</AccentWord>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
             Free forever for solo builders. No credit card required.
@@ -432,7 +433,7 @@ export default function PricingPage() {
         </span>
         <h1 className="mx-auto mt-4 max-w-3xl font-geist text-[52px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[64px]">
           Start free.{" "}
-          <span className="font-serif italic text-foreground/70">Upgrade when you're ready.</span>
+          <AccentWord>Upgrade when you're ready.</AccentWord>
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-[14.5px] leading-relaxed text-muted-foreground">
           Flat-rate pricing for engineering teams. No per-seat creep, no hidden fees, no surprises on
@@ -468,7 +469,7 @@ export default function PricingPage() {
           <div className="grid gap-10 md:grid-cols-[1fr_2fr]">
             <div>
               <h2 className="font-geist text-[26px] leading-tight tracking-[-0.02em] md:text-[30px]">
-                What counts as a <span className="font-serif italic text-foreground/70">unit?</span>
+                What counts as a <AccentWord>unit?</AccentWord>
               </h2>
               <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">
                 We charge for value created, not characters typed.

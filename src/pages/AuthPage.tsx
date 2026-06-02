@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { AccentWord } from "@/components/marketing/AccentWord";
 
 const PROOF_POINTS = [
   "Connect Jira & GitHub in minutes",
@@ -142,11 +143,11 @@ const AuthPage = () => {
             <h1 className="mt-4 font-geist text-[40px] leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[48px]">
               {isLogin ? (
                 <>
-                  Welcome <span className="font-serif italic text-foreground/70">back.</span>
+                  Welcome <AccentWord>back.</AccentWord>
                 </>
               ) : (
                 <>
-                  Start with <span className="font-serif italic text-foreground/70">proof.</span>
+                  Start with <AccentWord>proof.</AccentWord>
                 </>
               )}
             </h1>
@@ -312,8 +313,8 @@ const AuthPage = () => {
               Why teams switch
             </span>
             <h2 className="mt-4 font-geist text-[32px] leading-[1.1] tracking-[-0.02em] text-foreground">
-              From <span className="font-serif italic text-foreground/70">"I think it works"</span> to{" "}
-              <span className="font-serif italic text-foreground/70">proof it does.</span>
+              From <AccentWord>"I think it works"</AccentWord> to{" "}
+              <AccentWord>proof it does.</AccentWord>
             </h2>
 
             <ul className="mt-8 space-y-3.5">
