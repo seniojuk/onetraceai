@@ -44,7 +44,7 @@ function Spotlight() {
 
 export function FooterWordmark() {
   return (
-    <div className="mx-auto mt-16 max-w-[1400px] px-4 sm:px-6">
+    <div className="mt-16">
       <div className="overflow-hidden">
         <Spotlight />
       </div>
