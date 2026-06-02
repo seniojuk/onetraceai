@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Fragment } from "react";
 import { useState } from "react";
 import { ArrowUpRight, Check, Minus, ShieldCheck, Zap, Sparkles, Lock, Globe2 } from "lucide-react";
 import { Reveal } from "@/components/landing/motion";
@@ -331,8 +332,8 @@ function ComparisonMatrix({ highlightCol = 1 }: { highlightCol?: number }) {
         </thead>
         <tbody>
           {MATRIX.map((g) => (
-            <>
-              <tr key={`g-${g.group}`} className="border-b border-border bg-muted/30">
+            <Fragment key={g.group}>
+              <tr className="border-b border-border bg-muted/30">
                 <td
                   colSpan={5}
                   className="py-2.5 pr-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
@@ -355,7 +356,7 @@ function ComparisonMatrix({ highlightCol = 1 }: { highlightCol?: number }) {
                   ))}
                 </tr>
               ))}
-            </>
+            </Fragment>
           ))}
         </tbody>
       </table>
