@@ -1,12 +1,139 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Network, ArrowLeft, Mail, MessageSquare, Clock, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowUpRight, Mail, MessageSquare, Clock, CheckCircle2, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { useToast } from "@/hooks/use-toast";
+
+/* ===================== Nav ===================== */
+
+function Nav() {
+  const [open, setOpen] = useState(false);
+  return (
+    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
+        <Link to="/" className="flex items-center gap-2">
+          <span className="grid h-7 w-7 place-items-center rounded-md bg-accent font-mono text-[11px] font-medium text-accent-foreground">
+            OT
+          </span>
+          <span className="font-geist text-[15px] font-medium tracking-[-0.01em] text-foreground">
+            OneTrace <span className="text-muted-foreground">AI</span>
+          </span>
+        </Link>
+
+        <nav className="hidden items-center gap-7 md:flex">
+          <Link to="/#problem" className="text-[13px] text-muted-foreground hover:text-foreground">
+            Problem
+          </Link>
+          <Link to="/#solution" className="text-[13px] text-muted-foreground hover:text-foreground">
+            Solution
+          </Link>
+          <Link to="/#how" className="text-[13px] text-muted-foreground hover:text-foreground">
+            How it works
+          </Link>
+          <Link to="/pricing" className="text-[13px] text-muted-foreground hover:text-foreground">
+            Pricing
+          </Link>
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Link
+            to="/auth?mode=login"
+            className="hidden text-[13px] text-muted-foreground hover:text-foreground sm:inline"
+          >
+            Sign in
+          </Link>
+          <Link
+            to="/auth?mode=signup"
+            className="btn-3d btn-3d-primary inline-flex h-8 items-center gap-1 px-3 text-[12.5px] font-medium"
+          >
+            Start free <ArrowUpRight className="h-3 w-3" />
+          </Link>
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <button className="md:hidden">
+                <Menu className="h-5 w-5" />
+              </button>
+            </SheetTrigger>
+            <SheetContent>
+              <div className="mt-8 flex flex-col gap-4">
+                <Link to="/#problem">Problem</Link>
+                <Link to="/#solution">Solution</Link>
+                <Link to="/#how">How it works</Link>
+                <Link to="/pricing">Pricing</Link>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/* ===================== Atoms ===================== */
+
+const CHANNELS = [
+  {
+    icon: Mail,
+    eyebrow: "General",
+    title: "Support",
+    body: "Product questions, account help, anything else.",
+    email: "support@onetraceai.com",
+  },
+  {
+    icon: MessageSquare,
+    eyebrow: "Sales",
+    title: "Enterprise & Growth",
+    body: "Custom plans, security review, procurement.",
+    email: "sales@onetraceai.com",
+  },
+];
+
+function ChannelRow({
+  icon: Icon,
+  eyebrow,
+  title,
+  body,
+  email,
+}: {
+  icon: typeof Mail;
+  eyebrow: string;
+  title: string;
+  body: string;
+  email: string;
+}) {
+  return (
+    <a
+      href={`mailto:${email}`}
+      className="group block rounded-xl border border-border bg-card p-5 transition-colors hover:border-foreground/15"
+    >
+      <div className="flex items-start gap-4">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent">
+          <Icon className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {eyebrow}
+          </div>
+          <div className="mt-1 font-geist text-[15px] font-medium tracking-[-0.01em] text-foreground">
+            {title}
+          </div>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">{body}</p>
+          <div className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-medium text-accent group-hover:underline">
+            {email} <ArrowUpRight className="h-3 w-3" />
+          </div>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+/* ===================== Page ===================== */
 
 const ContactPage = () => {
   const { toast } = useToast();
@@ -23,259 +150,202 @@ const ContactPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    // Simulate form submission
     await new Promise((resolve) => setTimeout(resolve, 1500));
-
     setIsSubmitting(false);
     setIsSubmitted(true);
     toast({
-      title: "Message sent!",
-      description: "We'll get back to you as soon as possible.",
+      title: "Message sent",
+      description: "We'll get back to you within 24 hours.",
     });
   };
 
-  const handleChange = (field: string, value: string) => {
+  const handleChange = (field: string, value: string) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+
+  const isValid =
+    formData.name && formData.email && formData.category && formData.subject && formData.message;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Network className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-foreground">OneTrace AI</span>
-            </Link>
-            
-            <Link to="/">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-background text-foreground font-geist antialiased selection:bg-accent/20">
+      <Nav />
 
-      {/* Content */}
-      <main className="pt-32 pb-20">
-        <div className="container mx-auto px-6 max-w-5xl">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-foreground mb-4">Customer Support</h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Have questions or need help? Our team is here to assist you. Reach out and we'll respond as quickly as possible.
-            </p>
-          </div>
+      {/* Hero */}
+      <section className="mx-auto max-w-6xl px-6 pt-20 pb-12 text-center">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
+          Get in touch
+        </span>
+        <h1 className="mx-auto mt-4 max-w-2xl font-geist text-[48px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[60px]">
+          Talk to a <span className="font-serif italic text-foreground/70">human.</span>
+        </h1>
+        <p className="mx-auto mt-5 max-w-xl text-[14.5px] leading-relaxed text-muted-foreground">
+          Questions about a plan, a security review, or a custom integration — we read every
+          message and reply within 24 hours.
+        </p>
+      </section>
 
-          <div className="grid lg:grid-cols-3 gap-12">
-            {/* Contact Information */}
-            <div className="lg:col-span-1 space-y-6">
-              <div className="p-6 rounded-xl bg-card border border-border/50">
-                <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
-                  <Mail className="w-6 h-6 text-accent" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">Email Support</h3>
-                <p className="text-muted-foreground text-sm mb-3">
-                  For general inquiries and support requests
-                </p>
-                <a 
-                  href="mailto:support@onetraceai.com" 
-                  className="text-accent hover:underline font-medium"
-                >
-                  support@onetraceai.com
-                </a>
-              </div>
+      {/* Body: left rail + form */}
+      <section className="mx-auto max-w-6xl px-6 pb-24">
+        <div className="grid gap-8 lg:grid-cols-[1fr_1.4fr]">
+          {/* Left rail */}
+          <aside className="space-y-4">
+            {CHANNELS.map((c) => (
+              <ChannelRow key={c.email} {...c} />
+            ))}
 
-              <div className="p-6 rounded-xl bg-card border border-border/50">
-                <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-4">
-                  <MessageSquare className="w-6 h-6 text-purple-500" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">Sales Inquiries</h3>
-                <p className="text-muted-foreground text-sm mb-3">
-                  For enterprise plans and custom solutions
-                </p>
-                <a 
-                  href="mailto:sales@onetraceai.com" 
-                  className="text-accent hover:underline font-medium"
-                >
-                  sales@onetraceai.com
-                </a>
+            <div className="rounded-xl border border-border bg-muted/30 p-5">
+              <div className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 text-accent" />
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Response time
+                </span>
               </div>
-
-              <div className="p-6 rounded-xl bg-card border border-border/50">
-                <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center mb-4">
-                  <Clock className="w-6 h-6 text-success" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">Response Time</h3>
-                <p className="text-muted-foreground text-sm">
-                  We typically respond within <strong className="text-foreground">24 hours</strong> during business days (Monday–Friday, 9am–6pm EST).
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg bg-muted/30 border border-border/50">
-                <p className="text-sm text-muted-foreground">
-                  <strong className="text-foreground">Priority Support</strong> is available for Business and Enterprise plan subscribers with faster response times.
-                </p>
-              </div>
+              <p className="mt-3 text-[13px] leading-relaxed text-foreground/90">
+                We reply within <span className="font-medium text-foreground">24 hours</span> on
+                business days (Mon–Fri, 9am–6pm EST).
+              </p>
+              <p className="mt-3 text-[12.5px] leading-relaxed text-muted-foreground">
+                <span className="font-medium text-foreground">Priority support</span> ships with
+                Growth and Enterprise plans.
+              </p>
             </div>
+          </aside>
 
-            {/* Contact Form */}
-            <div className="lg:col-span-2">
-              <div className="p-8 rounded-xl bg-card border border-border/50">
-                {isSubmitted ? (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-6">
-                      <CheckCircle2 className="w-8 h-8 text-success" />
-                    </div>
-                    <h2 className="text-2xl font-semibold text-foreground mb-4">Thank You!</h2>
-                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                      Your message has been received. Our support team will review your request and get back to you within 24 hours.
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        setIsSubmitted(false);
-                        setFormData({ name: "", email: "", subject: "", category: "", message: "" });
-                      }}
-                    >
-                      Send Another Message
-                    </Button>
+          {/* Form */}
+          <div className="rounded-2xl border border-border bg-card p-7 md:p-9">
+            {isSubmitted ? (
+              <div className="py-10 text-center">
+                <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent/10">
+                  <CheckCircle2 className="h-7 w-7 text-accent" />
+                </div>
+                <h2 className="mt-5 font-geist text-[28px] leading-tight tracking-[-0.02em] text-foreground">
+                  Message <span className="font-serif italic text-foreground/70">received.</span>
+                </h2>
+                <p className="mx-auto mt-3 max-w-md text-[13.5px] leading-relaxed text-muted-foreground">
+                  Our team will review your request and get back to you within 24 hours.
+                </p>
+                <button
+                  onClick={() => {
+                    setIsSubmitted(false);
+                    setFormData({ name: "", email: "", subject: "", category: "", message: "" });
+                  }}
+                  className="btn-3d btn-3d-secondary mt-6 inline-flex h-9 items-center px-4 text-[13px] font-medium"
+                >
+                  Send another message
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Send a message
                   </div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <h2 className="text-xl font-semibold text-foreground mb-6">Send us a Message</h2>
-                    
-                    <div className="grid sm:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Full Name *</Label>
-                        <Input
-                          id="name"
-                          placeholder="John Doe"
-                          value={formData.name}
-                          onChange={(e) => handleChange("name", e.target.value)}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email Address *</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          placeholder="john@company.com"
-                          value={formData.email}
-                          onChange={(e) => handleChange("email", e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="category">Category *</Label>
-                        <Select value={formData.category} onValueChange={(value) => handleChange("category", value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="general">General Inquiry</SelectItem>
-                            <SelectItem value="technical">Technical Support</SelectItem>
-                            <SelectItem value="billing">Billing & Account</SelectItem>
-                            <SelectItem value="integration">Integrations</SelectItem>
-                            <SelectItem value="feature">Feature Request</SelectItem>
-                            <SelectItem value="bug">Bug Report</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="subject">Subject *</Label>
-                        <Input
-                          id="subject"
-                          placeholder="Brief description of your inquiry"
-                          value={formData.subject}
-                          onChange={(e) => handleChange("subject", e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="message">Message *</Label>
-                      <Textarea
-                        id="message"
-                        placeholder="Please describe your question or issue in detail. Include any relevant information that might help us assist you better."
-                        rows={6}
-                        value={formData.message}
-                        onChange={(e) => handleChange("message", e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div className="pt-4">
-                      <Button 
-                        type="submit" 
-                        className="w-full sm:w-auto px-8"
-                        disabled={isSubmitting || !formData.name || !formData.email || !formData.category || !formData.subject || !formData.message}
-                      >
-                        {isSubmitting ? "Sending..." : "Send Message"}
-                      </Button>
-                    </div>
-
-                    <p className="text-xs text-muted-foreground">
-                      By submitting this form, you agree to our{" "}
-                      <Link to="/privacy" className="text-accent hover:underline">Privacy Policy</Link>.
-                    </p>
-                  </form>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* FAQ Section */}
-          <div className="mt-16">
-            <h2 className="text-2xl font-semibold text-foreground text-center mb-8">Frequently Asked Questions</h2>
-            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-              {[
-                {
-                  q: "How do I reset my password?",
-                  a: "Click 'Forgot Password' on the login page and follow the instructions sent to your email.",
-                },
-                {
-                  q: "Can I upgrade or downgrade my plan?",
-                  a: "Yes, you can change your plan anytime from the Billing section in your account settings.",
-                },
-                {
-                  q: "How do I connect Jira to OneTrace AI?",
-                  a: "Navigate to Integrations in your dashboard and follow the Jira setup wizard to authorize the connection.",
-                },
-                {
-                  q: "Is my data secure?",
-                  a: "Yes, we use industry-standard encryption (TLS 1.3, AES-256) and follow security best practices. See our Privacy Policy for details.",
-                },
-              ].map((faq, i) => (
-                <div key={i} className="p-6 rounded-xl bg-card border border-border/50">
-                  <h3 className="font-semibold text-foreground mb-2">{faq.q}</h3>
-                  <p className="text-sm text-muted-foreground">{faq.a}</p>
+                  <h2 className="mt-1 font-geist text-[22px] font-medium tracking-[-0.01em] text-foreground">
+                    Tell us what you need.
+                  </h2>
                 </div>
-              ))}
-            </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-[12.5px] font-medium">
+                      Full name
+                    </Label>
+                    <Input
+                      id="name"
+                      placeholder="Jane Engineer"
+                      value={formData.name}
+                      onChange={(e) => handleChange("name", e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-[12.5px] font-medium">
+                      Work email
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="jane@company.com"
+                      value={formData.email}
+                      onChange={(e) => handleChange("email", e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-[12.5px] font-medium">
+                      Topic
+                    </Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) => handleChange("category", value)}
+                    >
+                      <SelectTrigger id="category">
+                        <SelectValue placeholder="Pick one" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sales">Sales / Enterprise</SelectItem>
+                        <SelectItem value="general">General inquiry</SelectItem>
+                        <SelectItem value="technical">Technical support</SelectItem>
+                        <SelectItem value="billing">Billing & account</SelectItem>
+                        <SelectItem value="integration">Integrations</SelectItem>
+                        <SelectItem value="feature">Feature request</SelectItem>
+                        <SelectItem value="bug">Bug report</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="subject" className="text-[12.5px] font-medium">
+                      Subject
+                    </Label>
+                    <Input
+                      id="subject"
+                      placeholder="Brief summary"
+                      value={formData.subject}
+                      onChange={(e) => handleChange("subject", e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="message" className="text-[12.5px] font-medium">
+                    Message
+                  </Label>
+                  <Textarea
+                    id="message"
+                    placeholder="Tell us about your team, what you're trying to do, and any relevant context."
+                    rows={6}
+                    value={formData.message}
+                    onChange={(e) => handleChange("message", e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="flex flex-col items-start gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-[11.5px] text-muted-foreground">
+                    By submitting, you agree to our{" "}
+                    <Link to="/privacy" className="text-accent hover:underline">
+                      Privacy Policy
+                    </Link>
+                    .
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !isValid}
+                    className="btn-3d btn-3d-primary inline-flex h-10 items-center gap-1.5 px-5 text-[13px] font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Sending…" : "Send message"}
+                    {!isSubmitting && <ArrowUpRight className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="py-8 bg-muted/30 border-t border-border/50">
-        <div className="container mx-auto px-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            © 2026 OneTrace AI, Inc. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      </section>
     </div>
   );
 };
