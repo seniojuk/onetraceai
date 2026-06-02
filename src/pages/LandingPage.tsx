@@ -38,7 +38,6 @@ const LandingPage = () => {
       <HowItWorks />
       <CoverageShowcase />
       <IntegrationsRow />
-      <PricingSection />
       <FinalCTA />
       <Footer />
     </div>
