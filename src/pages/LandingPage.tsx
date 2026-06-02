@@ -38,7 +38,6 @@ const LandingPage = () => {
       <HowItWorks />
       <CoverageShowcase />
       <IntegrationsRow />
-      <PricingSection />
       <FinalCTA />
       <Footer />
     </div>
@@ -64,7 +63,7 @@ function Nav() {
     { href: "#problem", id: "problem", label: "Problem" },
     { href: "#solution", id: "solution", label: "Solution" },
     { href: "#how", id: "how", label: "How it works" },
-    { href: "#pricing", id: "pricing", label: "Pricing" },
+    { href: "/pricing", id: "pricing", label: "Pricing", route: true as const },
   ];
   const active = useActiveSection(links.map((l) => l.id));
 
@@ -88,11 +87,17 @@ function Nav() {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-8 text-[13px] text-muted-foreground md:flex">
-          {links.map((l) => (
-            <a key={l.href} href={l.href} data-active={active === l.id} className="nav-link hover:text-foreground">
-              {l.label}
-            </a>
-          ))}
+          {links.map((l) =>
+            "route" in l && l.route ? (
+              <Link key={l.href} to={l.href} className="nav-link hover:text-foreground">
+                {l.label}
+              </Link>
+            ) : (
+              <a key={l.href} href={l.href} data-active={active === l.id} className="nav-link hover:text-foreground">
+                {l.label}
+              </a>
+            )
+          )}
         </nav>
 
         {/* Desktop actions */}
@@ -132,16 +137,27 @@ function Nav() {
                 </div>
               </div>
               <nav className="flex flex-col px-3 py-4">
-                {links.map((l) => (
-                  <a
-                    key={l.href}
-                    href={l.href}
-                    onClick={() => setOpen(false)}
-                    className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
-                  >
-                    {l.label}
-                  </a>
-                ))}
+                {links.map((l) =>
+                  "route" in l && l.route ? (
+                    <Link
+                      key={l.href}
+                      to={l.href}
+                      onClick={() => setOpen(false)}
+                      className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
+                    >
+                      {l.label}
+                    </Link>
+                  ) : (
+                    <a
+                      key={l.href}
+                      href={l.href}
+                      onClick={() => setOpen(false)}
+                      className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
+                    >
+                      {l.label}
+                    </a>
+                  )
+                )}
               </nav>
               <div className="mt-2 flex flex-col gap-2 border-t border-border px-5 py-4">
                 <Link
@@ -703,9 +719,9 @@ function FinalCTA() {
             >
               Start free <ArrowUpRight className="h-4 w-4" />
             </Link>
-            <a href="#pricing" className="btn-3d btn-3d-ghost inline-flex h-10 items-center px-4 text-[13px]">
+            <Link to="/pricing" className="btn-3d btn-3d-ghost inline-flex h-10 items-center px-4 text-[13px]">
               See pricing
-            </a>
+            </Link>
           </div>
         </div>
       </section>
