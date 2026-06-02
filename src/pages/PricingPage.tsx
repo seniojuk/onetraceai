@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Fragment, useState } from "react";
-import { ArrowUpRight, Check, Minus, ShieldCheck, Lock, Globe2, Menu } from "lucide-react";
+import { ArrowUpRight, Check, Minus, Lock, Menu } from "lucide-react";
 import { Reveal } from "@/components/landing/motion";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
