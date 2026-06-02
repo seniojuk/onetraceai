@@ -73,8 +73,6 @@ const TIERS: Tier[] = [
 const TRUST = [
   { icon: Check, label: "Cancel anytime" },
   { icon: Lock, label: "No card for free tier" },
-  { icon: ShieldCheck, label: "SOC 2 Type II (in progress)" },
-  { icon: Globe2, label: "EU data residency option" },
 ];
 
 const SEAT_MATH = [
@@ -93,7 +91,6 @@ const MATRIX: MatrixGroup[] = [
       { feature: "Projects", values: ["1", "Unlimited", "Unlimited", "Unlimited"] },
       { feature: "Artifacts", values: ["25", "Unlimited", "Unlimited", "Unlimited"] },
       { feature: "AI runs / month", values: ["10", "500", "Unlimited", "Unlimited"] },
-      { feature: "Data retention", values: ["30 days", "1 year", "3 years", "Unlimited"] },
     ],
   },
   {
@@ -102,8 +99,6 @@ const MATRIX: MatrixGroup[] = [
       { feature: "Jira two-way sync", values: [false, true, true, true] },
       { feature: "GitHub two-way sync", values: [false, true, true, true] },
       { feature: "Slack notifications", values: [false, false, true, true] },
-      { feature: "Webhooks + REST API", values: ["Read-only", "Read/write", "Read/write", "Unlimited"] },
-      { feature: "Custom connectors", values: [false, false, false, true] },
     ],
   },
   {
@@ -111,7 +106,6 @@ const MATRIX: MatrixGroup[] = [
     rows: [
       { feature: "Coverage engine", values: [false, true, true, true] },
       { feature: "Drift alerts", values: [false, true, true, true] },
-      { feature: "Custom model hub", values: [false, false, false, true] },
       { feature: "Custom prompts / agents", values: [false, true, true, true] },
     ],
   },
@@ -126,10 +120,8 @@ const MATRIX: MatrixGroup[] = [
   {
     group: "Security & support",
     rows: [
-      { feature: "SSO / SAML", values: [false, false, "Add-on", true] },
-      { feature: "SCIM provisioning", values: [false, false, false, true] },
-      { feature: "EU data residency", values: [false, false, false, true] },
-      { feature: "Support", values: ["Community", "Email", "Priority", "Dedicated CSM"] },
+      { feature: "SSO / SAML", values: [false, false, false, true] },
+      { feature: "Support", values: ["Community", "Email", "Priority", "Dedicated"] },
     ],
   },
 ];
@@ -145,19 +137,11 @@ const FAQ = [
   },
   {
     q: "What happens if we hit a limit?",
-    a: "We notify you at 80% and 100% — we never delete data or stop syncing. You can upgrade, or buy a top-up of 100 AI runs for $19.",
+    a: "We notify you before you hit it — we never delete data or stop syncing. You can upgrade at any time.",
   },
   {
-    q: "Do you offer annual billing?",
-    a: "Yes — annual billing is ~17% off (two months free) on all paid tiers. Contact us to switch after signup.",
-  },
-  {
-    q: "Can we self-host?",
-    a: "Single-tenant VPC deployments are available on Enterprise (AWS, GCP, Azure). EU data residency is included.",
-  },
-  {
-    q: "Is there a discount for early-stage startups?",
-    a: "Yes — pre-seed and seed teams under 10 people get 50% off Team for the first 12 months. Email us with your AngelList or Crunchbase link.",
+    q: "Can we cancel anytime?",
+    a: "Yes. Cancel from the billing settings at any point. You keep access through the end of your current billing period.",
   },
 ];
 
