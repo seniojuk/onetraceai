@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PublicNav } from "@/components/marketing/PublicNav";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Mail, MessageSquare, Clock, CheckCircle2, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
