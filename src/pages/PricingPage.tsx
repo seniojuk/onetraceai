@@ -310,36 +310,42 @@ function ComparisonMatrix({ highlightCol = 1 }: { highlightCol?: number }) {
 function FinalCTA() {
   return (
     <div className="mx-auto max-w-6xl px-6">
-      <section className="relative my-24 overflow-hidden rounded-3xl border border-border bg-card p-12 text-center">
+      <section className="relative my-24 overflow-hidden rounded-[32px] border border-border bg-card p-12 text-center shadow-[0_1px_3px_hsl(var(--foreground)/0.02),0_20px_40px_-12px_hsl(var(--foreground)/0.04)] md:p-24">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-60"
+          className="pointer-events-none absolute inset-0 opacity-[0.04]"
           style={{
-            backgroundImage: "radial-gradient(hsl(var(--border)) 1px, transparent 1px)",
-            backgroundSize: "20px 20px",
-            maskImage: "radial-gradient(ellipse at center, black 30%, transparent 70%)",
+            backgroundImage: "radial-gradient(hsl(var(--foreground)) 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
           }}
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 h-[320px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent/10 blur-[100px]"
+          className="pointer-events-none absolute -right-1/4 -top-1/2 h-[800px] w-[800px] rounded-full bg-[radial-gradient(circle_at_center,hsl(var(--accent)/0.10)_0%,transparent_70%)] blur-3xl"
         />
-        <div className="relative">
-          <h2 className="font-geist text-[40px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[48px]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-1/2 -left-1/4 h-[800px] w-[800px] rounded-full bg-[radial-gradient(circle_at_center,hsl(var(--accent)/0.06)_0%,transparent_70%)] blur-3xl"
+        />
+        <div className="relative flex flex-col items-center">
+          <h2 className="max-w-3xl font-geist text-[44px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[60px]">
             Start free.{" "}
-            <span className="font-serif italic text-foreground/70">Upgrade when you're ready.</span>
+            <span className="font-serif italic text-foreground/75">Upgrade when you're ready.</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-lg text-[14px] leading-relaxed text-muted-foreground">
+          <p className="mx-auto mt-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
             Free forever for solo builders. No credit card required.
           </p>
-          <div className="mt-8 flex items-center justify-center gap-3">
+          <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
             <Link
               to="/auth?mode=signup"
-              className="btn-3d btn-3d-primary inline-flex h-10 items-center gap-1.5 px-5 text-[14px] font-medium"
+              className="btn-3d btn-3d-primary inline-flex h-11 items-center gap-1.5 px-6 text-[14px] font-medium"
             >
               Start free <ArrowUpRight className="h-4 w-4" />
             </Link>
-            <Link to="/contact" className="btn-3d btn-3d-ghost inline-flex h-10 items-center px-4 text-[13px]">
+            <Link
+              to="/contact"
+              className="inline-flex h-11 items-center px-4 text-[14px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
               Talk to sales
             </Link>
           </div>
