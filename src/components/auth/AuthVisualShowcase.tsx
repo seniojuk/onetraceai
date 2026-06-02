@@ -565,6 +565,8 @@ export const AuthVisualShowcase = () => {
           {active === "orbital" && <Orbital />}
           {active === "isometric" && <Isometric />}
           {active === "liquid" && <Liquid />}
+          {active === "spotlight" && <Spotlight />}
+          {active === "gauge" && <Gauge />}
         </div>
       </div>
 
