@@ -2,40 +2,41 @@ import { useState, useMemo } from "react";
 
 /* ============================================================
    OneTrace visual library
-   Linear-style: 1px strokes, monochrome, single accent,
-   no in-canvas text. Every variant encodes a real product concept.
+   Linear-style: 1px strokes, monochrome, single accent.
+   Ambient motion: eased, layered, slow. No alert-pulses.
+   Techniques used throughout:
+     - stroke-dashoffset flow on connection paths
+     - staggered particle trails (multiple, eased)
+     - slow opacity "breathing" instead of expanding rings
+     - keySplines easing on every animate
+     - subtle parallax on background structures
    ============================================================ */
 
 type Variant =
-  | "cascade"        // PRD → Epic → Story → AC → Test
-  | "coverage"       // AC × Test matrix
-  | "drift"          // requirements vs code fault line
-  | "sync"           // Jira ↔ OneTrace ↔ GitHub
-  | "funnel"         // context → prompt
-  | "river"          // lineage as tributaries
-  | "circuit"        // agent pipeline as circuit
-  | "gauge"          // coverage %
-  | "genome"         // requirement ↔ implementation helix
-  | "overlay"        // drift overlay (ghost vs current)
-  | "stack"          // version history
-  | "constellation"; // workspaces & projects
+  | "cascade" | "coverage" | "drift" | "sync"
+  | "funnel" | "river" | "circuit" | "gauge"
+  | "genome" | "overlay" | "stack" | "constellation";
 
 const VARIANTS: { id: Variant; label: string; caption: string }[] = [
-  { id: "cascade",       label: "Cascade",       caption: "From product brief to passing test." },
-  { id: "coverage",      label: "Coverage",      caption: "Every requirement, accounted for." },
-  { id: "drift",         label: "Drift",         caption: "Catch the gap before it ships." },
-  { id: "sync",          label: "Sync",          caption: "Jira, GitHub, and truth — in lockstep." },
-  { id: "funnel",        label: "Context",       caption: "The right context, compressed." },
-  { id: "river",         label: "Lineage",       caption: "Trace any artifact to its source." },
-  { id: "circuit",       label: "Agents",        caption: "Pipelines that build themselves." },
-  { id: "gauge",         label: "Signal",        caption: "Coverage you can read at a glance." },
-  { id: "genome",        label: "Genome",        caption: "Requirements paired to code, base by base." },
-  { id: "overlay",       label: "Diff",          caption: "See what changed. See what broke." },
-  { id: "stack",         label: "Versions",      caption: "Every artifact, every revision." },
-  { id: "constellation", label: "Workspaces",    caption: "One graph per team. Many teams." },
+  { id: "cascade",       label: "Cascade",     caption: "From product brief to passing test." },
+  { id: "coverage",      label: "Coverage",    caption: "Every requirement, accounted for." },
+  { id: "drift",         label: "Drift",       caption: "Catch the gap before it ships." },
+  { id: "sync",          label: "Sync",        caption: "Jira, GitHub, and truth — in lockstep." },
+  { id: "funnel",        label: "Context",     caption: "The right context, compressed." },
+  { id: "river",         label: "Lineage",     caption: "Trace any artifact to its source." },
+  { id: "circuit",       label: "Agents",      caption: "Pipelines that build themselves." },
+  { id: "gauge",         label: "Signal",      caption: "Coverage you can read at a glance." },
+  { id: "genome",        label: "Genome",      caption: "Requirements paired to code, base by base." },
+  { id: "overlay",       label: "Diff",        caption: "See what changed. See what broke." },
+  { id: "stack",         label: "Versions",    caption: "Every artifact, every revision." },
+  { id: "constellation", label: "Workspaces",  caption: "One graph per team. Many teams." },
 ];
 
 /* ----------------------------- SHARED CHROME --------------------------- */
+
+const EASE = "0.4 0 0.2 1";        // Linear's standard ease
+const EASE_OUT = "0.16 1 0.3 1";   // expressive ease-out
+const SPLINES_3 = `${EASE_OUT};${EASE_OUT};${EASE_OUT}`;
 
 const CornerMarks = () => (
   <g stroke="hsl(var(--foreground))" strokeOpacity="0.3" strokeWidth="0.75">
@@ -80,14 +81,26 @@ const BracketBox = ({ x, y, w, h, c = 5, opacity = 0.7 }: { x: number; y: number
   </g>
 );
 
-// Stroke palette
+/* Soft "breathing" opacity — replaces alert-style expanding rings */
+const Breathe = ({ values = "0.4;0.9;0.4", dur = 4, begin = 0 }: { values?: string; dur?: number; begin?: number }) => (
+  <animate
+    attributeName="opacity"
+    values={values}
+    keyTimes="0;0.5;1"
+    keySplines={`${EASE};${EASE}`}
+    calcMode="spline"
+    dur={`${dur}s`}
+    begin={`${begin}s`}
+    repeatCount="indefinite"
+  />
+);
+
 const STROKE = "hsl(var(--foreground))";
 const ACCENT = "hsl(var(--accent))";
 const BG = "hsl(var(--background))";
 
 /* ------------------------- 1. CASCADE --------------------------------- */
 const Cascade = () => {
-  // 5 tiers: 1 PRD → 2 Epics → 4 Stories → 6 ACs → 8 Tests
   const tiers = [
     { y: 70,  nodes: [{ x: 200, satisfied: true }] },
     { y: 130, nodes: [{ x: 140 }, { x: 260 }] },
@@ -95,54 +108,82 @@ const Cascade = () => {
     { y: 260, nodes: [{ x: 70 }, { x: 120 }, { x: 170 }, { x: 220, gap: true }, { x: 270 }, { x: 330 }] },
     { y: 325, nodes: [{ x: 60 }, { x: 105 }, { x: 150 }, { x: 195 }, { x: 240 }, { x: 285 }, { x: 330 }] },
   ];
-  // edges between successive tiers (deterministic mapping)
-  const edges: { x1: number; y1: number; x2: number; y2: number; dashed?: boolean }[] = [];
+  const edges: { x1: number; y1: number; x2: number; y2: number; tier: number }[] = [];
   for (let t = 0; t < tiers.length - 1; t++) {
     const a = tiers[t], b = tiers[t + 1];
     b.nodes.forEach((nb, i) => {
       const parent = a.nodes[Math.floor((i / b.nodes.length) * a.nodes.length)];
-      edges.push({ x1: parent.x, y1: a.y, x2: nb.x, y2: b.y, dashed: t === tiers.length - 2 });
+      edges.push({ x1: parent.x, y1: a.y, x2: nb.x, y2: b.y, tier: t });
     });
   }
+  // collect all node coords for staggered fade-in shimmer
+  const allNodes = tiers.flatMap((t, ti) => t.nodes.map((n, ni) => ({ ...n, y: t.y, ti, ni })));
+
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
       <GridBg id="cs-grid" /><Spot id="cs-spot" /><CornerMarks />
-      <g stroke={STROKE} strokeOpacity="0.35" strokeWidth="0.75" fill="none">
+
+      {/* edges — flowing dash from parent to child, eased loop */}
+      <g fill="none" strokeWidth="0.75">
         {edges.map((e, i) => (
           <line key={i} x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2}
-            strokeDasharray={e.dashed ? "2 3" : undefined}
-            strokeOpacity={e.dashed ? 0.22 : 0.35} />
+            stroke={STROKE} strokeOpacity="0.3"
+            strokeDasharray="2 4">
+            <animate attributeName="stroke-dashoffset"
+              values="12;0" dur="6s"
+              keyTimes="0;1" keySplines="0.65 0 0.35 1" calcMode="spline"
+              repeatCount="indefinite" />
+          </line>
         ))}
       </g>
-      {tiers.map((tier, ti) =>
-        tier.nodes.map((n: any, i) => {
-          const r = ti === 0 ? 7 : ti === 1 ? 5.5 : ti === 2 ? 4.5 : ti === 3 ? 3.5 : 2.8;
-          const filled = ti < 3 || (ti === 3 && !n.gap);
-          return (
-            <g key={`${ti}-${i}`}>
-              {ti === 0 && (
-                <rect x={n.x - r - 3} y={tier.y - r - 3} width={(r + 3) * 2} height={(r + 3) * 2}
-                  fill="none" stroke={STROKE} strokeOpacity="0.4" strokeWidth="0.6" />
-              )}
-              <circle cx={n.x} cy={tier.y} r={r}
-                fill={filled ? STROKE : BG}
-                fillOpacity={filled ? 0.85 : 1}
-                stroke={STROKE} strokeOpacity="0.85" strokeWidth="0.9" />
-              {n.gap && (
-                <circle cx={n.x} cy={tier.y} r={r + 3} fill="none" stroke={ACCENT} strokeWidth="0.8" strokeOpacity="0.7">
-                  <animate attributeName="r" values={`${r + 2};${r + 6};${r + 2}`} dur="2.4s" repeatCount="indefinite" />
-                  <animate attributeName="stroke-opacity" values="0.8;0;0.8" dur="2.4s" repeatCount="indefinite" />
-                </circle>
-              )}
-            </g>
-          );
-        })
-      )}
-      {/* descending trace pulse along central spine */}
-      {[0, 2].map((d, i) => (
-        <circle key={i} cx="200" r="2.2" fill={ACCENT}>
-          <animate attributeName="cy" values="70;325" dur="4.5s" begin={`${d}s`} repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="4.5s" begin={`${d}s`} repeatCount="indefinite" />
+
+      {/* nodes with cascading shimmer */}
+      {allNodes.map((n: any, idx) => {
+        const r = n.ti === 0 ? 7 : n.ti === 1 ? 5.5 : n.ti === 2 ? 4.5 : n.ti === 3 ? 3.5 : 2.8;
+        const filled = n.ti < 3 || (n.ti === 3 && !n.gap);
+        const delay = (n.ti * 0.4 + n.ni * 0.05) % 5;
+        return (
+          <g key={idx}>
+            {n.ti === 0 && (
+              <rect x={n.x - r - 3} y={n.y - r - 3} width={(r + 3) * 2} height={(r + 3) * 2}
+                fill="none" stroke={STROKE} strokeOpacity="0.4" strokeWidth="0.6" />
+            )}
+            <circle cx={n.x} cy={n.y} r={r}
+              fill={filled ? STROKE : BG}
+              fillOpacity={filled ? 0.85 : 1}
+              stroke={STROKE} strokeOpacity="0.85" strokeWidth="0.9">
+              <animate attributeName="opacity"
+                values="0.55;1;0.55" keyTimes="0;0.5;1"
+                keySplines={`${EASE};${EASE}`} calcMode="spline"
+                dur="5s" begin={`${delay}s`} repeatCount="indefinite" />
+            </circle>
+            {n.gap && (
+              <circle cx={n.x} cy={n.y} r={r + 4}
+                fill="none" stroke={ACCENT} strokeWidth="0.8" strokeOpacity="0.7"
+                strokeDasharray="2 3">
+                <animateTransform attributeName="transform" type="rotate"
+                  from={`0 ${n.x} ${n.y}`} to={`360 ${n.x} ${n.y}`}
+                  dur="14s" repeatCount="indefinite" />
+                <Breathe values="0.3;0.8;0.3" dur={3.6} />
+              </circle>
+            )}
+          </g>
+        );
+      })}
+
+      {/* layered trace particles — 3 staggered down the spine */}
+      {[0, 1.8, 3.6].map((d, i) => (
+        <circle key={i} cx="200" r="2" fill={ACCENT}>
+          <animate attributeName="cy"
+            values="70;325" keyTimes="0;1"
+            keySplines="0.5 0 0.5 1" calcMode="spline"
+            dur="5.4s" begin={`${d}s`} repeatCount="indefinite" />
+          <animate attributeName="opacity"
+            values="0;1;1;0" keyTimes="0;0.12;0.88;1"
+            dur="5.4s" begin={`${d}s`} repeatCount="indefinite" />
+          <animate attributeName="r"
+            values="1;2.2;1" keyTimes="0;0.5;1"
+            dur="5.4s" begin={`${d}s`} repeatCount="indefinite" />
         </circle>
       ))}
     </svg>
@@ -158,16 +199,16 @@ const Coverage = () => {
   const filled = useMemo(() => {
     let s = 11;
     const r = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
-    const set = new Set<string>();
+    const list: { c: number; r: number; delay: number }[] = [];
     for (let i = 0; i < Math.round(cols * rows * 0.42); i++) {
-      set.add(`${Math.floor(r() * cols)}-${Math.floor(r() * rows)}`);
+      list.push({ c: Math.floor(r() * cols), r: Math.floor(r() * rows), delay: r() * 6 });
     }
-    return set;
+    return list;
   }, []);
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
       <GridBg id="cv-grid" /><Spot id="cv-spot" /><CornerMarks />
-      {/* axis ticks (no labels) */}
+      {/* axis ticks */}
       <g stroke={STROKE} strokeOpacity="0.4" strokeWidth="0.6">
         {Array.from({ length: cols }).map((_, i) => (
           <line key={`c${i}`} x1={x0 + i * cell + cell / 2} y1={y0 - 6} x2={x0 + i * cell + cell / 2} y2={y0 - 2} />
@@ -176,144 +217,239 @@ const Coverage = () => {
           <line key={`r${i}`} x1={x0 - 6} y1={y0 + i * cell + cell / 2} x2={x0 - 2} y2={y0 + i * cell + cell / 2} />
         ))}
       </g>
-      {/* cells */}
+      {/* empty cells */}
       <g>
         {Array.from({ length: rows }).map((_, ry) =>
-          Array.from({ length: cols }).map((_, cx) => {
-            const isFilled = filled.has(`${cx}-${ry}`);
-            return (
-              <rect key={`${cx}-${ry}`}
-                x={x0 + cx * cell + 1} y={y0 + ry * cell + 1}
-                width={cell - 2} height={cell - 2}
-                fill={isFilled ? STROKE : "none"}
-                fillOpacity={isFilled ? 0.78 : 0}
-                stroke={STROKE} strokeOpacity={isFilled ? 0 : 0.18} strokeWidth="0.5" />
-            );
-          })
+          Array.from({ length: cols }).map((_, cx) => (
+            <rect key={`${cx}-${ry}`}
+              x={x0 + cx * cell + 1} y={y0 + ry * cell + 1}
+              width={cell - 2} height={cell - 2}
+              fill="none" stroke={STROKE} strokeOpacity={0.14} strokeWidth="0.5" />
+          ))
         )}
+      </g>
+      {/* filled cells — each shimmers on its own staggered cadence */}
+      <g>
+        {filled.map((f, i) => (
+          <rect key={i}
+            x={x0 + f.c * cell + 1} y={y0 + f.r * cell + 1}
+            width={cell - 2} height={cell - 2}
+            fill={STROKE} fillOpacity="0.78">
+            <animate attributeName="fill-opacity"
+              values="0.55;0.88;0.55" keyTimes="0;0.5;1"
+              keySplines={`${EASE};${EASE}`} calcMode="spline"
+              dur="6s" begin={`${f.delay}s`} repeatCount="indefinite" />
+          </rect>
+        ))}
       </g>
       {/* frame */}
       <rect x={x0} y={y0} width={w} height={h} fill="none" stroke={STROKE} strokeOpacity="0.6" strokeWidth="0.8" />
-      {/* scan line */}
-      <line x1={x0} y1={y0} x2={x0} y2={y0 + h} stroke={ACCENT} strokeWidth="1" strokeOpacity="0.7">
-        <animate attributeName="x1" values={`${x0};${x0 + w};${x0}`} dur="6s" repeatCount="indefinite" />
-        <animate attributeName="x2" values={`${x0};${x0 + w};${x0}`} dur="6s" repeatCount="indefinite" />
-      </line>
-      {/* current focus cell */}
-      <BracketBox x={x0 + 5 * cell - 1} y={y0 + 7 * cell - 1} w={cell + 2} h={cell + 2} c={3} opacity={0.9} />
+
+      {/* scan line — single direction, eased, fades at edges */}
+      <g>
+        <line x1={x0} y1={y0} x2={x0} y2={y0 + h} stroke={ACCENT} strokeWidth="1" strokeOpacity="0">
+          <animate attributeName="x1"
+            values={`${x0};${x0 + w}`} keyTimes="0;1"
+            keySplines={`${EASE}`} calcMode="spline"
+            dur="7s" repeatCount="indefinite" />
+          <animate attributeName="x2"
+            values={`${x0};${x0 + w}`} keyTimes="0;1"
+            keySplines={`${EASE}`} calcMode="spline"
+            dur="7s" repeatCount="indefinite" />
+          <animate attributeName="stroke-opacity"
+            values="0;0.7;0.7;0" keyTimes="0;0.1;0.9;1"
+            dur="7s" repeatCount="indefinite" />
+        </line>
+        {/* trailing soft band */}
+        <rect x={x0} y={y0} width="40" height={h} fill="url(#cv-trail)" opacity="0.5">
+          <animate attributeName="x"
+            values={`${x0 - 40};${x0 + w}`} keyTimes="0;1"
+            keySplines={`${EASE}`} calcMode="spline"
+            dur="7s" repeatCount="indefinite" />
+        </rect>
+        <defs>
+          <linearGradient id="cv-trail" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0%" stopColor={ACCENT} stopOpacity="0" />
+            <stop offset="100%" stopColor={ACCENT} stopOpacity="0.18" />
+          </linearGradient>
+        </defs>
+      </g>
+      {/* focus bracket — soft breathe */}
+      <g>
+        <BracketBox x={x0 + 5 * cell - 1} y={y0 + 7 * cell - 1} w={cell + 2} h={cell + 2} c={3} opacity={0.9} />
+      </g>
     </svg>
   );
 };
 
 /* ------------------------- 3. DRIFT FAULT ----------------------------- */
 const Drift = () => {
-  // upper strata = requirements, lower = code; hairline fault grows between
   const upperY = 130, lowerY = 270;
   const upperNodes = [70, 120, 170, 220, 270, 330];
   const lowerNodes = [60, 115, 175, 230, 285, 340];
-  // links — one missing (drift), one mismatched
   const links: { i: number; j: number; kind: "ok" | "missing" | "mismatch" }[] = [
-    { i: 0, j: 0, kind: "ok" },
-    { i: 1, j: 1, kind: "ok" },
-    { i: 2, j: 2, kind: "mismatch" },
-    { i: 3, j: 3, kind: "missing" },
-    { i: 4, j: 4, kind: "ok" },
-    { i: 5, j: 5, kind: "ok" },
+    { i: 0, j: 0, kind: "ok" }, { i: 1, j: 1, kind: "ok" },
+    { i: 2, j: 2, kind: "mismatch" }, { i: 3, j: 3, kind: "missing" },
+    { i: 4, j: 4, kind: "ok" }, { i: 5, j: 5, kind: "ok" },
   ];
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
       <GridBg id="df-grid" /><Spot id="df-spot" /><CornerMarks />
-      {/* strata rails */}
+      {/* strata rails — subtle parallax breathe */}
       <g stroke={STROKE} strokeOpacity="0.3" strokeWidth="0.75">
         <line x1="50" y1={upperY - 30} x2="350" y2={upperY - 30} />
         <line x1="50" y1={upperY + 30} x2="350" y2={upperY + 30} />
         <line x1="50" y1={lowerY - 30} x2="350" y2={lowerY - 30} />
         <line x1="50" y1={lowerY + 30} x2="350" y2={lowerY + 30} />
       </g>
-      {/* the fault — jagged path through middle */}
+
+      {/* fault — flowing dash drift */}
       <path
         d="M 50 200 L 110 198 L 130 204 L 180 196 L 210 210 L 260 199 L 295 207 L 350 200"
         fill="none" stroke={STROKE} strokeOpacity="0.55" strokeWidth="0.75" strokeDasharray="3 2"
-      />
-      {/* drift marker on the fault */}
+      >
+        <animate attributeName="stroke-dashoffset"
+          values="0;-20" dur="8s" repeatCount="indefinite" />
+      </path>
+
+      {/* drift marker — gentle breathing dot, no harsh ring */}
       <g transform="translate(220 203)">
-        <circle r="8" fill="none" stroke={ACCENT} strokeOpacity="0.7" strokeWidth="0.8">
-          <animate attributeName="r" values="6;14;6" dur="2.6s" repeatCount="indefinite" />
-          <animate attributeName="stroke-opacity" values="0.8;0;0.8" dur="2.6s" repeatCount="indefinite" />
+        <circle r="2.2" fill={ACCENT}>
+          <Breathe values="0.6;1;0.6" dur={2.8} />
         </circle>
-        <circle r="2.2" fill={ACCENT} />
+        <circle r="6" fill="none" stroke={ACCENT} strokeOpacity="0.4" strokeWidth="0.6">
+          <Breathe values="0.2;0.6;0.2" dur={2.8} begin={0.3} />
+        </circle>
       </g>
-      {/* connection lines */}
-      <g>
-        {links.map((l, i) => {
-          const x1 = upperNodes[l.i], x2 = lowerNodes[l.j];
-          const stroke = l.kind === "missing" ? ACCENT : STROKE;
-          const op = l.kind === "missing" ? 0.7 : l.kind === "mismatch" ? 0.45 : 0.5;
-          const dash = l.kind === "missing" ? "2 4" : l.kind === "mismatch" ? "1 2" : undefined;
+
+      {/* OK links — flowing data dashes */}
+      {links.map((l, i) => {
+        const x1 = upperNodes[l.i], x2 = lowerNodes[l.j];
+        if (l.kind === "ok") {
           return (
-            <line key={i}
-              x1={x1} y1={upperY + 6} x2={x2} y2={lowerY - 6}
-              stroke={stroke} strokeOpacity={op} strokeWidth="0.8"
-              strokeDasharray={dash}
-            />
+            <line key={i} x1={x1} y1={upperY + 6} x2={x2} y2={lowerY - 6}
+              stroke={STROKE} strokeOpacity="0.5" strokeWidth="0.8"
+              strokeDasharray="1 5">
+              <animate attributeName="stroke-dashoffset"
+                values="0;-30" dur={`${5 + i * 0.3}s`} repeatCount="indefinite" />
+            </line>
           );
-        })}
-      </g>
-      {/* upper nodes (requirements — filled squares) */}
+        }
+        if (l.kind === "mismatch") {
+          return (
+            <line key={i} x1={x1} y1={upperY + 6} x2={x2} y2={lowerY - 6}
+              stroke={STROKE} strokeOpacity="0.45" strokeWidth="0.8" strokeDasharray="1 2">
+              <Breathe values="0.2;0.5;0.2" dur={3.2} />
+            </line>
+          );
+        }
+        // missing — accent dashed traveling
+        return (
+          <line key={i} x1={x1} y1={upperY + 6} x2={x2} y2={lowerY - 6}
+            stroke={ACCENT} strokeOpacity="0.75" strokeWidth="0.9" strokeDasharray="2 4">
+            <animate attributeName="stroke-dashoffset"
+              values="0;-24" dur="3s" repeatCount="indefinite" />
+          </line>
+        );
+      })}
+
+      {/* upper nodes */}
       {upperNodes.map((x, i) => (
         <rect key={`u${i}`} x={x - 5} y={upperY - 5} width="10" height="10"
-          fill={STROKE} fillOpacity="0.85" stroke={STROKE} strokeOpacity="0.9" strokeWidth="0.6" />
+          fill={STROKE} fillOpacity="0.85" stroke={STROKE} strokeOpacity="0.9" strokeWidth="0.6">
+          <Breathe values="0.7;1;0.7" dur={4 + (i % 3) * 0.5} begin={i * 0.3} />
+        </rect>
       ))}
-      {/* lower nodes (code — open circles, the mismatched one is hollow) */}
+      {/* lower nodes */}
       {lowerNodes.map((x, i) => (
         <circle key={`l${i}`} cx={x} cy={lowerY} r="5.5"
           fill={i === 3 ? "none" : STROKE}
           fillOpacity={i === 3 ? 0 : 0.85}
-          stroke={STROKE} strokeOpacity="0.9" strokeWidth="0.6" />
+          stroke={STROKE} strokeOpacity="0.9" strokeWidth="0.6">
+          <Breathe values="0.7;1;0.7" dur={4 + (i % 3) * 0.5} begin={i * 0.3 + 0.2} />
+        </circle>
       ))}
     </svg>
   );
 };
 
-/* ------------------------- 4. SYNC (Jira ↔ OT ↔ GH) ------------------- */
+/* ------------------------- 4. SYNC ------------------------------------ */
 const Sync = () => {
   const cx = 200, cy = 200;
-  const L = { x: 80, y: 200 };   // jira
-  const R = { x: 320, y: 200 };  // github
+  const L = { x: 80, y: 200 }, R = { x: 320, y: 200 };
+  const arcTop = `M ${L.x} ${L.y - 4} Q ${cx} ${cy - 60} ${R.x} ${R.y - 4}`;
+  const arcBot = `M ${R.x} ${R.y + 4} Q ${cx} ${cy + 60} ${L.x} ${L.y + 4}`;
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
       <GridBg id="sy-grid" /><Spot id="sy-spot" /><CornerMarks />
-      {/* orbital rings */}
+
+      {/* orbital rings — slow rotation around the core */}
       <g fill="none" stroke={STROKE} strokeOpacity="0.18" strokeWidth="0.6">
-        <ellipse cx={cx} cy={cy} rx="120" ry="38" />
-        <ellipse cx={cx} cy={cy} rx="120" ry="38" transform={`rotate(35 ${cx} ${cy})`} />
-        <ellipse cx={cx} cy={cy} rx="120" ry="38" transform={`rotate(-35 ${cx} ${cy})`} />
+        <g>
+          <ellipse cx={cx} cy={cy} rx="120" ry="38" />
+          <animateTransform attributeName="transform" type="rotate"
+            from={`0 ${cx} ${cy}`} to={`360 ${cx} ${cy}`}
+            dur="60s" repeatCount="indefinite" />
+        </g>
+        <g>
+          <ellipse cx={cx} cy={cy} rx="120" ry="38" transform={`rotate(35 ${cx} ${cy})`} />
+          <animateTransform attributeName="transform" type="rotate"
+            from={`35 ${cx} ${cy}`} to={`395 ${cx} ${cy}`}
+            dur="80s" repeatCount="indefinite" />
+        </g>
+        <g>
+          <ellipse cx={cx} cy={cy} rx="120" ry="38" transform={`rotate(-35 ${cx} ${cy})`} />
+          <animateTransform attributeName="transform" type="rotate"
+            from={`-35 ${cx} ${cy}`} to={`-395 ${cx} ${cy}`}
+            dur="90s" repeatCount="indefinite" />
+        </g>
       </g>
-      {/* connecting arcs */}
+
+      {/* arcs with flowing dash */}
       <g fill="none" strokeWidth="0.9">
-        <path d={`M ${L.x} ${L.y - 4} Q ${cx} ${cy - 60} ${R.x} ${R.y - 4}`} stroke={STROKE} strokeOpacity="0.5" />
-        <path d={`M ${R.x} ${R.y + 4} Q ${cx} ${cy + 60} ${L.x} ${L.y + 4}`} stroke={STROKE} strokeOpacity="0.5" />
-        {/* animated packets */}
-        <circle r="2.5" fill={ACCENT}>
-          <animateMotion dur="3.2s" repeatCount="indefinite"
-            path={`M ${L.x} ${L.y - 4} Q ${cx} ${cy - 60} ${R.x} ${R.y - 4}`} />
-        </circle>
-        <circle r="2.5" fill={ACCENT}>
-          <animateMotion dur="3.2s" begin="1.6s" repeatCount="indefinite"
-            path={`M ${R.x} ${R.y + 4} Q ${cx} ${cy + 60} ${L.x} ${L.y + 4}`} />
-        </circle>
+        <path d={arcTop} stroke={STROKE} strokeOpacity="0.45" strokeDasharray="2 5">
+          <animate attributeName="stroke-dashoffset" values="0;-21" dur="4s" repeatCount="indefinite" />
+        </path>
+        <path d={arcBot} stroke={STROKE} strokeOpacity="0.45" strokeDasharray="2 5">
+          <animate attributeName="stroke-dashoffset" values="0;21" dur="4s" repeatCount="indefinite" />
+        </path>
+
+        {/* packets — two trails each direction, staggered */}
+        {[0, 1.6].map((d, i) => (
+          <circle key={`tt-${i}`} r="2.2" fill={ACCENT}>
+            <animateMotion dur="3.6s" begin={`${d}s`} repeatCount="indefinite"
+              keyPoints="0;1" keyTimes="0;1"
+              keySplines="0.45 0 0.55 1" calcMode="spline"
+              path={arcTop} />
+            <animate attributeName="opacity" values="0;1;1;0"
+              keyTimes="0;0.1;0.9;1" dur="3.6s" begin={`${d}s`} repeatCount="indefinite" />
+          </circle>
+        ))}
+        {[0.8, 2.4].map((d, i) => (
+          <circle key={`tb-${i}`} r="2.2" fill={ACCENT}>
+            <animateMotion dur="3.6s" begin={`${d}s`} repeatCount="indefinite"
+              keyPoints="0;1" keyTimes="0;1"
+              keySplines="0.45 0 0.55 1" calcMode="spline"
+              path={arcBot} />
+            <animate attributeName="opacity" values="0;1;1;0"
+              keyTimes="0;0.1;0.9;1" dur="3.6s" begin={`${d}s`} repeatCount="indefinite" />
+          </circle>
+        ))}
       </g>
-      {/* left node — Jira-ish stacked squares */}
+
+      {/* Jira-ish */}
       <g transform={`translate(${L.x} ${L.y})`}>
         <circle r="22" fill={BG} stroke={STROKE} strokeOpacity="0.7" strokeWidth="0.9" />
         <g stroke={STROKE} strokeOpacity="0.85" strokeWidth="0.9" fill="none">
           <rect x="-9" y="-9" width="8" height="8" />
           <rect x="1" y="-9" width="8" height="8" />
           <rect x="-9" y="1" width="8" height="8" />
-          <rect x="1" y="1" width="8" height="8" fill={STROKE} fillOpacity="0.85" />
+          <rect x="1" y="1" width="8" height="8" fill={STROKE} fillOpacity="0.85">
+            <Breathe values="0.55;0.95;0.55" dur={3.4} />
+          </rect>
         </g>
       </g>
-      {/* right node — GitHub-ish branch */}
+      {/* GitHub-ish */}
       <g transform={`translate(${R.x} ${R.y})`}>
         <circle r="22" fill={BG} stroke={STROKE} strokeOpacity="0.7" strokeWidth="0.9" />
         <g stroke={STROKE} strokeOpacity="0.85" strokeWidth="1" fill="none" strokeLinecap="round">
@@ -321,20 +457,22 @@ const Sync = () => {
           <line x1="7" y1="-9" x2="7" y2="2" />
           <path d="M -7 0 Q 0 0 7 0" />
           <circle cx="-7" cy="-9" r="2" fill={STROKE} />
-          <circle cx="-7" cy="9" r="2" fill={STROKE} />
+          <circle cx="-7" cy="9" r="2" fill={STROKE}>
+            <Breathe values="0.55;1;0.55" dur={3.4} begin={1.2} />
+          </circle>
           <circle cx="7" cy="2" r="2" fill={STROKE} />
         </g>
       </g>
-      {/* center — OneTrace mark */}
+      {/* center */}
       <g transform={`translate(${cx} ${cy})`}>
         <rect x="-28" y="-28" width="56" height="56" rx="10"
           fill={BG} stroke={STROKE} strokeOpacity="0.85" strokeWidth="1.1" />
         <g stroke={STROKE} strokeOpacity="0.9" strokeWidth="4.5" strokeLinecap="square">
-          <line x1="-22" y1="-6" x2="22" y2="-6 " />
+          <line x1="-22" y1="-6" x2="22" y2="-6" />
           <line x1="-22" y1="6" x2="22" y2="6" />
         </g>
         <circle cx="18" cy="-18" r="2" fill={ACCENT}>
-          <animate attributeName="opacity" values="0.3;1;0.3" dur="2.4s" repeatCount="indefinite" />
+          <Breathe values="0.3;1;0.3" dur={2.4} />
         </circle>
       </g>
     </svg>
@@ -343,65 +481,82 @@ const Sync = () => {
 
 /* ------------------------- 5. CONTEXT FUNNEL -------------------------- */
 const Funnel = () => {
-  // top: scattered context fragments → narrow → single output line
   const frags = useMemo(() => {
     let s = 23;
     const r = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
     return Array.from({ length: 14 }).map(() => ({
-      x: 80 + r() * 240, y: 60 + r() * 40, w: 14 + r() * 22,
+      x: 80 + r() * 240, y: 60 + r() * 40, w: 14 + r() * 22, delay: r() * 5,
     }));
   }, []);
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
       <GridBg id="fn-grid" /><Spot id="fn-spot" /><CornerMarks />
-      {/* context fragments */}
+
+      {/* fragments — each glints on its own cadence */}
       {frags.map((f, i) => (
         <g key={i}>
           <rect x={f.x} y={f.y} width={f.w} height="6" fill="none"
-            stroke={STROKE} strokeOpacity="0.5" strokeWidth="0.6" />
+            stroke={STROKE} strokeOpacity="0.5" strokeWidth="0.6">
+            <Breathe values="0.25;0.65;0.25" dur={5 + (i % 4)} begin={f.delay} />
+          </rect>
           <line x1={f.x + 2} y1={f.y + 3} x2={f.x + f.w - 2} y2={f.y + 3}
             stroke={STROKE} strokeOpacity="0.35" strokeWidth="0.5" />
         </g>
       ))}
+
       {/* funnel sides */}
       <g fill="none" stroke={STROKE} strokeOpacity="0.55" strokeWidth="0.9">
         <line x1="70" y1="130" x2="180" y2="240" />
         <line x1="330" y1="130" x2="220" y2="240" />
         <line x1="70" y1="130" x2="330" y2="130" />
       </g>
-      {/* compression hatch */}
-      <g stroke={STROKE} strokeOpacity="0.2" strokeWidth="0.5">
+
+      {/* compression hatch — sequential reveal wave */}
+      <g stroke={STROKE} strokeOpacity="0.22" strokeWidth="0.5">
         {Array.from({ length: 8 }).map((_, i) => {
           const t = i / 8;
           const y = 130 + t * 110;
           const xL = 70 + t * 110;
           const xR = 330 - t * 110;
-          return <line key={i} x1={xL} y1={y} x2={xR} y2={y} />;
+          return (
+            <line key={i} x1={xL} y1={y} x2={xR} y2={y}>
+              <animate attributeName="stroke-opacity"
+                values="0.1;0.4;0.1" keyTimes="0;0.5;1"
+                keySplines={`${EASE};${EASE}`} calcMode="spline"
+                dur="4s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
+            </line>
+          );
         })}
       </g>
-      {/* falling tokens */}
-      {[0, 1, 2].map((i) => (
-        <circle key={i} r="1.8" fill={ACCENT}>
-          <animateMotion dur="3s" begin={`${i * 0.7}s`} repeatCount="indefinite"
-            path={`M ${120 + i * 80} 100 L 200 230`} />
-          <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="3s" begin={`${i * 0.7}s`} repeatCount="indefinite" />
+
+      {/* continuous falling tokens — 5 streams, eased */}
+      {[
+        { x: 110, d: 0 }, { x: 160, d: 0.6 }, { x: 200, d: 1.2 },
+        { x: 240, d: 1.8 }, { x: 290, d: 2.4 },
+      ].map((s, i) => (
+        <circle key={i} r="1.6" fill={ACCENT}>
+          <animateMotion dur="3.6s" begin={`${s.d}s`} repeatCount="indefinite"
+            keyPoints="0;1" keyTimes="0;1"
+            keySplines="0.5 0 0.6 1" calcMode="spline"
+            path={`M ${s.x} 95 L 200 232`} />
+          <animate attributeName="opacity" values="0;1;1;0"
+            keyTimes="0;0.15;0.85;1" dur="3.6s" begin={`${s.d}s`} repeatCount="indefinite" />
         </circle>
       ))}
+
       {/* output rail */}
       <g stroke={STROKE} strokeOpacity="0.6" strokeWidth="0.9" fill="none">
         <rect x="180" y="240" width="40" height="18" />
         <line x1="200" y1="258" x2="200" y2="300" strokeOpacity="0.5" />
         <rect x="120" y="300" width="160" height="48" rx="3" strokeOpacity="0.75" />
-        {/* prompt lines inside */}
         <g stroke={STROKE} strokeOpacity="0.4" strokeWidth="0.6">
           <line x1="130" y1="312" x2="270" y2="312" />
           <line x1="130" y1="322" x2="250" y2="322" />
           <line x1="130" y1="332" x2="265" y2="332" />
         </g>
       </g>
-      {/* receiver tick */}
       <circle cx="200" cy="324" r="2" fill={ACCENT}>
-        <animate attributeName="opacity" values="0.3;1;0.3" dur="2.2s" repeatCount="indefinite" />
+        <Breathe values="0.3;1;0.3" dur={2.2} />
       </circle>
     </svg>
   );
@@ -409,57 +564,74 @@ const Funnel = () => {
 
 /* ------------------------- 6. LINEAGE RIVER --------------------------- */
 const River = () => {
-  // tributaries converge left → split into delta on right
-  const path = (d: string, op = 0.4, w = 0.8) => (
-    <path d={d} fill="none" stroke={STROKE} strokeOpacity={op} strokeWidth={w} />
+  const Path = ({ d, op = 0.4, w = 0.8, flow, dur = 7 }: { d: string; op?: number; w?: number; flow?: boolean; dur?: number }) => (
+    <path d={d} fill="none" stroke={STROKE} strokeOpacity={op} strokeWidth={w}
+      strokeDasharray={flow ? "1 6" : undefined}>
+      {flow && <animate attributeName="stroke-dashoffset"
+        values="0;-21" dur={`${dur}s`} repeatCount="indefinite" />}
+    </path>
   );
+  const deltaPaths = [
+    "M 240 200 C 290 180 320 150 360 130",
+    "M 240 200 C 290 195 320 180 360 170",
+    "M 240 200 C 290 205 320 220 360 230",
+    "M 240 200 C 290 220 320 250 360 270",
+    "M 240 200 C 290 235 320 285 360 320",
+  ];
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
       <GridBg id="rv-grid" /><Spot id="rv-spot" /><CornerMarks />
-      {/* main spine */}
-      {path("M 60 200 C 150 200 180 200 240 200", 0.6, 1)}
-      {/* upstream tributaries (sources/PRD) */}
-      {path("M 50 120 C 110 130 130 170 160 195")}
-      {path("M 50 280 C 110 270 130 230 160 205")}
-      {path("M 80 90 C 130 110 150 160 175 195")}
-      {path("M 80 310 C 130 290 150 240 175 205")}
-      {/* delta (epics → stories → tests) */}
-      {path("M 240 200 C 290 180 320 150 360 130", 0.5)}
-      {path("M 240 200 C 290 195 320 180 360 170", 0.5)}
-      {path("M 240 200 C 290 205 320 220 360 230", 0.5)}
-      {path("M 240 200 C 290 220 320 250 360 270", 0.5)}
-      {path("M 240 200 C 290 235 320 285 360 320", 0.5)}
-      {/* source markers */}
+
+      {/* spine + tributaries — all flowing */}
+      <Path d="M 60 200 C 150 200 180 200 240 200" op={0.6} w={1} flow dur={6} />
+      <Path d="M 50 120 C 110 130 130 170 160 195" flow dur={8} />
+      <Path d="M 50 280 C 110 270 130 230 160 205" flow dur={8} />
+      <Path d="M 80 90 C 130 110 150 160 175 195" flow dur={9} />
+      <Path d="M 80 310 C 130 290 150 240 175 205" flow dur={9} />
+      {deltaPaths.map((d, i) => (
+        <Path key={i} d={d} op={0.5} flow dur={7 + i * 0.4} />
+      ))}
+
+      {/* sources */}
       <g fill={STROKE} fillOpacity="0.85">
-        <circle cx="50" cy="120" r="3" />
-        <circle cx="50" cy="280" r="3" />
-        <circle cx="80" cy="90" r="3" />
-        <circle cx="80" cy="310" r="3" />
+        {[[50,120],[50,280],[80,90],[80,310]].map(([x,y], i) => (
+          <circle key={i} cx={x} cy={y} r="3">
+            <Breathe values="0.55;0.95;0.55" dur={4 + i * 0.4} begin={i * 0.7} />
+          </circle>
+        ))}
       </g>
-      {/* confluence node (PRD) */}
+
+      {/* confluence */}
       <g>
         <circle cx="240" cy="200" r="9" fill={BG} stroke={STROKE} strokeOpacity="0.8" strokeWidth="1" />
-        <circle cx="240" cy="200" r="4" fill={STROKE} fillOpacity="0.9" />
+        <circle cx="240" cy="200" r="4" fill={STROKE} fillOpacity="0.9">
+          <Breathe values="0.7;1;0.7" dur={3.2} />
+        </circle>
       </g>
-      {/* delta endpoints (tests) */}
+
+      {/* endpoints */}
       {[{x:360,y:130},{x:360,y:170},{x:360,y:230},{x:360,y:270},{x:360,y:320}].map((p, i) => (
         <rect key={i} x={p.x - 3} y={p.y - 3} width="6" height="6"
           fill={i === 2 ? STROKE : "none"} fillOpacity="0.85"
           stroke={STROKE} strokeOpacity="0.8" strokeWidth="0.7" />
       ))}
-      {/* flow particles */}
-      {[0, 1.2, 2.4].map((d, i) => (
-        <circle key={i} r="1.8" fill={ACCENT}>
-          <animateMotion dur="4s" begin={`${d}s`} repeatCount="indefinite"
-            path="M 60 200 C 150 200 180 200 240 200 C 290 220 320 250 360 270" />
-          <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="4s" begin={`${d}s`} repeatCount="indefinite" />
+
+      {/* multiple flow particles fanning into each delta arm */}
+      {deltaPaths.map((d, i) => (
+        <circle key={`fp-${i}`} r="1.6" fill={ACCENT}>
+          <animateMotion dur="5s" begin={`${i * 0.5}s`} repeatCount="indefinite"
+            keyPoints="0;1" keyTimes="0;1"
+            keySplines="0.4 0 0.6 1" calcMode="spline"
+            path={`M 60 200 C 150 200 180 200 240 200 ${d.replace("M 240 200", "")}`} />
+          <animate attributeName="opacity" values="0;1;1;0"
+            keyTimes="0;0.12;0.88;1" dur="5s" begin={`${i * 0.5}s`} repeatCount="indefinite" />
         </circle>
       ))}
     </svg>
   );
 };
 
-/* ------------------------- 7. CIRCUIT / AGENTS ------------------------ */
+/* ------------------------- 7. CIRCUIT --------------------------------- */
 const Circuit = () => {
   const chips = [
     { x: 90,  y: 130, w: 50, h: 34 },
@@ -471,20 +643,30 @@ const Circuit = () => {
   const Pin = ({ x, y }: { x: number; y: number }) => (
     <rect x={x - 1} y={y - 1} width="2" height="2" fill={STROKE} fillOpacity="0.9" />
   );
+  const traces = [
+    "M 140 147 L 175 147",
+    "M 225 147 L 260 147",
+    "M 115 164 L 115 200 L 157 200 L 157 240",
+    "M 200 164 L 200 200 L 245 200 L 245 240",
+    "M 285 164 L 285 220 L 270 220 L 270 257",
+    "M 182 257 L 220 257",
+    "M 245 274 L 245 310 L 200 310",
+  ];
+  const masterPath = "M 140 147 L 175 147 L 225 147 L 260 147 L 285 164 L 285 220 L 270 220 L 270 257 L 245 274 L 245 310 L 200 310";
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
       <GridBg id="ct-grid" /><Spot id="ct-spot" /><CornerMarks />
-      {/* board traces */}
-      <g fill="none" stroke={STROKE} strokeOpacity="0.4" strokeWidth="0.8">
-        <path d="M 140 147 L 175 147" />
-        <path d="M 225 147 L 260 147" />
-        <path d="M 115 164 L 115 200 L 157 200 L 157 240" />
-        <path d="M 200 164 L 200 200 L 245 200 L 245 240" />
-        <path d="M 285 164 L 285 220 L 270 220 L 270 257 " />
-        <path d="M 182 257 L 220 257" />
-        <path d="M 245 274 L 245 310 L 200 310" />
+
+      {/* board traces — each carries a slow dash flow */}
+      <g fill="none" stroke={STROKE} strokeOpacity="0.4" strokeWidth="0.8" strokeDasharray="1 4">
+        {traces.map((d, i) => (
+          <path key={i} d={d}>
+            <animate attributeName="stroke-dashoffset"
+              values="0;-20" dur={`${6 + (i % 3)}s`} repeatCount="indefinite" />
+          </path>
+        ))}
       </g>
-      {/* solder pads */}
+
       <g>
         {chips.flatMap((c, ci) =>
           [-1, 1].flatMap((sy) =>
@@ -496,127 +678,185 @@ const Circuit = () => {
           )
         )}
       </g>
-      {/* chips */}
+
       {chips.map((c, i) => (
         <g key={i}>
           <rect x={c.x} y={c.y} width={c.w} height={c.h} rx="2"
             fill={BG} stroke={STROKE} strokeOpacity="0.85" strokeWidth="0.9" />
           <circle cx={c.x + 5} cy={c.y + 5} r="1.4" fill="none"
             stroke={STROKE} strokeOpacity="0.6" strokeWidth="0.5" />
-          {/* internal die */}
           <rect x={c.x + 10} y={c.y + 10} width={c.w - 20} height={c.h - 20}
-            fill={STROKE} fillOpacity="0.06" stroke={STROKE} strokeOpacity="0.3" strokeWidth="0.5" />
-          {/* status LED */}
+            fill={STROKE} fillOpacity="0.06" stroke={STROKE} strokeOpacity="0.3" strokeWidth="0.5">
+            <Breathe values="0.04;0.12;0.04" dur={4 + i * 0.3} begin={i * 0.5} />
+          </rect>
+          {/* LED — each chip its own heartbeat */}
           <circle cx={c.x + c.w - 6} cy={c.y + 6} r="2"
             fill={i <= 2 ? ACCENT : "none"}
             stroke={STROKE} strokeOpacity="0.7" strokeWidth="0.5">
-            {i === 2 && <animate attributeName="opacity" values="0.3;1;0.3" dur="1.4s" repeatCount="indefinite" />}
+            {i <= 2 && <Breathe values="0.4;1;0.4" dur={1.8 + i * 0.4} begin={i * 0.3} />}
           </circle>
         </g>
       ))}
-      {/* signal pulse moving along trace */}
-      <circle r="2.2" fill={ACCENT}>
-        <animateMotion dur="4s" repeatCount="indefinite"
-          path="M 140 147 L 175 147 L 225 147 L 260 147 L 285 164 L 285 220 L 270 220 L 270 257 L 245 274 L 245 310 L 200 310" />
-        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.95;1" dur="4s" repeatCount="indefinite" />
-      </circle>
-      {/* input / output terminals */}
+
+      {/* signal pulses — 3 trailing particles along the master path */}
+      {[0, 1.4, 2.8].map((d, i) => (
+        <circle key={i} r="2" fill={ACCENT}>
+          <animateMotion dur="5s" begin={`${d}s`} repeatCount="indefinite"
+            keyPoints="0;1" keyTimes="0;1"
+            keySplines="0.45 0 0.55 1" calcMode="spline"
+            path={masterPath} />
+          <animate attributeName="opacity" values="0;1;1;0"
+            keyTimes="0;0.08;0.92;1" dur="5s" begin={`${d}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+
       <g stroke={STROKE} strokeOpacity="0.6" strokeWidth="0.8" fill="none">
         <circle cx="70" cy="147" r="4" /><line x1="74" y1="147" x2="90" y2="147" />
-        <circle cx="200" cy="330" r="4" />
+        <circle cx="200" cy="330" r="4">
+          <Breathe values="0.55;1;0.55" dur={3} />
+        </circle>
       </g>
     </svg>
   );
 };
 
-/* ------------------------- 8. COVERAGE GAUGE -------------------------- */
+/* ------------------------- 8. GAUGE ----------------------------------- */
 const Gauge = () => {
   const cx = 200, cy = 230, R = 130;
   const start = -Math.PI, end = 0;
-  const pct = 0.74;
-  const ang = start + (end - start) * pct;
-  const px = cx + Math.cos(ang) * R;
-  const py = cy + Math.sin(ang) * R;
-  // tick marks
   const ticks = Array.from({ length: 41 }).map((_, i) => {
     const t = i / 40;
     const a = start + (end - start) * t;
     const major = i % 5 === 0;
     const r1 = R + 2, r2 = R + (major ? 12 : 7);
     return { x1: cx + Math.cos(a) * r1, y1: cy + Math.sin(a) * r1,
-             x2: cx + Math.cos(a) * r2, y2: cy + Math.sin(a) * r2, major, active: t <= pct };
+             x2: cx + Math.cos(a) * r2, y2: cy + Math.sin(a) * r2, major, t };
   });
+  // needle oscillates between 68% and 78% — looks like live data
+  const lo = 0.68, hi = 0.78;
+  const angAt = (p: number) => start + (end - start) * p;
+  const ptAt = (p: number) => ({ x: cx + Math.cos(angAt(p)) * R, y: cy + Math.sin(angAt(p)) * R });
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
       <GridBg id="gg-grid" /><Spot id="gg-spot" /><CornerMarks />
-      {/* arc */}
+      {/* full arc */}
       <path d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`}
         fill="none" stroke={STROKE} strokeOpacity="0.35" strokeWidth="0.9" />
-      {/* progress arc */}
-      <path
-        d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${px} ${py}`}
-        fill="none" stroke={STROKE} strokeOpacity="0.85" strokeWidth="1.4"
-      />
-      {/* ticks */}
+      {/* progress arc — animated stroke-dash */}
+      <path d={`M ${cx - R} ${cy} A ${R} ${R} 0 0 1 ${cx + R} ${cy}`}
+        fill="none" stroke={STROKE} strokeOpacity="0.9" strokeWidth="1.4"
+        pathLength="1" strokeDasharray="1 1">
+        <animate attributeName="stroke-dashoffset"
+          values={`${1 - lo};${1 - hi};${1 - lo}`}
+          keyTimes="0;0.5;1"
+          keySplines={`${EASE};${EASE}`} calcMode="spline"
+          dur="6s" repeatCount="indefinite" />
+      </path>
+      {/* ticks — sequential subtle shimmer along the arc */}
       <g>
         {ticks.map((t, i) => (
           <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2}
-            stroke={STROKE} strokeOpacity={t.active ? 0.8 : 0.3}
-            strokeWidth={t.major ? 0.9 : 0.6} />
+            stroke={STROKE} strokeWidth={t.major ? 0.9 : 0.6} strokeOpacity="0.35">
+            <animate attributeName="stroke-opacity"
+              values="0.3;0.85;0.3" keyTimes="0;0.5;1"
+              keySplines={`${EASE};${EASE}`} calcMode="spline"
+              dur="3.6s" begin={`${(i / 40) * 3.6}s`} repeatCount="indefinite" />
+          </line>
         ))}
       </g>
       {/* needle */}
-      <g>
-        <line x1={cx} y1={cy} x2={px} y2={py} stroke={STROKE} strokeOpacity="0.9" strokeWidth="1.2" />
-        <circle cx={cx} cy={cy} r="6" fill={BG} stroke={STROKE} strokeOpacity="0.9" strokeWidth="1" />
-        <circle cx={cx} cy={cy} r="2" fill={STROKE} />
-        <circle cx={px} cy={py} r="3" fill={ACCENT} />
-      </g>
-      {/* mini AC node ring */}
+      {(() => {
+        const a = ptAt(lo), b = ptAt(hi);
+        return (
+          <g>
+            <line x1={cx} y1={cy} x2={a.x} y2={a.y} stroke={STROKE} strokeOpacity="0.9" strokeWidth="1.2">
+              <animate attributeName="x2"
+                values={`${a.x};${b.x};${a.x}`}
+                keyTimes="0;0.5;1"
+                keySplines={`${EASE};${EASE}`} calcMode="spline"
+                dur="6s" repeatCount="indefinite" />
+              <animate attributeName="y2"
+                values={`${a.y};${b.y};${a.y}`}
+                keyTimes="0;0.5;1"
+                keySplines={`${EASE};${EASE}`} calcMode="spline"
+                dur="6s" repeatCount="indefinite" />
+            </line>
+            <circle cx={cx} cy={cy} r="6" fill={BG} stroke={STROKE} strokeOpacity="0.9" strokeWidth="1" />
+            <circle cx={cx} cy={cy} r="2" fill={STROKE} />
+            <circle r="3" fill={ACCENT}>
+              <animate attributeName="cx"
+                values={`${a.x};${b.x};${a.x}`}
+                keyTimes="0;0.5;1"
+                keySplines={`${EASE};${EASE}`} calcMode="spline"
+                dur="6s" repeatCount="indefinite" />
+              <animate attributeName="cy"
+                values={`${a.y};${b.y};${a.y}`}
+                keyTimes="0;0.5;1"
+                keySplines={`${EASE};${EASE}`} calcMode="spline"
+                dur="6s" repeatCount="indefinite" />
+            </circle>
+          </g>
+        );
+      })()}
+      {/* outer AC ring */}
       <g>
         {Array.from({ length: 20 }).map((_, i) => {
           const a = start + (end - start) * (i / 19);
           const r = R + 26;
           const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
-          const filled = (i / 19) <= pct;
-          return <circle key={i} cx={x} cy={y} r="2"
-            fill={filled ? STROKE : "none"} fillOpacity="0.85"
-            stroke={STROKE} strokeOpacity="0.6" strokeWidth="0.6" />;
+          const filled = (i / 19) <= 0.73;
+          return (
+            <circle key={i} cx={x} cy={y} r="2"
+              fill={filled ? STROKE : "none"} fillOpacity="0.85"
+              stroke={STROKE} strokeOpacity="0.6" strokeWidth="0.6">
+              {filled && <Breathe values="0.5;1;0.5" dur={4} begin={i * 0.15} />}
+            </circle>
+          );
         })}
       </g>
-      {/* baseline */}
       <line x1={cx - R - 30} y1={cy} x2={cx + R + 30} y2={cy}
         stroke={STROKE} strokeOpacity="0.25" strokeWidth="0.5" />
     </svg>
   );
 };
 
-/* ------------------------- 9. GENOME / HELIX -------------------------- */
+/* ------------------------- 9. GENOME ---------------------------------- */
 const Genome = () => {
   const cy = 200, amp = 70, len = 280, x0 = 60;
   const N = 28;
-  const sample = (t: number, phase: number) => ({
+  // Time-shifted helix: instead of rotating, advance phase to look like flowing helix
+  const sample = (t: number, phase: number, shift = 0) => ({
     x: x0 + t * len,
-    y: cy + Math.sin(t * Math.PI * 4 + phase) * amp,
+    y: cy + Math.sin(t * Math.PI * 4 + phase + shift) * amp,
   });
-  const pts1 = Array.from({ length: 80 }).map((_, i) => sample(i / 79, 0));
-  const pts2 = Array.from({ length: 80 }).map((_, i) => sample(i / 79, Math.PI));
-  const d = (pts: { x: number; y: number }[]) =>
-    pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  const buildPath = (phase: number) => {
+    const pts = Array.from({ length: 80 }).map((_, i) => sample(i / 79, phase));
+    return pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  };
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
       <GridBg id="gn-grid" /><Spot id="gn-spot" /><CornerMarks />
-      {/* base pairs */}
+
+      {/* base pairs — wave of dimming along length */}
       <g stroke={STROKE} strokeOpacity="0.35" strokeWidth="0.7">
         {Array.from({ length: N }).map((_, i) => {
           const t = i / (N - 1);
           const a = sample(t, 0), b = sample(t, Math.PI);
-          return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} />;
+          return (
+            <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y}>
+              <animate attributeName="stroke-opacity"
+                values="0.15;0.55;0.15" keyTimes="0;0.5;1"
+                keySplines={`${EASE};${EASE}`} calcMode="spline"
+                dur="4s" begin={`${(i / N) * 4}s`} repeatCount="indefinite" />
+            </line>
+          );
         })}
       </g>
+
       {/* strands */}
-      <path d={d(pts1)} fill="none" stroke={STROKE} strokeOpacity="0.8" strokeWidth="1.1" />
-      <path d={d(pts2)} fill="none" stroke={STROKE} strokeOpacity="0.8" strokeWidth="1.1" />
+      <path d={buildPath(0)} fill="none" stroke={STROKE} strokeOpacity="0.8" strokeWidth="1.1" />
+      <path d={buildPath(Math.PI)} fill="none" stroke={STROKE} strokeOpacity="0.8" strokeWidth="1.1" />
+
       {/* paired markers */}
       {Array.from({ length: N }).map((_, i) => {
         const t = i / (N - 1);
@@ -626,29 +866,37 @@ const Genome = () => {
         return (
           <g key={i}>
             <circle cx={B.x} cy={B.y} r="2" fill={BG} stroke={STROKE} strokeOpacity="0.5" strokeWidth="0.6" />
-            <circle cx={A.x} cy={A.y} r="2.5" fill={STROKE} fillOpacity="0.9" />
+            <circle cx={A.x} cy={A.y} r="2.5" fill={STROKE} fillOpacity="0.9">
+              <Breathe values="0.6;1;0.6" dur={4} begin={(i / N) * 4} />
+            </circle>
           </g>
         );
       })}
-      {/* highlighted pair */}
+
+      {/* accent traveler — a single highlighted pair that walks the helix */}
       <g>
-        {(() => {
-          const t = 0.6;
-          const a = sample(t, 0), b = sample(t, Math.PI);
-          return (
-            <>
-              <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={ACCENT} strokeOpacity="0.9" strokeWidth="1.2" />
-              <circle cx={a.x} cy={a.y} r="3" fill={ACCENT} />
-              <circle cx={b.x} cy={b.y} r="3" fill={ACCENT} />
-            </>
-          );
-        })()}
+        <circle r="3" fill={ACCENT}>
+          <animate attributeName="cx"
+            values={Array.from({ length: 40 }).map((_, i) => sample(i / 39, 0).x.toFixed(1)).join(";")}
+            dur="8s" repeatCount="indefinite" />
+          <animate attributeName="cy"
+            values={Array.from({ length: 40 }).map((_, i) => sample(i / 39, 0).y.toFixed(1)).join(";")}
+            dur="8s" repeatCount="indefinite" />
+        </circle>
+        <circle r="3" fill={ACCENT}>
+          <animate attributeName="cx"
+            values={Array.from({ length: 40 }).map((_, i) => sample(i / 39, Math.PI).x.toFixed(1)).join(";")}
+            dur="8s" repeatCount="indefinite" />
+          <animate attributeName="cy"
+            values={Array.from({ length: 40 }).map((_, i) => sample(i / 39, Math.PI).y.toFixed(1)).join(";")}
+            dur="8s" repeatCount="indefinite" />
+        </circle>
       </g>
     </svg>
   );
 };
 
-/* ------------------------- 10. DRIFT OVERLAY / DIFF ------------------- */
+/* ------------------------- 10. DIFF OVERLAY --------------------------- */
 const Overlay = () => {
   const a = [
     { x: 110, y: 140 }, { x: 175, y: 120 }, { x: 250, y: 145 },
@@ -661,13 +909,25 @@ const Overlay = () => {
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
       <GridBg id="ov-grid" /><Spot id="ov-spot" /><CornerMarks />
-      {/* ghost (previous state) */}
-      <g stroke={STROKE} strokeOpacity="0.22" strokeWidth="0.6" fill="none">
-        {edgesA.map(([i, j], k) => (
-          <line key={k} x1={b[i].x} y1={b[i].y} x2={b[j].x} y2={b[j].y} strokeDasharray="2 3" />
-        ))}
-        {b.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="3.5" />)}
+
+      {/* ghost cross-fade between A and B */}
+      <g>
+        <g opacity="0">
+          <g stroke={STROKE} strokeOpacity="0.45" strokeWidth="0.6" fill="none" strokeDasharray="2 3">
+            {edgesA.map(([i, j], k) => (
+              <line key={k} x1={b[i].x} y1={b[i].y} x2={b[j].x} y2={b[j].y} />
+            ))}
+          </g>
+          {b.map((p, i) => (
+            <circle key={i} cx={p.x} cy={p.y} r="3.5" fill="none" stroke={STROKE} strokeOpacity="0.5" strokeWidth="0.6" />
+          ))}
+          <animate attributeName="opacity"
+            values="0.4;0.05;0.4" keyTimes="0;0.5;1"
+            keySplines={`${EASE};${EASE}`} calcMode="spline"
+            dur="6s" repeatCount="indefinite" />
+        </g>
       </g>
+
       {/* current state */}
       <g stroke={STROKE} strokeOpacity="0.55" strokeWidth="0.8" fill="none">
         {edgesA.map(([i, j], k) => (
@@ -676,26 +936,58 @@ const Overlay = () => {
       </g>
       {a.map((p, i) => (
         <circle key={i} cx={p.x} cy={p.y} r="3.5" fill={STROKE} fillOpacity="0.9"
-          stroke={STROKE} strokeOpacity="0.9" strokeWidth="0.7" />
+          stroke={STROKE} strokeOpacity="0.9" strokeWidth="0.7">
+          <Breathe values="0.7;1;0.7" dur={4 + (i % 3) * 0.4} begin={i * 0.25} />
+        </circle>
       ))}
-      {/* missing edge in accent */}
+
+      {/* missing edge in accent — flowing dash */}
       <line x1={a[2].x} y1={a[2].y} x2={a[6].x} y2={a[6].y}
-        stroke={ACCENT} strokeOpacity="0.75" strokeWidth="0.9" strokeDasharray="2 4" />
-      {/* orphan node */}
+        stroke={ACCENT} strokeOpacity="0.75" strokeWidth="0.9" strokeDasharray="2 4">
+        <animate attributeName="stroke-dashoffset" values="0;-24" dur="3.6s" repeatCount="indefinite" />
+      </line>
+
+      {/* orphan node — soft pulse + bracket */}
       <g>
         <circle cx={orphan.x} cy={orphan.y} r="4" fill="none"
-          stroke={ACCENT} strokeOpacity="0.85" strokeWidth="1" />
+          stroke={ACCENT} strokeOpacity="0.85" strokeWidth="1">
+          <Breathe values="0.55;1;0.55" dur={3} />
+        </circle>
         <circle cx={orphan.x} cy={orphan.y} r="9" fill="none"
           stroke={ACCENT} strokeOpacity="0.5" strokeWidth="0.6">
-          <animate attributeName="r" values="7;14;7" dur="2.4s" repeatCount="indefinite" />
-          <animate attributeName="stroke-opacity" values="0.6;0;0.6" dur="2.4s" repeatCount="indefinite" />
+          <Breathe values="0.15;0.5;0.15" dur={3} begin={0.4} />
         </circle>
         <BracketBox x={orphan.x - 16} y={orphan.y - 16} w={32} h={32} c={4} opacity={0.6} />
       </g>
-      {/* diff sweep */}
-      <line x1="50" y1="50" x2="50" y2="350" stroke={ACCENT} strokeOpacity="0.4" strokeWidth="0.6">
-        <animate attributeName="x1" values="50;350;50" dur="7s" repeatCount="indefinite" />
-        <animate attributeName="x2" values="50;350;50" dur="7s" repeatCount="indefinite" />
+
+      {/* diff sweep — eased, with soft trailing band */}
+      <defs>
+        <linearGradient id="ov-trail" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%" stopColor={ACCENT} stopOpacity="0" />
+          <stop offset="100%" stopColor={ACCENT} stopOpacity="0.16" />
+        </linearGradient>
+      </defs>
+      <rect y="50" width="50" height="300" fill="url(#ov-trail)">
+        <animate attributeName="x"
+          values="0;350" keyTimes="0;1"
+          keySplines={`${EASE_OUT}`} calcMode="spline"
+          dur="7s" repeatCount="indefinite" />
+        <animate attributeName="opacity"
+          values="0;1;1;0" keyTimes="0;0.1;0.9;1"
+          dur="7s" repeatCount="indefinite" />
+      </rect>
+      <line y1="50" y2="350" stroke={ACCENT} strokeWidth="0.6" strokeOpacity="0.5">
+        <animate attributeName="x1"
+          values="50;400" keyTimes="0;1"
+          keySplines={`${EASE_OUT}`} calcMode="spline"
+          dur="7s" repeatCount="indefinite" />
+        <animate attributeName="x2"
+          values="50;400" keyTimes="0;1"
+          keySplines={`${EASE_OUT}`} calcMode="spline"
+          dur="7s" repeatCount="indefinite" />
+        <animate attributeName="stroke-opacity"
+          values="0;0.6;0.6;0" keyTimes="0;0.1;0.9;1"
+          dur="7s" repeatCount="indefinite" />
       </line>
     </svg>
   );
@@ -707,40 +999,64 @@ const Stack = () => {
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
       <GridBg id="st-grid" /><Spot id="st-spot" /><CornerMarks />
-      {/* timeline rail on the left */}
+
+      {/* timeline rail with traveling marker */}
       <g stroke={STROKE} strokeOpacity="0.4" strokeWidth="0.7">
         <line x1="70" y1="60" x2="70" y2="340" />
         {cards.map((i) => (
           <g key={i}>
             <line x1="66" y1={80 + i * 45} x2="74" y2={80 + i * 45} />
-            <circle cx="70" cy={80 + i * 45} r={i === 0 ? 3 : 1.6} fill={i === 0 ? ACCENT : STROKE} fillOpacity={i === 0 ? 1 : 0.7} />
+            <circle cx="70" cy={80 + i * 45} r={i === 0 ? 3 : 1.6}
+              fill={i === 0 ? ACCENT : STROKE} fillOpacity={i === 0 ? 1 : 0.7}>
+              {i === 0 && <Breathe values="0.6;1;0.6" dur={2.6} />}
+            </circle>
           </g>
         ))}
+        {/* traveling tick down the rail */}
+        <circle cx="70" r="2.4" fill={ACCENT} opacity="0.7">
+          <animate attributeName="cy"
+            values="80;305" keyTimes="0;1"
+            keySplines={`${EASE_OUT}`} calcMode="spline"
+            dur="6s" repeatCount="indefinite" />
+          <animate attributeName="opacity"
+            values="0;0.7;0.7;0" keyTimes="0;0.1;0.9;1"
+            dur="6s" repeatCount="indefinite" />
+        </circle>
       </g>
-      {/* stacked cards (perspective via offset & opacity) */}
+
+      {/* stacked cards with subtle parallax breathing */}
       {cards.slice().reverse().map((i) => {
-        const depth = i; // 0 = front
+        const depth = i;
         const ox = 110 + depth * 8;
         const oy = 70 + depth * 8;
         const op = depth === 0 ? 1 : 0.85 - depth * 0.12;
         return (
           <g key={i}>
-            <rect x={ox} y={oy} width="220" height="200" rx="4"
-              fill={BG} stroke={STROKE} strokeOpacity={0.3 + (depth === 0 ? 0.5 : 0)} strokeWidth={depth === 0 ? 1.1 : 0.7}
-              opacity={op} />
+            <g>
+              <rect x={ox} y={oy} width="220" height="200" rx="4"
+                fill={BG} stroke={STROKE} strokeOpacity={0.3 + (depth === 0 ? 0.5 : 0)} strokeWidth={depth === 0 ? 1.1 : 0.7}
+                opacity={op} />
+              {depth !== 0 && (
+                <animateTransform attributeName="transform" type="translate"
+                  values={`0 0;0 ${-depth * 0.6};0 0`}
+                  keyTimes="0;0.5;1"
+                  keySplines={`${EASE};${EASE}`} calcMode="spline"
+                  dur={`${6 + depth * 0.4}s`} repeatCount="indefinite" />
+              )}
+            </g>
             {depth === 0 && (
               <g stroke={STROKE} strokeOpacity="0.45" strokeWidth="0.6">
-                {/* header bar */}
                 <line x1={ox + 14} y1={oy + 22} x2={ox + 140} y2={oy + 22} strokeOpacity="0.85" strokeWidth="1.4" />
                 <line x1={ox + 14} y1={oy + 44} x2={ox + 200} y2={oy + 44} />
                 <line x1={ox + 14} y1={oy + 58} x2={ox + 190} y2={oy + 58} />
                 <line x1={ox + 14} y1={oy + 72} x2={ox + 170} y2={oy + 72} />
-                {/* AC checklist */}
                 <g>
                   {[0, 1, 2, 3].map((k) => (
                     <g key={k}>
                       <rect x={ox + 14} y={oy + 100 + k * 22} width="10" height="10"
-                        fill={k < 3 ? STROKE : "none"} fillOpacity={k < 3 ? 0.85 : 0} />
+                        fill={k < 3 ? STROKE : "none"} fillOpacity={k < 3 ? 0.85 : 0}>
+                        {k < 3 && <Breathe values="0.6;1;0.6" dur={3.5} begin={k * 0.5} />}
+                      </rect>
                       <line x1={ox + 32} y1={oy + 105 + k * 22} x2={ox + 200} y2={oy + 105 + k * 22} />
                     </g>
                   ))}
@@ -750,7 +1066,6 @@ const Stack = () => {
           </g>
         );
       })}
-      {/* current marker */}
       <BracketBox x={108} y={68} w={224} h={204} c={6} opacity={0.8} />
     </svg>
   );
@@ -769,16 +1084,26 @@ const Constellation = () => {
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
       <GridBg id="co-grid" /><Spot id="co-spot" /><CornerMarks />
-      {/* orbit rings */}
+
+      {/* orbit rings — slow counter-rotation */}
       <g fill="none" stroke={STROKE} strokeOpacity="0.12" strokeWidth="0.5">
-        <circle cx={center.x} cy={center.y} r="100" />
-        <circle cx={center.x} cy={center.y} r="130" />
+        <g>
+          <circle cx={center.x} cy={center.y} r="100" strokeDasharray="2 6" />
+          <animateTransform attributeName="transform" type="rotate"
+            from={`0 ${center.x} ${center.y}`} to={`360 ${center.x} ${center.y}`}
+            dur="80s" repeatCount="indefinite" />
+        </g>
+        <g>
+          <circle cx={center.x} cy={center.y} r="130" strokeDasharray="2 6" />
+          <animateTransform attributeName="transform" type="rotate"
+            from={`360 ${center.x} ${center.y}`} to={`0 ${center.x} ${center.y}`}
+            dur="120s" repeatCount="indefinite" />
+        </g>
       </g>
-      {/* spokes + project clusters */}
+
       {projects.map((p, pi) => {
         const px = center.x + Math.cos(p.angle) * p.r;
         const py = center.y + Math.sin(p.angle) * p.r;
-        // mini cluster around (px,py)
         const cluster = Array.from({ length: p.nodes }).map((_, i) => {
           const a = (i / p.nodes) * Math.PI * 2;
           const rr = 14 + (i % 2) * 6;
@@ -786,36 +1111,50 @@ const Constellation = () => {
         });
         return (
           <g key={pi}>
+            {/* spoke — flowing dash */}
             <line x1={center.x} y1={center.y} x2={px} y2={py}
-              stroke={STROKE} strokeOpacity="0.3" strokeWidth="0.6" />
+              stroke={STROKE} strokeOpacity="0.3" strokeWidth="0.6" strokeDasharray="1 4">
+              <animate attributeName="stroke-dashoffset"
+                values="0;-15" dur={`${6 + pi}s`} repeatCount="indefinite" />
+            </line>
             {/* cluster edges */}
             <g stroke={STROKE} strokeOpacity="0.35" strokeWidth="0.5">
               {cluster.map((c, i) => (
                 <line key={i} x1={px} y1={py} x2={c.x} y2={c.y} />
               ))}
             </g>
-            {/* cluster nodes */}
+            {/* cluster nodes — staggered twinkle */}
             {cluster.map((c, i) => (
-              <circle key={i} cx={c.x} cy={c.y} r="1.8" fill={STROKE} fillOpacity="0.75" />
+              <circle key={i} cx={c.x} cy={c.y} r="1.8" fill={STROKE} fillOpacity="0.75">
+                <Breathe values="0.4;0.95;0.4" dur={3.6 + (i % 4) * 0.4} begin={(pi * 0.4 + i * 0.18) % 4} />
+              </circle>
             ))}
             {/* project hub */}
             <circle cx={px} cy={py} r="5" fill={BG} stroke={STROKE} strokeOpacity="0.85" strokeWidth="0.9" />
-            <circle cx={px} cy={py} r="2.3" fill={STROKE} fillOpacity="0.9" />
-            {/* one active project pulse */}
+            <circle cx={px} cy={py} r="2.3" fill={STROKE} fillOpacity="0.9">
+              <Breathe values="0.7;1;0.7" dur={3.4} begin={pi * 0.4} />
+            </circle>
             {pi === 2 && (
               <circle cx={px} cy={py} r="8" fill="none" stroke={ACCENT} strokeOpacity="0.7" strokeWidth="0.8">
-                <animate attributeName="r" values="6;16;6" dur="2.8s" repeatCount="indefinite" />
-                <animate attributeName="stroke-opacity" values="0.8;0;0.8" dur="2.8s" repeatCount="indefinite" />
+                <Breathe values="0.25;0.7;0.25" dur={3.2} />
               </circle>
             )}
           </g>
         );
       })}
+
       {/* workspace core */}
       <g>
         <circle cx={center.x} cy={center.y} r="14" fill={BG} stroke={STROKE} strokeOpacity="0.9" strokeWidth="1.1" />
-        <circle cx={center.x} cy={center.y} r="6" fill={STROKE} fillOpacity="0.9" />
-        <circle cx={center.x} cy={center.y} r="22" fill="none" stroke={STROKE} strokeOpacity="0.25" strokeWidth="0.5" strokeDasharray="2 3" />
+        <circle cx={center.x} cy={center.y} r="6" fill={STROKE} fillOpacity="0.9">
+          <Breathe values="0.75;1;0.75" dur={3} />
+        </circle>
+        <g>
+          <circle cx={center.x} cy={center.y} r="22" fill="none" stroke={STROKE} strokeOpacity="0.25" strokeWidth="0.5" strokeDasharray="2 3" />
+          <animateTransform attributeName="transform" type="rotate"
+            from={`0 ${center.x} ${center.y}`} to={`360 ${center.x} ${center.y}`}
+            dur="40s" repeatCount="indefinite" />
+        </g>
       </g>
     </svg>
   );
@@ -823,18 +1162,9 @@ const Constellation = () => {
 
 /* ----------------------------- SHOWCASE -------------------------------- */
 const RENDERERS: Record<Variant, () => JSX.Element> = {
-  cascade: Cascade,
-  coverage: Coverage,
-  drift: Drift,
-  sync: Sync,
-  funnel: Funnel,
-  river: River,
-  circuit: Circuit,
-  gauge: Gauge,
-  genome: Genome,
-  overlay: Overlay,
-  stack: Stack,
-  constellation: Constellation,
+  cascade: Cascade, coverage: Coverage, drift: Drift, sync: Sync,
+  funnel: Funnel, river: River, circuit: Circuit, gauge: Gauge,
+  genome: Genome, overlay: Overlay, stack: Stack, constellation: Constellation,
 };
 
 export const AuthVisualShowcase = () => {
@@ -854,7 +1184,7 @@ export const AuthVisualShowcase = () => {
       </div>
 
       <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="absolute inset-0">
+        <div key={active} className="absolute inset-0 animate-fade-in">
           <Render />
         </div>
       </div>
