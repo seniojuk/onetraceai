@@ -34,11 +34,6 @@ const Constellation = () => {
           <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity="1" />
           <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id="cn-beam" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity="0" />
-          <stop offset="50%" stopColor="hsl(var(--accent))" stopOpacity="1" />
-          <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0" />
-        </linearGradient>
       </defs>
 
       {/* edges */}
