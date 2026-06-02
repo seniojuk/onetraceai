@@ -1,332 +1,17 @@
 import { useState } from "react";
 
-type Variant = "constellation" | "orbital" | "isometric" | "liquid" | "spotlight" | "gauge";
+type Variant = "spotlight" | "gauge" | "schematic" | "matrix" | "sync";
 
 const VARIANTS: { id: Variant; label: string; caption: string }[] = [
-  { id: "constellation", label: "Lineage", caption: "Every artifact, every link — alive." },
-  { id: "orbital", label: "Orbit", caption: "Systems in motion. Always in sync." },
-  { id: "isometric", label: "Layers", caption: "Scan the stack. Top to bottom." },
-  { id: "liquid", label: "Flux", caption: "Continuous. Fluid. Traceable." },
+  { id: "schematic", label: "Pipeline", caption: "Idea to release. One unbroken thread." },
+  { id: "matrix", label: "Coverage", caption: "Every requirement, accounted for." },
+  { id: "sync", label: "Sync", caption: "OneTrace ↔ Jira. Always reconciled." },
   { id: "spotlight", label: "Focus", caption: "One source of truth, in focus." },
   { id: "gauge", label: "Signal", caption: "Precision. Measured continuously." },
 ];
 
-/* ----------------------- 1. CONSTELLATION / LINEAGE ----------------------- */
-const Constellation = () => {
-  // Nodes positioned as a small graph
-  const nodes = [
-    { x: 80, y: 90, r: 6, d: "0s" },
-    { x: 200, y: 60, r: 8, d: "0.4s" },
-    { x: 320, y: 110, r: 5, d: "0.8s" },
-    { x: 140, y: 200, r: 7, d: "1.2s" },
-    { x: 260, y: 220, r: 6, d: "1.6s" },
-    { x: 380, y: 200, r: 9, d: "2.0s" },
-    { x: 200, y: 320, r: 6, d: "2.4s" },
-    { x: 330, y: 330, r: 7, d: "2.8s" },
-  ];
-  const edges = [
-    [0, 1], [1, 2], [0, 3], [1, 4], [2, 5],
-    [3, 4], [4, 5], [3, 6], [4, 6], [5, 7], [6, 7],
-  ];
-
-  return (
-    <svg viewBox="0 0 460 400" className="h-full w-full">
-      <defs>
-        <radialGradient id="cn-node" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity="1" />
-          <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      {/* edges */}
-      {edges.map(([a, b], i) => {
-        const A = nodes[a], B = nodes[b];
-        return (
-          <line
-            key={i}
-            x1={A.x} y1={A.y} x2={B.x} y2={B.y}
-            stroke="hsl(var(--foreground))" strokeOpacity="0.12" strokeWidth="1"
-          />
-        );
-      })}
-
-      {/* animated beams along three edges */}
-      {[0, 3, 8].map((idx, i) => {
-        const [a, b] = edges[idx];
-        const A = nodes[a], B = nodes[b];
-        return (
-          <circle key={`beam-${i}`} r="2.5" fill="hsl(var(--accent))">
-            <animate
-              attributeName="cx"
-              values={`${A.x};${B.x};${A.x}`}
-              dur={`${3 + i}s`}
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="cy"
-              values={`${A.y};${B.y};${A.y}`}
-              dur={`${3 + i}s`}
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="opacity"
-              values="0;1;1;0"
-              dur={`${3 + i}s`}
-              repeatCount="indefinite"
-            />
-          </circle>
-        );
-      })}
-
-      {/* nodes */}
-      {nodes.map((n, i) => (
-        <g key={i}>
-          <circle cx={n.x} cy={n.y} r={n.r * 3} fill="url(#cn-node)" opacity="0.35">
-            <animate
-              attributeName="opacity"
-              values="0.1;0.5;0.1"
-              dur="3s"
-              begin={n.d}
-              repeatCount="indefinite"
-            />
-          </circle>
-          <circle cx={n.x} cy={n.y} r={n.r} fill="hsl(var(--accent))" />
-          <circle
-            cx={n.x} cy={n.y} r={n.r}
-            fill="none" stroke="hsl(var(--accent))" strokeOpacity="0.5"
-          >
-            <animate
-              attributeName="r"
-              values={`${n.r};${n.r + 14};${n.r}`}
-              dur="3s"
-              begin={n.d}
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="stroke-opacity"
-              values="0.6;0;0.6"
-              dur="3s"
-              begin={n.d}
-              repeatCount="indefinite"
-            />
-          </circle>
-        </g>
-      ))}
-    </svg>
-  );
-};
-
-/* ----------------------------- 2. ORBITAL ------------------------------ */
-const Orbital = () => {
-  const orbits = [
-    { r: 60, dur: 12, count: 1, size: 4 },
-    { r: 110, dur: 22, count: 2, size: 5 },
-    { r: 160, dur: 34, count: 3, size: 3.5 },
-  ];
-  return (
-    <svg viewBox="0 0 400 400" className="h-full w-full">
-      <defs>
-        <radialGradient id="ob-core" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      <g transform="translate(200 200)">
-        {/* core */}
-        <circle r="36" fill="url(#ob-core)" />
-        <circle r="10" fill="hsl(var(--accent))" />
-        <circle r="14" fill="none" stroke="hsl(var(--accent))" strokeOpacity="0.4">
-          <animate attributeName="r" values="10;30;10" dur="3s" repeatCount="indefinite" />
-          <animate attributeName="stroke-opacity" values="0.6;0;0.6" dur="3s" repeatCount="indefinite" />
-        </circle>
-
-        {/* orbits */}
-        {orbits.map((o, i) => (
-          <g key={i}>
-            <circle
-              r={o.r}
-              fill="none"
-              stroke="hsl(var(--foreground))"
-              strokeOpacity="0.1"
-              strokeDasharray="2 4"
-            />
-            <g>
-              <animateTransform
-                attributeName="transform"
-                type="rotate"
-                from={i % 2 === 0 ? "0" : "360"}
-                to={i % 2 === 0 ? "360" : "0"}
-                dur={`${o.dur}s`}
-                repeatCount="indefinite"
-              />
-              {Array.from({ length: o.count }).map((_, j) => {
-                const angle = (j / o.count) * Math.PI * 2;
-                const x = Math.cos(angle) * o.r;
-                const y = Math.sin(angle) * o.r;
-                return (
-                  <g key={j}>
-                    <circle cx={x} cy={y} r={o.size + 4} fill="hsl(var(--accent))" opacity="0.2" />
-                    <circle cx={x} cy={y} r={o.size} fill="hsl(var(--accent))" />
-                  </g>
-                );
-              })}
-            </g>
-          </g>
-        ))}
-
-        {/* data packet */}
-        <circle r="3" fill="hsl(var(--accent))">
-          <animateMotion dur="6s" repeatCount="indefinite"
-            path="M 60 0 C 60 -40, 110 -40, 110 0 C 110 40, 160 40, 160 0" />
-          <animate attributeName="opacity" values="0;1;1;0" dur="6s" repeatCount="indefinite" />
-        </circle>
-      </g>
-    </svg>
-  );
-};
-
-/* ---------------------------- 3. ISOMETRIC ----------------------------- */
-const Isometric = () => {
-  // Stacked isometric cards
-  const layers = [0, 1, 2, 3, 4];
-  return (
-    <svg viewBox="0 0 400 400" className="h-full w-full">
-      <defs>
-        <linearGradient id="iso-card" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.08" />
-          <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0.02" />
-        </linearGradient>
-        <linearGradient id="iso-scan" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity="0" />
-          <stop offset="50%" stopColor="hsl(var(--accent))" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0" />
-        </linearGradient>
-        <clipPath id="iso-clip">
-          <polygon points="100,140 300,140 340,200 300,260 100,260 60,200" />
-        </clipPath>
-      </defs>
-
-      <g>
-        {layers.map((i) => {
-          const offset = (i - 2) * 28;
-          const points = [
-            `200,${100 + offset}`,
-            `320,${160 + offset}`,
-            `200,${220 + offset}`,
-            `80,${160 + offset}`,
-          ].join(" ");
-          return (
-            <g key={i}>
-              <polygon
-                points={points}
-                fill="url(#iso-card)"
-                stroke="hsl(var(--accent))"
-                strokeOpacity="0.25"
-                strokeWidth="1"
-              >
-                <animate
-                  attributeName="opacity"
-                  values="0.5;1;0.5"
-                  dur="4s"
-                  begin={`${i * 0.3}s`}
-                  repeatCount="indefinite"
-                />
-                <animateTransform
-                  attributeName="transform"
-                  type="translate"
-                  values="0 -3; 0 3; 0 -3"
-                  dur="6s"
-                  begin={`${i * 0.4}s`}
-                  repeatCount="indefinite"
-                />
-              </polygon>
-              {/* small marker dot */}
-              <circle cx="200" cy={160 + offset} r="2.5" fill="hsl(var(--accent))">
-                <animate
-                  attributeName="opacity"
-                  values="0.2;1;0.2"
-                  dur="3s"
-                  begin={`${i * 0.5}s`}
-                  repeatCount="indefinite"
-                />
-              </circle>
-            </g>
-          );
-        })}
-
-        {/* scan beam */}
-        <g clipPath="url(#iso-clip)">
-          <rect x="40" y="0" width="320" height="40" fill="url(#iso-scan)">
-            <animate
-              attributeName="y"
-              values="20;320;20"
-              dur="5s"
-              repeatCount="indefinite"
-            />
-          </rect>
-        </g>
-      </g>
-    </svg>
-  );
-};
-
-/* ------------------------------ 4. LIQUID ------------------------------ */
-const Liquid = () => {
-  return (
-    <svg viewBox="0 0 400 400" className="h-full w-full">
-      <defs>
-        <radialGradient id="lq-grad" cx="50%" cy="50%" r="60%">
-          <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity="0.9" />
-          <stop offset="60%" stopColor="hsl(var(--accent))" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0" />
-        </radialGradient>
-        <filter id="lq-turb" x="-20%" y="-20%" width="140%" height="140%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="3">
-            <animate
-              attributeName="baseFrequency"
-              dur="18s"
-              values="0.010 0.014;0.018 0.010;0.010 0.014"
-              repeatCount="indefinite"
-            />
-          </feTurbulence>
-          <feDisplacementMap in="SourceGraphic" scale="40" />
-        </filter>
-        <linearGradient id="lq-ring" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0.1" />
-        </linearGradient>
-      </defs>
-
-      <g filter="url(#lq-turb)">
-        <circle cx="200" cy="200" r="130" fill="url(#lq-grad)" />
-        <circle cx="200" cy="200" r="90" fill="none" stroke="url(#lq-ring)" strokeWidth="1.5" />
-        <circle cx="200" cy="200" r="60" fill="none" stroke="url(#lq-ring)" strokeWidth="1" />
-      </g>
-
-      {/* crisp overlay ring */}
-      <circle
-        cx="200" cy="200" r="150"
-        fill="none" stroke="hsl(var(--accent))" strokeOpacity="0.25" strokeWidth="1"
-        strokeDasharray="4 6"
-      >
-        <animateTransform
-          attributeName="transform"
-          type="rotate"
-          from="0 200 200"
-          to="360 200 200"
-          dur="40s"
-          repeatCount="indefinite"
-        />
-      </circle>
-      <circle cx="200" cy="200" r="4" fill="hsl(var(--accent))" />
-    </svg>
-  );
-};
-
-/* ---------------------- 5. SPOTLIGHT (Linear-style) -------------------- */
+/* ---------------------- SPOTLIGHT (icon-tile grid) --------------------- */
 const Spotlight = () => {
-  // 5x5 grid of icon tiles; the center tile is "lit", neighbors fade with distance.
   const cols = 5;
   const rows = 5;
   const size = 56;
@@ -337,7 +22,6 @@ const Spotlight = () => {
   const offsetY = (400 - totalH) / 2;
   const cx = 2, cy = 2;
 
-  // simple line-art glyphs
   const glyphs = [
     "M-8 -8 L8 -8 L8 8 L-8 8 Z",
     "M-8 0 L8 0 M0 -8 L0 8",
@@ -363,7 +47,6 @@ const Spotlight = () => {
         </radialGradient>
       </defs>
 
-      {/* spotlight glow behind grid */}
       <circle cx="200" cy="200" r="170" fill="url(#sp-spot)">
         <animate attributeName="r" values="160;185;160" dur="6s" repeatCount="indefinite" />
       </circle>
@@ -372,7 +55,7 @@ const Spotlight = () => {
         Array.from({ length: cols }).map((_, c) => {
           const dist = Math.hypot(c - cx, r - cy);
           const maxDist = Math.hypot(cx, cy);
-          const t = dist / maxDist; // 0 center -> 1 edge
+          const t = dist / maxDist;
           const tileOpacity = Math.max(0.04, 0.45 * (1 - t));
           const glyphOpacity = Math.max(0.06, 0.55 * (1 - t));
           const x = offsetX + c * (size + gap);
@@ -392,10 +75,7 @@ const Spotlight = () => {
               />
               {isCenter && (
                 <>
-                  <rect
-                    x={x} y={y} width={size} height={size} rx="12"
-                    fill="url(#sp-core)"
-                  />
+                  <rect x={x} y={y} width={size} height={size} rx="12" fill="url(#sp-core)" />
                   <rect
                     x={x - 4} y={y - 4} width={size + 8} height={size + 8} rx="14"
                     fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.3" strokeWidth="1"
@@ -423,16 +103,14 @@ const Spotlight = () => {
   );
 };
 
-/* ---------------------- 6. GAUGE (Linear-style) ------------------------ */
+/* ---------------------------- GAUGE ------------------------------------ */
 const Gauge = () => {
-  // analog precision meter with sweeping needle and tick marks
   const cx = 200, cy = 230;
   const radius = 140;
-  const startA = -210; // degrees
+  const startA = -210;
   const endA = 30;
   const totalA = endA - startA;
   const ticks = 41;
-
   const polar = (r: number, deg: number) => {
     const rad = (deg * Math.PI) / 180;
     return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
@@ -449,7 +127,6 @@ const Gauge = () => {
 
       <circle cx={cx} cy={cy} r="180" fill="url(#gg-spot)" />
 
-      {/* arc */}
       {(() => {
         const p1 = polar(radius, startA);
         const p2 = polar(radius, endA);
@@ -461,7 +138,6 @@ const Gauge = () => {
         );
       })()}
 
-      {/* ticks */}
       {Array.from({ length: ticks }).map((_, i) => {
         const t = i / (ticks - 1);
         const a = startA + t * totalA;
@@ -479,7 +155,6 @@ const Gauge = () => {
         );
       })}
 
-      {/* major tick labels (monospace numerals via SVG text) */}
       {[0, 0.25, 0.5, 0.75, 1].map((t, i) => {
         const a = startA + t * totalA;
         const p = polar(radius - 30, a);
@@ -487,22 +162,17 @@ const Gauge = () => {
           <text
             key={i}
             x={p.x} y={p.y}
-            fill="hsl(var(--foreground))"
-            fillOpacity="0.5"
-            fontSize="9"
-            fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
-            textAnchor="middle"
-            dominantBaseline="middle"
+            fill="hsl(var(--foreground))" fillOpacity="0.5"
+            fontSize="9" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+            textAnchor="middle" dominantBaseline="middle"
           >
             {Math.round(t * 100)}
           </text>
         );
       })}
 
-      {/* inner ring */}
       <circle cx={cx} cy={cy} r={radius - 50} fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.1" strokeDasharray="2 4" />
 
-      {/* needle — sweeps then settles */}
       <g>
         <animateTransform
           attributeName="transform"
@@ -512,31 +182,344 @@ const Gauge = () => {
           dur="7s"
           repeatCount="indefinite"
         />
-        <line
-          x1={cx} y1={cy}
-          x2={cx} y2={cy - (radius - 18)}
-          stroke="hsl(var(--accent))"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
+        <line x1={cx} y1={cy} x2={cx} y2={cy - (radius - 18)} stroke="hsl(var(--accent))" strokeWidth="1.5" strokeLinecap="round" />
         <circle cx={cx} cy={cy - (radius - 18)} r="3" fill="hsl(var(--accent))" />
       </g>
 
-      {/* hub */}
       <circle cx={cx} cy={cy} r="6" fill="hsl(var(--foreground))" />
       <circle cx={cx} cy={cy} r="10" fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.4" />
 
-      {/* readout */}
-      <text
-        x={cx} y={cy + 50}
-        fill="hsl(var(--foreground))"
-        fillOpacity="0.85"
-        fontSize="11"
-        fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
-        textAnchor="middle"
-        letterSpacing="2"
-      >
+      <text x={cx} y={cy + 50} fill="hsl(var(--foreground))" fillOpacity="0.85" fontSize="11"
+        fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace" textAnchor="middle" letterSpacing="2">
         COVERAGE
+      </text>
+    </svg>
+  );
+};
+
+/* ----------------------- SCHEMATIC (pipeline) -------------------------- */
+const Schematic = () => {
+  // Blueprint: IDEA → PRD → EPIC → STORY → TEST → SHIP
+  // Hairline strokes, monospace labels, trace dots flowing through.
+  const stages = [
+    { id: "IDEA", x: 50 },
+    { id: "PRD", x: 120 },
+    { id: "EPIC", x: 190 },
+    { id: "STORY", x: 260 },
+    { id: "TEST", x: 330 },
+  ];
+  const y = 200;
+  const nodeR = 7;
+
+  return (
+    <svg viewBox="0 0 400 400" className="h-full w-full">
+      <defs>
+        <radialGradient id="sc-spot" cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.10" />
+          <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0" />
+        </radialGradient>
+        <pattern id="sc-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.04" strokeWidth="0.5" />
+        </pattern>
+      </defs>
+
+      <rect width="400" height="400" fill="url(#sc-grid)" />
+      <circle cx="200" cy="200" r="180" fill="url(#sc-spot)" />
+
+      {/* corner crosshair marks */}
+      {[[20, 20], [380, 20], [20, 380], [380, 380]].map(([x, yy], i) => (
+        <g key={i} stroke="hsl(var(--foreground))" strokeOpacity="0.25" strokeWidth="1">
+          <line x1={x - 6} y1={yy} x2={x + 6} y2={yy} />
+          <line x1={x} y1={yy - 6} x2={x} y2={yy + 6} />
+        </g>
+      ))}
+
+      {/* baseline */}
+      <line x1={stages[0].x} y1={y} x2={stages[stages.length - 1].x} y2={y}
+        stroke="hsl(var(--foreground))" strokeOpacity="0.18" strokeWidth="1" />
+
+      {/* upper artifact branches off each stage */}
+      {stages.slice(1).map((s, i) => {
+        const branchY = y - 60 - (i % 2) * 14;
+        return (
+          <g key={`b-${i}`}>
+            <path
+              d={`M ${s.x} ${y} L ${s.x} ${branchY} L ${s.x + 30} ${branchY}`}
+              fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.22" strokeWidth="1"
+            />
+            <rect x={s.x + 30} y={branchY - 8} width="34" height="16" rx="2"
+              fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.35" strokeWidth="1" />
+            <text x={s.x + 47} y={branchY + 1} fill="hsl(var(--foreground))" fillOpacity="0.55"
+              fontSize="7" fontFamily="ui-monospace, monospace" textAnchor="middle" dominantBaseline="middle"
+              letterSpacing="1">
+              v{i + 1}.0
+            </text>
+          </g>
+        );
+      })}
+
+      {/* lower test branches */}
+      {stages.slice(1).map((s, i) => {
+        const branchY = y + 60 + (i % 2) * 14;
+        return (
+          <g key={`l-${i}`}>
+            <path
+              d={`M ${s.x} ${y} L ${s.x} ${branchY} L ${s.x + 20} ${branchY}`}
+              fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.18" strokeWidth="1"
+              strokeDasharray="2 3"
+            />
+            <circle cx={s.x + 24} cy={branchY} r="2.5" fill="hsl(var(--foreground))" fillOpacity="0.5" />
+          </g>
+        );
+      })}
+
+      {/* nodes + labels */}
+      {stages.map((s, i) => (
+        <g key={s.id}>
+          <circle cx={s.x} cy={y} r={nodeR + 4} fill="hsl(var(--background))" stroke="hsl(var(--foreground))" strokeOpacity="0.35" strokeWidth="1" />
+          <circle cx={s.x} cy={y} r={nodeR} fill="hsl(var(--foreground))" fillOpacity="0.85" />
+          <text x={s.x} y={y + 28} fill="hsl(var(--foreground))" fillOpacity="0.7"
+            fontSize="8" fontFamily="ui-monospace, monospace" textAnchor="middle" letterSpacing="1.5">
+            {s.id}
+          </text>
+          <text x={s.x} y={y + 40} fill="hsl(var(--foreground))" fillOpacity="0.35"
+            fontSize="7" fontFamily="ui-monospace, monospace" textAnchor="middle" letterSpacing="1">
+            0{i + 1}
+          </text>
+        </g>
+      ))}
+
+      {/* flowing trace dots */}
+      {[0, 1.4, 2.8].map((delay, i) => (
+        <circle key={i} r="2.5" fill="hsl(var(--accent))">
+          <animate attributeName="cx" values={`${stages[0].x};${stages[stages.length - 1].x}`}
+            dur="4.2s" begin={`${delay}s`} repeatCount="indefinite" />
+          <animate attributeName="cy" values={`${y};${y}`} dur="4.2s" begin={`${delay}s`} repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1"
+            dur="4.2s" begin={`${delay}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+
+      {/* header label */}
+      <text x="200" y="50" fill="hsl(var(--foreground))" fillOpacity="0.55"
+        fontSize="9" fontFamily="ui-monospace, monospace" textAnchor="middle" letterSpacing="3">
+        TRACE.PIPELINE — LIVE
+      </text>
+      <line x1="140" y1="60" x2="260" y2="60" stroke="hsl(var(--foreground))" strokeOpacity="0.2" />
+
+      {/* footer readout */}
+      <text x="200" y="350" fill="hsl(var(--foreground))" fillOpacity="0.45"
+        fontSize="8" fontFamily="ui-monospace, monospace" textAnchor="middle" letterSpacing="2">
+        5 STAGES · 12 ARTIFACTS · 0 GAPS
+      </text>
+    </svg>
+  );
+};
+
+/* ----------------------- MATRIX (coverage grid) ------------------------ */
+const Matrix = () => {
+  // 12x12 coverage matrix, cells fill in a deterministic pattern.
+  const N = 14;
+  const cell = 18;
+  const gap = 2;
+  const total = N * (cell + gap) - gap;
+  const offset = (400 - total) / 2;
+
+  // deterministic "filled" pattern that looks dense but irregular
+  const filled = (r: number, c: number) => {
+    const h = (r * 31 + c * 17 + r * c) % 100;
+    return h < 78; // ~78% coverage
+  };
+  const hot = (r: number, c: number) => ((r * 13 + c * 7) % 100) < 18;
+
+  return (
+    <svg viewBox="0 0 400 400" className="h-full w-full">
+      <defs>
+        <radialGradient id="mx-spot" cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.10" />
+          <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="200" cy="200" r="180" fill="url(#mx-spot)" />
+
+      {/* header */}
+      <text x="200" y="50" fill="hsl(var(--foreground))" fillOpacity="0.55"
+        fontSize="9" fontFamily="ui-monospace, monospace" textAnchor="middle" letterSpacing="3">
+        REQUIREMENTS × TESTS
+      </text>
+      <line x1="100" y1="60" x2="300" y2="60" stroke="hsl(var(--foreground))" strokeOpacity="0.2" />
+
+      {/* axis labels */}
+      {Array.from({ length: N }).map((_, i) => i % 2 === 0 && (
+        <text key={`x-${i}`} x={offset + i * (cell + gap) + cell / 2} y={offset - 6}
+          fill="hsl(var(--foreground))" fillOpacity="0.35"
+          fontSize="6" fontFamily="ui-monospace, monospace" textAnchor="middle">
+          T{i.toString().padStart(2, "0")}
+        </text>
+      ))}
+      {Array.from({ length: N }).map((_, i) => i % 2 === 0 && (
+        <text key={`y-${i}`} x={offset - 8} y={offset + i * (cell + gap) + cell / 2 + 2}
+          fill="hsl(var(--foreground))" fillOpacity="0.35"
+          fontSize="6" fontFamily="ui-monospace, monospace" textAnchor="end">
+          R{i.toString().padStart(2, "0")}
+        </text>
+      ))}
+
+      {/* cells */}
+      {Array.from({ length: N }).map((_, r) =>
+        Array.from({ length: N }).map((_, c) => {
+          const x = offset + c * (cell + gap);
+          const y = offset + r * (cell + gap);
+          const isFilled = filled(r, c);
+          const isHot = isFilled && hot(r, c);
+          const delay = ((r + c) * 0.04) % 2.4;
+          return (
+            <g key={`${r}-${c}`}>
+              <rect x={x} y={y} width={cell} height={cell} rx="2"
+                fill="hsl(var(--foreground))"
+                fillOpacity={isFilled ? 0.18 : 0.04}
+                stroke="hsl(var(--foreground))"
+                strokeOpacity={isFilled ? 0.35 : 0.08}
+                strokeWidth="0.75"
+              />
+              {isHot && (
+                <rect x={x} y={y} width={cell} height={cell} rx="2"
+                  fill="hsl(var(--accent))" fillOpacity="0.85">
+                  <animate attributeName="fill-opacity"
+                    values="0.2;0.9;0.2" dur="3.2s" begin={`${delay}s`} repeatCount="indefinite" />
+                </rect>
+              )}
+            </g>
+          );
+        })
+      )}
+
+      {/* scan line sweeping across */}
+      <rect x={offset} y={offset} width="2" height={total} fill="hsl(var(--accent))" opacity="0.6">
+        <animate attributeName="x" values={`${offset};${offset + total};${offset}`}
+          dur="6s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0;0.7;0.7;0" keyTimes="0;0.1;0.9;1"
+          dur="6s" repeatCount="indefinite" />
+      </rect>
+
+      {/* readout */}
+      <text x="200" y="370" fill="hsl(var(--foreground))" fillOpacity="0.55"
+        fontSize="9" fontFamily="ui-monospace, monospace" textAnchor="middle" letterSpacing="2">
+        78% COVERED · 12 GAPS · LIVE
+      </text>
+    </svg>
+  );
+};
+
+/* --------------------------- SYNC (bi-directional) --------------------- */
+const Sync = () => {
+  // Two columns of records (OneTrace vs Jira) with animated sync arrows.
+  const leftX = 90;
+  const rightX = 310;
+  const rows = [
+    { y: 110, label: "PRD-204", remote: "ENG-1180", dir: "out" as const },
+    { y: 160, label: "EPIC-31", remote: "ENG-1181", dir: "out" as const },
+    { y: 210, label: "STORY-88", remote: "ENG-1192", dir: "in" as const },
+    { y: 260, label: "STORY-89", remote: "ENG-1193", dir: "out" as const },
+    { y: 310, label: "TEST-44", remote: "ENG-1201", dir: "in" as const },
+  ];
+  const cardW = 92;
+  const cardH = 28;
+
+  return (
+    <svg viewBox="0 0 400 400" className="h-full w-full">
+      <defs>
+        <radialGradient id="sy-spot" cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.10" />
+          <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0" />
+        </radialGradient>
+        <marker id="sy-arrow" viewBox="0 0 10 10" refX="8" refY="5"
+          markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--accent))" />
+        </marker>
+      </defs>
+      <circle cx="200" cy="200" r="180" fill="url(#sy-spot)" />
+
+      {/* column headers */}
+      <text x={leftX} y="60" fill="hsl(var(--foreground))" fillOpacity="0.7"
+        fontSize="10" fontFamily="ui-monospace, monospace" textAnchor="middle" letterSpacing="2">
+        ONETRACE
+      </text>
+      <text x={rightX} y="60" fill="hsl(var(--foreground))" fillOpacity="0.7"
+        fontSize="10" fontFamily="ui-monospace, monospace" textAnchor="middle" letterSpacing="2">
+        JIRA
+      </text>
+      <line x1={leftX - 50} y1="70" x2={leftX + 50} y2="70" stroke="hsl(var(--foreground))" strokeOpacity="0.2" />
+      <line x1={rightX - 50} y1="70" x2={rightX + 50} y2="70" stroke="hsl(var(--foreground))" strokeOpacity="0.2" />
+
+      {/* rail lines */}
+      <line x1={leftX} y1="85" x2={leftX} y2="335" stroke="hsl(var(--foreground))" strokeOpacity="0.1" strokeDasharray="2 4" />
+      <line x1={rightX} y1="85" x2={rightX} y2="335" stroke="hsl(var(--foreground))" strokeOpacity="0.1" strokeDasharray="2 4" />
+
+      {/* rows */}
+      {rows.map((row, i) => {
+        const isOut = row.dir === "out";
+        const pathD = isOut
+          ? `M ${leftX + cardW / 2} ${row.y} L ${rightX - cardW / 2} ${row.y}`
+          : `M ${rightX - cardW / 2} ${row.y} L ${leftX + cardW / 2} ${row.y}`;
+        const delay = i * 0.6;
+        return (
+          <g key={i}>
+            {/* left card */}
+            <rect
+              x={leftX - cardW / 2} y={row.y - cardH / 2} width={cardW} height={cardH} rx="4"
+              fill="hsl(var(--foreground))" fillOpacity="0.04"
+              stroke="hsl(var(--foreground))" strokeOpacity="0.3" strokeWidth="1"
+            />
+            <circle cx={leftX - cardW / 2 + 10} cy={row.y} r="2.5" fill="hsl(var(--foreground))" fillOpacity="0.7" />
+            <text x={leftX - cardW / 2 + 20} y={row.y + 1} fill="hsl(var(--foreground))" fillOpacity="0.8"
+              fontSize="9" fontFamily="ui-monospace, monospace" dominantBaseline="middle" letterSpacing="0.5">
+              {row.label}
+            </text>
+
+            {/* right card */}
+            <rect
+              x={rightX - cardW / 2} y={row.y - cardH / 2} width={cardW} height={cardH} rx="4"
+              fill="hsl(var(--foreground))" fillOpacity="0.04"
+              stroke="hsl(var(--foreground))" strokeOpacity="0.3" strokeWidth="1"
+            />
+            <circle cx={rightX - cardW / 2 + 10} cy={row.y} r="2.5" fill="hsl(var(--foreground))" fillOpacity="0.7" />
+            <text x={rightX - cardW / 2 + 20} y={row.y + 1} fill="hsl(var(--foreground))" fillOpacity="0.8"
+              fontSize="9" fontFamily="ui-monospace, monospace" dominantBaseline="middle" letterSpacing="0.5">
+              {row.remote}
+            </text>
+
+            {/* connection line */}
+            <line
+              x1={leftX + cardW / 2} y1={row.y} x2={rightX - cardW / 2} y2={row.y}
+              stroke="hsl(var(--foreground))" strokeOpacity="0.15" strokeWidth="1"
+            />
+
+            {/* animated arrow + packet */}
+            <path
+              d={pathD}
+              fill="none" stroke="hsl(var(--accent))" strokeOpacity="0"
+              strokeWidth="1.25"
+              markerEnd="url(#sy-arrow)"
+            >
+              <animate attributeName="stroke-opacity"
+                values="0;0.9;0.9;0" keyTimes="0;0.15;0.85;1"
+                dur="3s" begin={`${delay}s`} repeatCount="indefinite" />
+            </path>
+            <circle r="2.5" fill="hsl(var(--accent))">
+              <animateMotion dur="3s" begin={`${delay}s`} repeatCount="indefinite" path={pathD} />
+              <animate attributeName="opacity"
+                values="0;1;1;0" keyTimes="0;0.15;0.85;1"
+                dur="3s" begin={`${delay}s`} repeatCount="indefinite" />
+            </circle>
+          </g>
+        );
+      })}
+
+      {/* footer */}
+      <text x="200" y="370" fill="hsl(var(--foreground))" fillOpacity="0.55"
+        fontSize="9" fontFamily="ui-monospace, monospace" textAnchor="middle" letterSpacing="2">
+        BI-DIRECTIONAL · LAST SYNC 2s
       </text>
     </svg>
   );
@@ -544,7 +527,7 @@ const Gauge = () => {
 
 /* ----------------------------- SHOWCASE -------------------------------- */
 export const AuthVisualShowcase = () => {
-  const [active, setActive] = useState<Variant>("constellation");
+  const [active, setActive] = useState<Variant>("schematic");
   const current = VARIANTS.find((v) => v.id === active)!;
 
   return (
@@ -558,19 +541,16 @@ export const AuthVisualShowcase = () => {
         </h2>
       </div>
 
-      {/* canvas */}
       <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-card">
         <div className="absolute inset-0">
-          {active === "constellation" && <Constellation />}
-          {active === "orbital" && <Orbital />}
-          {active === "isometric" && <Isometric />}
-          {active === "liquid" && <Liquid />}
           {active === "spotlight" && <Spotlight />}
           {active === "gauge" && <Gauge />}
+          {active === "schematic" && <Schematic />}
+          {active === "matrix" && <Matrix />}
+          {active === "sync" && <Sync />}
         </div>
       </div>
 
-      {/* toggle pills */}
       <div className="flex flex-wrap gap-2">
         {VARIANTS.map((v) => {
           const isActive = v.id === active;
