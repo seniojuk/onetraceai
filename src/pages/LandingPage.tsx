@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { HeroFlow } from "@/components/landing/HeroFlow";
-import { Reveal, ScrollProgress, useActiveSection } from "@/components/landing/motion";
+import { Reveal, useActiveSection } from "@/components/landing/motion";
 import { AccentWord } from "@/components/marketing/AccentWord";
 
 /**
@@ -181,7 +181,7 @@ function Nav() {
           </Sheet>
         </div>
       </div>
-      <ScrollProgress />
+      
     </header>
   );
 }
