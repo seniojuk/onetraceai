@@ -194,28 +194,36 @@ function Nav() {
                 </div>
               </div>
               <nav className="flex flex-col px-3 py-4">
-                {links.map((l) =>
-                  "route" in l && l.route ? (
-                    <Link
-                      key={l.href}
-                      to={l.href}
-                      onClick={() => setOpen(false)}
-                      className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
-                    >
-                      {l.label}
-                    </Link>
-                  ) : (
-                    <a
-                      key={l.href}
-                      href={l.href}
-                      onClick={() => setOpen(false)}
-                      className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
-                    >
-                      {l.label}
-                    </a>
-                  )
-                )}
+                <div className="px-3 pb-2 pt-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Product
+                </div>
+                {productItems.map((l) => (
+                  <a
+                    key={l.href}
+                    href={l.href}
+                    onClick={() => setOpen(false)}
+                    className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
+                  >
+                    {l.label}
+                  </a>
+                ))}
+                <div className="my-2 border-t border-border" />
+                <Link
+                  to="/pricing"
+                  onClick={() => setOpen(false)}
+                  className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
+                >
+                  Pricing
+                </Link>
+                <Link
+                  to="/contact"
+                  onClick={() => setOpen(false)}
+                  className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
+                >
+                  Contact
+                </Link>
               </nav>
+
               <div className="mt-2 flex flex-col gap-2 border-t border-border px-5 py-4">
                 <Link
                   to="/auth"
