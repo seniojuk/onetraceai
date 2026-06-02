@@ -60,6 +60,7 @@ import {
   useRevokeInvitation,
 } from "@/hooks/useWorkspaceInvitations";
 import { useAuth } from "@/hooks/useAuth";
+import { useUsageLimits, getUsageMessage } from "@/hooks/useUsageLimits";
 import { formatDistanceToNow } from "date-fns";
 
 const roleIcons: Record<string, React.ElementType> = {
@@ -113,6 +114,9 @@ export function MemberManagement({ workspaceId, workspaceName, userRole }: Membe
 
   const canManageMembers = userRole === "OWNER" || userRole === "ADMIN";
   const isOwner = userRole === "OWNER";
+  const { canInviteMember, userAtLimit, userWarning, usage } = useUsageLimits();
+  const seatsUsed = usage?.users.used ?? 0;
+  const seatsLimit = usage?.users.limit ?? null;
 
   // Get eligible members for ownership transfer (all non-owners)
   const eligibleForTransfer = members?.filter(m => m.user_id !== user?.id) || [];
@@ -253,15 +257,36 @@ export function MemberManagement({ workspaceId, workspaceName, userRole }: Membe
                 </Button>
               )}
               {canManageMembers && (
-                <Button onClick={() => setInviteDialogOpen(true)} className="gap-2">
+                <Button
+                  onClick={() => setInviteDialogOpen(true)}
+                  className="gap-2"
+                  disabled={!canInviteMember}
+                  title={!canInviteMember ? getUsageMessage("user", true) : undefined}
+                >
                   <UserPlus className="w-4 h-4" />
                   Invite Member
+                  {seatsLimit !== null && (
+                    <span className="ml-1 text-xs opacity-70">
+                      ({seatsUsed}/{seatsLimit})
+                    </span>
+                  )}
                 </Button>
               )}
             </div>
           </div>
         </CardHeader>
         <CardContent>
+          {(userAtLimit || userWarning) && canManageMembers && (
+            <div
+              className={`mb-4 rounded-md border px-3 py-2 text-sm ${
+                userAtLimit
+                  ? "border-destructive/40 bg-destructive/5 text-destructive"
+                  : "border-warning/40 bg-warning/5 text-warning"
+              }`}
+            >
+              {getUsageMessage("user", userAtLimit)}
+            </div>
+          )}
           {!members?.length ? (
             <div className="text-center py-8 text-muted-foreground">
               <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
