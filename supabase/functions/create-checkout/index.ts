@@ -14,13 +14,21 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 
 // Stripe price IDs for each plan
 const PRICE_IDS: Record<string, string> = {
-  pro: "price_1St7mPG45CY5mATXpSHF0gry",
+  team: "price_1Tdt8UG45CY5mATXig8jDzSi",
+  growth: "price_1TdtAZG45CY5mATXjYLsrF5r",
 };
 
 const PLAN_NAMES: Record<string, string> = {
-  pro: "Pro",
-  free: "Free",
+  starter: "Starter",
+  team: "Team",
+  growth: "Growth",
   enterprise: "Enterprise",
+};
+
+// Map Stripe product IDs back to internal plan names (for previous_plan metadata)
+const PRODUCT_TO_PLAN_NAME: Record<string, string> = {
+  "prod_Ud9RX485SvPTs6": "Team",
+  "prod_Ud9TK3ZsxydQcQ": "Growth",
 };
 
 // Helper to send billing email
@@ -85,12 +93,12 @@ serve(async (req) => {
     // Check if customer exists
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string | undefined;
-    let previousPlan = "Free";
-    
+    let previousPlan = "Starter";
+
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
       logStep("Existing customer found", { customerId });
-      
+
       // Check for existing subscription to determine previous plan
       const existingSubs = await stripe.subscriptions.list({
         customer: customerId,
@@ -99,9 +107,7 @@ serve(async (req) => {
       });
       if (existingSubs.data.length > 0) {
         const existingProductId = existingSubs.data[0].items.data[0].price.product as string;
-        if (existingProductId === "prod_TqpRp9M0STW5f3") {
-          previousPlan = "Pro";
-        }
+        previousPlan = PRODUCT_TO_PLAN_NAME[existingProductId] || "Starter";
       }
     }
 
