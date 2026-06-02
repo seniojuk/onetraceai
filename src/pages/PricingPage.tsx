@@ -321,11 +321,11 @@ function FinalCTA() {
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-1/4 -top-1/2 h-[800px] w-[800px] rounded-full bg-[radial-gradient(circle_at_center,hsl(var(--accent)/0.10)_0%,transparent_70%)] blur-3xl"
+          className="pointer-events-none absolute -right-1/4 -top-1/2 h-[800px] w-[800px] rounded-full bg-[radial-gradient(circle_at_center,hsl(var(--accent)/0.04)_0%,transparent_70%)] blur-2xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-1/2 -left-1/4 h-[800px] w-[800px] rounded-full bg-[radial-gradient(circle_at_center,hsl(var(--accent)/0.06)_0%,transparent_70%)] blur-3xl"
+          className="pointer-events-none absolute -bottom-1/2 -left-1/4 h-[800px] w-[800px] rounded-full bg-[radial-gradient(circle_at_center,hsl(var(--accent)/0.02)_0%,transparent_70%)] blur-2xl"
         />
         <div className="relative flex flex-col items-center">
           <h2 className="max-w-3xl font-geist text-[44px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[60px]">
