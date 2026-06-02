@@ -1,6 +1,5 @@
-import { Link } from "react-router-dom";
-import { ArrowUpRight } from "lucide-react";
 import { PublicNav } from "./PublicNav";
+import { PublicFooter } from "./PublicFooter";
 
 interface LegalLayoutProps {
   eyebrow: string;
@@ -62,24 +61,7 @@ export function LegalLayout({ eyebrow, title, flourish, updated, sections, child
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-4 py-8 sm:flex-row sm:items-center sm:px-6">
-          <p className="text-[12.5px] text-muted-foreground">
-            © 2026 OneTrace AI, Inc. All rights reserved.
-          </p>
-          <div className="flex items-center gap-5 text-[12.5px]">
-            <Link to="/privacy" className="text-muted-foreground hover:text-foreground">Privacy</Link>
-            <Link to="/terms" className="text-muted-foreground hover:text-foreground">Terms</Link>
-            <Link
-              to="/contact"
-              className="inline-flex items-center gap-1 text-accent hover:underline"
-            >
-              Contact <ArrowUpRight className="h-3 w-3" />
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

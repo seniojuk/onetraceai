@@ -39,7 +39,7 @@ const LandingPage = () => {
       <CoverageShowcase />
       <IntegrationsRow />
       <FinalCTA />
-      <Footer />
+      <PublicFooter />
     </div>
   );
 };
