@@ -411,9 +411,6 @@ export default function PricingPage() {
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">
-        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent">
-          06 / Pricing
-        </span>
         <h1 className="mx-auto mt-4 max-w-3xl font-geist text-[52px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[64px]">
           Start free.{" "}
           <span className="font-serif italic text-foreground/70">Upgrade when you're ready.</span>
@@ -432,16 +429,12 @@ export default function PricingPage() {
         <div className="rounded-2xl border border-border bg-muted/30 p-6 md:p-8">
           <div className="grid items-end gap-6 md:grid-cols-[1.2fr_1fr]">
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                The math
-              </span>
-              <h2 className="mt-3 font-geist text-[28px] leading-tight tracking-[-0.02em] md:text-[32px]">
-                Less than a{" "}
-                <span className="font-serif italic text-foreground/70">Figma seat.</span>
+              <h2 className="font-geist text-[28px] leading-tight tracking-[-0.02em] md:text-[32px]">
+                Flat team pricing.{" "}
+                <span className="font-serif italic text-foreground/70">No per-seat creep.</span>
               </h2>
               <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">
-                Flat team pricing. No per-seat creep. Bring your whole engineering team without
-                watching the bill climb.
+                Bring your whole engineering team without watching the bill climb.
               </p>
             </div>
             <div className="grid gap-3">
@@ -481,7 +474,7 @@ export default function PricingPage() {
           ))}
         </div>
         <p className="mt-6 text-center text-[12.5px] text-muted-foreground">
-          Billed monthly, cancel anytime. Annual billing saves ~17%.
+          Billed monthly, cancel anytime.
         </p>
       </section>
 
@@ -490,15 +483,12 @@ export default function PricingPage() {
         <div className="rounded-2xl border border-border bg-muted/30 p-10">
           <div className="grid gap-10 md:grid-cols-2">
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                How we count
-              </span>
-              <h2 className="mt-3 font-geist text-[28px] leading-tight tracking-[-0.02em]">
+              <h2 className="font-geist text-[28px] leading-tight tracking-[-0.02em]">
                 What counts as a{" "}
                 <span className="font-serif italic text-foreground/70">unit?</span>
               </h2>
               <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">
-                We charge for value created, not characters typed. Three units, defined plainly.
+                We charge for value created, not characters typed.
               </p>
             </div>
             <div className="space-y-6">
@@ -515,17 +505,7 @@ export default function PricingPage() {
                   AI run
                 </div>
                 <p className="mt-1 text-[13.5px] text-foreground/90">
-                  One generation or auto-trace call. Browsing your graph never costs a run. A
-                  10-person team typically uses 200–350 / month.
-                </p>
-              </div>
-              <div>
-                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                  Overage
-                </div>
-                <p className="mt-1 text-[13.5px] text-foreground/90">
-                  Top-ups are <span className="text-accent">$19 / 100 runs</span>. Never
-                  auto-charged — you approve.
+                  One generation or auto-trace call. Browsing your graph never costs a run.
                 </p>
               </div>
             </div>
@@ -536,10 +516,7 @@ export default function PricingPage() {
       {/* Compare */}
       <section className="mx-auto mt-24 max-w-5xl px-6">
         <div className="mb-8 text-center">
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent">
-            Compare
-          </span>
-          <h2 className="mt-3 font-geist text-[36px] leading-tight tracking-[-0.025em] md:text-[42px]">
+          <h2 className="font-geist text-[36px] leading-tight tracking-[-0.025em] md:text-[42px]">
             Every feature, side by side.
           </h2>
         </div>
@@ -549,13 +526,13 @@ export default function PricingPage() {
       {/* FAQ */}
       <section className="mx-auto mt-24 max-w-3xl px-6">
         <div className="mb-8 text-center">
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent">FAQ</span>
-          <h2 className="mt-3 font-geist text-[36px] leading-tight tracking-[-0.025em]">
+          <h2 className="font-geist text-[36px] leading-tight tracking-[-0.025em]">
             Common questions.
           </h2>
         </div>
         <FaqAccordion items={FAQ} />
       </section>
+
 
       <FinalCTA />
     </div>
