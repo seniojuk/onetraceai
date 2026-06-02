@@ -124,8 +124,8 @@ function ChannelRow({
             {title}
           </div>
           <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">{body}</p>
-          <div className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-medium text-accent group-hover:underline">
-            {email} <ArrowUpRight className="h-3 w-3" />
+          <div className="mt-3 inline-flex max-w-full items-center gap-1 break-all text-[12.5px] font-medium text-accent group-hover:underline">
+            {email} <ArrowUpRight className="h-3 w-3 shrink-0" />
           </div>
         </div>
       </div>
