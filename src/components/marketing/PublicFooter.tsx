@@ -1,45 +1,33 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Github, Linkedin, Twitter } from "lucide-react";
 import { FooterWordmark } from "./FooterWordmark";
 
 /* ============================================================
-   PublicFooter — editorial, footer.design-inspired.
-   - Oversized wordmark
-   - Status badge + manifesto line
-   - Sitemap columns (mono eyebrows)
-   - Newsletter capture
-   - Fine print rail
+   PublicFooter — single source of truth for public pages.
+   Only links to pages that actually exist. Indicates active route.
    ============================================================ */
 
-type ColLink = { label: string; to: string; external?: boolean };
+type ColLink = { label: string; to: string };
 
 const COLUMNS: { title: string; links: ColLink[] }[] = [
   {
     title: "Product",
     links: [
-      { label: "Artifact Graph", to: "/#solution" },
-      { label: "Coverage Engine", to: "/#solution" },
-      { label: "Drift Detection", to: "/#solution" },
-      { label: "Integrations", to: "/#how" },
+      { label: "Overview", to: "/" },
       { label: "Pricing", to: "/pricing" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "Manifesto", to: "/#problem" },
       { label: "Contact", to: "/contact" },
-      { label: "Careers", to: "/contact" },
-      { label: "Security", to: "/privacy" },
     ],
   },
   {
-    title: "Resources",
+    title: "Account",
     links: [
-      { label: "Docs", to: "/#how" },
-      { label: "Changelog", to: "/#how" },
-      { label: "Support", to: "/contact" },
-      { label: "Status", to: "/contact" },
+      { label: "Sign in", to: "/auth?mode=login" },
+      { label: "Start free", to: "/auth?mode=signup" },
     ],
   },
   {
@@ -47,13 +35,17 @@ const COLUMNS: { title: string; links: ColLink[] }[] = [
     links: [
       { label: "Privacy Policy", to: "/privacy" },
       { label: "Terms of Service", to: "/terms" },
-      { label: "DPA", to: "/contact" },
-      { label: "Cookies", to: "/privacy" },
     ],
   },
 ];
 
 export function PublicFooter() {
+  const { pathname } = useLocation();
+  const isActive = (to: string) => {
+    const path = to.split("?")[0];
+    if (path === "/") return pathname === "/";
+    return pathname === path;
+  };
   return (
     <footer className="relative mt-24 border-t border-border bg-background">
       {/* Sitemap */}
@@ -65,18 +57,33 @@ export function PublicFooter() {
                 {col.title}
               </div>
               <ul className="mt-5 space-y-3 text-[13px]">
-                {col.links.map((l) => (
-                  <li key={l.label}>
-                    <Link
-                      to={l.to}
-                      className="group inline-flex items-center gap-1 text-foreground/80 transition-colors hover:text-foreground"
-                    >
-                      <span className="border-b border-transparent group-hover:border-foreground/40">
-                        {l.label}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
+                {col.links.map((l) => {
+                  const active = isActive(l.to);
+                  return (
+                    <li key={l.label}>
+                      <Link
+                        to={l.to}
+                        aria-current={active ? "page" : undefined}
+                        className={`group inline-flex items-center gap-2 transition-colors ${
+                          active ? "text-foreground" : "text-foreground/70 hover:text-foreground"
+                        }`}
+                      >
+                        {active && (
+                          <span aria-hidden className="h-1 w-1 rounded-full bg-accent" />
+                        )}
+                        <span
+                          className={`border-b ${
+                            active
+                              ? "border-foreground/60"
+                              : "border-transparent group-hover:border-foreground/40"
+                          }`}
+                        >
+                          {l.label}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
