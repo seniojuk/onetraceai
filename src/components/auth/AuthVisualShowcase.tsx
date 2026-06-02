@@ -324,6 +324,224 @@ const Liquid = () => {
   );
 };
 
+/* ---------------------- 5. SPOTLIGHT (Linear-style) -------------------- */
+const Spotlight = () => {
+  // 5x5 grid of icon tiles; the center tile is "lit", neighbors fade with distance.
+  const cols = 5;
+  const rows = 5;
+  const size = 56;
+  const gap = 14;
+  const totalW = cols * size + (cols - 1) * gap;
+  const totalH = rows * size + (rows - 1) * gap;
+  const offsetX = (400 - totalW) / 2;
+  const offsetY = (400 - totalH) / 2;
+  const cx = 2, cy = 2;
+
+  // simple line-art glyphs
+  const glyphs = [
+    "M-8 -8 L8 -8 L8 8 L-8 8 Z",
+    "M-8 0 L8 0 M0 -8 L0 8",
+    "M-8 -6 L8 -6 M-8 0 L4 0 M-8 6 L8 6",
+    "M-7 -7 L7 7 M7 -7 L-7 7",
+    "M0 -8 A8 8 0 1 1 0 8 A8 8 0 1 1 0 -8 Z",
+    "M-8 4 L-2 -4 L2 2 L8 -6",
+    "M-7 -7 L7 -7 L0 7 Z",
+    "M-7 -3 L0 -7 L7 -3 L7 5 L-7 5 Z",
+  ];
+
+  return (
+    <svg viewBox="0 0 400 400" className="h-full w-full">
+      <defs>
+        <radialGradient id="sp-spot" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.18" />
+          <stop offset="60%" stopColor="hsl(var(--foreground))" stopOpacity="0.04" />
+          <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="sp-core" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="1" />
+          <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0.85" />
+        </radialGradient>
+      </defs>
+
+      {/* spotlight glow behind grid */}
+      <circle cx="200" cy="200" r="170" fill="url(#sp-spot)">
+        <animate attributeName="r" values="160;185;160" dur="6s" repeatCount="indefinite" />
+      </circle>
+
+      {Array.from({ length: rows }).map((_, r) =>
+        Array.from({ length: cols }).map((_, c) => {
+          const dist = Math.hypot(c - cx, r - cy);
+          const maxDist = Math.hypot(cx, cy);
+          const t = dist / maxDist; // 0 center -> 1 edge
+          const tileOpacity = Math.max(0.04, 0.45 * (1 - t));
+          const glyphOpacity = Math.max(0.06, 0.55 * (1 - t));
+          const x = offsetX + c * (size + gap);
+          const y = offsetY + r * (size + gap);
+          const isCenter = c === cx && r === cy;
+          const glyph = glyphs[(r * cols + c) % glyphs.length];
+
+          return (
+            <g key={`${r}-${c}`}>
+              <rect
+                x={x} y={y} width={size} height={size} rx="12"
+                fill="hsl(var(--foreground))"
+                fillOpacity={isCenter ? 0 : tileOpacity * 0.15}
+                stroke="hsl(var(--foreground))"
+                strokeOpacity={isCenter ? 0 : tileOpacity}
+                strokeWidth="1"
+              />
+              {isCenter && (
+                <>
+                  <rect
+                    x={x} y={y} width={size} height={size} rx="12"
+                    fill="url(#sp-core)"
+                  />
+                  <rect
+                    x={x - 4} y={y - 4} width={size + 8} height={size + 8} rx="14"
+                    fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.3" strokeWidth="1"
+                  >
+                    <animate attributeName="stroke-opacity" values="0.1;0.5;0.1" dur="3s" repeatCount="indefinite" />
+                  </rect>
+                </>
+              )}
+              <g transform={`translate(${x + size / 2} ${y + size / 2})`}>
+                <path
+                  d={glyph}
+                  fill="none"
+                  stroke={isCenter ? "hsl(var(--background))" : "hsl(var(--foreground))"}
+                  strokeOpacity={isCenter ? 1 : glyphOpacity}
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </g>
+            </g>
+          );
+        })
+      )}
+    </svg>
+  );
+};
+
+/* ---------------------- 6. GAUGE (Linear-style) ------------------------ */
+const Gauge = () => {
+  // analog precision meter with sweeping needle and tick marks
+  const cx = 200, cy = 230;
+  const radius = 140;
+  const startA = -210; // degrees
+  const endA = 30;
+  const totalA = endA - startA;
+  const ticks = 41;
+
+  const polar = (r: number, deg: number) => {
+    const rad = (deg * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  };
+
+  return (
+    <svg viewBox="0 0 400 400" className="h-full w-full">
+      <defs>
+        <radialGradient id="gg-spot" cx="50%" cy="60%" r="55%">
+          <stop offset="0%" stopColor="hsl(var(--foreground))" stopOpacity="0.12" />
+          <stop offset="100%" stopColor="hsl(var(--foreground))" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      <circle cx={cx} cy={cy} r="180" fill="url(#gg-spot)" />
+
+      {/* arc */}
+      {(() => {
+        const p1 = polar(radius, startA);
+        const p2 = polar(radius, endA);
+        return (
+          <path
+            d={`M ${p1.x} ${p1.y} A ${radius} ${radius} 0 1 1 ${p2.x} ${p2.y}`}
+            fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.18" strokeWidth="1"
+          />
+        );
+      })()}
+
+      {/* ticks */}
+      {Array.from({ length: ticks }).map((_, i) => {
+        const t = i / (ticks - 1);
+        const a = startA + t * totalA;
+        const major = i % 5 === 0;
+        const inner = polar(radius - (major ? 16 : 8), a);
+        const outer = polar(radius, a);
+        return (
+          <line
+            key={i}
+            x1={inner.x} y1={inner.y} x2={outer.x} y2={outer.y}
+            stroke="hsl(var(--foreground))"
+            strokeOpacity={major ? 0.6 : 0.25}
+            strokeWidth={major ? 1.25 : 1}
+          />
+        );
+      })}
+
+      {/* major tick labels (monospace numerals via SVG text) */}
+      {[0, 0.25, 0.5, 0.75, 1].map((t, i) => {
+        const a = startA + t * totalA;
+        const p = polar(radius - 30, a);
+        return (
+          <text
+            key={i}
+            x={p.x} y={p.y}
+            fill="hsl(var(--foreground))"
+            fillOpacity="0.5"
+            fontSize="9"
+            fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+            textAnchor="middle"
+            dominantBaseline="middle"
+          >
+            {Math.round(t * 100)}
+          </text>
+        );
+      })}
+
+      {/* inner ring */}
+      <circle cx={cx} cy={cy} r={radius - 50} fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.1" strokeDasharray="2 4" />
+
+      {/* needle — sweeps then settles */}
+      <g>
+        <animateTransform
+          attributeName="transform"
+          type="rotate"
+          values={`${startA + 90} ${cx} ${cy}; ${startA + totalA * 0.78 + 90} ${cx} ${cy}; ${startA + totalA * 0.62 + 90} ${cx} ${cy}; ${startA + totalA * 0.72 + 90} ${cx} ${cy}; ${startA + 90} ${cx} ${cy}`}
+          keyTimes="0; 0.35; 0.55; 0.75; 1"
+          dur="7s"
+          repeatCount="indefinite"
+        />
+        <line
+          x1={cx} y1={cy}
+          x2={cx} y2={cy - (radius - 18)}
+          stroke="hsl(var(--accent))"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+        <circle cx={cx} cy={cy - (radius - 18)} r="3" fill="hsl(var(--accent))" />
+      </g>
+
+      {/* hub */}
+      <circle cx={cx} cy={cy} r="6" fill="hsl(var(--foreground))" />
+      <circle cx={cx} cy={cy} r="10" fill="none" stroke="hsl(var(--foreground))" strokeOpacity="0.4" />
+
+      {/* readout */}
+      <text
+        x={cx} y={cy + 50}
+        fill="hsl(var(--foreground))"
+        fillOpacity="0.85"
+        fontSize="11"
+        fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
+        textAnchor="middle"
+        letterSpacing="2"
+      >
+        COVERAGE
+      </text>
+    </svg>
+  );
+};
+
 /* ----------------------------- SHOWCASE -------------------------------- */
 export const AuthVisualShowcase = () => {
   const [active, setActive] = useState<Variant>("constellation");
