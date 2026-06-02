@@ -347,6 +347,7 @@ const ContactPage = () => {
           </div>
         </div>
       </section>
+      <PublicFooter />
     </div>
   );
 };
