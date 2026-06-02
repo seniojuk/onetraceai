@@ -44,7 +44,7 @@ const BillingPage = () => {
   const { data: plans, isLoading: plansLoading } = usePlanLimits();
   const { data: invoices, isLoading: invoicesLoading } = useInvoices(currentWorkspaceId ?? undefined);
   
-  const currentPlanId = subscriptionStatus?.plan_id || "free";
+  const currentPlanId = subscriptionStatus?.plan_id || "starter";
   const { data: usage, isLoading: usageLoading } = useUsageMetrics(currentWorkspaceId ?? undefined, currentPlanId);
 
   // Mutations
@@ -108,8 +108,8 @@ const BillingPage = () => {
   };
 
   const handleConfirmDowngrade = async () => {
-    // For downgrade to free, redirect to customer portal for cancellation
-    if (selectedPlan?.plan_id === "free") {
+    // For downgrade to starter, redirect to customer portal for cancellation
+    if (selectedPlan?.plan_id === "starter") {
       portalMutation.mutate(`${window.location.origin}/billing`);
       setShowDowngradeDialog(false);
     }
@@ -133,7 +133,7 @@ const BillingPage = () => {
   };
 
   const currentPlan = plans?.find((p) => p.plan_id === currentPlanId);
-  const isPaidPlan = currentPlanId !== "free";
+  const isPaidPlan = currentPlanId !== "starter";
   const subscriptionEnd = subscriptionStatus?.subscription_end;
 
   return (
@@ -209,7 +209,7 @@ const BillingPage = () => {
                 <div>
                   <CardTitle>Current Plan</CardTitle>
                   <CardDescription>
-                    You're currently on the {currentPlan?.plan_name || "Free"} plan
+                    You're currently on the {currentPlan?.plan_name || "Starter"} plan
                   </CardDescription>
                 </div>
                 <Badge 
@@ -218,7 +218,7 @@ const BillingPage = () => {
                     : "bg-muted text-muted-foreground"
                   }
                 >
-                  {currentPlan?.plan_name || "Free"}
+                  {currentPlan?.plan_name || "Starter"}
                 </Badge>
               </div>
             </CardHeader>
@@ -314,7 +314,7 @@ const BillingPage = () => {
         <CancelSubscriptionDialog
           open={showCancelDialog}
           onOpenChange={setShowCancelDialog}
-          planName={currentPlan?.plan_name || "Pro"}
+          planName={currentPlan?.plan_name || "Team"}
           subscriptionEnd={subscriptionEnd || null}
           onConfirm={handleCancelSubscription}
           isLoading={portalMutation.isPending}

@@ -5,8 +5,9 @@ import { useCheckSubscription, useSubscription } from "./useBilling";
 import { useAuth } from "./useAuth";
 import { useUIStore } from "@/store/uiStore";
 
-// Plans that have access to integrations
-const INTEGRATION_ENABLED_PLANS = ["pro", "enterprise"];
+// All paid + Starter tiers can connect Jira + GitHub.
+// Advanced features (Slack, SSO/SCIM, audit, custom LLM) are gated separately via isFeatureAvailable.
+const INTEGRATION_ENABLED_PLANS = ["starter", "team", "growth", "enterprise"];
 
 export interface WorkspaceMemberRole {
   role: "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
@@ -70,8 +71,9 @@ export function useIntegrationPermissions(
     // Use Stripe subscription if available, otherwise fall back to database subscription
     const stripePlanId = subscriptionStatus?.plan_id;
     const dbPlanId = dbSubscription?.plan_id;
-    const planId = stripePlanId && stripePlanId !== "free" ? stripePlanId : (dbPlanId || "free");
-    
+    const planId =
+      stripePlanId && stripePlanId !== "starter" ? stripePlanId : (dbPlanId || "starter");
+
     const hasIntegrationAccess = INTEGRATION_ENABLED_PLANS.includes(planId);
     const requiresUpgrade = !hasIntegrationAccess;
 
@@ -90,7 +92,7 @@ export function useIntegrationPermissions(
       isLoading: stripeLoading || dbLoading || roleLoading,
       requiresUpgrade,
       upgradeMessage: requiresUpgrade
-        ? "Jira integration is available on Pro and Enterprise plans. Upgrade to connect your Jira projects."
+        ? "Integrations are available on every paid plan. Upgrade to connect Jira and GitHub."
         : "",
     };
   }, [subscriptionStatus, dbSubscription, role, stripeLoading, dbLoading, roleLoading]);
@@ -99,16 +101,17 @@ export function useIntegrationPermissions(
 // Helper to check if a specific integration feature is available
 export function isFeatureAvailable(
   planId: string,
-  feature: "jira" | "github" | "linear" | "github_actions"
+  feature: "jira" | "github" | "slack" | "sso" | "scim" | "audit_log" | "custom_llm"
 ): boolean {
-  const proFeatures = ["jira", "github"];
-  const enterpriseFeatures = ["jira", "github", "linear", "github_actions"];
+  // Available from Starter and up
+  const baseFeatures = ["jira", "github"];
+  // Growth and up
+  const growthFeatures = [...baseFeatures, "slack", "audit_log"];
+  // Enterprise only
+  const enterpriseFeatures = [...growthFeatures, "sso", "scim", "custom_llm"];
 
-  if (planId === "enterprise") {
-    return enterpriseFeatures.includes(feature);
-  }
-  if (planId === "pro") {
-    return proFeatures.includes(feature);
-  }
+  if (planId === "enterprise") return enterpriseFeatures.includes(feature);
+  if (planId === "growth") return growthFeatures.includes(feature);
+  if (planId === "team" || planId === "starter") return baseFeatures.includes(feature);
   return false;
 }

@@ -7,9 +7,10 @@ export interface UsageMetrics {
   projects: { used: number; limit: number | null };
   aiRuns: { used: number; limit: number | null };
   storage: { used: number; limit: number | null };
+  users: { used: number; limit: number | null };
 }
 
-export function useUsageMetrics(workspaceId: string | undefined, planId: string = "free") {
+export function useUsageMetrics(workspaceId: string | undefined, planId: string = "starter") {
   const { user } = useAuth();
 
   return useQuery({
@@ -17,10 +18,11 @@ export function useUsageMetrics(workspaceId: string | undefined, planId: string 
     queryFn: async (): Promise<UsageMetrics> => {
       if (!workspaceId) {
         return {
-          artifacts: { used: 0, limit: 100 },
-          projects: { used: 0, limit: 2 },
+          artifacts: { used: 0, limit: 25 },
+          projects: { used: 0, limit: 1 },
           aiRuns: { used: 0, limit: 10 },
           storage: { used: 0, limit: 100 },
+          users: { used: 0, limit: 1 },
         };
       }
 
@@ -61,6 +63,12 @@ export function useUsageMetrics(workspaceId: string | undefined, planId: string 
         .eq("workspace_id", workspaceId)
         .gte("created_at", startOfMonth.toISOString());
 
+      // Count seats (accepted workspace members)
+      const { count: memberCount } = await supabase
+        .from("workspace_members")
+        .select("*", { count: "exact", head: true })
+        .eq("workspace_id", workspaceId);
+
       // Calculate storage (simplified - count file artifacts)
       let storageUsed = 0;
       if (projectIds.length > 0) {
@@ -69,31 +77,34 @@ export function useUsageMetrics(workspaceId: string | undefined, planId: string 
           .select("content_json")
           .in("project_id", projectIds)
           .eq("type", "FILE");
-        
-        // Estimate storage from file metadata (rough estimate)
+
         storageUsed = fileArtifacts?.reduce((acc, f) => {
           const size = (f.content_json as { size?: number })?.size || 0;
           return acc + size;
         }, 0) || 0;
-        storageUsed = Math.round(storageUsed / (1024 * 1024)); // Convert to MB
+        storageUsed = Math.round(storageUsed / (1024 * 1024)); // MB
       }
 
       return {
         artifacts: {
           used: artifactCount,
-          limit: planLimit?.max_artifacts || 100,
+          limit: planLimit?.max_artifacts ?? null,
         },
         projects: {
           used: projectIds.length,
-          limit: planLimit?.max_projects || 2,
+          limit: planLimit?.max_projects ?? null,
         },
         aiRuns: {
           used: aiRunsCount || 0,
-          limit: planLimit?.max_ai_runs_per_month || 10,
+          limit: planLimit?.max_ai_runs_per_month ?? null,
         },
         storage: {
           used: storageUsed,
-          limit: planLimit?.max_storage_mb || 100,
+          limit: planLimit?.max_storage_mb ?? null,
+        },
+        users: {
+          used: memberCount || 0,
+          limit: (planLimit as { max_users?: number | null })?.max_users ?? null,
         },
       };
     },

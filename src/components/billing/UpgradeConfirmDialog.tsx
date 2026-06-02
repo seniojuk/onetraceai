@@ -41,9 +41,11 @@ export function UpgradeConfirmDialog({
     return `$${(cents / 100).toFixed(0)}/month`;
   };
 
+  const planMaxUsers = (plan as PlanLimit & { max_users?: number | null }).max_users;
+
   const features = [
-    plan.max_workspaces === null ? "Unlimited workspaces" : `${plan.max_workspaces} workspace`,
-    plan.max_projects === null ? "Unlimited projects" : `${plan.max_projects} projects`,
+    planMaxUsers == null ? "Unlimited users" : `Up to ${planMaxUsers} user${planMaxUsers > 1 ? "s" : ""}`,
+    plan.max_projects === null ? "Unlimited projects" : `${plan.max_projects} project${plan.max_projects > 1 ? "s" : ""}`,
     plan.max_artifacts === null ? "Unlimited artifacts" : `${plan.max_artifacts} artifacts`,
     plan.max_ai_runs_per_month === null ? "Unlimited AI runs" : `${plan.max_ai_runs_per_month} AI runs/month`,
   ];
@@ -131,13 +133,10 @@ export function UpgradeConfirmDialog({
 
 function getPlanPriority(planId: string): number {
   switch (planId) {
-    case "free":
-      return 0;
-    case "pro":
-      return 1;
-    case "enterprise":
-      return 2;
-    default:
-      return 0;
+    case "starter": return 0;
+    case "team": return 1;
+    case "growth": return 2;
+    case "enterprise": return 3;
+    default: return 0;
   }
 }
