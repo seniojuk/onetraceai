@@ -63,7 +63,7 @@ function Nav() {
     { href: "#problem", id: "problem", label: "Problem" },
     { href: "#solution", id: "solution", label: "Solution" },
     { href: "#how", id: "how", label: "How it works" },
-    { href: "#pricing", id: "pricing", label: "Pricing" },
+    { href: "/pricing", id: "pricing", label: "Pricing", route: true as const },
   ];
   const active = useActiveSection(links.map((l) => l.id));
 
