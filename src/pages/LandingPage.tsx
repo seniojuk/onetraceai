@@ -898,34 +898,65 @@ const INTEGRATIONS: { name: string; body: string; viewBox: string; path: string;
   },
 ];
 
-const PLANS = [
+const PLANS: Array<{
+  name: string;
+  price: string;
+  priceSuffix?: string;
+  tagline: string;
+  features: string[];
+  cta: string;
+  featured: boolean;
+}> = [
   {
-    name: "Free",
+    name: "Starter",
     price: "$0",
-    tagline: "For solo builders getting started.",
-    features: ["1 project", "2 users", "100 artifacts", "Basic integrations", "Community support"],
-    cta: "Get started",
+    priceSuffix: "/month",
+    tagline: "Kick the tires. See your first traced requirement.",
+    features: ["1 project", "25 artifacts", "10 AI runs / month", "Jira + GitHub connect", "Community support"],
+    cta: "Start free",
     featured: false,
   },
   {
-    name: "Builder",
-    price: "$29",
-    tagline: "For growing teams.",
-    features: ["5 projects", "10 users", "Unlimited artifacts", "Full integrations", "AI agents", "Priority support"],
+    name: "Team",
+    price: "$149",
+    priceSuffix: "/month",
+    tagline: "For seed → Series A engineering teams.",
+    features: [
+      "Up to 10 users",
+      "Unlimited projects",
+      "Unlimited artifacts",
+      "500 AI runs / month",
+      "Full Jira + GitHub two-way sync",
+      "Coverage engine + drift alerts",
+    ],
     cta: "Start free trial",
     featured: true,
   },
   {
-    name: "Scale",
-    price: "$99",
-    tagline: "For larger teams.",
+    name: "Growth",
+    price: "$399",
+    priceSuffix: "/month",
+    tagline: "Scaling engineering orgs.",
     features: [
-      "Unlimited projects",
+      "Up to 25 users",
+      "Unlimited AI runs",
+      "Slack notifications",
+      "Audit log + versioning",
+      "Priority support",
+    ],
+    cta: "Start free trial",
+    featured: false,
+  },
+  {
+    name: "Enterprise",
+    price: "Custom",
+    tagline: "Security, scale, and white-glove onboarding.",
+    features: [
       "Unlimited users",
-      "Custom model hub",
-      "Advanced analytics",
       "SSO / SAML",
-      "Dedicated support",
+      "Custom model hub",
+      "Dedicated CSM",
+      "SLA + DPA",
     ],
     cta: "Contact sales",
     featured: false,
