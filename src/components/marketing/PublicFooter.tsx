@@ -67,55 +67,9 @@ export function PublicFooter() {
 
   return (
     <footer className="relative mt-24 border-t border-border bg-background">
-      {/* Top band: manifesto + newsletter */}
+      {/* Sitemap + newsletter */}
       <div className="mx-auto max-w-6xl px-4 pt-16 sm:px-6 sm:pt-20">
-        <div className="grid gap-12 lg:grid-cols-[1.3fr_1fr] lg:gap-16">
-          {/* Manifesto */}
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/30 px-3 py-1">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              </span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                All systems operational
-              </span>
-            </div>
-            <h2 className="mt-6 font-geist text-[32px] leading-[1.05] tracking-[-0.025em] text-foreground sm:text-[44px] md:text-[52px]">
-              Stop shipping{" "}
-              <span className="font-serif italic text-foreground/70">orphaned code.</span>
-              <br />
-              Trace it,{" "}
-              <span className="font-serif italic text-foreground/70">end to end.</span>
-            </h2>
-            <p className="mt-5 max-w-md text-[13.5px] leading-relaxed text-muted-foreground">
-              OneTrace is the traceability layer for AI-built software. PRDs, Stories, Jira, Git
-              and Tests — connected in one living graph.
-            </p>
-          </div>
-
-          {/* Newsletter — inline */}
-          <form onSubmit={handleSubscribe} className="flex items-center gap-2 self-start lg:pl-8">
-            <input
-              type="email"
-              required
-              placeholder="you@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-9 flex-1 rounded-md border border-border bg-muted/20 px-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus:border-foreground/30"
-            />
-            <button
-              type="submit"
-              className="btn-3d btn-3d-primary inline-flex h-9 items-center gap-1 whitespace-nowrap px-4 text-[12.5px] font-medium"
-            >
-              {subscribed ? "Subscribed" : "Subscribe"}
-              {!subscribed && <ArrowUpRight className="h-3 w-3" />}
-            </button>
-          </form>
-        </div>
-
-        {/* Sitemap */}
-        <div className="mt-16 grid grid-cols-2 gap-10 border-t border-border pt-12 sm:grid-cols-4 sm:gap-8">
+        <div className="grid grid-cols-2 gap-10 border-t-0 sm:grid-cols-4 sm:gap-8">
           {COLUMNS.map((col) => (
             <div key={col.title}>
               <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -138,6 +92,25 @@ export function PublicFooter() {
             </div>
           ))}
         </div>
+
+        {/* Newsletter — below links */}
+        <form onSubmit={handleSubscribe} className="mt-12 flex max-w-md items-center gap-2">
+          <input
+            type="email"
+            required
+            placeholder="you@company.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-9 flex-1 rounded-md border border-border bg-muted/20 px-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus:border-foreground/30"
+          />
+          <button
+            type="submit"
+            className="btn-3d btn-3d-primary inline-flex h-9 items-center gap-1 whitespace-nowrap px-4 text-[12.5px] font-medium"
+          >
+            {subscribed ? "Subscribed" : "Subscribe"}
+            {!subscribed && <ArrowUpRight className="h-3 w-3" />}
+          </button>
+        </form>
       </div>
 
       {/* Oversized wordmark */}
