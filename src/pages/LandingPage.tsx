@@ -61,13 +61,31 @@ function Nav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const links = [
-    { href: "#problem", id: "problem", label: "Problem" },
-    { href: "#solution", id: "solution", label: "Solution" },
-    { href: "#how", id: "how", label: "How it works" },
-    { href: "/pricing", id: "pricing", label: "Pricing", route: true as const },
+  const productItems = [
+    {
+      href: "#problem",
+      id: "problem",
+      label: "The problem",
+      desc: "Why specs and code drift",
+      Icon: AlertTriangle,
+    },
+    {
+      href: "#solution",
+      id: "solution",
+      label: "The solution",
+      desc: "One source of truth, AI-kept in sync",
+      Icon: Sparkles,
+    },
+    {
+      href: "#how",
+      id: "how",
+      label: "How it works",
+      desc: "PRD → Epics → Stories → Code → Coverage",
+      Icon: Workflow,
+    },
   ];
-  const active = useActiveSection(links.map((l) => l.id));
+  const active = useActiveSection(productItems.map((l) => l.id));
+  const productOpen = active === "problem" || active === "solution" || active === "how";
 
   return (
     <header
@@ -89,18 +107,55 @@ function Nav() {
 
         {/* Desktop nav */}
         <nav className="hidden items-center gap-8 text-[13px] text-muted-foreground md:flex">
-          {links.map((l) =>
-            "route" in l && l.route ? (
-              <Link key={l.href} to={l.href} className="nav-link hover:text-foreground">
-                {l.label}
-              </Link>
-            ) : (
-              <a key={l.href} href={l.href} data-active={active === l.id} className="nav-link hover:text-foreground">
-                {l.label}
-              </a>
-            )
-          )}
+          {/* Product mega menu */}
+          <div className="group relative">
+            <button
+              type="button"
+              data-active={productOpen}
+              className="nav-link inline-flex items-center gap-1 hover:text-foreground"
+            >
+              Product
+              <svg
+                className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180"
+                viewBox="0 0 12 12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M3 4.5L6 7.5L9 4.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <div
+              className="invisible absolute left-1/2 top-full z-50 w-[340px] -translate-x-1/2 pt-3 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100"
+            >
+              <div className="rounded-xl border border-border bg-popover p-2 shadow-[0_20px_50px_-20px_hsl(var(--foreground)/0.25)]">
+                {productItems.map(({ href, id, label, desc, Icon }) => (
+                  <a
+                    key={id}
+                    href={href}
+                    data-active={active === id}
+                    className="group/item flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-muted/60 data-[active=true]:bg-muted/40"
+                  >
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-border bg-background text-muted-foreground group-hover/item:text-foreground">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="flex flex-col">
+                      <span className="text-[13px] font-medium text-foreground">{label}</span>
+                      <span className="text-[12px] leading-snug text-muted-foreground">{desc}</span>
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+          <Link to="/pricing" className="nav-link hover:text-foreground">
+            Pricing
+          </Link>
+          <Link to="/contact" className="nav-link hover:text-foreground">
+            Contact
+          </Link>
         </nav>
+
 
         {/* Desktop actions */}
         <div className="hidden items-center gap-2 md:flex">
