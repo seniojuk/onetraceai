@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Fragment, useState } from "react";
-import { ArrowUpRight, Check, Minus, ShieldCheck, Lock, Globe2, Menu } from "lucide-react";
+import { ArrowUpRight, Check, Minus, Lock, Menu } from "lucide-react";
 import { Reveal } from "@/components/landing/motion";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -73,8 +73,6 @@ const TIERS: Tier[] = [
 const TRUST = [
   { icon: Check, label: "Cancel anytime" },
   { icon: Lock, label: "No card for free tier" },
-  { icon: ShieldCheck, label: "SOC 2 Type II (in progress)" },
-  { icon: Globe2, label: "EU data residency option" },
 ];
 
 const SEAT_MATH = [
@@ -93,7 +91,6 @@ const MATRIX: MatrixGroup[] = [
       { feature: "Projects", values: ["1", "Unlimited", "Unlimited", "Unlimited"] },
       { feature: "Artifacts", values: ["25", "Unlimited", "Unlimited", "Unlimited"] },
       { feature: "AI runs / month", values: ["10", "500", "Unlimited", "Unlimited"] },
-      { feature: "Data retention", values: ["30 days", "1 year", "3 years", "Unlimited"] },
     ],
   },
   {
@@ -102,8 +99,6 @@ const MATRIX: MatrixGroup[] = [
       { feature: "Jira two-way sync", values: [false, true, true, true] },
       { feature: "GitHub two-way sync", values: [false, true, true, true] },
       { feature: "Slack notifications", values: [false, false, true, true] },
-      { feature: "Webhooks + REST API", values: ["Read-only", "Read/write", "Read/write", "Unlimited"] },
-      { feature: "Custom connectors", values: [false, false, false, true] },
     ],
   },
   {
@@ -111,7 +106,6 @@ const MATRIX: MatrixGroup[] = [
     rows: [
       { feature: "Coverage engine", values: [false, true, true, true] },
       { feature: "Drift alerts", values: [false, true, true, true] },
-      { feature: "Custom model hub", values: [false, false, false, true] },
       { feature: "Custom prompts / agents", values: [false, true, true, true] },
     ],
   },
@@ -126,10 +120,8 @@ const MATRIX: MatrixGroup[] = [
   {
     group: "Security & support",
     rows: [
-      { feature: "SSO / SAML", values: [false, false, "Add-on", true] },
-      { feature: "SCIM provisioning", values: [false, false, false, true] },
-      { feature: "EU data residency", values: [false, false, false, true] },
-      { feature: "Support", values: ["Community", "Email", "Priority", "Dedicated CSM"] },
+      { feature: "SSO / SAML", values: [false, false, false, true] },
+      { feature: "Support", values: ["Community", "Email", "Priority", "Dedicated"] },
     ],
   },
 ];
@@ -145,19 +137,11 @@ const FAQ = [
   },
   {
     q: "What happens if we hit a limit?",
-    a: "We notify you at 80% and 100% — we never delete data or stop syncing. You can upgrade, or buy a top-up of 100 AI runs for $19.",
+    a: "We notify you before you hit it — we never delete data or stop syncing. You can upgrade at any time.",
   },
   {
-    q: "Do you offer annual billing?",
-    a: "Yes — annual billing is ~17% off (two months free) on all paid tiers. Contact us to switch after signup.",
-  },
-  {
-    q: "Can we self-host?",
-    a: "Single-tenant VPC deployments are available on Enterprise (AWS, GCP, Azure). EU data residency is included.",
-  },
-  {
-    q: "Is there a discount for early-stage startups?",
-    a: "Yes — pre-seed and seed teams under 10 people get 50% off Team for the first 12 months. Email us with your AngelList or Crunchbase link.",
+    q: "Can we cancel anytime?",
+    a: "Yes. Cancel from the billing settings at any point. You keep access through the end of your current billing period.",
   },
 ];
 
@@ -427,9 +411,6 @@ export default function PricingPage() {
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pt-16 pb-10 text-center">
-        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent">
-          06 / Pricing
-        </span>
         <h1 className="mx-auto mt-4 max-w-3xl font-geist text-[52px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[64px]">
           Start free.{" "}
           <span className="font-serif italic text-foreground/70">Upgrade when you're ready.</span>
@@ -448,16 +429,12 @@ export default function PricingPage() {
         <div className="rounded-2xl border border-border bg-muted/30 p-6 md:p-8">
           <div className="grid items-end gap-6 md:grid-cols-[1.2fr_1fr]">
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                The math
-              </span>
-              <h2 className="mt-3 font-geist text-[28px] leading-tight tracking-[-0.02em] md:text-[32px]">
-                Less than a{" "}
-                <span className="font-serif italic text-foreground/70">Figma seat.</span>
+              <h2 className="font-geist text-[28px] leading-tight tracking-[-0.02em] md:text-[32px]">
+                Flat team pricing.{" "}
+                <span className="font-serif italic text-foreground/70">No per-seat creep.</span>
               </h2>
               <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">
-                Flat team pricing. No per-seat creep. Bring your whole engineering team without
-                watching the bill climb.
+                Bring your whole engineering team without watching the bill climb.
               </p>
             </div>
             <div className="grid gap-3">
@@ -497,7 +474,7 @@ export default function PricingPage() {
           ))}
         </div>
         <p className="mt-6 text-center text-[12.5px] text-muted-foreground">
-          Billed monthly, cancel anytime. Annual billing saves ~17%.
+          Billed monthly, cancel anytime.
         </p>
       </section>
 
@@ -506,15 +483,12 @@ export default function PricingPage() {
         <div className="rounded-2xl border border-border bg-muted/30 p-10">
           <div className="grid gap-10 md:grid-cols-2">
             <div>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                How we count
-              </span>
-              <h2 className="mt-3 font-geist text-[28px] leading-tight tracking-[-0.02em]">
+              <h2 className="font-geist text-[28px] leading-tight tracking-[-0.02em]">
                 What counts as a{" "}
                 <span className="font-serif italic text-foreground/70">unit?</span>
               </h2>
               <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">
-                We charge for value created, not characters typed. Three units, defined plainly.
+                We charge for value created, not characters typed.
               </p>
             </div>
             <div className="space-y-6">
@@ -531,17 +505,7 @@ export default function PricingPage() {
                   AI run
                 </div>
                 <p className="mt-1 text-[13.5px] text-foreground/90">
-                  One generation or auto-trace call. Browsing your graph never costs a run. A
-                  10-person team typically uses 200–350 / month.
-                </p>
-              </div>
-              <div>
-                <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-                  Overage
-                </div>
-                <p className="mt-1 text-[13.5px] text-foreground/90">
-                  Top-ups are <span className="text-accent">$19 / 100 runs</span>. Never
-                  auto-charged — you approve.
+                  One generation or auto-trace call. Browsing your graph never costs a run.
                 </p>
               </div>
             </div>
@@ -552,10 +516,7 @@ export default function PricingPage() {
       {/* Compare */}
       <section className="mx-auto mt-24 max-w-5xl px-6">
         <div className="mb-8 text-center">
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent">
-            Compare
-          </span>
-          <h2 className="mt-3 font-geist text-[36px] leading-tight tracking-[-0.025em] md:text-[42px]">
+          <h2 className="font-geist text-[36px] leading-tight tracking-[-0.025em] md:text-[42px]">
             Every feature, side by side.
           </h2>
         </div>
@@ -565,13 +526,13 @@ export default function PricingPage() {
       {/* FAQ */}
       <section className="mx-auto mt-24 max-w-3xl px-6">
         <div className="mb-8 text-center">
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent">FAQ</span>
-          <h2 className="mt-3 font-geist text-[36px] leading-tight tracking-[-0.025em]">
+          <h2 className="font-geist text-[36px] leading-tight tracking-[-0.025em]">
             Common questions.
           </h2>
         </div>
         <FaqAccordion items={FAQ} />
       </section>
+
 
       <FinalCTA />
     </div>
