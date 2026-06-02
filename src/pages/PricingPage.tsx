@@ -200,7 +200,7 @@ function TierCard({ p }: { p: Tier }) {
       }`}
     >
       {isFeatured && (
-        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-accent-foreground shadow-sm">
+        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-3 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em] text-accent-foreground shadow-sm">
           Most popular
         </span>
       )}
