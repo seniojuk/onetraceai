@@ -137,16 +137,27 @@ function Nav() {
                 </div>
               </div>
               <nav className="flex flex-col px-3 py-4">
-                {links.map((l) => (
-                  <a
-                    key={l.href}
-                    href={l.href}
-                    onClick={() => setOpen(false)}
-                    className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
-                  >
-                    {l.label}
-                  </a>
-                ))}
+                {links.map((l) =>
+                  "route" in l && l.route ? (
+                    <Link
+                      key={l.href}
+                      to={l.href}
+                      onClick={() => setOpen(false)}
+                      className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
+                    >
+                      {l.label}
+                    </Link>
+                  ) : (
+                    <a
+                      key={l.href}
+                      href={l.href}
+                      onClick={() => setOpen(false)}
+                      className="rounded-md px-3 py-3 text-base text-foreground/90 transition-colors hover:bg-muted/50"
+                    >
+                      {l.label}
+                    </a>
+                  )
+                )}
               </nav>
               <div className="mt-2 flex flex-col gap-2 border-t border-border px-5 py-4">
                 <Link
