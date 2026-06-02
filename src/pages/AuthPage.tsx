@@ -7,7 +7,6 @@ import {
   EyeOff,
   Loader2,
   AlertCircle,
-  CheckCircle2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,13 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { AccentWord } from "@/components/marketing/AccentWord";
 import { AuthVisualShowcase } from "@/components/auth/AuthVisualShowcase";
-
-const PROOF_POINTS = [
-  "Connect Jira & GitHub in minutes",
-  "AI-powered story generation",
-  "Real-time coverage tracking",
-  "Automatic drift detection",
-];
 
 const AuthPage = () => {
   const [searchParams] = useSearchParams();
