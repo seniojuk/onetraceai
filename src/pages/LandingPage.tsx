@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { PublicFooter } from "@/components/marketing/PublicFooter";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -39,7 +40,7 @@ const LandingPage = () => {
       <CoverageShowcase />
       <IntegrationsRow />
       <FinalCTA />
-      <Footer />
+      <PublicFooter />
     </div>
   );
 };

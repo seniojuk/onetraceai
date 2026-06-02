@@ -4,6 +4,7 @@ import { ArrowUpRight, Check, Minus, Lock, Menu } from "lucide-react";
 import { Reveal } from "@/components/landing/motion";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { PublicFooter } from "@/components/marketing/PublicFooter";
 
 /* ===================== Data ===================== */
 
@@ -510,6 +511,7 @@ export default function PricingPage() {
       </section>
 
       <FinalCTA />
+      <PublicFooter />
     </div>
   );
 }
