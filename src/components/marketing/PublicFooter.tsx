@@ -94,38 +94,24 @@ export function PublicFooter() {
             </p>
           </div>
 
-          {/* Newsletter */}
-          <div className="lg:pl-8">
-            <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Field notes · monthly
-            </div>
-            <p className="mt-3 text-[14px] leading-relaxed text-foreground/90">
-              A short dispatch on AI-native traceability, coverage engineering and how teams ship
-              with provenance.
-            </p>
-            <form onSubmit={handleSubscribe} className="mt-5">
-              <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/20 p-1.5 focus-within:border-foreground/30">
-                <input
-                  type="email"
-                  required
-                  placeholder="you@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 bg-transparent px-3 py-2 text-[13.5px] text-foreground outline-none placeholder:text-muted-foreground"
-                />
-                <button
-                  type="submit"
-                  className="btn-3d btn-3d-primary inline-flex h-9 items-center gap-1 px-4 text-[12.5px] font-medium"
-                >
-                  {subscribed ? "Subscribed" : "Subscribe"}
-                  {!subscribed && <ArrowUpRight className="h-3 w-3" />}
-                </button>
-              </div>
-              <p className="mt-2.5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                No spam · unsubscribe in one click
-              </p>
-            </form>
-          </div>
+          {/* Newsletter — inline */}
+          <form onSubmit={handleSubscribe} className="flex items-center gap-2 self-start lg:pl-8">
+            <input
+              type="email"
+              required
+              placeholder="you@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-9 flex-1 rounded-md border border-border bg-muted/20 px-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus:border-foreground/30"
+            />
+            <button
+              type="submit"
+              className="btn-3d btn-3d-primary inline-flex h-9 items-center gap-1 whitespace-nowrap px-4 text-[12.5px] font-medium"
+            >
+              {subscribed ? "Subscribed" : "Subscribe"}
+              {!subscribed && <ArrowUpRight className="h-3 w-3" />}
+            </button>
+          </form>
         </div>
 
         {/* Sitemap */}
