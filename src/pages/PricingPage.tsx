@@ -260,50 +260,113 @@ function TierCard({ p }: { p: Tier }) {
 
 function ComparisonMatrix({ highlightCol = 1 }: { highlightCol?: number }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] border-collapse">
-        <thead>
-          <tr className="border-b border-border">
-            <th className="w-[34%] py-4 pr-4 text-left font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Feature
-            </th>
-            {TIERS.map((t, i) => (
-              <th
-                key={t.name}
-                className={`py-4 text-center text-[13px] font-medium ${
-                  i === highlightCol ? "text-accent" : "text-foreground"
-                }`}
-              >
-                {t.name}
+    <>
+      {/* Desktop / tablet: full matrix */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full min-w-[720px] border-collapse">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="w-[34%] py-4 pr-4 text-left font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                Feature
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {MATRIX.map((g) => (
-            <Fragment key={g.group}>
-              <tr className="border-b border-border bg-muted/30">
-                <td
-                  colSpan={5}
-                  className="py-2.5 pr-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
+              {TIERS.map((t, i) => (
+                <th
+                  key={t.name}
+                  className={`py-4 text-center text-[13px] font-medium ${
+                    i === highlightCol ? "text-accent" : "text-foreground"
+                  }`}
                 >
-                  {g.group}
-                </td>
-              </tr>
-              {g.rows.map((r) => (
-                <tr key={r.feature} className="border-b border-border/70">
-                  <td className="py-3 pr-4 text-[13px] text-foreground/90">{r.feature}</td>
-                  {r.values.map((v, i) => (
-                    <td key={i} className={`py-3 text-center ${i === highlightCol ? "bg-accent/5" : ""}`}>
-                      <MatrixCell v={v} />
-                    </td>
-                  ))}
-                </tr>
+                  {t.name}
+                </th>
               ))}
-            </Fragment>
-          ))}
-        </tbody>
-      </table>
+            </tr>
+          </thead>
+          <tbody>
+            {MATRIX.map((g) => (
+              <Fragment key={g.group}>
+                <tr className="border-b border-border bg-muted/30">
+                  <td
+                    colSpan={5}
+                    className="py-2.5 pr-4 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground"
+                  >
+                    {g.group}
+                  </td>
+                </tr>
+                {g.rows.map((r) => (
+                  <tr key={r.feature} className="border-b border-border/70">
+                    <td className="py-3 pr-4 text-[13px] text-foreground/90">{r.feature}</td>
+                    {r.values.map((v, i) => (
+                      <td key={i} className={`py-3 text-center ${i === highlightCol ? "bg-accent/5" : ""}`}>
+                        <MatrixCell v={v} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile: per-plan tabs, one column shown at a time */}
+      <MobileComparison highlightCol={highlightCol} />
+    </>
+  );
+}
+
+function MobileComparison({ highlightCol = 1 }: { highlightCol?: number }) {
+  const [active, setActive] = useState(highlightCol);
+  return (
+    <div className="md:hidden">
+      {/* Plan switcher */}
+      <div
+        role="tablist"
+        aria-label="Select plan"
+        className="sticky top-2 z-10 -mx-1 mb-5 flex gap-1 overflow-x-auto rounded-full border border-border bg-card/90 p-1 backdrop-blur"
+      >
+        {TIERS.map((t, i) => {
+          const isActive = i === active;
+          return (
+            <button
+              key={t.name}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActive(i)}
+              className={`flex-1 whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors ${
+                isActive
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {t.name}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected plan column */}
+      <div className="rounded-2xl border border-border bg-card">
+        {MATRIX.map((g, gi) => (
+          <div key={g.group} className={gi === 0 ? "" : "border-t border-border"}>
+            <div className="px-4 pt-4 pb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              {g.group}
+            </div>
+            <ul>
+              {g.rows.map((r) => (
+                <li
+                  key={r.feature}
+                  className="flex items-center justify-between gap-4 border-t border-border/70 px-4 py-3"
+                >
+                  <span className="text-[13px] text-foreground/90">{r.feature}</span>
+                  <span className="shrink-0">
+                    <MatrixCell v={r.values[active]} />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
