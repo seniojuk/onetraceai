@@ -1,4 +1,4 @@
-import { Check, Sparkles, Zap, Building2, ArrowRight, Loader2 } from "lucide-react";
+import { Check, Sparkles, Zap, Building2, Rocket, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,24 +17,30 @@ interface PlanCardProps {
 
 function getPlanPriority(planId: string): number {
   switch (planId) {
-    case "free":
-      return 0;
-    case "pro":
-      return 1;
-    case "enterprise":
-      return 2;
-    default:
-      return 0;
+    case "starter": return 0;
+    case "team": return 1;
+    case "growth": return 2;
+    case "enterprise": return 3;
+    default: return 0;
   }
 }
 
+const PLAN_DESCRIPTIONS: Record<string, string> = {
+  starter: "Kick the tires. See your first traced requirement.",
+  team: "Everything a small engineering team needs.",
+  growth: "Scaling engineering orgs.",
+  enterprise: "Security, scale, and white-glove onboarding.",
+};
+
 function PlanCard({ plan, currentPlanId, isCurrentPlan, isPopular, isUpgrading, onPlanAction }: PlanCardProps) {
-  const isUpgrade = getPlanPriority(plan.plan_id) > getPlanPriority(currentPlanId);
   const isDowngrade = getPlanPriority(plan.plan_id) < getPlanPriority(currentPlanId);
   const isEnterprise = plan.plan_id === "enterprise";
+
+  const planMaxUsers = (plan as PlanLimit & { max_users?: number | null }).max_users;
+
   const features = [
-    plan.max_workspaces === null ? "Unlimited workspaces" : `${plan.max_workspaces} workspace${plan.max_workspaces > 1 ? "s" : ""}`,
-    plan.max_projects === null ? "Unlimited projects" : `${plan.max_projects} projects`,
+    planMaxUsers == null ? "Unlimited users" : `Up to ${planMaxUsers} user${planMaxUsers > 1 ? "s" : ""}`,
+    plan.max_projects === null ? "Unlimited projects" : `${plan.max_projects} project${plan.max_projects > 1 ? "s" : ""}`,
     plan.max_artifacts === null ? "Unlimited artifacts" : `${plan.max_artifacts} artifacts`,
     plan.max_ai_runs_per_month === null ? "Unlimited AI runs" : `${plan.max_ai_runs_per_month} AI runs/month`,
     ...(plan.features as string[] || []),
@@ -42,24 +48,19 @@ function PlanCard({ plan, currentPlanId, isCurrentPlan, isPopular, isUpgrading, 
 
   const getIcon = () => {
     switch (plan.plan_id) {
-      case "free":
-        return <Zap className="w-5 h-5" />;
-      case "pro":
-        return <Sparkles className="w-5 h-5 text-accent" />;
-      case "enterprise":
-        return <Building2 className="w-5 h-5" />;
-      default:
-        return <Zap className="w-5 h-5" />;
+      case "starter": return <Zap className="w-5 h-5" />;
+      case "team": return <Sparkles className="w-5 h-5 text-accent" />;
+      case "growth": return <Rocket className="w-5 h-5 text-accent" />;
+      case "enterprise": return <Building2 className="w-5 h-5" />;
+      default: return <Zap className="w-5 h-5" />;
     }
   };
 
   const formatPrice = () => {
-    if (plan.price_monthly === -1) {
-      return { amount: "Custom", period: "" };
-    }
+    if (plan.price_monthly === -1) return { amount: "Custom", period: "" };
     return {
       amount: `$${(plan.price_monthly / 100).toFixed(0)}`,
-      period: plan.price_monthly === 0 ? "forever" : "per user/month",
+      period: plan.price_monthly === 0 ? "forever" : "per month",
     };
   };
 
@@ -88,9 +89,7 @@ function PlanCard({ plan, currentPlanId, isCurrentPlan, isPopular, isUpgrading, 
           {isCurrentPlan && <Badge variant="secondary">Current</Badge>}
         </CardTitle>
         <CardDescription>
-          {plan.plan_id === "free" && "For individuals getting started"}
-          {plan.plan_id === "pro" && "For growing teams"}
-          {plan.plan_id === "enterprise" && "For large organizations"}
+          {PLAN_DESCRIPTIONS[plan.plan_id] || ""}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -134,9 +133,7 @@ function PlanCard({ plan, currentPlanId, isCurrentPlan, isPopular, isUpgrading, 
             onClick={() => onPlanAction(plan, "downgrade")}
             disabled={isUpgrading}
           >
-            {isUpgrading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : null}
+            {isUpgrading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             Downgrade
           </Button>
         ) : (
@@ -145,10 +142,8 @@ function PlanCard({ plan, currentPlanId, isCurrentPlan, isPopular, isUpgrading, 
             onClick={() => onPlanAction(plan, "upgrade")}
             disabled={isUpgrading}
           >
-            {isUpgrading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : null}
-            Upgrade
+            {isUpgrading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {plan.plan_id === "starter" ? "Start free" : "Upgrade"}
             {!isUpgrading && <ArrowRight className="w-4 h-4 ml-2" />}
           </Button>
         )}
@@ -168,8 +163,8 @@ interface PlanCardsProps {
 export function PlanCards({ plans, currentPlanId, isLoading, isUpgrading, onPlanAction }: PlanCardsProps) {
   if (isLoading) {
     return (
-      <div className="grid md:grid-cols-3 gap-6">
-        {[1, 2, 3].map((i) => (
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[1, 2, 3, 4].map((i) => (
           <Card key={i}>
             <CardHeader className="pt-8">
               <Skeleton className="h-6 w-24 mb-2" />
@@ -198,15 +193,20 @@ export function PlanCards({ plans, currentPlanId, isLoading, isUpgrading, onPlan
     );
   }
 
+  // Sort to canonical order so cards always render Starter → Enterprise
+  const ordered = [...plans].sort(
+    (a, b) => getPlanPriority(a.plan_id) - getPlanPriority(b.plan_id)
+  );
+
   return (
-    <div className="grid md:grid-cols-3 gap-6">
-      {plans.map((plan) => (
+    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {ordered.map((plan) => (
         <PlanCard
           key={plan.id}
           plan={plan}
           currentPlanId={currentPlanId}
           isCurrentPlan={plan.plan_id === currentPlanId}
-          isPopular={plan.plan_id === "pro"}
+          isPopular={plan.plan_id === "team"}
           isUpgrading={isUpgrading}
           onPlanAction={onPlanAction}
         />

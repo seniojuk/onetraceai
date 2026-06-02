@@ -45,11 +45,17 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
+    // Map Stripe product IDs → internal plan IDs
+    const PRODUCT_TO_PLAN: Record<string, string> = {
+      "prod_Ud9RX485SvPTs6": "team",
+      "prod_Ud9TK3ZsxydQcQ": "growth",
+    };
+
     if (customers.data.length === 0) {
       logStep("No customer found, returning unsubscribed state");
       return new Response(JSON.stringify({ 
         subscribed: false,
-        plan_id: "free",
+        plan_id: "starter",
         product_id: null,
         subscription_end: null
       }), {
@@ -70,21 +76,16 @@ serve(async (req) => {
     const hasActiveSub = subscriptions.data.length > 0;
     let productId: string | null = null;
     let subscriptionEnd: string | null = null;
-    let planId = "free";
+    let planId = "starter";
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
       subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
       productId = subscription.items.data[0].price.product as string;
-      
-      // Map product ID to plan ID
-      // Pro product ID
-      if (productId === "prod_TqpRp9M0STW5f3") {
-        planId = "pro";
-      }
-      
-      logStep("Active subscription found", { 
-        subscriptionId: subscription.id, 
+      planId = PRODUCT_TO_PLAN[productId] || "starter";
+
+      logStep("Active subscription found", {
+        subscriptionId: subscription.id,
         endDate: subscriptionEnd,
         productId,
         planId

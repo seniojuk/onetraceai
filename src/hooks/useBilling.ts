@@ -31,6 +31,7 @@ export interface PlanLimit {
   plan_id: string;
   plan_name: string;
   price_monthly: number;
+  max_users: number | null;
   max_workspaces: number | null;
   max_projects: number | null;
   max_artifacts: number | null;

@@ -12,7 +12,8 @@ const logStep = (step: string, details?: Record<string, unknown>) => {
 };
 
 const PLAN_NAMES: Record<string, string> = {
-  "prod_TqpRp9M0STW5f3": "Pro",
+  "prod_Ud9RX485SvPTs6": "Team",
+  "prod_Ud9TK3ZsxydQcQ": "Growth",
 };
 
 // Helper to send billing email
@@ -68,10 +69,10 @@ serve(async (req) => {
         
         if (customerEmail) {
           await sendBillingEmail({
-            type: metadata.previous_plan === "Free" ? "subscription_created" : "subscription_upgraded",
+            type: metadata.previous_plan === "Starter" ? "subscription_created" : "subscription_upgraded",
             email: customerEmail,
-            planName: PLAN_NAMES[metadata.plan_id] || "Pro",
-            previousPlan: metadata.previous_plan || "Free",
+            planName: PLAN_NAMES[metadata.plan_id] || metadata.plan_id || "Team",
+            previousPlan: metadata.previous_plan || "Starter",
           });
         }
         break;
@@ -83,7 +84,7 @@ serve(async (req) => {
         
         if (customer && !customer.deleted && customer.email) {
           const productId = subscription.items.data[0]?.price.product as string;
-          const planName = PLAN_NAMES[productId] || "Pro";
+          const planName = PLAN_NAMES[productId] || "Team";
           
           if (subscription.cancel_at_period_end) {
             await sendBillingEmail({
