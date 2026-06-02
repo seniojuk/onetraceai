@@ -53,20 +53,9 @@ const COLUMNS: { title: string; links: ColLink[] }[] = [
 ];
 
 export function PublicFooter() {
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
-
-  const handleSubscribe = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    setSubscribed(true);
-    setEmail("");
-    setTimeout(() => setSubscribed(false), 4000);
-  };
-
   return (
     <footer className="relative mt-24 border-t border-border bg-background">
-      {/* Sitemap + newsletter */}
+      {/* Sitemap */}
       <div className="mx-auto max-w-6xl px-4 pt-16 sm:px-6 sm:pt-20">
         <div className="grid grid-cols-2 gap-10 border-t-0 sm:grid-cols-4 sm:gap-8">
           {COLUMNS.map((col) => (
@@ -91,26 +80,8 @@ export function PublicFooter() {
             </div>
           ))}
         </div>
-
-        {/* Newsletter — below links */}
-        <form onSubmit={handleSubscribe} className="mt-12 flex max-w-md items-center gap-2">
-          <input
-            type="email"
-            required
-            placeholder="you@company.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-9 flex-1 rounded-md border border-border bg-muted/20 px-3 text-[13px] text-foreground outline-none placeholder:text-muted-foreground focus:border-foreground/30"
-          />
-          <button
-            type="submit"
-            className="btn-3d btn-3d-primary inline-flex h-9 items-center gap-1 whitespace-nowrap px-4 text-[12.5px] font-medium"
-          >
-            {subscribed ? "Subscribed" : "Subscribe"}
-            {!subscribed && <ArrowUpRight className="h-3 w-3" />}
-          </button>
-        </form>
       </div>
+
 
       {/* Oversized wordmark */}
       <div
