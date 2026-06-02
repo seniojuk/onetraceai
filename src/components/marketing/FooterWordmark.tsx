@@ -16,10 +16,10 @@ function Spotlight() {
       const container = containerRef.current;
       const measure = measureRef.current;
       if (!container || !measure) return;
-      const containerWidth = container.clientWidth;
+      const containerWidth = Math.max(container.clientWidth - 8, 0);
       const currentWidth = measure.getBoundingClientRect().width;
       if (currentWidth === 0) return;
-      // scale font size so text exactly fills container width
+      // scale font size just under the container width so italic glyph overhangs do not clip
       setFontSize((prev) => (prev * containerWidth) / currentWidth);
     };
     fit();
@@ -82,7 +82,7 @@ function Spotlight() {
 export function FooterWordmark() {
   return (
     <div className="mt-16 w-full">
-      <div className="w-full overflow-hidden">
+      <div className="w-full overflow-visible">
         <Spotlight />
       </div>
     </div>
