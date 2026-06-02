@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Github, Linkedin, Twitter } from "lucide-react";
-import { useState } from "react";
+import { Github, Linkedin, Twitter } from "lucide-react";
 
 /* ============================================================
    PublicFooter — editorial, footer.design-inspired.
