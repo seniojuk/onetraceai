@@ -193,8 +193,8 @@ function Hero() {
         </Reveal>
 
         {/* Subhead */}
-        <Reveal as="p" delay={120} className="mt-8 max-w-md text-[15px] leading-relaxed text-muted-foreground">
-          Plan, build, and prove every line of AI-generated software.
+        <Reveal as="p" delay={120} className="mt-8 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
+          Plan requirements, generate stories, link code, and prove coverage. One traceable platform for AI-built software.
         </Reveal>
 
         {/* Product visual. Full-bleed panel below, Linear-style. */}
