@@ -34,7 +34,7 @@ import { AccentWord } from "@/components/marketing/AccentWord";
 const LandingPage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground font-geist antialiased selection:bg-accent/20">
-      <Nav />
+      <PublicNav />
       <Hero />
       <ProblemSection />
       <SolutionSection />
