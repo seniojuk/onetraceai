@@ -2302,6 +2302,7 @@ export type Database = {
           max_artifacts: number | null
           max_projects: number | null
           max_storage_mb: number | null
+          max_users: number | null
           max_workspaces: number | null
           plan_id: string
           plan_name: string
@@ -2315,6 +2316,7 @@ export type Database = {
           max_artifacts?: number | null
           max_projects?: number | null
           max_storage_mb?: number | null
+          max_users?: number | null
           max_workspaces?: number | null
           plan_id: string
           plan_name: string
@@ -2328,6 +2330,7 @@ export type Database = {
           max_artifacts?: number | null
           max_projects?: number | null
           max_storage_mb?: number | null
+          max_users?: number | null
           max_workspaces?: number | null
           plan_id?: string
           plan_name?: string
