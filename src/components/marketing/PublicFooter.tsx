@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Github, Linkedin, Twitter } from "lucide-react";
+import { FooterWordmark } from "./FooterWordmark";
 
 /* ============================================================
    PublicFooter — editorial, footer.design-inspired.
