@@ -613,18 +613,18 @@ function PricingSection() {
   return (
     <div className="mx-auto max-w-6xl px-6">
       <Section id="pricing" eyebrow="06 / Pricing" title="Start free. Upgrade when you're ready.">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((p, idx) => (
             <Reveal key={p.name} delay={idx * 100}>
               <div
                 className={`relative h-full rounded-xl border bg-card p-6 lift ${
                   p.featured
-                    ? "border-accent/40 ring-1 ring-accent/20 shadow-[0_20px_60px_-30px_hsl(var(--accent)/0.4)]"
+                    ? "border-accent/60 ring-1 ring-accent/30 shadow-[0_20px_60px_-30px_hsl(var(--accent)/0.5)]"
                     : "border-border"
                 }`}
               >
                 {p.featured && (
-                  <span className="absolute -top-2.5 left-6 rounded-full border border-accent/30 bg-accent/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-accent">
+                  <span className="absolute -top-2.5 left-6 rounded-full bg-accent px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-accent-foreground shadow-sm">
                     Most popular
                   </span>
                 )}
@@ -633,7 +633,9 @@ function PricingSection() {
                   <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">
                     {p.price}
                   </span>
-                  <span className="text-[13px] text-muted-foreground">/month</span>
+                  {p.priceSuffix && (
+                    <span className="text-[13px] text-muted-foreground">{p.priceSuffix}</span>
+                  )}
                 </div>
                 <p className="mt-2 text-[12.5px] text-muted-foreground">{p.tagline}</p>
                 <ul className="mt-5 space-y-2 border-t border-border pt-4">
@@ -656,6 +658,9 @@ function PricingSection() {
             </Reveal>
           ))}
         </div>
+        <p className="mt-6 text-center text-[12.5px] text-muted-foreground">
+          ~$15/user — less than a Figma seat. All paid plans billed monthly, cancel anytime.
+        </p>
       </Section>
     </div>
   );
