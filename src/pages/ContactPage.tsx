@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { useToast } from "@/hooks/use-toast";
+import { PublicFooter } from "@/components/marketing/PublicFooter";
 
 /* ===================== Nav ===================== */
 
