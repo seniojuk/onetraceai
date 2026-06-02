@@ -31,6 +31,7 @@ import PromptGeneratorPage from "./pages/PromptGeneratorPage";
 import AcceptInvitePage from "./pages/AcceptInvitePage";
 import UnsubscribePage from "./pages/UnsubscribePage";
 import DesignSystemPage from "./pages/DesignSystemPage";
+import PricingPage from "./pages/PricingPage";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />
