@@ -309,42 +309,7 @@ const AuthPage = () => {
 
         {/* Right: editorial proof rail */}
         <aside className="hidden items-center border-l border-border lg:flex">
-          <div className="px-12 py-16">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-              Why teams switch
-            </span>
-            <h2 className="mt-4 font-geist text-[32px] leading-[1.1] tracking-[-0.02em] text-foreground">
-              From <AccentWord>"I think it works"</AccentWord> to{" "}
-              <AccentWord>proof it does.</AccentWord>
-            </h2>
-
-            <ul className="mt-8 space-y-3.5">
-              {PROOF_POINTS.map((point) => (
-                <li key={point} className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                  <span className="text-[13.5px] leading-relaxed text-foreground/90">{point}</span>
-                </li>
-              ))}
-            </ul>
-
-            <figure className="mt-10 rounded-xl border border-border bg-card p-6">
-              <blockquote className="font-serif text-[15px] italic leading-relaxed text-foreground/90">
-                "OneTrace turned every shipped feature into a paper trail. Reviews used to take a
-                day. Now it's a click."
-              </blockquote>
-              <figcaption className="mt-5 flex items-center gap-3">
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-accent font-mono text-[11px] font-medium text-accent-foreground">
-                  JD
-                </span>
-                <div>
-                  <div className="text-[13px] font-medium text-foreground">Jane Developer</div>
-                  <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                    CTO · AI Startup
-                  </div>
-                </div>
-              </figcaption>
-            </figure>
-          </div>
+          <AuthVisualShowcase />
         </aside>
       </main>
     </div>
