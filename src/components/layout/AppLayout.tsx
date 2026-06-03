@@ -407,12 +407,13 @@ function InnerLayout({ children }: AppLayoutProps) {
             </DropdownMenu>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 gap-1.5 text-[13px]"
+              className="h-8 gap-1.5 text-[13px] px-2 sm:px-3"
               onClick={() => navigate("/artifacts/new")}
+              aria-label="New artifact"
             >
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">New artifact</span>
