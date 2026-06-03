@@ -202,8 +202,10 @@ const nodeTypes = {
 
 const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: string) => void; currentView: string }) => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const focusId = searchParams.get("focus");
+  const lensParam = (searchParams.get("lens") ?? "none") as
+    | "none" | "orphans" | "coverage-gaps" | "drift" | "recent";
   const { fitView, setCenter } = useReactFlow();
   
   const { currentProjectId, currentWorkspaceId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
@@ -215,6 +217,13 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const { data: driftFindings } = useDriftFindings(currentProjectId || undefined);
 
   const isLoading = artifactsLoading || edgesLoading;
+
+  const setLens = useCallback((next: typeof lensParam) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "none") params.delete("lens");
+    else params.set("lens", next);
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // Impact analysis state
   const [impactAnalysisMode, setImpactAnalysisMode] = useState(false);
@@ -263,6 +272,51 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     });
     return map;
   }, [driftFindings]);
+
+  // Lens: a non-destructive overlay on the canvas. Computes which artifact ids
+  // are "in" the lens; everything else gets dimmed but stays visible.
+  const lensMatchIds = useMemo(() => {
+    if (lensParam === "none" || !artifacts) return null;
+    if (lensParam === "orphans") {
+      const linked = new Set<string>();
+      artifactEdges?.forEach(e => {
+        linked.add(e.from_artifact_id);
+        linked.add(e.to_artifact_id);
+      });
+      artifacts.forEach(a => {
+        if (a.parent_artifact_id) {
+          linked.add(a.id);
+          linked.add(a.parent_artifact_id);
+        }
+      });
+      return new Set(artifacts.filter(a => !linked.has(a.id)).map(a => a.id));
+    }
+    if (lensParam === "coverage-gaps") {
+      return new Set(
+        artifacts
+          .filter(a => {
+            const c = coverageByArtifact.get(a.id);
+            return c == null || c < 0.5;
+          })
+          .map(a => a.id)
+      );
+    }
+    if (lensParam === "drift") {
+      return new Set(
+        artifacts.filter(a => driftByArtifact.get(a.id)?.hasDrift).map(a => a.id)
+      );
+    }
+    if (lensParam === "recent") {
+      const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
+      return new Set(
+        artifacts.filter(a => new Date(a.updated_at).getTime() >= cutoff).map(a => a.id)
+      );
+    }
+    return null;
+  }, [lensParam, artifacts, artifactEdges, coverageByArtifact, driftByArtifact]);
+
+  const lensActive = lensParam !== "none";
+  const lensOverlaysOn = lensParam === "coverage-gaps" || lensParam === "drift";
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Artifact[]>([]);
@@ -416,7 +470,10 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
       const isHighlighted = impactAnalysisMode && downstreamArtifactIds.has(artifact.id);
       const isUpstream = impactAnalysisMode && upstreamArtifactIds.has(artifact.id);
       const isSearchMatch = searchMatchIds.has(artifact.id);
-      const isDimmed = impactAnalysisMode && selectedNodeId && !isSelected && !isHighlighted && !isUpstream;
+      const isLensMatch = lensMatchIds ? lensMatchIds.has(artifact.id) : false;
+      const impactDim = impactAnalysisMode && selectedNodeId && !isSelected && !isHighlighted && !isUpstream;
+      const lensDim = lensActive && !isLensMatch;
+      const isDimmed = impactDim || lensDim;
       const drift = driftByArtifact.get(artifact.id);
       return {
         label: artifact.title,
@@ -424,14 +481,14 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
         shortId: artifact.short_id,
         status: artifact.status,
         isSelected,
-        isHighlighted,
+        isHighlighted: isHighlighted || (lensActive && isLensMatch),
         isUpstream,
         isSearchMatch,
         isDimmed,
         coverageRatio: coverageByArtifact.get(artifact.id) ?? null,
         hasDrift: drift?.hasDrift ?? false,
         driftSeverity: drift?.maxSeverity ?? null,
-        showOverlays,
+        showOverlays: showOverlays || lensOverlaysOn,
       };
     };
 
@@ -465,7 +522,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     });
 
     return nodes;
-  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds, searchMatchIds, coverageByArtifact, driftByArtifact, showOverlays]);
+  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds, searchMatchIds, coverageByArtifact, driftByArtifact, showOverlays, lensMatchIds, lensActive, lensOverlaysOn]);
 
   // Edge type colors for different relationship types
   const edgeTypeStyles: Record<string, { stroke: string; label: string }> = {
@@ -1026,8 +1083,55 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
               </Card>
             </Panel>
 
+            {/* Lens Rail — apply a question as an overlay on the canvas */}
+            <Panel position="top-center" className="m-4">
+              <Card className="shadow-lg">
+                <CardContent className="p-2">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[11px] font-medium text-muted-foreground px-2">
+                      Lens
+                    </span>
+                    {([
+                      { id: "none", label: "All" },
+                      { id: "orphans", label: "Orphans" },
+                      { id: "coverage-gaps", label: "Coverage gaps" },
+                      { id: "drift", label: "Drift" },
+                      { id: "recent", label: "Recent" },
+                    ] as const).map((l) => {
+                      const matchCount =
+                        l.id === "none"
+                          ? null
+                          : lensParam === l.id
+                          ? lensMatchIds?.size ?? 0
+                          : null;
+                      return (
+                        <Button
+                          key={l.id}
+                          size="sm"
+                          variant={lensParam === l.id ? "default" : "ghost"}
+                          className="h-7 px-2.5 text-xs"
+                          onClick={() => setLens(l.id)}
+                        >
+                          {l.label}
+                          {matchCount != null && (
+                            <Badge
+                              variant="secondary"
+                              className="ml-1.5 h-4 px-1 text-[10px]"
+                            >
+                              {matchCount}
+                            </Badge>
+                          )}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </Panel>
+
             {/* Legend */}
             <Panel position="bottom-left" className="m-4">
+
               <Card className="shadow-lg">
                 <CardContent className="p-3">
                   <p className="text-xs font-medium text-muted-foreground mb-2">Legend</p>
@@ -1370,31 +1474,21 @@ const GraphPage = () => {
     return <LegacyPipelineLineageView onViewChange={handleViewChange} currentView="lineage" />;
   }
 
-  // No question → home
-  if (!qParam) {
-    return <GraphHome />;
-  }
-
-  // Full project map → the original canvas (kept intact as one answer)
-  if (qParam === "full-map") {
-    const handleViewChange = (value: string) => {
-      if (value === "lineage") setSearchParams({ view: "lineage" });
-      else setSearchParams({});
-    };
-    return (
-      <ReactFlowProvider>
-        <GraphPageInner onViewChange={handleViewChange} currentView="graph" />
-      </ReactFlowProvider>
-    );
-  }
-
-  // Other question views
-  if (isGraphQuestionId(qParam)) {
+  // Focused list answers (orphans, drift, etc.) — still reachable via ?q=
+  // The canvas is the default page; lenses ride on top of it via ?lens=...
+  if (qParam && qParam !== "full-map" && isGraphQuestionId(qParam)) {
     return <QuestionRouter questionId={qParam} />;
   }
 
-  // Unknown question → fall back to home
-  return <GraphHome />;
+  const handleViewChange = (value: string) => {
+    if (value === "lineage") setSearchParams({ view: "lineage" });
+    else setSearchParams({});
+  };
+  return (
+    <ReactFlowProvider>
+      <GraphPageInner onViewChange={handleViewChange} currentView="graph" />
+    </ReactFlowProvider>
+  );
 };
 
 function QuestionRouter({ questionId }: { questionId: GraphQuestionId }) {
