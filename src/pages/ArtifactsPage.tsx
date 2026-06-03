@@ -185,21 +185,14 @@ const ArtifactsPage = () => {
 
     const visibleIds = new Set<string>(filteredIds);
     const findAncestors = (id: string) => {
-      for (const edge of projectEdges) {
-        if ((edge.edge_type === "CONTAINS" || edge.edge_type === "DERIVES_FROM") && edge.to_artifact_id === id) {
-          if (artifactMap.has(edge.from_artifact_id)) {
-            visibleIds.add(edge.from_artifact_id);
-            findAncestors(edge.from_artifact_id);
-          }
-        }
-      }
-      const artifact = artifactMap.get(id);
-      if (artifact?.parent_artifact_id && artifactMap.has(artifact.parent_artifact_id)) {
-        visibleIds.add(artifact.parent_artifact_id);
-        findAncestors(artifact.parent_artifact_id);
+      const p = parentOf.get(id);
+      if (p && !visibleIds.has(p.parentId)) {
+        visibleIds.add(p.parentId);
+        findAncestors(p.parentId);
       }
     };
     filteredIds.forEach((id) => findAncestors(id));
+
 
     const roots = allArtifacts.filter((a) => visibleIds.has(a.id) && !childIds.has(a.id));
     const typeOrder: Record<string, number> = { IDEA: 0, PRD: 1, EPIC: 2, STORY: 3 };
