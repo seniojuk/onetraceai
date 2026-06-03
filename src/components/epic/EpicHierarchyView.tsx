@@ -98,6 +98,68 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [draggingStoryId]);
 
+  // Auto-scroll viewport / nearest scrollable parent when dragging near edges
+  useEffect(() => {
+    if (!draggingStoryId) return;
+    let raf: number | null = null;
+    let lastY = 0;
+    let active = false;
+
+    const findScrollParent = (el: Element | null): HTMLElement | Window => {
+      let node = el as HTMLElement | null;
+      while (node && node !== document.body) {
+        const style = window.getComputedStyle(node);
+        const oy = style.overflowY;
+        if ((oy === "auto" || oy === "scroll") && node.scrollHeight > node.clientHeight) {
+          return node;
+        }
+        node = node.parentElement;
+      }
+      return window;
+    };
+
+    const EDGE = 90; // px from edge to trigger
+    const MAX_SPEED = 22; // px per frame
+
+    const tick = () => {
+      raf = null;
+      const vh = window.innerHeight;
+      let delta = 0;
+      if (lastY < EDGE) {
+        delta = -Math.ceil(((EDGE - lastY) / EDGE) * MAX_SPEED);
+      } else if (lastY > vh - EDGE) {
+        delta = Math.ceil(((lastY - (vh - EDGE)) / EDGE) * MAX_SPEED);
+      }
+      if (delta !== 0) {
+        const target = findScrollParent(
+          document.elementFromPoint(window.innerWidth / 2, Math.max(1, Math.min(vh - 1, lastY))),
+        );
+        if (target === window) window.scrollBy(0, delta);
+        else (target as HTMLElement).scrollTop += delta;
+      }
+      if (active) raf = window.requestAnimationFrame(tick);
+    };
+
+    const onDragOver = (e: globalThis.DragEvent) => {
+      lastY = e.clientY;
+      const vh = window.innerHeight;
+      const shouldScroll = lastY < EDGE || lastY > vh - EDGE;
+      if (shouldScroll && !active) {
+        active = true;
+        raf = window.requestAnimationFrame(tick);
+      } else if (!shouldScroll) {
+        active = false;
+      }
+    };
+
+    window.addEventListener("dragover", onDragOver);
+    return () => {
+      active = false;
+      if (raf) window.cancelAnimationFrame(raf);
+      window.removeEventListener("dragover", onDragOver);
+    };
+  }, [draggingStoryId]);
+
   const epicHierarchy = useMemo((): EpicWithStories[] => {
     if (!allArtifacts || !edges) return [];
 
