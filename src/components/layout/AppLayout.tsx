@@ -78,11 +78,24 @@ const workspaceNav = [
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
+// Marks that an AppLayout chrome (sidebar + header) is already mounted higher
+// in the tree. Nested AppLayouts become pass-through so per-page wrappers
+// don't tear down and rebuild the sidebar on every navigation.
+const AppLayoutActiveContext = createContext(false);
+
 export function AppLayout({ children }: AppLayoutProps) {
+  const alreadyMounted = useContext(AppLayoutActiveContext);
+
+  if (alreadyMounted) {
+    return <>{children}</>;
+  }
+
   return (
-    <SidebarProvider defaultOpen>
-      <InnerLayout>{children}</InnerLayout>
-    </SidebarProvider>
+    <AppLayoutActiveContext.Provider value={true}>
+      <SidebarProvider defaultOpen>
+        <InnerLayout>{children}</InnerLayout>
+      </SidebarProvider>
+    </AppLayoutActiveContext.Provider>
   );
 }
 
