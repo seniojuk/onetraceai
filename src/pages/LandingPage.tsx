@@ -68,21 +68,6 @@ function Hero() {
         }}
       />
 
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        <img
-          src={glass01.url}
-          alt=""
-          className="hero-glass hero-glass-a"
-          decoding="async"
-          fetchPriority="high"
-        />
-        <img
-          src={glass03.url}
-          alt=""
-          className="hero-glass hero-glass-b"
-          decoding="async"
-        />
-      </div>
 
       <div className="relative mx-auto max-w-7xl px-8 pt-32 pb-16 md:pt-40 md:pb-20">
         <Reveal
