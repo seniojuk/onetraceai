@@ -352,21 +352,21 @@ function InnerLayout({ children }: AppLayoutProps) {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <span className="text-muted-foreground/40 text-sm">/</span>
+            <span className="hidden md:inline text-muted-foreground/40 text-sm">/</span>
 
             {/* Project switcher */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-[13px] font-medium hover:bg-muted">
+                <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-[13px] font-medium hover:bg-muted min-w-0">
                   {currentProject?.project_key && (
-                    <span className="font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    <span className="font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
                       {currentProject.project_key}
                     </span>
                   )}
-                  <span className="truncate max-w-[160px]">
+                  <span className="truncate max-w-[120px] sm:max-w-[160px]">
                     {currentProject?.name || "Select project"}
                   </span>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground/60" />
+                  <ChevronDown className="w-3 h-3 text-muted-foreground/60 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-72">
