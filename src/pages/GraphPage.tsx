@@ -101,6 +101,51 @@ import { toast } from "sonner";
 import { ArtifactLineageView } from "@/components/lineage/ArtifactLineageView";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+// ── Layered DAG layout (Dagre) ────────────────────────────────────────────────
+// Replaces "type-bucketed horizontal rows" with a proper left-to-right
+// layered graph: x = depth from a root, y = sibling order within rank.
+// Same approach React Flow's official docs recommend.
+const NODE_W = 210;
+const NODE_H = 88;
+
+function layoutWithDagre(
+  nodes: Node[],
+  edges: Edge[],
+  direction: "LR" | "TB" = "LR",
+): Node[] {
+  if (nodes.length === 0) return nodes;
+  const g = new Dagre.graphlib.Graph({ multigraph: true })
+    .setDefaultEdgeLabel(() => ({}))
+    .setGraph({
+      rankdir: direction,
+      nodesep: direction === "LR" ? 28 : 60,
+      ranksep: direction === "LR" ? 110 : 90,
+      marginx: 24,
+      marginy: 24,
+      ranker: "tight-tree",
+    });
+
+  nodes.forEach((n) => g.setNode(n.id, { width: NODE_W, height: NODE_H }));
+  edges.forEach((e) => {
+    if (g.hasNode(e.source) && g.hasNode(e.target)) {
+      g.setEdge(e.source, e.target);
+    }
+  });
+
+  Dagre.layout(g);
+
+  return nodes.map((n) => {
+    const { x, y } = g.node(n.id);
+    return {
+      ...n,
+      // Dagre returns the *center* of each node; React Flow wants the top-left.
+      position: { x: x - NODE_W / 2, y: y - NODE_H / 2 },
+      targetPosition: direction === "LR" ? Position.Left : Position.Top,
+      sourcePosition: direction === "LR" ? Position.Right : Position.Bottom,
+    };
+  });
+}
+
 // ── Per-type visual language, matched to HeroFlow ─────────────────────────────
 const TYPE_META: Record<ArtifactType, { icon: LucideIcon; label: string; tone: string }> = {
   IDEA:                 { icon: Lightbulb,     label: "IDEA",    tone: "text-yellow-500" },
