@@ -603,15 +603,16 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                 <CollapsibleTrigger asChild>
                   <div
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg border border-dashed border-border cursor-pointer transition-all",
+                      "relative flex items-center gap-3 px-3 py-2.5 rounded-lg border border-dashed border-border cursor-pointer transition-colors",
                       "hover:border-foreground/30 hover:bg-muted/30",
                       dragOverUnlinked &&
-                        "ring-2 ring-destructive/40 border-destructive bg-destructive/5",
+                        "border-destructive/60 bg-destructive/[0.04] before:absolute before:inset-1 before:rounded-md before:border before:border-dashed before:border-destructive/60 before:pointer-events-none",
                     )}
                     onDragOver={handleUnlinkedDragOver}
                     onDragLeave={() => setDragOverUnlinked(false)}
                     onDrop={handleUnlinkedDrop}
                   >
+
                     <button
                       type="button"
                       className="text-muted-foreground shrink-0"
