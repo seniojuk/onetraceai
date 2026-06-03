@@ -338,28 +338,39 @@
   .graph-node-ac { @apply border-l-4 border-l-[hsl(152,76%,42%)]; }
   .graph-node-commit { @apply border-l-4 border-l-[hsl(215,16%,47%)]; }
 
-  /* Artifact type badges */
+  /* Artifact type badges — tokenized */
   .artifact-badge {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full;
+    @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border;
   }
 
-  .artifact-badge-prd { @apply bg-purple-100 text-purple-800; }
-  .artifact-badge-epic { @apply bg-blue-100 text-blue-800; }
-  .artifact-badge-story { @apply bg-teal-100 text-teal-800; }
-  .artifact-badge-ac { @apply bg-green-100 text-green-800; }
-  .artifact-badge-test { @apply bg-amber-100 text-amber-800; }
-  .artifact-badge-commit { @apply bg-slate-100 text-slate-800; }
+  .artifact-badge-prd { background: hsl(var(--status-prd) / 0.1); color: hsl(var(--status-prd-fg)); border-color: hsl(var(--status-prd) / 0.2); }
+  .artifact-badge-epic { background: hsl(var(--status-epic) / 0.1); color: hsl(var(--status-epic-fg)); border-color: hsl(var(--status-epic) / 0.2); }
+  .artifact-badge-story { background: hsl(var(--status-story) / 0.1); color: hsl(var(--status-story-fg)); border-color: hsl(var(--status-story) / 0.2); }
+  .artifact-badge-ac { background: hsl(var(--status-ac) / 0.1); color: hsl(var(--status-ac-fg)); border-color: hsl(var(--status-ac) / 0.2); }
+  .artifact-badge-acceptance-criterion { background: hsl(var(--status-ac) / 0.1); color: hsl(var(--status-ac-fg)); border-color: hsl(var(--status-ac) / 0.2); }
+  .artifact-badge-test { background: hsl(var(--status-test) / 0.1); color: hsl(var(--status-test-fg)); border-color: hsl(var(--status-test) / 0.2); }
+  .artifact-badge-test-case { background: hsl(var(--status-test) / 0.1); color: hsl(var(--status-test-fg)); border-color: hsl(var(--status-test) / 0.2); }
+  .artifact-badge-commit { background: hsl(var(--status-commit) / 0.1); color: hsl(var(--status-commit-fg)); border-color: hsl(var(--status-commit) / 0.2); }
 
-  /* Status indicators */
+  /* Status indicators — tokenized */
   .status-dot {
     @apply w-2 h-2 rounded-full;
   }
 
-  .status-dot-draft { @apply bg-slate-400; }
-  .status-dot-active { @apply bg-blue-500; }
-  .status-dot-in-progress { @apply bg-amber-500 animate-pulse; }
-  .status-dot-blocked { @apply bg-red-500; }
-  .status-dot-done { @apply bg-green-500; }
+  .status-dot-draft { background: hsl(var(--muted-foreground) / 0.5); }
+  .status-dot-active { background: hsl(var(--accent)); }
+  .status-dot-in-progress { background: hsl(var(--coverage-partial)); @apply animate-pulse; }
+  .status-dot-blocked { background: hsl(var(--destructive)); }
+  .status-dot-done { background: hsl(var(--coverage-full)); }
+
+  /* Subtle lift for in-app surfaces — no translate, just border + shadow */
+  .lift-subtle {
+    @apply transition-[border-color,box-shadow] duration-200;
+  }
+  .lift-subtle:hover {
+    border-color: hsl(var(--foreground) / 0.18);
+    box-shadow: 0 4px 16px -8px hsl(var(--foreground) / 0.12);
+  }
 
   /* Feature card for landing */
   .feature-card {
