@@ -444,18 +444,24 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                   <CollapsibleTrigger asChild>
                     <div
                       className={cn(
-                        "group flex items-center gap-3 px-3.5 py-3 rounded-lg border bg-card cursor-pointer transition-all",
+                        "group relative flex items-center gap-3 px-3.5 py-3 rounded-lg border bg-card cursor-pointer transition-colors",
                         "hover:border-foreground/20",
                         isExpanded
                           ? "border-foreground/15 bg-muted/20 shadow-[0_1px_0_hsl(var(--border))]"
                           : "border-border",
+                        // Calmer drop affordance: inset outline + faint tint, no jarring ring
                         dragOverEpicId === epic.id &&
-                          "ring-2 ring-accent border-accent bg-accent/5",
+                          "border-accent/60 bg-accent/[0.04] before:absolute before:inset-1 before:rounded-md before:border before:border-dashed before:border-accent/60 before:pointer-events-none",
+                        // While ANY story is dragging, mark this as a valid landing area subtly
+                        draggingStoryId &&
+                          dragOverEpicId !== epic.id &&
+                          "border-dashed",
                       )}
                       onDragOver={(e) => handleDragOver(e, epic.id)}
-                      onDragLeave={() => setDragOverEpicId(null)}
+                      onDragLeave={handleEpicDragLeave}
                       onDrop={(e) => handleDrop(e, epic.id)}
                     >
+
                       <button
                         type="button"
                         className="text-muted-foreground/60 shrink-0"
