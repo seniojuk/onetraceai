@@ -883,15 +883,21 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     }
   }, [nodes]);
 
+  // Run Dagre once we have both nodes and edges. Memoized so it only
+  // re-runs when the underlying graph actually changes.
+  const laidOutNodes = useMemo(
+    () => layoutWithDagre(initialNodes, initialEdges, "LR"),
+    [initialNodes, initialEdges],
+  );
+
   // Update nodes first, then edges after a brief delay to ensure nodes are registered
   useEffect(() => {
-    setNodes(initialNodes);
-    // Set edges after nodes are registered with React Flow
+    setNodes(laidOutNodes);
     const timer = setTimeout(() => {
       setEdges(initialEdges);
     }, 50);
     return () => clearTimeout(timer);
-  }, [initialNodes, initialEdges, setNodes, setEdges]);
+  }, [laidOutNodes, initialEdges, setNodes, setEdges]);
 
   const artifactTypes: { value: ArtifactType; label: string }[] = [
     { value: "PRD", label: "PRD" },
