@@ -381,7 +381,7 @@ const Sync = () => {
   const arcBot = `M ${R.x} ${R.y + 4} Q ${cx} ${cy + 60} ${L.x} ${L.y + 4}`;
   return (
     <svg viewBox="0 0 400 400" className="h-full w-full">
-      <GridBg id="sy-grid" /><Spot id="sy-spot" /><CornerMarks />
+      <GridBg id="sy-grid" /><Spot id="sy-spot" />
 
       {/* orbital rings — slow rotation around the core */}
       <g fill="none" stroke={STROKE} strokeOpacity="0.18" strokeWidth="0.6">
@@ -1183,7 +1183,7 @@ export const AuthVisualSingle = ({
   const Render = RENDERERS[variant];
   return (
     <div className="flex h-full w-full flex-col justify-center gap-8 px-12 py-16">
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl">
         <div className="absolute inset-0 animate-fade-in">
           <Render />
         </div>
