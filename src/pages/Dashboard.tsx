@@ -324,13 +324,13 @@ const Dashboard = () => {
                       <li key={artifact.id}>
                         <button
                           onClick={() => navigate(`/artifacts/${artifact.id}`)}
-                          className="w-full flex items-center gap-3 px-5 py-3 hover:bg-muted/40 transition-colors text-left group"
+                          className="w-full flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 hover:bg-muted/40 transition-colors text-left group"
                         >
                           <ArtifactTypeChip type={artifact.type} />
-                          <span className="font-mono text-[10px] text-muted-foreground w-16 shrink-0">{artifact.short_id}</span>
+                          <span className="hidden sm:inline font-mono text-[10px] text-muted-foreground w-16 shrink-0">{artifact.short_id}</span>
                           <span className="flex-1 text-[13px] text-foreground truncate">{artifact.title}</span>
                           <StatusDot status={artifact.status} />
-                          <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
+                          <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors shrink-0" />
                         </button>
                       </li>
                     ))}
