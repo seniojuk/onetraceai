@@ -51,12 +51,9 @@ interface EpicHierarchyViewProps {
   projectId?: string;
 }
 
-/* Priority dot — neutral, semantic-token driven */
-const priorityDot: Record<string, string> = {
-  high: "bg-destructive",
-  medium: "bg-coverage-partial",
-  low: "bg-coverage-full",
-};
+/* Priority tag — only render for non-default (high) to avoid wallpapering rows */
+const isHighPriority = (p?: string) => p?.toLowerCase() === "high";
+const isLowPriority = (p?: string) => p?.toLowerCase() === "low";
 
 export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
   const navigate = useNavigate();
@@ -396,9 +393,11 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                   <CollapsibleTrigger asChild>
                     <div
                       className={cn(
-                        "group flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border bg-card cursor-pointer transition-all",
-                        "hover:border-foreground/20 hover:bg-muted/40",
-                        isExpanded && "border-foreground/15 bg-muted/30",
+                        "group flex items-center gap-3 px-3.5 py-3 rounded-lg border bg-card cursor-pointer transition-all",
+                        "hover:border-foreground/20",
+                        isExpanded
+                          ? "border-foreground/15 bg-muted/20 shadow-[0_1px_0_hsl(var(--border))]"
+                          : "border-border",
                         dragOverEpicId === epic.id &&
                           "ring-2 ring-accent border-accent bg-accent/5",
                       )}
@@ -408,7 +407,7 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                     >
                       <button
                         type="button"
-                        className="text-muted-foreground shrink-0"
+                        className="text-muted-foreground/60 shrink-0"
                         aria-label={isExpanded ? "Collapse" : "Expand"}
                       >
                         {isExpanded ? (
@@ -418,34 +417,32 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                         )}
                       </button>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div
-                          className={cn(
-                            "w-1.5 h-1.5 rounded-full",
-                            priorityDot[priority],
-                          )}
-                          title={`${priority} priority`}
-                        />
-                        <GitBranch className="h-3.5 w-3.5 text-status-epic-fg" />
+                      {/* Type chip — establishes EPIC as a parent unit */}
+                      <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-status-epic/10 text-status-epic-fg shrink-0">
+                        <GitBranch className="h-3 w-3" />
+                        <span className="text-[10px] uppercase tracking-[0.1em] font-medium">
+                          Epic
+                        </span>
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-[10px] text-muted-foreground shrink-0">
-                            {epic.short_id}
-                          </span>
-                          <span className="text-[13px] text-foreground truncate font-medium">
+                          <span className="text-[13.5px] text-foreground truncate font-medium leading-snug">
                             {epic.title}
                           </span>
+                          {isHighPriority(priority) && (
+                            <span className="text-[9px] uppercase tracking-[0.1em] font-semibold text-destructive shrink-0">
+                              High
+                            </span>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
-                          <span>
-                            {storyCount}{" "}
-                            {storyCount === 1 ? "story" : "stories"}
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/80 mt-0.5">
+                          <span className="font-mono text-[10px]">
+                            {epic.short_id}
                           </span>
                           {sourcePrd && (
                             <>
-                              <span className="text-muted-foreground/40">·</span>
+                              <span className="text-muted-foreground/30">·</span>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -461,41 +458,58 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setLinkTarget(epic);
-                          }}
+                      {/* Right rail: story count badge + actions */}
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div
+                          className={cn(
+                            "flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] tabular-nums",
+                            storyCount === 0
+                              ? "text-muted-foreground/60"
+                              : "text-foreground bg-muted/60",
+                          )}
+                          title={`${storyCount} ${storyCount === 1 ? "story" : "stories"}`}
                         >
-                          <Link2 className="h-3 w-3 mr-1" />
-                          Link
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/artifacts/${epic.id}`);
-                          }}
-                        >
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </Button>
+                          <FileText className="h-3 w-3" />
+                          {storyCount}
+                        </div>
+
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLinkTarget(epic);
+                            }}
+                          >
+                            <Link2 className="h-3 w-3 mr-1" />
+                            Link
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/artifacts/${epic.id}`);
+                            }}
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
+
                   </CollapsibleTrigger>
 
                   <CollapsibleContent>
-                    <div className="ml-5 mt-1 mb-2 space-y-0.5 border-l border-border pl-3">
+                    <div className="ml-[26px] mt-0.5 mb-1.5 pl-3 border-l border-dashed border-border/70">
                       {stories.length === 0 ? (
-                        <div className="text-[12px] text-muted-foreground py-2 px-2">
+                        <div className="text-[12px] text-muted-foreground/80 py-2 px-2 italic">
                           No stories linked. Drag a story here, or use{" "}
                           <button
-                            className="text-foreground hover:underline"
+                            className="not-italic text-foreground hover:underline font-medium"
                             onClick={() => setLinkTarget(epic)}
                           >
                             Link
@@ -518,6 +532,7 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                       )}
                     </div>
                   </CollapsibleContent>
+
                 </Collapsible>
               );
             })}
@@ -670,24 +685,30 @@ function StoryRow({
       onDragEnd={onDragEnd}
       onClick={onOpen}
       className={cn(
-        "group flex items-center gap-2 px-2 py-1.5 rounded-md cursor-grab transition-colors",
-        "hover:bg-muted/50",
+        "group flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-md cursor-grab transition-colors",
+        "hover:bg-muted/40",
         draggingStoryId === story.id && "opacity-50",
       )}
     >
-      <GripVertical className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground shrink-0" />
-      <div
-        className={cn("w-1 h-1 rounded-full shrink-0", priorityDot[storyPriority])}
-      />
-      <FileText className="h-3 w-3 text-status-story-fg shrink-0" />
-      <span className="font-mono text-[10px] text-muted-foreground shrink-0">
+      <GripVertical className="h-3 w-3 text-muted-foreground/30 group-hover:text-muted-foreground/70 shrink-0" />
+      <span className="font-mono text-[10px] text-muted-foreground/70 shrink-0 w-[64px]">
         {story.short_id}
       </span>
-      <span className="text-[12px] text-foreground truncate flex-1">
+      <span className="text-[12.5px] text-foreground/90 truncate flex-1 leading-snug">
         {story.title}
       </span>
+      {isHighPriority(storyPriority) && (
+        <span className="text-[9px] uppercase tracking-[0.1em] font-semibold text-destructive shrink-0">
+          High
+        </span>
+      )}
+      {isLowPriority(storyPriority) && (
+        <span className="text-[9px] uppercase tracking-[0.1em] text-muted-foreground/60 shrink-0">
+          Low
+        </span>
+      )}
       {storyPoints && (
-        <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+        <span className="text-[10px] text-muted-foreground/70 tabular-nums shrink-0 w-7 text-right">
           {storyPoints}pt
         </span>
       )}
@@ -703,4 +724,5 @@ function StoryRow({
       </button>
     </div>
   );
+
 }
