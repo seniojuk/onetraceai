@@ -99,115 +99,149 @@ import { toast } from "sonner";
 import { ArtifactLineageView } from "@/components/lineage/ArtifactLineageView";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Custom node component
-function ArtifactNode({ data }: { data: { label: string; type: ArtifactType; shortId: string; status: string; isHighlighted?: boolean; isUpstream?: boolean; isSelected?: boolean; isDimmed?: boolean; isSearchMatch?: boolean; coverageRatio?: number | null; hasDrift?: boolean; driftSeverity?: number | null; showOverlays?: boolean } }) {
-  const typeColors: Record<ArtifactType, string> = {
-    IDEA: "border-l-yellow-500",
-    PRD: "border-l-purple-500",
-    EPIC: "border-l-blue-500",
-    STORY: "border-l-teal-500",
-    ACCEPTANCE_CRITERION: "border-l-green-500",
-    TEST_CASE: "border-l-amber-500",
-    TEST_SUITE: "border-l-orange-500",
-    CODE_MODULE: "border-l-slate-500",
-    COMMIT: "border-l-gray-500",
-    PULL_REQUEST: "border-l-indigo-500",
-    BUG: "border-l-red-500",
-    DECISION: "border-l-cyan-500",
-    RELEASE: "border-l-emerald-500",
-    DEPLOYMENT: "border-l-violet-500",
-    FILE: "border-l-stone-500",
-  };
+// ── Per-type visual language, matched to HeroFlow ─────────────────────────────
+const TYPE_META: Record<ArtifactType, { icon: LucideIcon; label: string; tone: string }> = {
+  IDEA:                 { icon: Lightbulb,     label: "IDEA",    tone: "text-yellow-500" },
+  PRD:                  { icon: FileText,      label: "PRD",     tone: "text-violet-500" },
+  EPIC:                 { icon: Layers,        label: "EPIC",    tone: "text-blue-500" },
+  STORY:                { icon: Sparkles,      label: "STORY",   tone: "text-accent" },
+  ACCEPTANCE_CRITERION: { icon: CheckCircle2,  label: "AC",      tone: "text-emerald-500" },
+  TEST_CASE:            { icon: TestTube2,     label: "TEST",    tone: "text-amber-500" },
+  TEST_SUITE:           { icon: TestTube2,     label: "SUITE",   tone: "text-orange-500" },
+  CODE_MODULE:          { icon: Boxes,         label: "MODULE",  tone: "text-slate-500" },
+  COMMIT:               { icon: GitCommit,     label: "COMMIT",  tone: "text-muted-foreground" },
+  PULL_REQUEST:         { icon: GitPullRequest,label: "PR",      tone: "text-indigo-500" },
+  BUG:                  { icon: Bug,           label: "BUG",     tone: "text-red-500" },
+  DECISION:             { icon: ScrollText,    label: "DECISION",tone: "text-cyan-500" },
+  RELEASE:              { icon: Rocket,        label: "RELEASE", tone: "text-emerald-600" },
+  DEPLOYMENT:           { icon: Cloud,         label: "DEPLOY",  tone: "text-violet-600" },
+  FILE:                 { icon: FileIcon,      label: "FILE",    tone: "text-stone-500" },
+};
 
-  const typeLabels: Record<ArtifactType, string> = {
-    IDEA: "Idea",
-    PRD: "PRD",
-    EPIC: "Epic",
-    STORY: "Story",
-    ACCEPTANCE_CRITERION: "AC",
-    TEST_CASE: "Test",
-    TEST_SUITE: "Suite",
-    CODE_MODULE: "Module",
-    COMMIT: "Commit",
-    PULL_REQUEST: "PR",
-    BUG: "Bug",
-    DECISION: "Decision",
-    RELEASE: "Release",
-    DEPLOYMENT: "Deploy",
-    FILE: "File",
-  };
+// Editorial artifact node — same DNA as the marketing HeroFlow card.
+function ArtifactNode({ data }: { data: {
+  label: string;
+  type: ArtifactType;
+  shortId: string;
+  status: string;
+  isHighlighted?: boolean;
+  isUpstream?: boolean;
+  isSelected?: boolean;
+  isDimmed?: boolean;
+  isSearchMatch?: boolean;
+  coverageRatio?: number | null;
+  hasDrift?: boolean;
+  driftSeverity?: number | null;
+  showOverlays?: boolean;
+} }) {
+  const meta = TYPE_META[data.type] ?? TYPE_META.FILE;
+  const Icon = meta.icon;
 
-  const coverageColor = data.coverageRatio != null
-    ? data.coverageRatio >= 0.8 ? "bg-green-500" : data.coverageRatio >= 0.5 ? "bg-amber-500" : "bg-red-500"
-    : null;
+  const accentRing =
+    data.isSelected
+      ? "border-primary/60 shadow-[0_0_0_3px_hsl(var(--primary)/0.10),0_6px_20px_-8px_hsl(var(--primary)/0.30)]"
+      : data.isSearchMatch
+        ? "border-emerald-500/50 shadow-[0_0_0_3px_hsl(142_71%_45%/0.12),0_6px_20px_-8px_hsl(142_71%_45%/0.30)]"
+        : data.isHighlighted
+          ? "border-accent/55 shadow-[0_0_0_3px_hsl(var(--accent)/0.10),0_6px_20px_-8px_hsl(var(--accent)/0.30)]"
+          : data.isUpstream
+            ? "border-blue-500/50 shadow-[0_0_0_3px_hsl(217_91%_60%/0.10),0_6px_20px_-8px_hsl(217_91%_60%/0.30)]"
+            : "border-border shadow-[0_4px_14px_-6px_hsl(var(--foreground)/0.12)]";
+
+  const coverageTone =
+    data.coverageRatio == null
+      ? null
+      : data.coverageRatio >= 0.8
+        ? "bg-emerald-500"
+        : data.coverageRatio >= 0.5
+          ? "bg-amber-500"
+          : "bg-red-500";
+
+  const statusDot =
+    data.status === "DONE"
+      ? "bg-emerald-500"
+      : data.status === "IN_PROGRESS"
+        ? "bg-accent"
+        : data.status === "BLOCKED"
+          ? "bg-red-500"
+          : "bg-muted-foreground/50";
 
   return (
-    <div className={cn(
-      "px-4 py-3 bg-card border-2 rounded-lg shadow-md border-l-4 min-w-[180px] max-w-[250px] cursor-pointer transition-all relative",
-      typeColors[data.type],
-      data.isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background",
-      data.isHighlighted && "ring-2 ring-amber-500 ring-offset-1 ring-offset-background shadow-lg shadow-amber-500/20",
-      data.isUpstream && "ring-2 ring-blue-500 ring-offset-1 ring-offset-background shadow-lg shadow-blue-500/20",
-      data.isSearchMatch && "ring-2 ring-green-500 ring-offset-1 ring-offset-background shadow-lg shadow-green-500/20",
-      data.isDimmed && "opacity-30",
-      !data.isDimmed && "hover:shadow-lg hover:border-primary/50"
-    )}>
-      {/* Source handle (right side) */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!bg-primary/80 transition-colors"
-      />
-      {/* Target handle (left side) */}
+    <div
+      className={cn(
+        "group relative w-[200px] rounded-lg border bg-card/95 px-3 py-2.5 backdrop-blur transition-all",
+        accentRing,
+        data.isDimmed ? "opacity-25" : "hover:border-foreground/20",
+      )}
+    >
       <Handle
         type="target"
         position={Position.Left}
-        className="!w-3 !h-3 !bg-muted-foreground !border-2 !border-background hover:!bg-primary transition-colors"
+        className="!h-1.5 !w-1.5 !border-0 !bg-border"
       />
 
-      {/* Drift warning indicator */}
-      {data.showOverlays && data.hasDrift && (
-        <div className="absolute -top-2 -right-2 z-10">
-          <div className={cn(
-            "w-5 h-5 rounded-full flex items-center justify-center",
-            data.driftSeverity && data.driftSeverity >= 3 ? "bg-red-500" : "bg-amber-500"
-          )}>
-            <AlertTriangle className="w-3 h-3 text-white" />
-          </div>
+      {/* Header row: icon + kind + status */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <Icon className={cn("h-3 w-3 shrink-0", meta.tone)} />
+          <span className="font-mono text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">
+            {meta.label}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {data.status === "IN_PROGRESS" ? (
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-70" />
+              <span className={cn("relative inline-flex h-1.5 w-1.5 rounded-full", statusDot)} />
+            </span>
+          ) : (
+            <span className={cn("h-1.5 w-1.5 rounded-full", statusDot)} />
+          )}
+        </div>
+      </div>
+
+      {/* Title */}
+      <div className="mt-1.5 truncate text-[12px] font-medium tracking-tight text-foreground">
+        {data.label}
+      </div>
+
+      {/* Meta line */}
+      <div className="mt-0.5 truncate font-mono text-[10px] text-muted-foreground">
+        {data.shortId}
+        {data.coverageRatio != null && (
+          <> · {Math.round(data.coverageRatio * 100)}% cov</>
+        )}
+      </div>
+
+      {/* Coverage bar (subtle, only when overlays are on) */}
+      {data.showOverlays && data.coverageRatio != null && (
+        <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn("h-full rounded-full transition-all", coverageTone)}
+            style={{ width: `${Math.round(data.coverageRatio * 100)}%` }}
+          />
         </div>
       )}
 
-      <div className="flex items-center gap-2 mb-1">
-        <Badge variant="secondary" className="text-xs">
-          {typeLabels[data.type]}
-        </Badge>
-        <span className="text-xs text-muted-foreground font-mono">{data.shortId}</span>
-      </div>
-      <p className="text-sm font-medium text-foreground line-clamp-2">{data.label}</p>
-      <div className="flex items-center gap-2 mt-2">
-        <div className={cn(
-          "w-2 h-2 rounded-full",
-          data.status === "DONE" ? "bg-green-500" :
-          data.status === "IN_PROGRESS" ? "bg-amber-500" :
-          data.status === "BLOCKED" ? "bg-red-500" :
-          "bg-slate-400"
-        )} />
+      {/* Drift indicator: small pulse in top-right corner */}
+      {data.showOverlays && data.hasDrift && (
+        <span
+          className={cn(
+            "absolute -top-1 -right-1 flex h-2 w-2",
+            data.driftSeverity && data.driftSeverity >= 3 ? "text-red-500" : "text-amber-500",
+          )}
+          aria-label="Drift detected"
+        >
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-60" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-current" />
+        </span>
+      )}
 
-        {/* Coverage bar overlay */}
-        {data.showOverlays && data.coverageRatio != null && (
-          <div className="flex items-center gap-1.5 flex-1">
-            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className={cn("h-full rounded-full transition-all", coverageColor)}
-                style={{ width: `${Math.round(data.coverageRatio * 100)}%` }}
-              />
-            </div>
-            <span className="text-[10px] text-muted-foreground font-mono">
-              {Math.round(data.coverageRatio * 100)}%
-            </span>
-          </div>
-        )}
-      </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="!h-1.5 !w-1.5 !border-0 !bg-border"
+      />
     </div>
   );
 }
