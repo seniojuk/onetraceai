@@ -177,6 +177,12 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
+  /* Hide browser-native password reveal icons (Edge/IE) so our custom toggle isn't duplicated */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+
   /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
