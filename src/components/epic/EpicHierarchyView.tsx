@@ -733,22 +733,38 @@ function StoryRow({
   const storyPriority = storyData?.priority?.toLowerCase() || "medium";
   const storyPoints = storyData?.storyPoints;
 
+  const isDragging = draggingStoryId === story.id;
+
   return (
     <div
-      draggable
-      onDragStart={(e) => {
-        e.stopPropagation();
-        onDragStart(e, story.id, fromEpicId);
-      }}
-      onDragEnd={onDragEnd}
+      // Whole row is NOT draggable — click safely opens the story.
       onClick={onOpen}
       className={cn(
-        "group flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-md cursor-grab transition-colors",
+        "group flex items-center gap-2 pl-1 pr-2 py-1.5 rounded-md cursor-pointer transition-colors",
         "hover:bg-muted/40",
-        draggingStoryId === story.id && "opacity-50",
+        isDragging && "opacity-40",
       )}
     >
-      <GripVertical className="h-3 w-3 text-muted-foreground/30 group-hover:text-muted-foreground/70 shrink-0" />
+      {/* Drag handle — the ONLY draggable surface. Always visible at low contrast so users trust it. */}
+      <div
+        draggable
+        onDragStart={(e) => {
+          e.stopPropagation();
+          onDragStart(e, story.id, fromEpicId);
+        }}
+        onDragEnd={onDragEnd}
+        onClick={(e) => e.stopPropagation()}
+        title="Drag to move to another epic"
+        aria-label="Drag handle"
+        className={cn(
+          "flex items-center justify-center h-6 w-5 rounded shrink-0 transition-colors",
+          "text-muted-foreground/50 hover:text-foreground hover:bg-muted",
+          "cursor-grab active:cursor-grabbing",
+        )}
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </div>
+
       <span className="font-mono text-[10px] text-muted-foreground/70 shrink-0 w-[64px]">
         {story.short_id}
       </span>
@@ -782,5 +798,6 @@ function StoryRow({
       </button>
     </div>
   );
+
 
 }
