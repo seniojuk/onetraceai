@@ -638,7 +638,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
             height: 15,
             color: edgeStyle.stroke,
           },
-          style: { stroke: edgeStyle.stroke, strokeWidth: 2 },
+          style: { stroke: edgeStyle.stroke, strokeWidth: 1.5, opacity: 0.75 },
         };
       });
   }, [artifactEdges, artifacts, visibleNodeIds, edgeTypeFilter]);
