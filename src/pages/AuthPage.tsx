@@ -303,7 +303,7 @@ const AuthPage = () => {
         <aside className="hidden items-center border-l border-border lg:flex">
           <AuthVisualSingle
             variant="sync"
-            headline="Your Jira tickets and your GitHub commits can now tell the same story."
+            headline="Your Jira tickets and GitHub commits can now tell the same story."
           />
         </aside>
       </main>
