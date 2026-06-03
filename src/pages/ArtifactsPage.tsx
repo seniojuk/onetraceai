@@ -24,6 +24,7 @@ import {
   Network,
   ArrowUpRight,
   Boxes,
+  Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,8 @@ import { FilesSection } from "@/components/files/FilesSection";
 import { EpicHierarchyView } from "@/components/epic/EpicHierarchyView";
 import { UsageLimitBanner, UsageLimitDialog } from "@/components/billing";
 import { useUsageLimits } from "@/hooks/useUsageLimits";
+import { LinkArtifactDialog } from "@/components/artifacts/LinkArtifactDialog";
+import { linkRules } from "@/lib/artifactLinking";
 
 // ─── Type config: maps to design-system tokens (no raw color classes) ──────
 type TypeMeta = { icon: React.ElementType; label: string; chip: string };
@@ -100,6 +103,7 @@ const ArtifactsPage = () => {
   const [selectedArtifacts, setSelectedArtifacts] = useState<Set<string>>(new Set());
   const [showLimitDialog, setShowLimitDialog] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+  const [linkTarget, setLinkTarget] = useState<Artifact | null>(null);
 
   const filteredArtifacts = useMemo(() => {
     return (artifacts || []).filter((artifact) => {
@@ -662,6 +666,11 @@ const ArtifactsPage = () => {
                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/artifacts/${artifact.id}/edit`); }}>
                                   Edit
                                 </DropdownMenuItem>
+                                {linkRules[artifact.type as ArtifactType] && (
+                                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setLinkTarget(artifact); }}>
+                                    <Link2 className="w-3.5 h-3.5 mr-2" /> Link to parent…
+                                  </DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); navigate(`/graph?focus=${artifact.id}`); }}>
                                   <Network className="w-3.5 h-3.5 mr-2" /> View in graph
@@ -734,6 +743,14 @@ const ArtifactsPage = () => {
           type="artifact"
           isAtLimit={artifactAtLimit}
         />
+
+        {linkTarget && (
+          <LinkArtifactDialog
+            open={!!linkTarget}
+            onOpenChange={(open) => { if (!open) setLinkTarget(null); }}
+            artifact={linkTarget}
+          />
+        )}
       </AppLayout>
     </AuthGuard>
   );

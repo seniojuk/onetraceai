@@ -57,7 +57,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { useArtifact, useUpdateArtifact, useArtifacts, ArtifactStatus, Artifact } from "@/hooks/useArtifacts";
-import { useArtifactEdges } from "@/hooks/useArtifactEdges";
+import { useArtifactEdges, useDeleteArtifactEdge, useCreateArtifactEdge } from "@/hooks/useArtifactEdges";
+import { LinkArtifactDialog } from "@/components/artifacts/LinkArtifactDialog";
+import { linkRules } from "@/lib/artifactLinking";
+import { toast as sonner } from "sonner";
 import { usePipelineRunForArtifact } from "@/hooks/useArtifactLineage";
 import { useJiraIssueMapping } from "@/hooks/useJiraIssueMapping";
 import { useToast } from "@/hooks/use-toast";
@@ -94,42 +97,65 @@ const ArtifactDetailPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isPromptGenOpen, setIsPromptGenOpen] = useState(false);
+  const [isLinkOpen, setIsLinkOpen] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedContent, setEditedContent] = useState("");
   const [editedStatus, setEditedStatus] = useState<ArtifactStatus>("DRAFT");
 
-  // Compute linked artifacts from edges
+  const deleteEdge = useDeleteArtifactEdge();
+  const createEdge = useCreateArtifactEdge();
+
+  const handleUnlinkEdge = async (
+    edgeId: string,
+    snapshot: { fromId: string; toId: string; edgeType: string; source: string },
+    parentLabel: string,
+  ) => {
+    if (!artifact) return;
+    try {
+      await deleteEdge.mutateAsync({ edgeId, projectId: artifact.project_id });
+      sonner.success(`Unlinked ${parentLabel}`, {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            createEdge.mutate({
+              workspaceId: artifact.workspace_id,
+              projectId: artifact.project_id,
+              fromArtifactId: snapshot.fromId,
+              toArtifactId: snapshot.toId,
+              edgeType: snapshot.edgeType as any,
+              source: snapshot.source || "MANUAL",
+            });
+          },
+        },
+      });
+    } catch (e) {
+      sonner.error("Could not unlink");
+    }
+  };
+
+  // Compute linked artifacts from edges (carry edge id so we can unlink)
+  type LinkedItem = { artifact: Artifact; edgeId: string; edgeType: string; source: string; fromId: string; toId: string };
   const linkedArtifacts = useMemo(() => {
-    if (!edges || !allArtifacts) return { parents: [] as Array<{ artifact: Artifact; edgeType: string; source: string }>, children: [] as Array<{ artifact: Artifact; edgeType: string; source: string }> };
-    
+    if (!edges || !allArtifacts) return { parents: [] as LinkedItem[], children: [] as LinkedItem[] };
+
     const artifactMap = new Map(allArtifacts.map(a => [a.id, a]));
-    
-    // Parents: artifacts that point TO this artifact (incoming edges)
-    const parents = edges.incoming
+
+    const parents: LinkedItem[] = edges.incoming
       .map(edge => {
-        const artifact = artifactMap.get(edge.from_artifact_id);
-        if (!artifact) return null;
-        return {
-          artifact,
-          edgeType: edge.edge_type as string,
-          source: edge.source,
-        };
+        const a = artifactMap.get(edge.from_artifact_id);
+        if (!a) return null;
+        return { artifact: a, edgeId: edge.id, edgeType: edge.edge_type as string, source: edge.source, fromId: edge.from_artifact_id, toId: edge.to_artifact_id };
       })
-      .filter((item): item is { artifact: Artifact; edgeType: string; source: string } => item !== null);
-    
-    // Children: artifacts that this artifact points TO (outgoing edges)
-    const children = edges.outgoing
+      .filter((x): x is LinkedItem => x !== null);
+
+    const children: LinkedItem[] = edges.outgoing
       .map(edge => {
-        const artifact = artifactMap.get(edge.to_artifact_id);
-        if (!artifact) return null;
-        return {
-          artifact,
-          edgeType: edge.edge_type as string,
-          source: edge.source,
-        };
+        const a = artifactMap.get(edge.to_artifact_id);
+        if (!a) return null;
+        return { artifact: a, edgeId: edge.id, edgeType: edge.edge_type as string, source: edge.source, fromId: edge.from_artifact_id, toId: edge.to_artifact_id };
       })
-      .filter((item): item is { artifact: Artifact; edgeType: string; source: string } => item !== null);
-    
+      .filter((x): x is LinkedItem => x !== null);
+
     return { parents, children };
   }, [edges, allArtifacts]);
 
@@ -376,6 +402,12 @@ const ArtifactDetailPage = () => {
                       Generate Stories
                     </Button>
                   )}
+                  {linkRules[artifact.type] && (
+                    <Button variant="outline" onClick={() => setIsLinkOpen(true)}>
+                      <Link2 className="w-4 h-4 mr-2" />
+                      Link
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={handleEdit}>
                     <Edit2 className="w-4 h-4 mr-2" />
                     Edit
@@ -524,10 +556,18 @@ const ArtifactDetailPage = () => {
                     <CardTitle>Related Artifacts</CardTitle>
                     <CardDescription>Connected through the artifact graph</CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/graph?focus=${artifact.id}`)}>
-                    <GitBranch className="w-4 h-4 mr-2" />
-                    View Graph
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {linkRules[artifact.type] && (
+                      <Button variant="outline" size="sm" onClick={() => setIsLinkOpen(true)}>
+                        <Link2 className="w-4 h-4 mr-2" />
+                        Link
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/graph?focus=${artifact.id}`)}>
+                      <GitBranch className="w-4 h-4 mr-2" />
+                      Graph
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {edgesLoading ? (
@@ -536,9 +576,15 @@ const ArtifactDetailPage = () => {
                       <Skeleton className="h-12 w-full" />
                     </div>
                   ) : !hasLinkedArtifacts ? (
-                    <p className="text-muted-foreground text-sm text-center py-8">
-                      No related artifacts yet
-                    </p>
+                    <div className="flex flex-col items-center gap-3 py-8">
+                      <p className="text-muted-foreground text-sm">No related artifacts yet</p>
+                      {linkRules[artifact.type] && (
+                        <Button variant="outline" size="sm" onClick={() => setIsLinkOpen(true)}>
+                          <Link2 className="w-4 h-4 mr-2" />
+                          Link a parent
+                        </Button>
+                      )}
+                    </div>
                   ) : (
                     <div className="space-y-6">
                       {/* Parent Artifacts (derived from) */}
@@ -549,12 +595,12 @@ const ArtifactDetailPage = () => {
                             <span className="text-sm font-medium text-muted-foreground">Derived From</span>
                           </div>
                           <div className="space-y-2">
-                            {linkedArtifacts.parents.map(({ artifact: parent, edgeType, source }) => {
+                            {linkedArtifacts.parents.map(({ artifact: parent, edgeId, edgeType, source, fromId, toId }) => {
                               const Icon = typeIcons[parent.type] || FileText;
                               return (
                                 <div
-                                  key={parent.id}
-                                  className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
+                                  key={edgeId}
+                                  className="group relative flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                                   onClick={() => navigate(`/artifacts/${parent.id}`)}
                                 >
                                   <div className="w-8 h-8 rounded-md bg-accent/10 flex items-center justify-center">
@@ -565,12 +611,25 @@ const ArtifactDetailPage = () => {
                                     <div className="flex items-center gap-2 mt-0.5">
                                       <span className="text-xs font-mono text-muted-foreground">{parent.short_id}</span>
                                       <Badge variant="outline" className="text-xs">{parent.type.replace("_", " ")}</Badge>
+                                      <Badge variant="secondary" className="text-xs">
+                                        {edgeTypeLabels[edgeType] || edgeType.replace("_", " ").toLowerCase()}
+                                      </Badge>
                                       {source === "AI_GENERATED" && (
                                         <Badge variant="secondary" className="text-xs">AI</Badge>
                                       )}
                                     </div>
                                   </div>
-                                  <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+                                  <button
+                                    type="button"
+                                    aria-label="Unlink"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUnlinkEdge(edgeId, { fromId, toId, edgeType, source }, parent.short_id);
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               );
                             })}
@@ -586,12 +645,12 @@ const ArtifactDetailPage = () => {
                             <span className="text-sm font-medium text-muted-foreground">Generated Artifacts</span>
                           </div>
                           <div className="space-y-2">
-                            {linkedArtifacts.children.map(({ artifact: child, edgeType, source }) => {
+                            {linkedArtifacts.children.map(({ artifact: child, edgeId, edgeType, source, fromId, toId }) => {
                               const Icon = typeIcons[child.type] || FileText;
                               return (
                                 <div
-                                  key={child.id}
-                                  className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
+                                  key={edgeId}
+                                  className="group relative flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                                   onClick={() => navigate(`/artifacts/${child.id}`)}
                                 >
                                   <div className="w-8 h-8 rounded-md bg-accent/10 flex items-center justify-center">
@@ -603,14 +662,24 @@ const ArtifactDetailPage = () => {
                                       <span className="text-xs font-mono text-muted-foreground">{child.short_id}</span>
                                       <Badge variant="outline" className="text-xs">{child.type.replace("_", " ")}</Badge>
                                       <Badge variant="secondary" className="text-xs">
-                                        {edgeTypeLabels[edgeType] || edgeType}
+                                        {edgeTypeLabels[edgeType] || edgeType.replace("_", " ").toLowerCase()}
                                       </Badge>
                                       {source === "AI_GENERATED" && (
                                         <Badge variant="secondary" className="text-xs">AI</Badge>
                                       )}
                                     </div>
                                   </div>
-                                  <ArrowDownRight className="w-4 h-4 text-muted-foreground" />
+                                  <button
+                                    type="button"
+                                    aria-label="Unlink"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUnlinkEdge(edgeId, { fromId, toId, edgeType, source }, child.short_id);
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               );
                             })}
@@ -765,6 +834,13 @@ const ArtifactDetailPage = () => {
         <PromptGeneratorDialog
           open={isPromptGenOpen}
           onOpenChange={setIsPromptGenOpen}
+          artifact={artifact}
+        />
+
+        {/* Link Artifact Dialog */}
+        <LinkArtifactDialog
+          open={isLinkOpen}
+          onOpenChange={setIsLinkOpen}
           artifact={artifact}
         />
       </AppLayout>
