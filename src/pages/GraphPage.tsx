@@ -1370,31 +1370,21 @@ const GraphPage = () => {
     return <LegacyPipelineLineageView onViewChange={handleViewChange} currentView="lineage" />;
   }
 
-  // No question → home
-  if (!qParam) {
-    return <GraphHome />;
-  }
-
-  // Full project map → the original canvas (kept intact as one answer)
-  if (qParam === "full-map") {
-    const handleViewChange = (value: string) => {
-      if (value === "lineage") setSearchParams({ view: "lineage" });
-      else setSearchParams({});
-    };
-    return (
-      <ReactFlowProvider>
-        <GraphPageInner onViewChange={handleViewChange} currentView="graph" />
-      </ReactFlowProvider>
-    );
-  }
-
-  // Other question views
-  if (isGraphQuestionId(qParam)) {
+  // Focused list answers (orphans, drift, etc.) — still reachable via ?q=
+  // The canvas is the default page; lenses ride on top of it via ?lens=...
+  if (qParam && qParam !== "full-map" && isGraphQuestionId(qParam)) {
     return <QuestionRouter questionId={qParam} />;
   }
 
-  // Unknown question → fall back to home
-  return <GraphHome />;
+  const handleViewChange = (value: string) => {
+    if (value === "lineage") setSearchParams({ view: "lineage" });
+    else setSearchParams({});
+  };
+  return (
+    <ReactFlowProvider>
+      <GraphPageInner onViewChange={handleViewChange} currentView="graph" />
+    </ReactFlowProvider>
+  );
 };
 
 function QuestionRouter({ questionId }: { questionId: GraphQuestionId }) {
