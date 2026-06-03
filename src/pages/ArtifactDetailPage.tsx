@@ -97,9 +97,41 @@ const ArtifactDetailPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isPromptGenOpen, setIsPromptGenOpen] = useState(false);
+  const [isLinkOpen, setIsLinkOpen] = useState(false);
   const [editedTitle, setEditedTitle] = useState("");
   const [editedContent, setEditedContent] = useState("");
   const [editedStatus, setEditedStatus] = useState<ArtifactStatus>("DRAFT");
+
+  const deleteEdge = useDeleteArtifactEdge();
+  const createEdge = useCreateArtifactEdge();
+
+  const handleUnlinkEdge = async (
+    edgeId: string,
+    snapshot: { fromId: string; toId: string; edgeType: string; source: string },
+    parentLabel: string,
+  ) => {
+    if (!artifact) return;
+    try {
+      await deleteEdge.mutateAsync({ edgeId, projectId: artifact.project_id });
+      sonner.success(`Unlinked ${parentLabel}`, {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            createEdge.mutate({
+              workspaceId: artifact.workspace_id,
+              projectId: artifact.project_id,
+              fromArtifactId: snapshot.fromId,
+              toArtifactId: snapshot.toId,
+              edgeType: snapshot.edgeType as any,
+              source: snapshot.source || "MANUAL",
+            });
+          },
+        },
+      });
+    } catch (e) {
+      sonner.error("Could not unlink");
+    }
+  };
 
   // Compute linked artifacts from edges
   const linkedArtifacts = useMemo(() => {
