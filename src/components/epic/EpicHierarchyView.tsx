@@ -685,24 +685,30 @@ function StoryRow({
       onDragEnd={onDragEnd}
       onClick={onOpen}
       className={cn(
-        "group flex items-center gap-2 px-2 py-1.5 rounded-md cursor-grab transition-colors",
-        "hover:bg-muted/50",
+        "group flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-md cursor-grab transition-colors",
+        "hover:bg-muted/40",
         draggingStoryId === story.id && "opacity-50",
       )}
     >
-      <GripVertical className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground shrink-0" />
-      <div
-        className={cn("w-1 h-1 rounded-full shrink-0", priorityDot[storyPriority])}
-      />
-      <FileText className="h-3 w-3 text-status-story-fg shrink-0" />
-      <span className="font-mono text-[10px] text-muted-foreground shrink-0">
+      <GripVertical className="h-3 w-3 text-muted-foreground/30 group-hover:text-muted-foreground/70 shrink-0" />
+      <span className="font-mono text-[10px] text-muted-foreground/70 shrink-0 w-[64px]">
         {story.short_id}
       </span>
-      <span className="text-[12px] text-foreground truncate flex-1">
+      <span className="text-[12.5px] text-foreground/90 truncate flex-1 leading-snug">
         {story.title}
       </span>
+      {isHighPriority(storyPriority) && (
+        <span className="text-[9px] uppercase tracking-[0.1em] font-semibold text-destructive shrink-0">
+          High
+        </span>
+      )}
+      {isLowPriority(storyPriority) && (
+        <span className="text-[9px] uppercase tracking-[0.1em] text-muted-foreground/60 shrink-0">
+          Low
+        </span>
+      )}
       {storyPoints && (
-        <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
+        <span className="text-[10px] text-muted-foreground/70 tabular-nums shrink-0 w-7 text-right">
           {storyPoints}pt
         </span>
       )}
@@ -718,4 +724,5 @@ function StoryRow({
       </button>
     </div>
   );
+
 }
