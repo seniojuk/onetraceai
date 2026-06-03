@@ -470,7 +470,10 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
       const isHighlighted = impactAnalysisMode && downstreamArtifactIds.has(artifact.id);
       const isUpstream = impactAnalysisMode && upstreamArtifactIds.has(artifact.id);
       const isSearchMatch = searchMatchIds.has(artifact.id);
-      const isDimmed = impactAnalysisMode && selectedNodeId && !isSelected && !isHighlighted && !isUpstream;
+      const isLensMatch = lensMatchIds ? lensMatchIds.has(artifact.id) : false;
+      const impactDim = impactAnalysisMode && selectedNodeId && !isSelected && !isHighlighted && !isUpstream;
+      const lensDim = lensActive && !isLensMatch;
+      const isDimmed = impactDim || lensDim;
       const drift = driftByArtifact.get(artifact.id);
       return {
         label: artifact.title,
@@ -478,14 +481,14 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
         shortId: artifact.short_id,
         status: artifact.status,
         isSelected,
-        isHighlighted,
+        isHighlighted: isHighlighted || (lensActive && isLensMatch),
         isUpstream,
         isSearchMatch,
         isDimmed,
         coverageRatio: coverageByArtifact.get(artifact.id) ?? null,
         hasDrift: drift?.hasDrift ?? false,
         driftSeverity: drift?.maxSeverity ?? null,
-        showOverlays,
+        showOverlays: showOverlays || lensOverlaysOn,
       };
     };
 
