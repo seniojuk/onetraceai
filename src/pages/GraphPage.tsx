@@ -202,8 +202,10 @@ const nodeTypes = {
 
 const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: string) => void; currentView: string }) => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const focusId = searchParams.get("focus");
+  const lensParam = (searchParams.get("lens") ?? "none") as
+    | "none" | "orphans" | "coverage-gaps" | "drift" | "recent";
   const { fitView, setCenter } = useReactFlow();
   
   const { currentProjectId, currentWorkspaceId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
@@ -215,6 +217,13 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const { data: driftFindings } = useDriftFindings(currentProjectId || undefined);
 
   const isLoading = artifactsLoading || edgesLoading;
+
+  const setLens = useCallback((next: typeof lensParam) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "none") params.delete("lens");
+    else params.set("lens", next);
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // Impact analysis state
   const [impactAnalysisMode, setImpactAnalysisMode] = useState(false);
