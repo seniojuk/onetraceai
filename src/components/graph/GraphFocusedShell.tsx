@@ -12,7 +12,7 @@ interface GraphFocusedShellProps {
   /** Right-aligned chip — typically the result count or status. */
   count?: string;
   /** Optional small subtitle under the question name. */
-  subtitle?: string;
+  subtitle?: ReactNode;
   /** Optional right-side controls (filter chips, view toggles). */
   actions?: ReactNode;
   children: ReactNode;
