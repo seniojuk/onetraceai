@@ -84,18 +84,6 @@ function Hero() {
           className="hero-glass hero-glass-b"
           decoding="async"
         />
-        <img
-          src={glass04.url}
-          alt=""
-          className="hero-glass hero-glass-c"
-          decoding="async"
-        />
-        <img
-          src={glass10.url}
-          alt=""
-          className="hero-glass hero-glass-d"
-          decoding="async"
-        />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-8 pt-32 pb-16 md:pt-40 md:pb-20">
