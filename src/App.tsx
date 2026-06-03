@@ -35,6 +35,7 @@ import UnsubscribePage from "./pages/UnsubscribePage";
 import DesignSystemPage from "./pages/DesignSystemPage";
 import PricingPage from "./pages/PricingPage";
 import { ProtectedLayout } from "./components/layout/ProtectedLayout";
+import { AuthProvider } from "./hooks/useAuth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,6 +56,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <AuthProvider>
         <ScrollToTop />
         <Routes>
           {/* Public routes */}
@@ -94,6 +96,7 @@ const App = () => (
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
     </ThemeProvider>
