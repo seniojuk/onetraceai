@@ -34,8 +34,19 @@ import AcceptInvitePage from "./pages/AcceptInvitePage";
 import UnsubscribePage from "./pages/UnsubscribePage";
 import DesignSystemPage from "./pages/DesignSystemPage";
 import PricingPage from "./pages/PricingPage";
+import { ProtectedLayout } from "./components/layout/ProtectedLayout";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Keep recently-fetched data fresh across navigations so the
+      // sidebar / switchers don't flash "Loading…" when re-mounting hooks.
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -46,6 +57,7 @@ const App = () => (
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
+          {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/auth" element={<AuthPage />} />
@@ -53,27 +65,33 @@ const App = () => (
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="/contact" element={<ContactPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
-          <Route path="/artifacts" element={<ArtifactsPage />} />
-          <Route path="/artifacts/new" element={<CreateArtifactPage />} />
-          <Route path="/artifacts/:id" element={<ArtifactDetailPage />} />
-          <Route path="/graph" element={<GraphPage />} />
-          <Route path="/lineage" element={<Navigate to="/graph?view=lineage" replace />} />
-          <Route path="/coverage" element={<CoveragePage />} />
-          <Route path="/drift" element={<DriftPage />} />
-          <Route path="/ai-agents" element={<AIAgentsPage />} />
-          <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/integrations/jira/callback" element={<JiraOAuthCallbackPage />} />
           <Route path="/integrations/github/callback" element={<GitHubOAuthCallbackPage />} />
-          <Route path="/team" element={<TeamPage />} />
-          <Route path="/billing" element={<BillingPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/admin" element={<PlatformAdminPage />} />
-          <Route path="/prompt-generator" element={<PromptGeneratorPage />} />
           <Route path="/invite/accept" element={<AcceptInvitePage />} />
           <Route path="/unsubscribe" element={<UnsubscribePage />} />
           <Route path="/design" element={<DesignSystemPage />} />
+          <Route path="/lineage" element={<Navigate to="/graph?view=lineage" replace />} />
+
+          {/* Protected routes — share a single mounted layout so the
+              sidebar / header don't remount on every navigation */}
+          <Route element={<ProtectedLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/artifacts" element={<ArtifactsPage />} />
+            <Route path="/artifacts/new" element={<CreateArtifactPage />} />
+            <Route path="/artifacts/:id" element={<ArtifactDetailPage />} />
+            <Route path="/graph" element={<GraphPage />} />
+            <Route path="/coverage" element={<CoveragePage />} />
+            <Route path="/drift" element={<DriftPage />} />
+            <Route path="/ai-agents" element={<AIAgentsPage />} />
+            <Route path="/integrations" element={<IntegrationsPage />} />
+            <Route path="/team" element={<TeamPage />} />
+            <Route path="/billing" element={<BillingPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/admin" element={<PlatformAdminPage />} />
+            <Route path="/prompt-generator" element={<PromptGeneratorPage />} />
+          </Route>
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
