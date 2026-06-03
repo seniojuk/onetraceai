@@ -1183,11 +1183,13 @@ export const AuthVisualSingle = ({
   const Render = RENDERERS[variant];
   return (
     <div className="flex h-full w-full flex-col justify-center gap-8 px-12 py-16">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="absolute inset-0 animate-fade-in">
+          <Render />
+        </div>
+      </div>
       <div>
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-          {eyebrow ?? "Traceability, visualized"}
-        </span>
-        <h2 className="mt-4 font-geist text-[28px] leading-[1.1] tracking-[-0.02em] text-foreground">
+        <h2 className="font-geist text-[28px] leading-[1.1] tracking-[-0.02em] text-foreground">
           {headline ?? meta.caption}
         </h2>
         {subline && (
@@ -1196,14 +1198,10 @@ export const AuthVisualSingle = ({
           </p>
         )}
       </div>
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="absolute inset-0 animate-fade-in">
-          <Render />
-        </div>
-      </div>
     </div>
   );
 };
+
 
 
 
