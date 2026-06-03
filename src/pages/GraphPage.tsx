@@ -23,7 +23,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { toPng, toSvg } from "html-to-image";
 import { jsPDF } from "jspdf";
-import { 
+import {
   Filter,
   LayoutGrid,
   Loader2,
@@ -41,6 +41,22 @@ import {
   ShieldAlert,
   BarChart3,
   AlertTriangle,
+  CheckCircle2,
+  FileText,
+  Layers,
+  Sparkles,
+  Ticket,
+  GitPullRequest,
+  TestTube2,
+  Bug,
+  Boxes,
+  GitCommit,
+  Rocket,
+  Cloud,
+  Lightbulb,
+  ScrollText,
+  File as FileIcon,
+  type LucideIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
