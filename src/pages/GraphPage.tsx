@@ -895,7 +895,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
             proOptions={{ hideAttribution: true }}
           >
             <Background
-              variant={"dots" as any}
+              variant={BackgroundVariant.Dots}
               gap={18}
               size={1}
               color="hsl(var(--border))"
