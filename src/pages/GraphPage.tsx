@@ -1331,54 +1331,137 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   );
 };
 
-// Wrapper component to provide ReactFlow context
+// ─────────────────────────────────────────────────────────────────────────────
+// /graph router
+//
+// The page is organized around saved questions (see src/lib/graphQuestions.ts).
+// No ?q= → Graph Home (insights + question grid + artifact picker).
+// ?q=full-map → the original full-project React Flow canvas (kept verbatim).
+// ?q=<anything else> → a focused question view.
+//
+// `view=lineage` (legacy deep-link) is preserved and routes to the
+// pipeline-lineage component as before.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { GraphHome } from "@/components/graph/GraphHome";
+import { GraphFocusedShell } from "@/components/graph/GraphFocusedShell";
+import { OrphansView } from "@/components/graph/questions/OrphansView";
+import { CoverageGapsView } from "@/components/graph/questions/CoverageGapsView";
+import { DriftView } from "@/components/graph/questions/DriftView";
+import { RecentlyChangedView } from "@/components/graph/questions/RecentlyChangedView";
+import { LineageWalkView } from "@/components/graph/questions/LineageWalkView";
+import {
+  isGraphQuestionId,
+  QUESTION_BY_ID,
+  type GraphQuestionId,
+} from "@/lib/graphQuestions";
+
 const GraphPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const currentView = searchParams.get("view") === "lineage" ? "lineage" : "graph";
-  const { currentProjectId, currentWorkspaceId } = useUIStore();
+  const view = searchParams.get("view");
+  const qParam = searchParams.get("q");
 
-  const handleViewChange = (value: string) => {
-    if (value === "lineage") {
-      setSearchParams({ view: "lineage" });
-    } else {
-      setSearchParams({});
-    }
-  };
+  // Legacy pipeline-lineage deep-link
+  if (view === "lineage") {
+    const handleViewChange = (value: string) => {
+      if (value === "lineage") setSearchParams({ view: "lineage" });
+      else setSearchParams({});
+    };
+    return <LegacyPipelineLineageView onViewChange={handleViewChange} currentView="lineage" />;
+  }
 
-  if (currentView === "lineage") {
+  // No question → home
+  if (!qParam) {
+    return <GraphHome />;
+  }
+
+  // Full project map → the original canvas (kept intact as one answer)
+  if (qParam === "full-map") {
+    const handleViewChange = (value: string) => {
+      if (value === "lineage") setSearchParams({ view: "lineage" });
+      else setSearchParams({});
+    };
     return (
-      <AuthGuard>
-        <AppLayout>
-          <div className="p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">Graph & Lineage</h1>
-                <p className="text-muted-foreground text-sm">
-                  Visual traceability of artifacts and pipeline runs
-                </p>
-              </div>
-              <Tabs value={currentView} onValueChange={handleViewChange}>
-                <TabsList>
-                  <TabsTrigger value="graph">Artifact Graph</TabsTrigger>
-                  <TabsTrigger value="lineage">Pipeline Lineage</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-            <ArtifactLineageView
-              projectId={currentProjectId || undefined}
-              workspaceId={currentWorkspaceId || undefined}
-            />
-          </div>
-        </AppLayout>
-      </AuthGuard>
+      <ReactFlowProvider>
+        <GraphPageInner onViewChange={handleViewChange} currentView="graph" />
+      </ReactFlowProvider>
     );
   }
 
-  return (
-    <ReactFlowProvider>
-      <GraphPageInner onViewChange={handleViewChange} currentView={currentView} />
-    </ReactFlowProvider>
-  );
+  // Other question views
+  if (isGraphQuestionId(qParam)) {
+    return <QuestionRouter questionId={qParam} />;
+  }
+
+  // Unknown question → fall back to home
+  return <GraphHome />;
 };
+
+function QuestionRouter({ questionId }: { questionId: GraphQuestionId }) {
+  switch (questionId) {
+    case "orphans":
+      return <OrphansView />;
+    case "coverage-gaps":
+      return <CoverageGapsView />;
+    case "drift":
+      return <DriftView />;
+    case "recent":
+      return <RecentlyChangedView />;
+    case "trace":
+      return <LineageWalkView questionId="trace" />;
+    case "blast-radius":
+      return <LineageWalkView questionId="blast-radius" />;
+    case "full-map":
+      // handled above with ReactFlowProvider
+      return null;
+    default: {
+      const q = QUESTION_BY_ID[questionId];
+      return (
+        <GraphFocusedShell question={q}>
+          <div className="px-6 py-12 text-center text-[12px] text-muted-foreground">
+            This question is coming next.
+          </div>
+        </GraphFocusedShell>
+      );
+    }
+  }
+}
+
+/**
+ * Preserves the original "Pipeline Lineage" tab view. Wrapped here so the
+ * new router stays clean. AppLayout is provided by the parent route now,
+ * so we don't re-wrap it.
+ */
+function LegacyPipelineLineageView({
+  onViewChange,
+  currentView,
+}: {
+  onViewChange: (value: string) => void;
+  currentView: string;
+}) {
+  const { currentProjectId, currentWorkspaceId } = useUIStore();
+  return (
+    <div className="p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Graph & Lineage</h1>
+          <p className="text-muted-foreground text-sm">
+            Visual traceability of artifacts and pipeline runs
+          </p>
+        </div>
+        <Tabs value={currentView} onValueChange={onViewChange}>
+          <TabsList>
+            <TabsTrigger value="graph">Artifact Graph</TabsTrigger>
+            <TabsTrigger value="lineage">Pipeline Lineage</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+      <ArtifactLineageView
+        projectId={currentProjectId || undefined}
+        workspaceId={currentWorkspaceId || undefined}
+      />
+    </div>
+  );
+}
 
 export default GraphPage;
