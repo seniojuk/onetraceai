@@ -205,7 +205,7 @@ const AuthPage = () => {
                       type="button"
                       className="text-[11.5px] text-accent hover:underline"
                     >
-                      Forgot?
+                      Forgot password
                     </button>
                   )}
                 </div>
