@@ -411,10 +411,25 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
 
       {/* Hint */}
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground/80 px-0.5">
-        <Sparkles className="w-3 h-3" />
-        Drag stories between epics, or use{" "}
-        <span className="text-foreground font-medium">Link</span> on any row.
+        <Sparkles className="w-3 h-3 shrink-0" />
+        {draggingStoryId ? (
+          <span className="text-foreground">
+            Hover an epic to expand it, then drop. Press{" "}
+            <kbd className="px-1 py-0.5 rounded border border-border bg-muted text-[10px] font-mono">
+              Esc
+            </kbd>{" "}
+            to cancel.
+          </span>
+        ) : (
+          <span>
+            Grab the{" "}
+            <GripVertical className="inline w-3 h-3 -mt-0.5 text-muted-foreground" />{" "}
+            handle to move a story, or use{" "}
+            <span className="text-foreground font-medium">Link</span> on any row.
+          </span>
+        )}
       </div>
+
 
       {/* Tree */}
       <div className="space-y-1.5">
