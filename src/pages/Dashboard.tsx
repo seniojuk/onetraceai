@@ -136,20 +136,20 @@ const Dashboard = () => {
   return (
     <AuthGuard>
       <AppLayout>
-        <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-8">
           {/* Header */}
-          <div className="flex items-end justify-between flex-wrap gap-4">
-            <div>
+          <div className="flex items-start sm:items-end justify-between flex-wrap gap-3">
+            <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/70 font-medium mb-1">
                 {currentProject ? `Project · ${currentProject.project_key}` : "Dashboard"}
               </div>
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground truncate">
                 {currentProject?.name || "Dashboard"}
               </h1>
             </div>
 
             {currentProject && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 -mx-1 px-1 overflow-x-auto sm:overflow-visible scrollbar-none max-w-full">
                 <QuickAction icon={FileText} label="New PRD" onClick={() => navigate("/artifacts/new?type=PRD")} />
                 <QuickAction icon={Sparkles} label="Generate stories" onClick={() => navigate("/ai-runs/new?type=story")} />
                 <QuickAction icon={Wand2} label="Prompt gen" onClick={() => navigate("/prompt-generator")} />
@@ -157,6 +157,7 @@ const Dashboard = () => {
               </div>
             )}
           </div>
+
 
           {!currentProject ? (
             <EmptyState
@@ -223,7 +224,7 @@ const Dashboard = () => {
                         <button
                           key={`${item.kind}-${item.id}`}
                           onClick={item.onClick}
-                          className="w-full flex items-center gap-3 px-5 py-3 hover:bg-muted/40 transition-colors text-left group"
+                          className="w-full flex items-center gap-3 px-4 sm:px-5 py-3 hover:bg-muted/40 transition-colors text-left group"
                         >
                           <SeverityDot kind={item.kind} severity={item.severity} />
                           <div className="flex-1 min-w-0">
@@ -232,10 +233,10 @@ const Dashboard = () => {
                               <p className="text-[11px] text-muted-foreground truncate mt-0.5">{item.meta}</p>
                             )}
                           </div>
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+                          <span className="hidden sm:inline text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium whitespace-nowrap">
                             {item.kind === "drift" ? "Drift" : "In progress"}
                           </span>
-                          <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
+                          <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors shrink-0" />
                         </button>
                       ))
                     )}
@@ -323,13 +324,13 @@ const Dashboard = () => {
                       <li key={artifact.id}>
                         <button
                           onClick={() => navigate(`/artifacts/${artifact.id}`)}
-                          className="w-full flex items-center gap-3 px-5 py-3 hover:bg-muted/40 transition-colors text-left group"
+                          className="w-full flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 hover:bg-muted/40 transition-colors text-left group"
                         >
                           <ArtifactTypeChip type={artifact.type} />
-                          <span className="font-mono text-[10px] text-muted-foreground w-16 shrink-0">{artifact.short_id}</span>
+                          <span className="hidden sm:inline font-mono text-[10px] text-muted-foreground w-16 shrink-0">{artifact.short_id}</span>
                           <span className="flex-1 text-[13px] text-foreground truncate">{artifact.title}</span>
                           <StatusDot status={artifact.status} />
-                          <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors" />
+                          <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground/40 group-hover:text-foreground transition-colors shrink-0" />
                         </button>
                       </li>
                     ))}

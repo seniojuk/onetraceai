@@ -292,10 +292,10 @@ function InnerLayout({ children }: AppLayoutProps) {
 
       <main className="flex-1 flex flex-col min-w-0">
         {/* Command bar header */}
-        <header className="h-14 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30 flex items-center justify-between px-4 gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
-            <div className="h-4 w-px bg-border mx-1" />
+        <header className="h-14 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30 flex items-center justify-between px-2 sm:px-4 gap-2 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
+            <SidebarTrigger className="text-muted-foreground hover:text-foreground shrink-0" />
+            <div className="hidden sm:block h-4 w-px bg-border mx-1" />
 
             {/* Workspace switcher */}
             <DropdownMenu>
@@ -303,12 +303,13 @@ function InnerLayout({ children }: AppLayoutProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 gap-1.5 px-2 text-[13px] font-medium hover:bg-muted"
+                  className="h-8 gap-1.5 px-2 text-[13px] font-medium hover:bg-muted shrink-0"
+                  aria-label="Switch workspace"
                 >
                   <div className="w-4 h-4 rounded-sm bg-accent/15 flex items-center justify-center text-[9px] font-bold text-accent">
                     {currentWorkspace?.name?.charAt(0) || "W"}
                   </div>
-                  <span className="truncate max-w-[140px]">
+                  <span className="hidden md:inline truncate max-w-[140px]">
                     {currentWorkspace?.name || "Select workspace"}
                   </span>
                   <ChevronDown className="w-3 h-3 text-muted-foreground/60" />
@@ -351,21 +352,21 @@ function InnerLayout({ children }: AppLayoutProps) {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <span className="text-muted-foreground/40 text-sm">/</span>
+            <span className="hidden md:inline text-muted-foreground/40 text-sm">/</span>
 
             {/* Project switcher */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-[13px] font-medium hover:bg-muted">
+                <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-[13px] font-medium hover:bg-muted min-w-0">
                   {currentProject?.project_key && (
-                    <span className="font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    <span className="font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded shrink-0">
                       {currentProject.project_key}
                     </span>
                   )}
-                  <span className="truncate max-w-[160px]">
+                  <span className="truncate max-w-[120px] sm:max-w-[160px]">
                     {currentProject?.name || "Select project"}
                   </span>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground/60" />
+                  <ChevronDown className="w-3 h-3 text-muted-foreground/60 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-72">
@@ -406,12 +407,13 @@ function InnerLayout({ children }: AppLayoutProps) {
             </DropdownMenu>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 gap-1.5 text-[13px]"
+              className="h-8 gap-1.5 text-[13px] px-2 sm:px-3"
               onClick={() => navigate("/artifacts/new")}
+              aria-label="New artifact"
             >
               <Plus className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">New artifact</span>

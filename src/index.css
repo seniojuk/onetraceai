@@ -496,6 +496,10 @@
   .delay-400 { animation-delay: 400ms; }
   .delay-500 { animation-delay: 500ms; }
 
+  /* Hide scrollbars while keeping scroll behavior (used for horizontal action rows) */
+  .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+
   /* Micro-interactions */
   .lift {
     transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
