@@ -1,4 +1,4 @@
-import { useState, useMemo, DragEvent } from "react";
+import { useState, useMemo, useEffect, useRef, DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronDown,
@@ -79,6 +79,24 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
     null,
   );
   const [linkTarget, setLinkTarget] = useState<Artifact | null>(null);
+
+  // Track which epic the cursor is hovering during a drag, to auto-expand it
+  const hoverExpandTimer = useRef<number | null>(null);
+
+  // ESC cancels an in-flight drag — calmer escape hatch
+  useEffect(() => {
+    if (!draggingStoryId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setDraggingStoryId(null);
+        setDraggingFromEpicId(null);
+        setDragOverEpicId(null);
+        setDragOverUnlinked(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [draggingStoryId]);
 
   const epicHierarchy = useMemo((): EpicWithStories[] => {
     if (!allArtifacts || !edges) return [];
@@ -185,11 +203,28 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
     e.dataTransfer.setData("storyId", storyId);
     if (fromEpicId) e.dataTransfer.setData("fromEpicId", fromEpicId);
     e.dataTransfer.effectAllowed = "move";
+
+    // Use the row element itself as the drag image so the user sees what they're moving
+    const target = e.currentTarget as HTMLElement;
+    try {
+      e.dataTransfer.setDragImage(target, 12, 12);
+    } catch {
+      /* noop — some browsers */
+    }
+
     setDraggingStoryId(storyId);
     setDraggingFromEpicId(fromEpicId || null);
   };
 
+  const clearHoverTimer = () => {
+    if (hoverExpandTimer.current) {
+      window.clearTimeout(hoverExpandTimer.current);
+      hoverExpandTimer.current = null;
+    }
+  };
+
   const handleDragEnd = () => {
+    clearHoverTimer();
     setDraggingStoryId(null);
     setDraggingFromEpicId(null);
     setDragOverEpicId(null);
@@ -199,8 +234,22 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
   const handleDragOver = (e: DragEvent<HTMLDivElement>, epicId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
+    if (dragOverEpicId === epicId) return;
     setDragOverEpicId(epicId);
     setDragOverUnlinked(false);
+
+    // Auto-expand collapsed epic after a short dwell so user can see what they're dropping into
+    clearHoverTimer();
+    if (!expandedEpics.has(epicId)) {
+      hoverExpandTimer.current = window.setTimeout(() => {
+        setExpandedEpics((prev) => new Set(prev).add(epicId));
+      }, 450);
+    }
+  };
+
+  const handleEpicDragLeave = () => {
+    clearHoverTimer();
+    setDragOverEpicId(null);
   };
 
   const handleUnlinkedDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -208,10 +257,12 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
     e.dataTransfer.dropEffect = "move";
     setDragOverUnlinked(true);
     setDragOverEpicId(null);
+    clearHoverTimer();
   };
 
   const handleDrop = async (e: DragEvent<HTMLDivElement>, epicId: string) => {
     e.preventDefault();
+    clearHoverTimer();
     setDragOverEpicId(null);
     setDraggingStoryId(null);
     setDraggingFromEpicId(null);
@@ -360,10 +411,25 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
 
       {/* Hint */}
       <div className="flex items-center gap-2 text-[11px] text-muted-foreground/80 px-0.5">
-        <Sparkles className="w-3 h-3" />
-        Drag stories between epics, or use{" "}
-        <span className="text-foreground font-medium">Link</span> on any row.
+        <Sparkles className="w-3 h-3 shrink-0" />
+        {draggingStoryId ? (
+          <span className="text-foreground">
+            Hover an epic to expand it, then drop. Press{" "}
+            <kbd className="px-1 py-0.5 rounded border border-border bg-muted text-[10px] font-mono">
+              Esc
+            </kbd>{" "}
+            to cancel.
+          </span>
+        ) : (
+          <span>
+            Grab the{" "}
+            <GripVertical className="inline w-3 h-3 -mt-0.5 text-muted-foreground" />{" "}
+            handle to move a story, or use{" "}
+            <span className="text-foreground font-medium">Link</span> on any row.
+          </span>
+        )}
       </div>
+
 
       {/* Tree */}
       <div className="space-y-1.5">
@@ -393,18 +459,24 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                   <CollapsibleTrigger asChild>
                     <div
                       className={cn(
-                        "group flex items-center gap-3 px-3.5 py-3 rounded-lg border bg-card cursor-pointer transition-all",
+                        "group relative flex items-center gap-3 px-3.5 py-3 rounded-lg border bg-card cursor-pointer transition-colors",
                         "hover:border-foreground/20",
                         isExpanded
                           ? "border-foreground/15 bg-muted/20 shadow-[0_1px_0_hsl(var(--border))]"
                           : "border-border",
+                        // Calmer drop affordance: inset outline + faint tint, no jarring ring
                         dragOverEpicId === epic.id &&
-                          "ring-2 ring-accent border-accent bg-accent/5",
+                          "border-accent/60 bg-accent/[0.04] before:absolute before:inset-1 before:rounded-md before:border before:border-dashed before:border-accent/60 before:pointer-events-none",
+                        // While ANY story is dragging, mark this as a valid landing area subtly
+                        draggingStoryId &&
+                          dragOverEpicId !== epic.id &&
+                          "border-dashed",
                       )}
                       onDragOver={(e) => handleDragOver(e, epic.id)}
-                      onDragLeave={() => setDragOverEpicId(null)}
+                      onDragLeave={handleEpicDragLeave}
                       onDrop={(e) => handleDrop(e, epic.id)}
                     >
+
                       <button
                         type="button"
                         className="text-muted-foreground/60 shrink-0"
@@ -546,15 +618,16 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                 <CollapsibleTrigger asChild>
                   <div
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg border border-dashed border-border cursor-pointer transition-all",
+                      "relative flex items-center gap-3 px-3 py-2.5 rounded-lg border border-dashed border-border cursor-pointer transition-colors",
                       "hover:border-foreground/30 hover:bg-muted/30",
                       dragOverUnlinked &&
-                        "ring-2 ring-destructive/40 border-destructive bg-destructive/5",
+                        "border-destructive/60 bg-destructive/[0.04] before:absolute before:inset-1 before:rounded-md before:border before:border-dashed before:border-destructive/60 before:pointer-events-none",
                     )}
                     onDragOver={handleUnlinkedDragOver}
                     onDragLeave={() => setDragOverUnlinked(false)}
                     onDrop={handleUnlinkedDrop}
                   >
+
                     <button
                       type="button"
                       className="text-muted-foreground shrink-0"
@@ -675,22 +748,38 @@ function StoryRow({
   const storyPriority = storyData?.priority?.toLowerCase() || "medium";
   const storyPoints = storyData?.storyPoints;
 
+  const isDragging = draggingStoryId === story.id;
+
   return (
     <div
-      draggable
-      onDragStart={(e) => {
-        e.stopPropagation();
-        onDragStart(e, story.id, fromEpicId);
-      }}
-      onDragEnd={onDragEnd}
+      // Whole row is NOT draggable — click safely opens the story.
       onClick={onOpen}
       className={cn(
-        "group flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-md cursor-grab transition-colors",
+        "group flex items-center gap-2 pl-1 pr-2 py-1.5 rounded-md cursor-pointer transition-colors",
         "hover:bg-muted/40",
-        draggingStoryId === story.id && "opacity-50",
+        isDragging && "opacity-40",
       )}
     >
-      <GripVertical className="h-3 w-3 text-muted-foreground/30 group-hover:text-muted-foreground/70 shrink-0" />
+      {/* Drag handle — the ONLY draggable surface. Always visible at low contrast so users trust it. */}
+      <div
+        draggable
+        onDragStart={(e) => {
+          e.stopPropagation();
+          onDragStart(e, story.id, fromEpicId);
+        }}
+        onDragEnd={onDragEnd}
+        onClick={(e) => e.stopPropagation()}
+        title="Drag to move to another epic"
+        aria-label="Drag handle"
+        className={cn(
+          "flex items-center justify-center h-6 w-5 rounded shrink-0 transition-colors",
+          "text-muted-foreground/50 hover:text-foreground hover:bg-muted",
+          "cursor-grab active:cursor-grabbing",
+        )}
+      >
+        <GripVertical className="h-3.5 w-3.5" />
+      </div>
+
       <span className="font-mono text-[10px] text-muted-foreground/70 shrink-0 w-[64px]">
         {story.short_id}
       </span>
@@ -724,5 +813,6 @@ function StoryRow({
       </button>
     </div>
   );
+
 
 }
