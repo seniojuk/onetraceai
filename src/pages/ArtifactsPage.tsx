@@ -147,31 +147,41 @@ const ArtifactsPage = () => {
     const filteredIds = new Set(filteredArtifacts.map((a) => a.id));
     const artifactMap = new Map(allArtifacts.map((a) => [a.id, a]));
 
-    const cMap = new Map<string, Artifact[]>();
-    const childIds = new Set<string>();
-
-    for (const edge of projectEdges) {
-      if (edge.edge_type === "CONTAINS" || edge.edge_type === "DERIVES_FROM") {
-        const parentId = edge.from_artifact_id;
-        const childId = edge.to_artifact_id;
-        const childArtifact = artifactMap.get(childId);
-        if (childArtifact && artifactMap.has(parentId)) {
-          childIds.add(childId);
-          if (!cMap.has(parentId)) cMap.set(parentId, []);
-          const existing = cMap.get(parentId)!;
-          if (!existing.some((c) => c.id === childId)) existing.push(childArtifact);
-        }
+    // Pick ONE canonical parent per child to avoid duplicates.
+    // Priority: parent_artifact_id > CONTAINS edge > DERIVES_FROM edge.
+    const parentOf = new Map<string, { parentId: string; priority: number }>();
+    const setParent = (childId: string, parentId: string, priority: number) => {
+      if (!artifactMap.has(parentId) || !artifactMap.has(childId)) return;
+      if (parentId === childId) return;
+      const existing = parentOf.get(childId);
+      if (!existing || priority < existing.priority) {
+        parentOf.set(childId, { parentId, priority });
       }
-    }
+    };
 
     for (const a of allArtifacts) {
-      if (a.parent_artifact_id && artifactMap.has(a.parent_artifact_id)) {
-        childIds.add(a.id);
-        if (!cMap.has(a.parent_artifact_id)) cMap.set(a.parent_artifact_id, []);
-        const existing = cMap.get(a.parent_artifact_id)!;
-        if (!existing.some((c) => c.id === a.id)) existing.push(a);
+      if (a.parent_artifact_id) setParent(a.id, a.parent_artifact_id, 0);
+    }
+    for (const edge of projectEdges) {
+      if (edge.edge_type === "CONTAINS") {
+        setParent(edge.to_artifact_id, edge.from_artifact_id, 1);
       }
     }
+    for (const edge of projectEdges) {
+      if (edge.edge_type === "DERIVES_FROM") {
+        setParent(edge.to_artifact_id, edge.from_artifact_id, 2);
+      }
+    }
+
+    const cMap = new Map<string, Artifact[]>();
+    const childIds = new Set<string>();
+    for (const [childId, { parentId }] of parentOf) {
+      const child = artifactMap.get(childId)!;
+      childIds.add(childId);
+      if (!cMap.has(parentId)) cMap.set(parentId, []);
+      cMap.get(parentId)!.push(child);
+    }
+
 
     const visibleIds = new Set<string>(filteredIds);
     const findAncestors = (id: string) => {
