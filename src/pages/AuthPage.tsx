@@ -130,6 +130,7 @@ const AuthPage = () => {
         {/* Left: form */}
         <div className="flex items-center py-12 lg:pr-12">
           <div className="w-full max-w-md">
+            <div key={isLogin ? "login" : "signup"} className="animate-fade-in">
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
               {isLogin ? "Sign in" : "Create account"}
             </span>
@@ -234,7 +235,7 @@ const AuthPage = () => {
               </div>
 
               {!isLogin && (
-                <div className="space-y-2">
+                <div className="space-y-2 animate-fade-in">
                   <Label htmlFor="confirmPassword" className="text-[12.5px] font-medium">
                     Confirm password
                   </Label>
@@ -296,6 +297,7 @@ const AuthPage = () => {
                 .
               </p>
             )}
+            </div>
           </div>
         </div>
 
