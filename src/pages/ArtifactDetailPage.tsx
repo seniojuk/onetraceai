@@ -589,12 +589,12 @@ const ArtifactDetailPage = () => {
                             <span className="text-sm font-medium text-muted-foreground">Derived From</span>
                           </div>
                           <div className="space-y-2">
-                            {linkedArtifacts.parents.map(({ artifact: parent, edgeType, source }) => {
+                            {linkedArtifacts.parents.map(({ artifact: parent, edgeId, edgeType, source, fromId, toId }) => {
                               const Icon = typeIcons[parent.type] || FileText;
                               return (
                                 <div
-                                  key={parent.id}
-                                  className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
+                                  key={edgeId}
+                                  className="group relative flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                                   onClick={() => navigate(`/artifacts/${parent.id}`)}
                                 >
                                   <div className="w-8 h-8 rounded-md bg-accent/10 flex items-center justify-center">
@@ -605,12 +605,25 @@ const ArtifactDetailPage = () => {
                                     <div className="flex items-center gap-2 mt-0.5">
                                       <span className="text-xs font-mono text-muted-foreground">{parent.short_id}</span>
                                       <Badge variant="outline" className="text-xs">{parent.type.replace("_", " ")}</Badge>
+                                      <Badge variant="secondary" className="text-xs">
+                                        {edgeTypeLabels[edgeType] || edgeType.replace("_", " ").toLowerCase()}
+                                      </Badge>
                                       {source === "AI_GENERATED" && (
                                         <Badge variant="secondary" className="text-xs">AI</Badge>
                                       )}
                                     </div>
                                   </div>
-                                  <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+                                  <button
+                                    type="button"
+                                    aria-label="Unlink"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUnlinkEdge(edgeId, { fromId, toId, edgeType, source }, parent.short_id);
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               );
                             })}
@@ -626,12 +639,12 @@ const ArtifactDetailPage = () => {
                             <span className="text-sm font-medium text-muted-foreground">Generated Artifacts</span>
                           </div>
                           <div className="space-y-2">
-                            {linkedArtifacts.children.map(({ artifact: child, edgeType, source }) => {
+                            {linkedArtifacts.children.map(({ artifact: child, edgeId, edgeType, source, fromId, toId }) => {
                               const Icon = typeIcons[child.type] || FileText;
                               return (
                                 <div
-                                  key={child.id}
-                                  className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
+                                  key={edgeId}
+                                  className="group relative flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                                   onClick={() => navigate(`/artifacts/${child.id}`)}
                                 >
                                   <div className="w-8 h-8 rounded-md bg-accent/10 flex items-center justify-center">
@@ -643,14 +656,24 @@ const ArtifactDetailPage = () => {
                                       <span className="text-xs font-mono text-muted-foreground">{child.short_id}</span>
                                       <Badge variant="outline" className="text-xs">{child.type.replace("_", " ")}</Badge>
                                       <Badge variant="secondary" className="text-xs">
-                                        {edgeTypeLabels[edgeType] || edgeType}
+                                        {edgeTypeLabels[edgeType] || edgeType.replace("_", " ").toLowerCase()}
                                       </Badge>
                                       {source === "AI_GENERATED" && (
                                         <Badge variant="secondary" className="text-xs">AI</Badge>
                                       )}
                                     </div>
                                   </div>
-                                  <ArrowDownRight className="w-4 h-4 text-muted-foreground" />
+                                  <button
+                                    type="button"
+                                    aria-label="Unlink"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleUnlinkEdge(edgeId, { fromId, toId, edgeType, source }, child.short_id);
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
                                 </div>
                               );
                             })}
