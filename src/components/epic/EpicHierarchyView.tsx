@@ -118,8 +118,8 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
       return window;
     };
 
-    const EDGE = 90; // px from edge to trigger
-    const MAX_SPEED = 22; // px per frame
+    const EDGE = 180; // px from edge to trigger
+    const MAX_SPEED = 32; // px per frame
 
     const tick = () => {
       raf = null;
