@@ -1168,18 +1168,33 @@ export { VARIANTS };
 export type { Variant };
 
 /* Single-variant renderer for use outside the picker (e.g. auth page). */
-export const AuthVisualSingle = ({ variant }: { variant: Variant }) => {
+export const AuthVisualSingle = ({
+  variant,
+  eyebrow,
+  headline,
+  subline,
+}: {
+  variant: Variant;
+  eyebrow?: string;
+  headline?: string;
+  subline?: string;
+}) => {
   const meta = VARIANTS.find((v) => v.id === variant)!;
   const Render = RENDERERS[variant];
   return (
     <div className="flex h-full w-full flex-col justify-center gap-8 px-12 py-16">
       <div>
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-          Traceability, visualized
+          {eyebrow ?? "Traceability, visualized"}
         </span>
         <h2 className="mt-4 font-geist text-[28px] leading-[1.1] tracking-[-0.02em] text-foreground">
-          {meta.caption}
+          {headline ?? meta.caption}
         </h2>
+        {subline && (
+          <p className="mt-3 max-w-[34ch] font-geist text-[14px] leading-[1.5] text-muted-foreground">
+            {subline}
+          </p>
+        )}
       </div>
       <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-card">
         <div className="absolute inset-0 animate-fade-in">
@@ -1189,6 +1204,7 @@ export const AuthVisualSingle = ({ variant }: { variant: Variant }) => {
     </div>
   );
 };
+
 
 
 export const AuthVisualShowcase = () => {
