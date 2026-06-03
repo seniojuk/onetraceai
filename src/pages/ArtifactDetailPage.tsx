@@ -576,9 +576,15 @@ const ArtifactDetailPage = () => {
                       <Skeleton className="h-12 w-full" />
                     </div>
                   ) : !hasLinkedArtifacts ? (
-                    <p className="text-muted-foreground text-sm text-center py-8">
-                      No related artifacts yet
-                    </p>
+                    <div className="flex flex-col items-center gap-3 py-8">
+                      <p className="text-muted-foreground text-sm">No related artifacts yet</p>
+                      {linkRules[artifact.type] && (
+                        <Button variant="outline" size="sm" onClick={() => setIsLinkOpen(true)}>
+                          <Link2 className="w-4 h-4 mr-2" />
+                          Link a parent
+                        </Button>
+                      )}
+                    </div>
                   ) : (
                     <div className="space-y-6">
                       {/* Parent Artifacts (derived from) */}
@@ -828,6 +834,13 @@ const ArtifactDetailPage = () => {
         <PromptGeneratorDialog
           open={isPromptGenOpen}
           onOpenChange={setIsPromptGenOpen}
+          artifact={artifact}
+        />
+
+        {/* Link Artifact Dialog */}
+        <LinkArtifactDialog
+          open={isLinkOpen}
+          onOpenChange={setIsLinkOpen}
           artifact={artifact}
         />
       </AppLayout>
