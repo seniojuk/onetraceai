@@ -610,7 +610,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
             width: 15,
             height: 15,
           },
-          style: { stroke: "hsl(var(--muted-foreground))", strokeWidth: 2 },
+          style: { stroke: "hsl(var(--muted-foreground))", strokeWidth: 1.25, opacity: 0.55 },
         }));
     }
     
