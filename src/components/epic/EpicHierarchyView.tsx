@@ -504,12 +504,12 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                   </CollapsibleTrigger>
 
                   <CollapsibleContent>
-                    <div className="ml-5 mt-1 mb-2 space-y-0.5 border-l border-border pl-3">
+                    <div className="ml-[26px] mt-0.5 mb-1.5 pl-3 border-l border-dashed border-border/70">
                       {stories.length === 0 ? (
-                        <div className="text-[12px] text-muted-foreground py-2 px-2">
+                        <div className="text-[12px] text-muted-foreground/80 py-2 px-2 italic">
                           No stories linked. Drag a story here, or use{" "}
                           <button
-                            className="text-foreground hover:underline"
+                            className="not-italic text-foreground hover:underline font-medium"
                             onClick={() => setLinkTarget(epic)}
                           >
                             Link
@@ -532,6 +532,7 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
                       )}
                     </div>
                   </CollapsibleContent>
+
                 </Collapsible>
               );
             })}
