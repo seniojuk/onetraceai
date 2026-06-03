@@ -283,24 +283,6 @@
     animation-delay: -7s;
   }
 
-  .hero-glass-c {
-    top: 120px;
-    left: -44px;
-    width: min(18vw, 240px);
-    opacity: 0.52;
-    animation-duration: 22s;
-    animation-delay: -10s;
-  }
-
-  .hero-glass-d {
-    bottom: 24px;
-    left: 6%;
-    width: min(22vw, 290px);
-    opacity: 0.42;
-    animation-duration: 26s;
-    animation-delay: -13s;
-  }
-
   @keyframes hero-glass-float {
     0%,
     100% {
@@ -319,17 +301,8 @@
       opacity: 0.4;
     }
 
-    .hero-glass-b,
-    .hero-glass-c {
+    .hero-glass-b {
       display: none;
-    }
-
-    .hero-glass-d {
-      left: auto;
-      right: -34px;
-      bottom: 140px;
-      width: 180px;
-      opacity: 0.28;
     }
   }
 
