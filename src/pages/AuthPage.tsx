@@ -301,7 +301,7 @@ const AuthPage = () => {
 
         {/* Right: editorial proof rail */}
         <aside className="hidden items-center border-l border-border lg:flex">
-          <AuthVisualShowcase />
+          <AuthVisualSingle variant="sync" />
         </aside>
       </main>
     </div>
