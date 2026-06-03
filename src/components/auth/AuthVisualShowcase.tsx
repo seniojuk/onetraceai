@@ -437,31 +437,28 @@ const Sync = () => {
         ))}
       </g>
 
-      {/* Jira-ish */}
+      {/* Jira mark — three stacked chevrons */}
       <g transform={`translate(${L.x} ${L.y})`}>
         <circle r="22" fill={BG} stroke={STROKE} strokeOpacity="0.7" strokeWidth="0.9" />
-        <g stroke={STROKE} strokeOpacity="0.85" strokeWidth="0.9" fill="none">
-          <rect x="-9" y="-9" width="8" height="8" />
-          <rect x="1" y="-9" width="8" height="8" />
-          <rect x="-9" y="1" width="8" height="8" />
-          <rect x="1" y="1" width="8" height="8" fill={STROKE} fillOpacity="0.85">
-            <Breathe values="0.55;0.95;0.55" dur={3.4} />
-          </rect>
+        <g transform="translate(-11 -11) scale(0.9)" fill={STROKE} fillOpacity="0.95">
+          <path d="M12 0 L24 12 L18 18 L12 12 L6 18 L0 12 Z" />
+          <path d="M12 8 L20 16 L14 22 L12 20 L10 22 L4 16 Z" opacity="0.75" />
+          <path d="M12 16 L16 20 L12 24 L8 20 Z" opacity="0.55">
+            <Breathe values="0.4;0.85;0.4" dur={3.4} />
+          </path>
         </g>
       </g>
-      {/* GitHub-ish */}
+      {/* GitHub mark — Octocat silhouette */}
       <g transform={`translate(${R.x} ${R.y})`}>
         <circle r="22" fill={BG} stroke={STROKE} strokeOpacity="0.7" strokeWidth="0.9" />
-        <g stroke={STROKE} strokeOpacity="0.85" strokeWidth="1" fill="none" strokeLinecap="round">
-          <line x1="-7" y1="-9" x2="-7" y2="9" />
-          <line x1="7" y1="-9" x2="7" y2="2" />
-          <path d="M -7 0 Q 0 0 7 0" />
-          <circle cx="-7" cy="-9" r="2" fill={STROKE} />
-          <circle cx="-7" cy="9" r="2" fill={STROKE}>
-            <Breathe values="0.55;1;0.55" dur={3.4} begin={1.2} />
-          </circle>
-          <circle cx="7" cy="2" r="2" fill={STROKE} />
-        </g>
+        <path
+          transform="translate(-12 -12) scale(0.024)"
+          fill={STROKE}
+          fillOpacity="0.95"
+          d="M499.953 0C223.701 0 0 223.748 0 499.953c0 220.917 143.214 408.426 341.851 474.554 24.99 4.589 34.131-10.857 34.131-24.064 0-11.857-.428-43.297-.666-85.018-139.06 30.219-168.413-67.039-168.413-67.039-22.731-57.738-55.49-73.114-55.49-73.114-45.32-30.98 3.444-30.362 3.444-30.362 50.146 3.515 76.531 51.474 76.531 51.474 44.559 76.342 116.918 54.275 145.413 41.496 4.493-32.281 17.43-54.299 31.701-66.776-110.985-12.62-227.685-55.49-227.685-247.033 0-54.561 19.521-99.169 51.426-134.149-5.184-12.62-22.302-63.451 4.85-132.293 0 0 41.924-13.421 137.292 51.236 39.829-11.072 82.51-16.62 124.954-16.81 42.397.19 85.113 5.738 124.99 16.81 95.273-64.657 137.149-51.236 137.149-51.236 27.224 68.842 10.105 119.673 4.945 132.293 32.001 34.98 51.379 79.588 51.379 134.149 0 192.018-116.89 234.27-228.21 246.652 17.93 15.42 33.926 45.892 33.926 92.518 0 66.81-.619 120.681-.619 137.077 0 13.326 9.022 28.891 34.36 24.016C856.83 908.331 1000 720.846 1000 499.953 1000 223.748 776.275 0 499.953 0z"
+        >
+          <animate attributeName="fill-opacity" values="0.7;1;0.7" dur="3.4s" begin="1.2s" repeatCount="indefinite" />
+        </path>
       </g>
       {/* center */}
       <g transform={`translate(${cx} ${cy})`}>
