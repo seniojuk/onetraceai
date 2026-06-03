@@ -1,19 +1,21 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import { User, Session, AuthError } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+
+type AuthResult<T = unknown> = { data: T; error: AuthError | null };
 
 export interface AuthContextValue {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signUp: (email: string, password: string) => Promise<{ data: unknown; error: unknown }>;
-  signIn: (email: string, password: string) => Promise<{ data: unknown; error: unknown }>;
+  signUp: (email: string, password: string) => Promise<AuthResult>;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
   signInWithOAuth: (
     provider: "google" | "github" | "azure",
-  ) => Promise<{ data: unknown; error: unknown }>;
-  signOut: () => Promise<{ error: unknown }>;
-  resetPassword: (email: string) => Promise<{ data: unknown; error: unknown }>;
-  updatePassword: (password: string) => Promise<{ data: unknown; error: unknown }>;
+  ) => Promise<AuthResult>;
+  signOut: () => Promise<{ error: AuthError | null }>;
+  resetPassword: (email: string) => Promise<AuthResult>;
+  updatePassword: (password: string) => Promise<AuthResult>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
