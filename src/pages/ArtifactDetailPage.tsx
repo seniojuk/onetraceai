@@ -402,6 +402,12 @@ const ArtifactDetailPage = () => {
                       Generate Stories
                     </Button>
                   )}
+                  {linkRules[artifact.type] && (
+                    <Button variant="outline" onClick={() => setIsLinkOpen(true)}>
+                      <Link2 className="w-4 h-4 mr-2" />
+                      Link
+                    </Button>
+                  )}
                   <Button variant="outline" onClick={handleEdit}>
                     <Edit2 className="w-4 h-4 mr-2" />
                     Edit
@@ -550,10 +556,18 @@ const ArtifactDetailPage = () => {
                     <CardTitle>Related Artifacts</CardTitle>
                     <CardDescription>Connected through the artifact graph</CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/graph?focus=${artifact.id}`)}>
-                    <GitBranch className="w-4 h-4 mr-2" />
-                    View Graph
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {linkRules[artifact.type] && (
+                      <Button variant="outline" size="sm" onClick={() => setIsLinkOpen(true)}>
+                        <Link2 className="w-4 h-4 mr-2" />
+                        Link
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={() => navigate(`/graph?focus=${artifact.id}`)}>
+                      <GitBranch className="w-4 h-4 mr-2" />
+                      Graph
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {edgesLoading ? (
