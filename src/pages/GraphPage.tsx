@@ -522,7 +522,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     });
 
     return nodes;
-  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds, searchMatchIds, coverageByArtifact, driftByArtifact, showOverlays]);
+  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds, searchMatchIds, coverageByArtifact, driftByArtifact, showOverlays, lensMatchIds, lensActive, lensOverlaysOn]);
 
   // Edge type colors for different relationship types
   const edgeTypeStyles: Record<string, { stroke: string; label: string }> = {
