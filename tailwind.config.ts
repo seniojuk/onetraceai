@@ -77,6 +77,11 @@ export default {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
         },
+        // Warning (quota / soft alerts)
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
         // Trace link colors
         trace: {
           implements: "hsl(var(--trace-implements))",

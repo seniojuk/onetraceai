@@ -7,17 +7,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, TrendingUp } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getUsageMessage } from "@/hooks/useUsageLimits";
+import { useUsageLimits } from "@/hooks/useUsageLimits";
+import { limitHeadline, limitRecovery, type LimitType } from "./usageCopy";
 
 interface UsageLimitDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  type: "artifact" | "project" | "aiRun" | "storage";
+  type: LimitType;
   isAtLimit?: boolean;
 }
 
+const pluralKey = (t: LimitType) =>
+  t === "artifact" ? "artifacts"
+  : t === "project" ? "projects"
+  : t === "aiRun" ? "aiRuns"
+  : t === "user" ? "users"
+  : "storage";
+
+/**
+ * Reserved for true blocks (user clicked through an action that can't proceed).
+ * Soft, not destructive-red. Two paths: free up space, or upgrade.
+ */
 export function UsageLimitDialog({
   open,
   onOpenChange,
@@ -25,58 +37,51 @@ export function UsageLimitDialog({
   isAtLimit = true,
 }: UsageLimitDialogProps) {
   const navigate = useNavigate();
-  const message = getUsageMessage(type, isAtLimit);
-
-  const typeLabels = {
-    artifact: "Artifact",
-    project: "Project",
-    aiRun: "AI Run",
-    storage: "Storage",
-  };
+  const { usage } = useUsageLimits();
+  const metric = usage?.[pluralKey(type)];
+  const used = metric?.used ?? 0;
+  const limit = metric?.limit ?? 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <div className="flex items-center gap-3 mb-2">
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                isAtLimit ? "bg-destructive/10" : "bg-warning/10"
-              }`}
-            >
-              {isAtLimit ? (
-                <AlertTriangle className="w-5 h-5 text-destructive" />
-              ) : (
-                <TrendingUp className="w-5 h-5 text-warning" />
-              )}
+          <div className="flex items-center gap-2.5 mb-1">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-warning/15">
+              <AlertTriangle className="w-4 h-4 text-warning" />
             </div>
-            <DialogTitle>
-              {isAtLimit ? `${typeLabels[type]} Limit Reached` : `Approaching ${typeLabels[type]} Limit`}
+            <DialogTitle className="text-base">
+              {limitHeadline(type, isAtLimit)}
             </DialogTitle>
           </div>
-          <DialogDescription className="text-left">{message}</DialogDescription>
+          <DialogDescription className="text-left">
+            <span className="tabular-nums font-medium text-foreground">{used}/{limit}</span>{" "}
+            <span className="text-muted-foreground">used. {limitRecovery(type, isAtLimit)}</span>
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4">
-          <p className="text-sm text-muted-foreground">
-            {isAtLimit
-              ? "To continue using this feature, please upgrade to a higher plan."
-              : "Consider upgrading your plan to avoid interruptions."}
-          </p>
-        </div>
-
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
-            {isAtLimit ? "Cancel" : "Maybe Later"}
+        <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+            Not now
           </Button>
           <Button
+            variant="outline"
+            size="sm"
             onClick={() => {
               onOpenChange(false);
-              navigate("/billing");
+              navigate("/settings?tab=workspace");
             }}
-            className="w-full sm:w-auto bg-accent hover:bg-accent/90"
           >
-            {isAtLimit ? "Upgrade Now" : "View Plans"}
+            Free up space
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              onOpenChange(false);
+              navigate("/settings?tab=billing");
+            }}
+          >
+            See plans
           </Button>
         </DialogFooter>
       </DialogContent>
