@@ -53,6 +53,9 @@
     --success: 152 65% 36%;
     --success-foreground: 0 0% 100%;
 
+    --warning: 38 92% 45%;
+    --warning-foreground: 30 100% 16%;
+
     --trace-implements: 222 78% 50%;
     --trace-satisfies: 152 65% 36%;
     --trace-validates: 262 70% 50%;
@@ -129,6 +132,9 @@
 
     --success: 152 70% 50%;
     --success-foreground: 0 0% 100%;
+
+    --warning: 38 95% 58%;
+    --warning-foreground: 30 100% 10%;
 
     --border: 0 0% 14%;
     --input: 0 0% 14%;
