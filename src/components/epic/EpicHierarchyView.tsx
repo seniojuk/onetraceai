@@ -203,11 +203,28 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
     e.dataTransfer.setData("storyId", storyId);
     if (fromEpicId) e.dataTransfer.setData("fromEpicId", fromEpicId);
     e.dataTransfer.effectAllowed = "move";
+
+    // Use the row element itself as the drag image so the user sees what they're moving
+    const target = e.currentTarget as HTMLElement;
+    try {
+      e.dataTransfer.setDragImage(target, 12, 12);
+    } catch {
+      /* noop — some browsers */
+    }
+
     setDraggingStoryId(storyId);
     setDraggingFromEpicId(fromEpicId || null);
   };
 
+  const clearHoverTimer = () => {
+    if (hoverExpandTimer.current) {
+      window.clearTimeout(hoverExpandTimer.current);
+      hoverExpandTimer.current = null;
+    }
+  };
+
   const handleDragEnd = () => {
+    clearHoverTimer();
     setDraggingStoryId(null);
     setDraggingFromEpicId(null);
     setDragOverEpicId(null);
@@ -217,8 +234,22 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
   const handleDragOver = (e: DragEvent<HTMLDivElement>, epicId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
+    if (dragOverEpicId === epicId) return;
     setDragOverEpicId(epicId);
     setDragOverUnlinked(false);
+
+    // Auto-expand collapsed epic after a short dwell so user can see what they're dropping into
+    clearHoverTimer();
+    if (!expandedEpics.has(epicId)) {
+      hoverExpandTimer.current = window.setTimeout(() => {
+        setExpandedEpics((prev) => new Set(prev).add(epicId));
+      }, 450);
+    }
+  };
+
+  const handleEpicDragLeave = () => {
+    clearHoverTimer();
+    setDragOverEpicId(null);
   };
 
   const handleUnlinkedDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -226,10 +257,12 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
     e.dataTransfer.dropEffect = "move";
     setDragOverUnlinked(true);
     setDragOverEpicId(null);
+    clearHoverTimer();
   };
 
   const handleDrop = async (e: DragEvent<HTMLDivElement>, epicId: string) => {
     e.preventDefault();
+    clearHoverTimer();
     setDragOverEpicId(null);
     setDraggingStoryId(null);
     setDraggingFromEpicId(null);
