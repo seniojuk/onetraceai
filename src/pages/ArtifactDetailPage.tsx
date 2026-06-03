@@ -133,38 +133,29 @@ const ArtifactDetailPage = () => {
     }
   };
 
-  // Compute linked artifacts from edges
+  // Compute linked artifacts from edges (carry edge id so we can unlink)
+  type LinkedItem = { artifact: Artifact; edgeId: string; edgeType: string; source: string; fromId: string; toId: string };
   const linkedArtifacts = useMemo(() => {
-    if (!edges || !allArtifacts) return { parents: [] as Array<{ artifact: Artifact; edgeType: string; source: string }>, children: [] as Array<{ artifact: Artifact; edgeType: string; source: string }> };
-    
+    if (!edges || !allArtifacts) return { parents: [] as LinkedItem[], children: [] as LinkedItem[] };
+
     const artifactMap = new Map(allArtifacts.map(a => [a.id, a]));
-    
-    // Parents: artifacts that point TO this artifact (incoming edges)
-    const parents = edges.incoming
+
+    const parents: LinkedItem[] = edges.incoming
       .map(edge => {
-        const artifact = artifactMap.get(edge.from_artifact_id);
-        if (!artifact) return null;
-        return {
-          artifact,
-          edgeType: edge.edge_type as string,
-          source: edge.source,
-        };
+        const a = artifactMap.get(edge.from_artifact_id);
+        if (!a) return null;
+        return { artifact: a, edgeId: edge.id, edgeType: edge.edge_type as string, source: edge.source, fromId: edge.from_artifact_id, toId: edge.to_artifact_id };
       })
-      .filter((item): item is { artifact: Artifact; edgeType: string; source: string } => item !== null);
-    
-    // Children: artifacts that this artifact points TO (outgoing edges)
-    const children = edges.outgoing
+      .filter((x): x is LinkedItem => x !== null);
+
+    const children: LinkedItem[] = edges.outgoing
       .map(edge => {
-        const artifact = artifactMap.get(edge.to_artifact_id);
-        if (!artifact) return null;
-        return {
-          artifact,
-          edgeType: edge.edge_type as string,
-          source: edge.source,
-        };
+        const a = artifactMap.get(edge.to_artifact_id);
+        if (!a) return null;
+        return { artifact: a, edgeId: edge.id, edgeType: edge.edge_type as string, source: edge.source, fromId: edge.from_artifact_id, toId: edge.to_artifact_id };
       })
-      .filter((item): item is { artifact: Artifact; edgeType: string; source: string } => item !== null);
-    
+      .filter((x): x is LinkedItem => x !== null);
+
     return { parents, children };
   }, [edges, allArtifacts]);
 
