@@ -136,20 +136,20 @@ const Dashboard = () => {
   return (
     <AuthGuard>
       <AppLayout>
-        <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-8">
           {/* Header */}
-          <div className="flex items-end justify-between flex-wrap gap-4">
-            <div>
+          <div className="flex items-start sm:items-end justify-between flex-wrap gap-3">
+            <div className="min-w-0">
               <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/70 font-medium mb-1">
                 {currentProject ? `Project · ${currentProject.project_key}` : "Dashboard"}
               </div>
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground truncate">
                 {currentProject?.name || "Dashboard"}
               </h1>
             </div>
 
             {currentProject && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 -mx-1 px-1 overflow-x-auto sm:overflow-visible scrollbar-none max-w-full">
                 <QuickAction icon={FileText} label="New PRD" onClick={() => navigate("/artifacts/new?type=PRD")} />
                 <QuickAction icon={Sparkles} label="Generate stories" onClick={() => navigate("/ai-runs/new?type=story")} />
                 <QuickAction icon={Wand2} label="Prompt gen" onClick={() => navigate("/prompt-generator")} />
@@ -157,6 +157,7 @@ const Dashboard = () => {
               </div>
             )}
           </div>
+
 
           {!currentProject ? (
             <EmptyState
