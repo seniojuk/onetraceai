@@ -1083,8 +1083,55 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
               </Card>
             </Panel>
 
+            {/* Lens Rail — apply a question as an overlay on the canvas */}
+            <Panel position="top-center" className="m-4">
+              <Card className="shadow-lg">
+                <CardContent className="p-2">
+                  <div className="flex items-center gap-1">
+                    <span className="text-[11px] font-medium text-muted-foreground px-2">
+                      Lens
+                    </span>
+                    {([
+                      { id: "none", label: "All" },
+                      { id: "orphans", label: "Orphans" },
+                      { id: "coverage-gaps", label: "Coverage gaps" },
+                      { id: "drift", label: "Drift" },
+                      { id: "recent", label: "Recent" },
+                    ] as const).map((l) => {
+                      const matchCount =
+                        l.id === "none"
+                          ? null
+                          : lensParam === l.id
+                          ? lensMatchIds?.size ?? 0
+                          : null;
+                      return (
+                        <Button
+                          key={l.id}
+                          size="sm"
+                          variant={lensParam === l.id ? "default" : "ghost"}
+                          className="h-7 px-2.5 text-xs"
+                          onClick={() => setLens(l.id)}
+                        >
+                          {l.label}
+                          {matchCount != null && (
+                            <Badge
+                              variant="secondary"
+                              className="ml-1.5 h-4 px-1 text-[10px]"
+                            >
+                              {matchCount}
+                            </Badge>
+                          )}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </Panel>
+
             {/* Legend */}
             <Panel position="bottom-left" className="m-4">
+
               <Card className="shadow-lg">
                 <CardContent className="p-3">
                   <p className="text-xs font-medium text-muted-foreground mb-2">Legend</p>
