@@ -26,8 +26,6 @@ import { Reveal, useActiveSection } from "@/components/landing/motion";
 import { AccentWord } from "@/components/marketing/AccentWord";
 import glass01 from "@/assets/brand/onetrace-glass-01.png.asset.json";
 import glass03 from "@/assets/brand/onetrace-glass-03.png.asset.json";
-import glass04 from "@/assets/brand/onetrace-glass-04.png.asset.json";
-import glass10 from "@/assets/brand/onetrace-glass-10.png.asset.json";
 
 
 /**
@@ -82,18 +80,6 @@ function Hero() {
           src={glass03.url}
           alt=""
           className="hero-glass hero-glass-b"
-          decoding="async"
-        />
-        <img
-          src={glass04.url}
-          alt=""
-          className="hero-glass hero-glass-c"
-          decoding="async"
-        />
-        <img
-          src={glass10.url}
-          alt=""
-          className="hero-glass hero-glass-d"
           decoding="async"
         />
       </div>
