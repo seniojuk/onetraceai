@@ -885,11 +885,25 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
             defaultEdgeOptions={{
               type: "smoothstep",
               animated: true,
+              style: {
+                stroke: "hsl(var(--accent))",
+                strokeWidth: 1.25,
+                opacity: 0.55,
+              },
             }}
+            proOptions={{ hideAttribution: true }}
           >
-            <Background color="hsl(var(--graph-grid))" gap={20} />
-            <Controls />
-            <MiniMap 
+            <Background
+              variant={"dots" as any}
+              gap={18}
+              size={1}
+              color="hsl(var(--border))"
+            />
+            <Controls
+              className="!bg-card !border !border-border !rounded-md !shadow-[0_4px_14px_-6px_hsl(var(--foreground)/0.12)] [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-muted-foreground [&>button:hover]:!bg-muted [&>button:hover]:!text-foreground"
+              showInteractive={false}
+            />
+            <MiniMap
               nodeColor={(node) => {
                 const type = node.data?.type as ArtifactType;
                 const colors: Record<ArtifactType, string> = {
@@ -911,8 +925,10 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
                 };
                 return colors[type] || "#64748b";
               }}
-              className="!bg-card border border-border rounded-lg"
+              maskColor="hsl(var(--background) / 0.6)"
+              className="!bg-card border border-border rounded-md shadow-[0_4px_14px_-6px_hsl(var(--foreground)/0.12)]"
             />
+
 
             {/* Custom Panel */}
             <Panel position="top-left" className="m-4">
