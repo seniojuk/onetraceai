@@ -303,12 +303,13 @@ function InnerLayout({ children }: AppLayoutProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 gap-1.5 px-2 text-[13px] font-medium hover:bg-muted"
+                  className="h-8 gap-1.5 px-2 text-[13px] font-medium hover:bg-muted shrink-0"
+                  aria-label="Switch workspace"
                 >
                   <div className="w-4 h-4 rounded-sm bg-accent/15 flex items-center justify-center text-[9px] font-bold text-accent">
                     {currentWorkspace?.name?.charAt(0) || "W"}
                   </div>
-                  <span className="truncate max-w-[140px]">
+                  <span className="hidden md:inline truncate max-w-[140px]">
                     {currentWorkspace?.name || "Select workspace"}
                   </span>
                   <ChevronDown className="w-3 h-3 text-muted-foreground/60" />
