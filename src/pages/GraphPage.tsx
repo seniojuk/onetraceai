@@ -272,6 +272,51 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     });
     return map;
   }, [driftFindings]);
+
+  // Lens: a non-destructive overlay on the canvas. Computes which artifact ids
+  // are "in" the lens; everything else gets dimmed but stays visible.
+  const lensMatchIds = useMemo(() => {
+    if (lensParam === "none" || !artifacts) return null;
+    if (lensParam === "orphans") {
+      const linked = new Set<string>();
+      artifactEdges?.forEach(e => {
+        linked.add(e.from_artifact_id);
+        linked.add(e.to_artifact_id);
+      });
+      artifacts.forEach(a => {
+        if (a.parent_artifact_id) {
+          linked.add(a.id);
+          linked.add(a.parent_artifact_id);
+        }
+      });
+      return new Set(artifacts.filter(a => !linked.has(a.id)).map(a => a.id));
+    }
+    if (lensParam === "coverage-gaps") {
+      return new Set(
+        artifacts
+          .filter(a => {
+            const c = coverageByArtifact.get(a.id);
+            return c == null || c < 0.5;
+          })
+          .map(a => a.id)
+      );
+    }
+    if (lensParam === "drift") {
+      return new Set(
+        artifacts.filter(a => driftByArtifact.get(a.id)?.hasDrift).map(a => a.id)
+      );
+    }
+    if (lensParam === "recent") {
+      const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
+      return new Set(
+        artifacts.filter(a => new Date(a.updated_at).getTime() >= cutoff).map(a => a.id)
+      );
+    }
+    return null;
+  }, [lensParam, artifacts, artifactEdges, coverageByArtifact, driftByArtifact]);
+
+  const lensActive = lensParam !== "none";
+  const lensOverlaysOn = lensParam === "coverage-gaps" || lensParam === "drift";
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Artifact[]>([]);
