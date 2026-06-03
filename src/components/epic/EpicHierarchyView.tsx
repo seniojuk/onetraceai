@@ -51,12 +51,9 @@ interface EpicHierarchyViewProps {
   projectId?: string;
 }
 
-/* Priority dot — neutral, semantic-token driven */
-const priorityDot: Record<string, string> = {
-  high: "bg-destructive",
-  medium: "bg-coverage-partial",
-  low: "bg-coverage-full",
-};
+/* Priority tag — only render for non-default (high) to avoid wallpapering rows */
+const isHighPriority = (p?: string) => p?.toLowerCase() === "high";
+const isLowPriority = (p?: string) => p?.toLowerCase() === "low";
 
 export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
   const navigate = useNavigate();
