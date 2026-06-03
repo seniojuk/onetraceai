@@ -437,16 +437,17 @@ const Sync = () => {
         ))}
       </g>
 
-      {/* Jira mark — three stacked chevrons */}
+      {/* Jira mark — official two-chevron "A" silhouette */}
       <g transform={`translate(${L.x} ${L.y})`}>
         <circle r="22" fill={BG} stroke={STROKE} strokeOpacity="0.7" strokeWidth="0.9" />
-        <g transform="translate(-11 -11) scale(0.9)" fill={STROKE} fillOpacity="0.95">
-          <path d="M12 0 L24 12 L18 18 L12 12 L6 18 L0 12 Z" />
-          <path d="M12 8 L20 16 L14 22 L12 20 L10 22 L4 16 Z" opacity="0.75" />
-          <path d="M12 16 L16 20 L12 24 L8 20 Z" opacity="0.55">
-            <Breathe values="0.4;0.85;0.4" dur={3.4} />
-          </path>
-        </g>
+        <path
+          transform="translate(-12 -12) scale(1)"
+          fill={STROKE}
+          fillOpacity="0.95"
+          d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.004-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.762a1.005 1.005 0 0 0-1.001-1.005zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.005 1.005 0 0 0 23.013 0z"
+        >
+          <animate attributeName="fill-opacity" values="0.7;1;0.7" dur="3.4s" repeatCount="indefinite" />
+        </path>
       </g>
       {/* GitHub mark — Octocat silhouette */}
       <g transform={`translate(${R.x} ${R.y})`}>
@@ -1167,18 +1168,33 @@ export { VARIANTS };
 export type { Variant };
 
 /* Single-variant renderer for use outside the picker (e.g. auth page). */
-export const AuthVisualSingle = ({ variant }: { variant: Variant }) => {
+export const AuthVisualSingle = ({
+  variant,
+  eyebrow,
+  headline,
+  subline,
+}: {
+  variant: Variant;
+  eyebrow?: string;
+  headline?: string;
+  subline?: string;
+}) => {
   const meta = VARIANTS.find((v) => v.id === variant)!;
   const Render = RENDERERS[variant];
   return (
     <div className="flex h-full w-full flex-col justify-center gap-8 px-12 py-16">
       <div>
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
-          Traceability, visualized
+          {eyebrow ?? "Traceability, visualized"}
         </span>
         <h2 className="mt-4 font-geist text-[28px] leading-[1.1] tracking-[-0.02em] text-foreground">
-          {meta.caption}
+          {headline ?? meta.caption}
         </h2>
+        {subline && (
+          <p className="mt-3 max-w-[34ch] font-geist text-[14px] leading-[1.5] text-muted-foreground">
+            {subline}
+          </p>
+        )}
       </div>
       <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-card">
         <div className="absolute inset-0 animate-fade-in">
@@ -1188,6 +1204,7 @@ export const AuthVisualSingle = ({ variant }: { variant: Variant }) => {
     </div>
   );
 };
+
 
 
 export const AuthVisualShowcase = () => {

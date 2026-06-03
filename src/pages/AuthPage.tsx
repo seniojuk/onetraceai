@@ -301,7 +301,12 @@ const AuthPage = () => {
 
         {/* Right: editorial proof rail */}
         <aside className="hidden items-center border-l border-border lg:flex">
-          <AuthVisualSingle variant="sync" />
+          <AuthVisualSingle
+            variant="sync"
+            eyebrow="One last thing before you sign up"
+            headline="Your Jira tickets and your GitHub commits should tell the same story."
+            subline="OneTrace is the connective tissue between what you promised, what you built, and what you shipped. Five minutes from now, you'll see every gap you've been missing."
+          />
         </aside>
       </main>
     </div>
