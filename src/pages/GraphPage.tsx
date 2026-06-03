@@ -22,6 +22,7 @@ import {
   Position,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import Dagre from "@dagrejs/dagre";
 import { toPng, toSvg } from "html-to-image";
 import { jsPDF } from "jspdf";
 import {
