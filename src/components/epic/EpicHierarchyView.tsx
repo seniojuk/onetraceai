@@ -80,6 +80,24 @@ export function EpicHierarchyView({ projectId }: EpicHierarchyViewProps) {
   );
   const [linkTarget, setLinkTarget] = useState<Artifact | null>(null);
 
+  // Track which epic the cursor is hovering during a drag, to auto-expand it
+  const hoverExpandTimer = useRef<number | null>(null);
+
+  // ESC cancels an in-flight drag — calmer escape hatch
+  useEffect(() => {
+    if (!draggingStoryId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setDraggingStoryId(null);
+        setDraggingFromEpicId(null);
+        setDragOverEpicId(null);
+        setDragOverUnlinked(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [draggingStoryId]);
+
   const epicHierarchy = useMemo((): EpicWithStories[] => {
     if (!allArtifacts || !edges) return [];
 
