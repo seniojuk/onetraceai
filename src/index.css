@@ -257,6 +257,82 @@
     box-shadow: 0 0 15px hsl(var(--drift) / 0.4);
   }
 
+  .hero-glass {
+    position: absolute;
+    z-index: 0;
+    user-select: none;
+    opacity: 0.68;
+    filter: drop-shadow(0 20px 60px hsl(var(--foreground) / 0.12));
+    animation: hero-glass-float 18s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    will-change: transform;
+  }
+
+  .hero-glass-a {
+    top: 88px;
+    right: -40px;
+    width: min(28vw, 360px);
+    animation-duration: 20s;
+  }
+
+  .hero-glass-b {
+    top: 280px;
+    right: 18%;
+    width: min(20vw, 260px);
+    opacity: 0.54;
+    animation-duration: 24s;
+    animation-delay: -7s;
+  }
+
+  .hero-glass-c {
+    top: 120px;
+    left: -44px;
+    width: min(18vw, 240px);
+    opacity: 0.52;
+    animation-duration: 22s;
+    animation-delay: -10s;
+  }
+
+  .hero-glass-d {
+    bottom: 24px;
+    left: 6%;
+    width: min(22vw, 290px);
+    opacity: 0.42;
+    animation-duration: 26s;
+    animation-delay: -13s;
+  }
+
+  @keyframes hero-glass-float {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    }
+    50% {
+      transform: translate3d(0, -12px, 0) rotate(2deg) scale(1.02);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .hero-glass-a {
+      top: 90px;
+      right: -48px;
+      width: 220px;
+      opacity: 0.4;
+    }
+
+    .hero-glass-b,
+    .hero-glass-c {
+      display: none;
+    }
+
+    .hero-glass-d {
+      left: auto;
+      right: -34px;
+      bottom: 140px;
+      width: 180px;
+      opacity: 0.28;
+    }
+  }
+
   /* Card hover effect */
   .card-hover {
     @apply transition-all duration-300;
@@ -331,6 +407,7 @@
     @apply border-accent/30 shadow-xl;
     transform: translateY(-2px);
   }
+
 
   /* Integration card */
   .integration-card {

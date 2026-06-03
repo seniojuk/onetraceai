@@ -24,6 +24,11 @@ import { ThemeToggle } from "@/components/theme/ThemeProvider";
 import { HeroFlow } from "@/components/landing/HeroFlow";
 import { Reveal, useActiveSection } from "@/components/landing/motion";
 import { AccentWord } from "@/components/marketing/AccentWord";
+import glass01 from "@/assets/brand/onetrace-glass-01.png.asset.json";
+import glass03 from "@/assets/brand/onetrace-glass-03.png.asset.json";
+import glass04 from "@/assets/brand/onetrace-glass-04.png.asset.json";
+import glass10 from "@/assets/brand/onetrace-glass-10.png.asset.json";
+
 
 /**
  * Marketing home. Architectural density direction.
@@ -57,7 +62,6 @@ export default LandingPage;
 function Hero() {
   return (
     <section className="relative overflow-hidden border-b border-border bg-background">
-      {/* Very subtle top vignette. Linear keeps it nearly black. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[420px]"
@@ -66,23 +70,48 @@ function Hero() {
         }}
       />
 
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <img
+          src={glass01.url}
+          alt=""
+          className="hero-glass hero-glass-a"
+          decoding="async"
+          fetchPriority="high"
+        />
+        <img
+          src={glass03.url}
+          alt=""
+          className="hero-glass hero-glass-b"
+          decoding="async"
+        />
+        <img
+          src={glass04.url}
+          alt=""
+          className="hero-glass hero-glass-c"
+          decoding="async"
+        />
+        <img
+          src={glass10.url}
+          alt=""
+          className="hero-glass hero-glass-d"
+          decoding="async"
+        />
+      </div>
+
       <div className="relative mx-auto max-w-7xl px-8 pt-32 pb-16 md:pt-40 md:pb-20">
-        {/* Headline. Left aligned, oversized, tight. */}
         <Reveal
           as="h1"
           y={20}
-          className="max-w-[18ch] font-geist text-[40px] font-medium leading-[1.06] tracking-[-0.04em] text-foreground sm:text-[52px] md:text-[64px] lg:text-[72px]"
+          className="relative z-10 max-w-[18ch] font-geist text-[40px] font-medium leading-[1.06] tracking-[-0.04em] text-foreground sm:text-[52px] md:text-[64px] lg:text-[72px]"
         >
           Ship AI-built software with <span className="text-accent">confidence</span>
         </Reveal>
 
-        {/* Subhead */}
-        <Reveal as="p" delay={120} className="mt-8 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
+        <Reveal as="p" delay={120} className="relative z-10 mt-8 max-w-lg text-[15px] leading-relaxed text-muted-foreground">
           Plan requirements, generate stories, link code, and prove coverage. One traceable platform for AI-built software.
         </Reveal>
 
-        {/* Product visual. Full-bleed panel below, Linear-style. */}
-        <Reveal delay={220} y={28} className="relative mt-10 md:mt-14">
+        <Reveal delay={220} y={28} className="relative z-10 mt-10 md:mt-14">
           <div
             aria-hidden
             className="pointer-events-none absolute -inset-x-10 -top-10 bottom-0 -z-10 rounded-[32px] bg-[radial-gradient(60%_50%_at_50%_0%,hsl(var(--accent)/0.10),transparent_70%)] blur-2xl"
@@ -93,6 +122,7 @@ function Hero() {
     </section>
   );
 }
+
 
 function HeroGraph() {
   return (
