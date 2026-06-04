@@ -1197,96 +1197,106 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
               </div>
             </Panel>
 
-            {/* Lens Rail — apply a question as an overlay on the canvas */}
-            <Panel position="top-center" className="m-4">
-              <Card className="shadow-lg">
-                <CardContent className="p-2">
-                  <div className="flex items-center gap-1">
-                    <span className="text-[11px] font-medium text-muted-foreground px-2">
-                      Lens
-                    </span>
-                    {([
-                      { id: "none", label: "All" },
-                      { id: "orphans", label: "Orphans" },
-                      { id: "coverage-gaps", label: "Coverage gaps" },
-                      { id: "drift", label: "Drift" },
-                      { id: "recent", label: "Recent" },
-                    ] as const).map((l) => {
-                      const matchCount =
-                        l.id === "none"
-                          ? null
-                          : lensParam === l.id
-                          ? lensMatchIds?.size ?? 0
-                          : null;
-                      return (
-                        <Button
-                          key={l.id}
-                          size="sm"
-                          variant={lensParam === l.id ? "default" : "ghost"}
-                          className="h-7 px-2.5 text-xs"
-                          onClick={() => setLens(l.id)}
-                        >
-                          {l.label}
-                          {matchCount != null && (
-                            <Badge
-                              variant="secondary"
-                              className="ml-1.5 h-4 px-1 text-[10px]"
-                            >
-                              {matchCount}
-                            </Badge>
+            {/* Lens rail — segmented pill */}
+            <Panel position="top-center" className="!m-4">
+              <div className="flex items-center gap-0.5 rounded-full border border-border bg-card/90 p-1 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.18)] backdrop-blur">
+                <span className="px-2.5 font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Lens
+                </span>
+                <span className="mr-0.5 h-3.5 w-px bg-border" />
+                {([
+                  { id: "none", label: "All" },
+                  { id: "orphans", label: "Orphans" },
+                  { id: "coverage-gaps", label: "Coverage gaps" },
+                  { id: "drift", label: "Drift" },
+                  { id: "recent", label: "Recent" },
+                ] as const).map((l) => {
+                  const active = lensParam === l.id;
+                  const matchCount =
+                    l.id === "none" ? null : active ? lensMatchIds?.size ?? 0 : null;
+                  return (
+                    <button
+                      key={l.id}
+                      onClick={() => setLens(l.id)}
+                      className={cn(
+                        "flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium transition-colors",
+                        active
+                          ? "bg-foreground text-background shadow-sm"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      {l.label}
+                      {matchCount != null && (
+                        <span
+                          className={cn(
+                            "rounded-full px-1.5 font-mono text-[9px]",
+                            active ? "bg-background/20 text-background" : "bg-muted text-muted-foreground",
                           )}
-                        </Button>
+                        >
+                          {matchCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </Panel>
+
+            {/* Legend — minimal glass strip */}
+            <Panel position="bottom-left" className="!m-4">
+              <div className="overflow-hidden rounded-lg border border-border bg-card/90 shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.18)] backdrop-blur">
+                <div className="flex items-center gap-3 px-3 py-2">
+                  <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Types
+                  </span>
+                  <div className="flex items-center gap-2.5">
+                    {[
+                      { tone: "text-violet-500", icon: FileText, label: "PRD" },
+                      { tone: "text-blue-500", icon: Layers, label: "Epic" },
+                      { tone: "text-accent", icon: Sparkles, label: "Story" },
+                      { tone: "text-emerald-500", icon: CheckCircle2, label: "AC" },
+                      { tone: "text-amber-500", icon: TestTube2, label: "Test" },
+                    ].map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <div key={item.label} className="flex items-center gap-1">
+                          <Icon className={cn("h-3 w-3", item.tone)} />
+                          <span className="text-[11px] text-muted-foreground">{item.label}</span>
+                        </div>
                       );
                     })}
                   </div>
-                </CardContent>
-              </Card>
-            </Panel>
-
-            {/* Legend */}
-            <Panel position="bottom-left" className="m-4">
-
-              <Card className="shadow-lg">
-                <CardContent className="p-3">
-                  <p className="text-xs font-medium text-muted-foreground mb-2">Legend</p>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { color: "bg-purple-500", label: "PRD" },
-                      { color: "bg-blue-500", label: "Epic" },
-                      { color: "bg-teal-500", label: "Story" },
-                      { color: "bg-green-500", label: "AC" },
-                      { color: "bg-amber-500", label: "Test" },
-                    ].map((item) => (
-                      <div key={item.label} className="flex items-center gap-1">
-                        <div className={cn("w-3 h-3 rounded", item.color)} />
-                        <span className="text-xs text-muted-foreground">{item.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {showOverlays && (
-                    <div className="flex flex-wrap gap-2 mt-2 pt-2 border-t border-border">
+                </div>
+                {showOverlays && (
+                  <div className="flex items-center gap-3 border-t border-border/60 px-3 py-2">
+                    <span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-muted-foreground">
+                      Coverage
+                    </span>
+                    <div className="flex items-center gap-2.5">
                       <div className="flex items-center gap-1">
-                        <div className="w-6 h-1.5 bg-green-500 rounded-full" />
-                        <span className="text-xs text-muted-foreground">≥80%</span>
+                        <div className="h-1 w-5 rounded-full bg-emerald-500" />
+                        <span className="text-[11px] text-muted-foreground">≥80%</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <div className="w-6 h-1.5 bg-amber-500 rounded-full" />
-                        <span className="text-xs text-muted-foreground">≥50%</span>
+                        <div className="h-1 w-5 rounded-full bg-amber-500" />
+                        <span className="text-[11px] text-muted-foreground">≥50%</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <div className="w-6 h-1.5 bg-red-500 rounded-full" />
-                        <span className="text-xs text-muted-foreground">&lt;50%</span>
+                        <div className="h-1 w-5 rounded-full bg-red-500" />
+                        <span className="text-[11px] text-muted-foreground">&lt;50%</span>
                       </div>
+                      <span className="mx-1 h-3 w-px bg-border" />
                       <div className="flex items-center gap-1">
-                        <div className="w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center">
-                          <AlertTriangle className="w-2.5 h-2.5 text-white" />
-                        </div>
-                        <span className="text-xs text-muted-foreground">Drift</span>
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-60" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">Drift</span>
                       </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </div>
+                )}
+              </div>
             </Panel>
 
             {/* Impact Analysis Results Panel */}
