@@ -1474,14 +1474,11 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
                     return (
                       <CommandItem
                         key={artifact.id}
-                        value={`${artifact.title} ${artifact.short_id} ${artifact.type}`}
-                        onSelect={() => {
-                          focusOnNode(artifact.id);
-                          setSearchOpen(false);
-                          setSearchQuery("");
-                          setSearchResults([]);
-                        }}
-                        className="gap-2.5"
+                        value={artifact.id}
+                        keywords={[artifact.title, artifact.short_id, artifact.type]}
+                        onSelect={() => selectSearchResult(artifact)}
+                        onClick={() => selectSearchResult(artifact)}
+                        className="gap-2.5 !cursor-pointer"
                       >
                         <Icon className={cn("h-4 w-4 shrink-0", meta.tone)} />
                         <div className="min-w-0 flex-1">
