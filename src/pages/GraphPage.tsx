@@ -316,7 +316,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const [searchParams, setSearchParams] = useSearchParams();
   const focusId = searchParams.get("focus");
   const lensParam = (searchParams.get("lens") ?? "none") as
-    | "none" | "orphans" | "coverage-gaps" | "drift" | "recent";
+    | "none" | "orphans" | "coverage-gaps" | "drift";
   const { setCenter, fitView } = useReactFlow();
   const isInteractive = useStore(
     (s) => s.nodesDraggable || s.nodesConnectable || s.elementsSelectable,
@@ -424,12 +424,6 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     if (lensParam === "drift") {
       return new Set(
         artifacts.filter(a => driftByArtifact.get(a.id)?.hasDrift).map(a => a.id)
-      );
-    }
-    if (lensParam === "recent") {
-      const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
-      return new Set(
-        artifacts.filter(a => new Date(a.updated_at).getTime() >= cutoff).map(a => a.id)
       );
     }
     return null;
@@ -1373,7 +1367,6 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
                   { id: "orphans", label: "Orphans" },
                   { id: "coverage-gaps", label: "Coverage gaps" },
                   { id: "drift", label: "Drift" },
-                  { id: "recent", label: "Recent" },
                 ] as const).map((l) => {
                   const active = lensParam === l.id;
                   const matchCount =
@@ -1815,7 +1808,6 @@ import { GraphFocusedShell } from "@/components/graph/GraphFocusedShell";
 import { OrphansView } from "@/components/graph/questions/OrphansView";
 import { CoverageGapsView } from "@/components/graph/questions/CoverageGapsView";
 import { DriftView } from "@/components/graph/questions/DriftView";
-import { RecentlyChangedView } from "@/components/graph/questions/RecentlyChangedView";
 import { LineageWalkView } from "@/components/graph/questions/LineageWalkView";
 import {
   isGraphQuestionId,
@@ -1856,8 +1848,6 @@ function QuestionRouter({ questionId }: { questionId: GraphQuestionId }) {
       return <CoverageGapsView />;
     case "drift":
       return <DriftView />;
-    case "recent":
-      return <RecentlyChangedView />;
     case "trace":
       return <LineageWalkView questionId="trace" />;
     case "blast-radius":
