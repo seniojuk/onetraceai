@@ -1130,7 +1130,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
                       <GitBranch className="h-3 w-3" />
                     </span>
                     <h2 className="truncate text-[13px] font-semibold tracking-tight text-foreground">
-                      Artifact graph
+                      {mode === "lineage" ? "Pipeline lineage" : "Artifact graph"}
                     </h2>
                     <span className="font-mono text-[10px] text-muted-foreground">
                       {nodes.length}n · {edges.length}e
