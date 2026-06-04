@@ -3047,6 +3047,19 @@ export type Database = {
           read_ct: number
         }[]
       }
+      search_artifacts: {
+        Args: { p_limit?: number; p_project_id: string; p_query: string }
+        Returns: {
+          id: string
+          score: number
+          short_id: string
+          status: string
+          title: string
+          type: string
+        }[]
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       jira_connection_status:

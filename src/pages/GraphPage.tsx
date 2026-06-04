@@ -100,6 +100,15 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ArtifactLineageView } from "@/components/lineage/ArtifactLineageView";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
 
 // ── Layered DAG layout (Dagre) ────────────────────────────────────────────────
 // Replaces "type-bucketed horizontal rows" with a proper left-to-right
@@ -418,25 +427,61 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Artifact[]>([]);
   const [focusedSearchIndex, setFocusedSearchIndex] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
 
-  // Search artifacts
+  // ⌘K / Ctrl+K opens the search palette
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Server-side trigram search via search_artifacts RPC, debounced.
+  // Falls back to in-memory match if the project id is missing.
+  const searchAbortRef = useRef<number | null>(null);
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    if (!query.trim() || !artifacts) {
+    setFocusedSearchIndex(0);
+    if (searchAbortRef.current) {
+      window.clearTimeout(searchAbortRef.current);
+      searchAbortRef.current = null;
+    }
+    const q = query.trim();
+    if (!q) {
       setSearchResults([]);
-      setFocusedSearchIndex(0);
       return;
     }
-    
-    const lowerQuery = query.toLowerCase();
-    const results = artifacts.filter(a => 
-      a.title.toLowerCase().includes(lowerQuery) ||
-      a.short_id.toLowerCase().includes(lowerQuery) ||
-      a.type.toLowerCase().includes(lowerQuery)
-    );
-    setSearchResults(results);
-    setFocusedSearchIndex(0);
-  }, [artifacts]);
+    if (!currentProjectId) {
+      // local fallback
+      const lower = q.toLowerCase();
+      setSearchResults(
+        (artifacts ?? []).filter(a =>
+          a.title.toLowerCase().includes(lower) ||
+          a.short_id.toLowerCase().includes(lower) ||
+          a.type.toLowerCase().includes(lower)
+        )
+      );
+      return;
+    }
+    searchAbortRef.current = window.setTimeout(async () => {
+      const { data, error } = await supabase.rpc("search_artifacts", {
+        p_project_id: currentProjectId,
+        p_query: q,
+        p_limit: 50,
+      });
+      if (error) {
+        console.error("search_artifacts failed", error);
+        return;
+      }
+      // RPC returns a subset of Artifact; cast for the list UI.
+      setSearchResults((data ?? []) as unknown as Artifact[]);
+    }, 120);
+  }, [currentProjectId, artifacts]);
 
   // Focus on a specific node
   const focusOnNode = useCallback((nodeId: string) => {
@@ -1017,49 +1062,22 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
                 </div>
 
                 {/* Search */}
-                <div className="relative border-b border-border/60 px-3 py-2.5">
-                  <Search className="absolute left-5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search artifacts…"
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    onKeyDown={handleSearchKeyDown}
-                    className="h-8 border-border/60 bg-background/60 pl-8 text-[12px] placeholder:text-muted-foreground/70 focus-visible:ring-1 focus-visible:ring-accent/40"
-                  />
-                  {searchResults.length > 0 && (
-                    <div className="absolute left-3 right-3 top-full z-50 mt-1 overflow-hidden rounded-lg border border-border bg-popover shadow-xl">
-                      <ScrollArea className="max-h-56">
-                        <div className="p-1">
-                          {searchResults.map((artifact, index) => (
-                            <div
-                              key={artifact.id}
-                              className={cn(
-                                "flex cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5",
-                                index === focusedSearchIndex ? "bg-accent/10" : "hover:bg-muted",
-                              )}
-                              onClick={() => {
-                                focusOnNode(artifact.id);
-                                setSearchQuery("");
-                                setSearchResults([]);
-                              }}
-                            >
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-[12px] font-medium">{artifact.title}</p>
-                                <div className="mt-0.5 flex items-center gap-2">
-                                  <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{artifact.type}</span>
-                                  <span className="font-mono text-[10px] text-muted-foreground/70">{artifact.short_id}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  )}
-                </div>
+                {/* Search moved to ⌘K command palette (see CommandDialog below) */}
 
                 {/* Toolbar — single dense row */}
                 <div className="flex flex-wrap items-center gap-1 px-2 py-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSearchOpen(true)}
+                    className="h-7 gap-1.5 px-2 text-[11px] font-medium"
+                  >
+                    <Search className="h-3 w-3" />
+                    Search
+                    <kbd className="ml-1 hidden rounded border border-border bg-muted px-1 font-mono text-[9px] text-muted-foreground sm:inline-block">
+                      ⌘K
+                    </kbd>
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1389,6 +1407,54 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
               </Panel>
             )}
           </ReactFlow>
+
+          {/* ⌘K Search palette — portaled, so never clipped by canvas chrome */}
+          <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+            <CommandInput
+              placeholder="Search artifacts by title, ID, or type…"
+              value={searchQuery}
+              onValueChange={(v) => {
+                setSearchQuery(v);
+                handleSearch(v);
+              }}
+            />
+            <CommandList>
+              <CommandEmpty>
+                {searchQuery.trim() ? "No artifacts match." : "Start typing to search."}
+              </CommandEmpty>
+              {searchResults.length > 0 && (
+                <CommandGroup heading={`${searchResults.length} result${searchResults.length === 1 ? "" : "s"}`}>
+                  {searchResults.slice(0, 50).map((artifact) => {
+                    const meta = TYPE_META[artifact.type] ?? TYPE_META.FILE;
+                    const Icon = meta.icon;
+                    return (
+                      <CommandItem
+                        key={artifact.id}
+                        value={`${artifact.title} ${artifact.short_id} ${artifact.type}`}
+                        onSelect={() => {
+                          focusOnNode(artifact.id);
+                          setSearchOpen(false);
+                          setSearchQuery("");
+                          setSearchResults([]);
+                        }}
+                        className="gap-2.5"
+                      >
+                        <Icon className={cn("h-4 w-4 shrink-0", meta.tone)} />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[13px] font-medium">{artifact.title}</div>
+                          <div className="mt-0.5 flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
+                            <span className="uppercase tracking-wider">{meta.label}</span>
+                            <span>·</span>
+                            <span>{artifact.short_id}</span>
+                          </div>
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+            </CommandList>
+          </CommandDialog>
 
           {/* Edge Type Selection Dialog */}
           <Dialog open={!!pendingConnection} onOpenChange={(open) => !open && handleCancelConnection()}>
