@@ -58,6 +58,9 @@ import {
   Lightbulb,
   ScrollText,
   File as FileIcon,
+  ArrowUpRight,
+  ArrowDownRight,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
