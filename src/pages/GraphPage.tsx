@@ -426,7 +426,6 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Artifact[]>([]);
-  const [focusedSearchIndex, setFocusedSearchIndex] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
 
   // ⌘K / Ctrl+K opens the search palette
@@ -446,7 +445,6 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const searchAbortRef = useRef<number | null>(null);
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    setFocusedSearchIndex(0);
     if (searchAbortRef.current) {
       window.clearTimeout(searchAbortRef.current);
       searchAbortRef.current = null;
@@ -490,30 +488,6 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
       setCenter(node.position.x + 125, node.position.y + 50, { zoom: 1.5, duration: 500 });
     }
   }, [setCenter]);
-
-  // Navigate search results
-  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (searchResults.length === 0) return;
-    
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setFocusedSearchIndex(prev => (prev + 1) % searchResults.length);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setFocusedSearchIndex(prev => (prev - 1 + searchResults.length) % searchResults.length);
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      const artifact = searchResults[focusedSearchIndex];
-      if (artifact) {
-        focusOnNode(artifact.id);
-        setSearchQuery("");
-        setSearchResults([]);
-      }
-    } else if (e.key === "Escape") {
-      setSearchQuery("");
-      setSearchResults([]);
-    }
-  }, [searchResults, focusedSearchIndex, focusOnNode]);
 
   // Get search match IDs for highlighting
   const searchMatchIds = useMemo(() => {
@@ -1409,7 +1383,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
           </ReactFlow>
 
           {/* ⌘K Search palette — portaled, so never clipped by canvas chrome */}
-          <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+          <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} shouldFilter={false}>
             <CommandInput
               placeholder="Search artifacts by title, ID, or type…"
               value={searchQuery}
