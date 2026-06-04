@@ -101,7 +101,7 @@ import { Label } from "@/components/ui/label";
 import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ArtifactLineageView } from "@/components/lineage/ArtifactLineageView";
+import { useArtifactLineage } from "@/hooks/useArtifactLineage";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -159,7 +159,7 @@ function layoutWithDagre(
 }
 
 // ── Per-type visual language, matched to HeroFlow ─────────────────────────────
-const TYPE_META: Record<ArtifactType, { icon: LucideIcon; label: string; tone: string }> = {
+const TYPE_META: Record<string, { icon: LucideIcon; label: string; tone: string }> = {
   IDEA:                 { icon: Lightbulb,     label: "IDEA",    tone: "text-yellow-500" },
   PRD:                  { icon: FileText,      label: "PRD",     tone: "text-violet-500" },
   EPIC:                 { icon: Layers,        label: "EPIC",    tone: "text-blue-500" },
@@ -175,12 +175,13 @@ const TYPE_META: Record<ArtifactType, { icon: LucideIcon; label: string; tone: s
   RELEASE:              { icon: Rocket,        label: "RELEASE", tone: "text-emerald-600" },
   DEPLOYMENT:           { icon: Cloud,         label: "DEPLOY",  tone: "text-violet-600" },
   FILE:                 { icon: FileIcon,      label: "FILE",    tone: "text-stone-500" },
+  PIPELINE:             { icon: GitBranch,     label: "PIPELINE",tone: "text-accent" },
 };
 
 // Editorial artifact node — same DNA as the marketing HeroFlow card.
 function ArtifactNode({ data }: { data: {
   label: string;
-  type: ArtifactType;
+  type: ArtifactType | "PIPELINE";
   shortId: string;
   status: string;
   isHighlighted?: boolean;
@@ -309,7 +310,8 @@ const nodeTypes = {
   artifact: ArtifactNode,
 };
 
-const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: string) => void; currentView: string }) => {
+const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: string) => void; currentView: "graph" | "lineage" }) => {
+  const mode = currentView;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const focusId = searchParams.get("focus");
@@ -324,6 +326,10 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const deleteEdgeMutation = useDeleteArtifactEdge();
   const { data: coverageSnapshots } = useCoverageSnapshots(currentProjectId || undefined);
   const { data: driftFindings } = useDriftFindings(currentProjectId || undefined);
+  const { data: lineageData } = useArtifactLineage(
+    mode === "lineage" ? (currentProjectId || undefined) : undefined,
+    mode === "lineage" ? (currentWorkspaceId || undefined) : undefined,
+  );
 
   const isLoading = artifactsLoading || edgesLoading;
 
@@ -942,21 +948,83 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     }
   }, [nodes]);
 
+  // ── Lineage augmentation ────────────────────────────────────────────────
+  // In "lineage" mode we feed the SAME canvas pipeline-run nodes and
+  // "generated" edges from useArtifactLineage on top of the artifact graph.
+  // One shell, one node language, one layout engine — only the dataset
+  // changes when the user flips the tab.
+  const { nodes: mergedNodes, edges: mergedEdges } = useMemo(() => {
+    if (mode !== "lineage" || !lineageData) {
+      return { nodes: initialNodes, edges: initialEdges };
+    }
+
+    const artifactIds = new Set(initialNodes.map(n => n.id));
+    const extraNodes: Node[] = [];
+    const extraEdges: Edge[] = [];
+
+    lineageData.pipelineRuns.forEach((run) => {
+      const id = `run-${run.id}`;
+      extraNodes.push({
+        id,
+        type: "artifact",
+        position: { x: 0, y: 0 },
+        data: {
+          label: run.pipeline?.name || "Pipeline run",
+          type: "PIPELINE" as const,
+          shortId: run.id.slice(0, 8),
+          status:
+            run.status === "completed" ? "DONE" :
+            run.status === "running"   ? "IN_PROGRESS" :
+            run.status === "failed"    ? "BLOCKED" : "TODO",
+          showOverlays: false,
+        },
+      });
+    });
+
+    lineageData.edges.forEach((e) => {
+      const source = e.source; // "run-<id>"
+      const target = e.target.startsWith("artifact-") ? e.target.slice("artifact-".length) : e.target;
+      if (!artifactIds.has(target)) return;
+      extraEdges.push({
+        id: `lineage-${e.id}`,
+        source,
+        target,
+        type: "smoothstep",
+        animated: false,
+        label: e.label,
+        labelStyle: { fontSize: 10, fill: "hsl(var(--accent))" },
+        labelBgStyle: { fill: "hsl(var(--card))", fillOpacity: 0.9 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 14,
+          height: 14,
+          color: "hsl(var(--accent))",
+        },
+        style: { stroke: "hsl(var(--accent))", strokeWidth: 1.25, opacity: 0.7 },
+      });
+    });
+
+    return {
+      nodes: [...extraNodes, ...initialNodes],
+      edges: [...initialEdges, ...extraEdges],
+    };
+  }, [mode, lineageData, initialNodes, initialEdges]);
+
   // Run Dagre once we have both nodes and edges. Memoized so it only
   // re-runs when the underlying graph actually changes.
   const laidOutNodes = useMemo(
-    () => layoutWithDagre(initialNodes, initialEdges, "LR"),
-    [initialNodes, initialEdges],
+    () => layoutWithDagre(mergedNodes, mergedEdges, "LR"),
+    [mergedNodes, mergedEdges],
   );
 
   // Update nodes first, then edges after a brief delay to ensure nodes are registered
   useEffect(() => {
     setNodes(laidOutNodes);
     const timer = setTimeout(() => {
-      setEdges(initialEdges);
+      setEdges(mergedEdges);
     }, 50);
     return () => clearTimeout(timer);
-  }, [laidOutNodes, initialEdges, setNodes, setEdges]);
+  }, [laidOutNodes, mergedEdges, setNodes, setEdges]);
 
   const artifactTypes: { value: ArtifactType; label: string }[] = [
     { value: "PRD", label: "PRD" },
@@ -1061,7 +1129,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
                       <GitBranch className="h-3 w-3" />
                     </span>
                     <h2 className="truncate text-[13px] font-semibold tracking-tight text-foreground">
-                      Artifact graph
+                      {mode === "lineage" ? "Pipeline lineage" : "Artifact graph"}
                     </h2>
                     <span className="font-mono text-[10px] text-muted-foreground">
                       {nodes.length}n · {edges.length}e
@@ -1701,14 +1769,10 @@ const GraphPage = () => {
   const view = searchParams.get("view");
   const qParam = searchParams.get("q");
 
-  // Legacy pipeline-lineage deep-link
-  if (view === "lineage") {
-    const handleViewChange = (value: string) => {
-      if (value === "lineage") setSearchParams({ view: "lineage" });
-      else setSearchParams({});
-    };
-    return <LegacyPipelineLineageView onViewChange={handleViewChange} currentView="lineage" />;
-  }
+  const handleViewChange = (value: string) => {
+    if (value === "lineage") setSearchParams({ view: "lineage" });
+    else setSearchParams({});
+  };
 
   // Focused list answers (orphans, drift, etc.) — still reachable via ?q=
   // The canvas is the default page; lenses ride on top of it via ?lens=...
@@ -1716,13 +1780,11 @@ const GraphPage = () => {
     return <QuestionRouter questionId={qParam} />;
   }
 
-  const handleViewChange = (value: string) => {
-    if (value === "lineage") setSearchParams({ view: "lineage" });
-    else setSearchParams({});
-  };
+  const currentView: "graph" | "lineage" = view === "lineage" ? "lineage" : "graph";
+
   return (
     <ReactFlowProvider>
-      <GraphPageInner onViewChange={handleViewChange} currentView="graph" />
+      <GraphPageInner onViewChange={handleViewChange} currentView={currentView} />
     </ReactFlowProvider>
   );
 };
@@ -1757,41 +1819,5 @@ function QuestionRouter({ questionId }: { questionId: GraphQuestionId }) {
   }
 }
 
-/**
- * Preserves the original "Pipeline Lineage" tab view. Wrapped here so the
- * new router stays clean. AppLayout is provided by the parent route now,
- * so we don't re-wrap it.
- */
-function LegacyPipelineLineageView({
-  onViewChange,
-  currentView,
-}: {
-  onViewChange: (value: string) => void;
-  currentView: string;
-}) {
-  const { currentProjectId, currentWorkspaceId } = useUIStore();
-  return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Graph & Lineage</h1>
-          <p className="text-muted-foreground text-sm">
-            Visual traceability of artifacts and pipeline runs
-          </p>
-        </div>
-        <Tabs value={currentView} onValueChange={onViewChange}>
-          <TabsList>
-            <TabsTrigger value="graph">Artifact Graph</TabsTrigger>
-            <TabsTrigger value="lineage">Pipeline Lineage</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-      <ArtifactLineageView
-        projectId={currentProjectId || undefined}
-        workspaceId={currentWorkspaceId || undefined}
-      />
-    </div>
-  );
-}
 
 export default GraphPage;
