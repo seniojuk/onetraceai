@@ -440,24 +440,47 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Search artifacts
+  // Server-side trigram search via search_artifacts RPC, debounced.
+  // Falls back to in-memory match if the project id is missing.
+  const searchAbortRef = useRef<number | null>(null);
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    if (!query.trim() || !artifacts) {
+    setFocusedSearchIndex(0);
+    if (searchAbortRef.current) {
+      window.clearTimeout(searchAbortRef.current);
+      searchAbortRef.current = null;
+    }
+    const q = query.trim();
+    if (!q) {
       setSearchResults([]);
-      setFocusedSearchIndex(0);
       return;
     }
-    
-    const lowerQuery = query.toLowerCase();
-    const results = artifacts.filter(a => 
-      a.title.toLowerCase().includes(lowerQuery) ||
-      a.short_id.toLowerCase().includes(lowerQuery) ||
-      a.type.toLowerCase().includes(lowerQuery)
-    );
-    setSearchResults(results);
-    setFocusedSearchIndex(0);
-  }, [artifacts]);
+    if (!currentProjectId) {
+      // local fallback
+      const lower = q.toLowerCase();
+      setSearchResults(
+        (artifacts ?? []).filter(a =>
+          a.title.toLowerCase().includes(lower) ||
+          a.short_id.toLowerCase().includes(lower) ||
+          a.type.toLowerCase().includes(lower)
+        )
+      );
+      return;
+    }
+    searchAbortRef.current = window.setTimeout(async () => {
+      const { data, error } = await supabase.rpc("search_artifacts", {
+        p_project_id: currentProjectId,
+        p_query: q,
+        p_limit: 50,
+      });
+      if (error) {
+        console.error("search_artifacts failed", error);
+        return;
+      }
+      // RPC returns a subset of Artifact; cast for the list UI.
+      setSearchResults((data ?? []) as unknown as Artifact[]);
+    }, 120);
+  }, [currentProjectId, artifacts]);
 
   // Focus on a specific node
   const focusOnNode = useCallback((nodeId: string) => {
