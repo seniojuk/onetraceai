@@ -1770,14 +1770,10 @@ const GraphPage = () => {
   const view = searchParams.get("view");
   const qParam = searchParams.get("q");
 
-  // Legacy pipeline-lineage deep-link
-  if (view === "lineage") {
-    const handleViewChange = (value: string) => {
-      if (value === "lineage") setSearchParams({ view: "lineage" });
-      else setSearchParams({});
-    };
-    return <LegacyPipelineLineageView onViewChange={handleViewChange} currentView="lineage" />;
-  }
+  const handleViewChange = (value: string) => {
+    if (value === "lineage") setSearchParams({ view: "lineage" });
+    else setSearchParams({});
+  };
 
   // Focused list answers (orphans, drift, etc.) — still reachable via ?q=
   // The canvas is the default page; lenses ride on top of it via ?lens=...
@@ -1785,13 +1781,11 @@ const GraphPage = () => {
     return <QuestionRouter questionId={qParam} />;
   }
 
-  const handleViewChange = (value: string) => {
-    if (value === "lineage") setSearchParams({ view: "lineage" });
-    else setSearchParams({});
-  };
+  const currentView: "graph" | "lineage" = view === "lineage" ? "lineage" : "graph";
+
   return (
     <ReactFlowProvider>
-      <GraphPageInner onViewChange={handleViewChange} currentView="graph" />
+      <GraphPageInner onViewChange={handleViewChange} currentView={currentView} />
     </ReactFlowProvider>
   );
 };
