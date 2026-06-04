@@ -949,21 +949,83 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     }
   }, [nodes]);
 
+  // ── Lineage augmentation ────────────────────────────────────────────────
+  // In "lineage" mode we feed the SAME canvas pipeline-run nodes and
+  // "generated" edges from useArtifactLineage on top of the artifact graph.
+  // One shell, one node language, one layout engine — only the dataset
+  // changes when the user flips the tab.
+  const { nodes: mergedNodes, edges: mergedEdges } = useMemo(() => {
+    if (mode !== "lineage" || !lineageData) {
+      return { nodes: initialNodes, edges: initialEdges };
+    }
+
+    const artifactIds = new Set(initialNodes.map(n => n.id));
+    const extraNodes: Node[] = [];
+    const extraEdges: Edge[] = [];
+
+    lineageData.pipelineRuns.forEach((run) => {
+      const id = `run-${run.id}`;
+      extraNodes.push({
+        id,
+        type: "artifact",
+        position: { x: 0, y: 0 },
+        data: {
+          label: run.pipeline?.name || "Pipeline run",
+          type: "PIPELINE" as const,
+          shortId: run.id.slice(0, 8),
+          status:
+            run.status === "completed" ? "DONE" :
+            run.status === "running"   ? "IN_PROGRESS" :
+            run.status === "failed"    ? "BLOCKED" : "TODO",
+          showOverlays: false,
+        },
+      });
+    });
+
+    lineageData.edges.forEach((e) => {
+      const source = e.source; // "run-<id>"
+      const target = e.target.startsWith("artifact-") ? e.target.slice("artifact-".length) : e.target;
+      if (!artifactIds.has(target)) return;
+      extraEdges.push({
+        id: `lineage-${e.id}`,
+        source,
+        target,
+        type: "smoothstep",
+        animated: false,
+        label: e.label,
+        labelStyle: { fontSize: 10, fill: "hsl(var(--accent))" },
+        labelBgStyle: { fill: "hsl(var(--card))", fillOpacity: 0.9 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 14,
+          height: 14,
+          color: "hsl(var(--accent))",
+        },
+        style: { stroke: "hsl(var(--accent))", strokeWidth: 1.25, opacity: 0.7 },
+      });
+    });
+
+    return {
+      nodes: [...extraNodes, ...initialNodes],
+      edges: [...initialEdges, ...extraEdges],
+    };
+  }, [mode, lineageData, initialNodes, initialEdges]);
+
   // Run Dagre once we have both nodes and edges. Memoized so it only
   // re-runs when the underlying graph actually changes.
   const laidOutNodes = useMemo(
-    () => layoutWithDagre(initialNodes, initialEdges, "LR"),
-    [initialNodes, initialEdges],
+    () => layoutWithDagre(mergedNodes, mergedEdges, "LR"),
+    [mergedNodes, mergedEdges],
   );
 
   // Update nodes first, then edges after a brief delay to ensure nodes are registered
   useEffect(() => {
     setNodes(laidOutNodes);
     const timer = setTimeout(() => {
-      setEdges(initialEdges);
+      setEdges(mergedEdges);
     }, 50);
     return () => clearTimeout(timer);
-  }, [laidOutNodes, initialEdges, setNodes, setEdges]);
+  }, [laidOutNodes, mergedEdges, setNodes, setEdges]);
 
   const artifactTypes: { value: ArtifactType; label: string }[] = [
     { value: "PRD", label: "PRD" },
