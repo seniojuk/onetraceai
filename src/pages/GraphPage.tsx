@@ -489,30 +489,6 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     }
   }, [setCenter]);
 
-  // Navigate search results
-  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (searchResults.length === 0) return;
-    
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setFocusedSearchIndex(prev => (prev + 1) % searchResults.length);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setFocusedSearchIndex(prev => (prev - 1 + searchResults.length) % searchResults.length);
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      const artifact = searchResults[focusedSearchIndex];
-      if (artifact) {
-        focusOnNode(artifact.id);
-        setSearchQuery("");
-        setSearchResults([]);
-      }
-    } else if (e.key === "Escape") {
-      setSearchQuery("");
-      setSearchResults([]);
-    }
-  }, [searchResults, focusedSearchIndex, focusOnNode]);
-
   // Get search match IDs for highlighting
   const searchMatchIds = useMemo(() => {
     return new Set(searchResults.map(a => a.id));
