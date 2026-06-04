@@ -410,9 +410,12 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
           onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
           fitView
-          className="bg-muted/20"
+          fitViewOptions={{ padding: 0.2, minZoom: 0.4, maxZoom: 1.2 }}
+          proOptions={{ hideAttribution: true }}
+          className="bg-gradient-to-br from-muted/10 via-background to-muted/20"
         >
-          <Background color="hsl(var(--muted-foreground))" gap={24} size={1} />
+          <Background color="hsl(var(--muted-foreground) / 0.35)" gap={22} size={1} />
+
           <Controls className="!bg-card/90 !backdrop-blur-sm !border !rounded-lg !shadow-sm overflow-hidden" />
           <MiniMap
             className="!bg-card/90 !backdrop-blur-sm !border !rounded-lg !shadow-sm"
