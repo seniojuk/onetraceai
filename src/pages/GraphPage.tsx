@@ -315,7 +315,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const focusId = searchParams.get("focus");
   const lensParam = (searchParams.get("lens") ?? "none") as
     | "none" | "orphans" | "coverage-gaps" | "drift" | "recent";
-  const { fitView, setCenter } = useReactFlow();
+  const { setCenter } = useReactFlow();
   
   const { currentProjectId, currentWorkspaceId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
   const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(currentProjectId || undefined);
@@ -430,6 +430,9 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Artifact[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
+  const [pendingFocusNodeId, setPendingFocusNodeId] = useState<string | null>(null);
+  const graphShellRef = useRef<HTMLDivElement | null>(null);
 
   // ⌘K / Ctrl+K opens the search palette
   useEffect(() => {
@@ -489,6 +492,13 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const focusOnNode = useCallback((nodeId: string) => {
     focusOnNodeRef.current(nodeId);
   }, []);
+
+  const selectSearchResult = useCallback((artifact: Artifact) => {
+    focusOnNode(artifact.id);
+    setSearchOpen(false);
+    setSearchQuery("");
+    setSearchResults([]);
+  }, [focusOnNode]);
 
   // Get search match IDs for highlighting
   const searchMatchIds = useMemo(() => {
@@ -586,7 +596,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
       const isSelected = impactAnalysisMode && selectedNodeId === artifact.id;
       const isHighlighted = impactAnalysisMode && downstreamArtifactIds.has(artifact.id);
       const isUpstream = impactAnalysisMode && upstreamArtifactIds.has(artifact.id);
-      const isSearchMatch = searchMatchIds.has(artifact.id);
+      const isSearchMatch = searchMatchIds.has(artifact.id) || focusedNodeId === artifact.id;
       const isLensMatch = lensMatchIds ? lensMatchIds.has(artifact.id) : false;
       const impactDim = impactAnalysisMode && selectedNodeId && !isSelected && !isHighlighted && !isUpstream;
       const lensDim = lensActive && !isLensMatch;
@@ -639,7 +649,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     });
 
     return nodes;
-  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds, searchMatchIds, coverageByArtifact, driftByArtifact, showOverlays, lensMatchIds, lensActive, lensOverlaysOn]);
+  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds, searchMatchIds, focusedNodeId, coverageByArtifact, driftByArtifact, showOverlays, lensMatchIds, lensActive, lensOverlaysOn]);
 
   // Edge type colors for different relationship types
   const edgeTypeStyles: Record<string, { stroke: string; label: string }> = {
@@ -716,22 +726,30 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   // Keep focusOnNode implementation in sync with latest nodes/filters
   useEffect(() => {
     focusOnNodeRef.current = (nodeId: string) => {
+      graphShellRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      setFocusedNodeId(nodeId);
       const node = nodes.find(n => n.id === nodeId);
       if (node) {
         setSelectedNodeId(nodeId);
-        setCenter(node.position.x + 125, node.position.y + 50, { zoom: 1.5, duration: 500 });
+        setCenter(node.position.x + NODE_W / 2, node.position.y + NODE_H / 2, { zoom: 1.45, duration: 500 });
         return;
       }
       // Node likely filtered out — clear filter, then center next frame
+      setPendingFocusNodeId(nodeId);
       setArtifactTypeFilter([]);
       setSelectedNodeId(nodeId);
-      setTimeout(() => {
-        try {
-          fitView({ nodes: [{ id: nodeId }], duration: 500, maxZoom: 1.5, padding: 0.3 });
-        } catch {}
-      }, 80);
     };
-  }, [nodes, setCenter, fitView, setArtifactTypeFilter]);
+  }, [nodes, setCenter, setArtifactTypeFilter]);
+
+  useEffect(() => {
+    if (!pendingFocusNodeId) return;
+    const node = nodes.find(n => n.id === pendingFocusNodeId);
+    if (!node) return;
+    setPendingFocusNodeId(null);
+    window.requestAnimationFrame(() => {
+      setCenter(node.position.x + NODE_W / 2, node.position.y + NODE_H / 2, { zoom: 1.45, duration: 500 });
+    });
+  }, [pendingFocusNodeId, nodes, setCenter]);
 
 
   const onConnect = useCallback(
@@ -964,7 +982,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   return (
     <AuthGuard>
       <AppLayout>
-        <div className="h-[calc(100vh-0px)] w-full">
+        <div ref={graphShellRef} className="h-[calc(100vh-0px)] w-full">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -1456,14 +1474,11 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
                     return (
                       <CommandItem
                         key={artifact.id}
-                        value={`${artifact.title} ${artifact.short_id} ${artifact.type}`}
-                        onSelect={() => {
-                          focusOnNode(artifact.id);
-                          setSearchOpen(false);
-                          setSearchQuery("");
-                          setSearchResults([]);
-                        }}
-                        className="gap-2.5"
+                        value={artifact.id}
+                        keywords={[artifact.title, artifact.short_id, artifact.type]}
+                        onSelect={() => selectSearchResult(artifact)}
+                        onClick={() => selectSearchResult(artifact)}
+                        className="gap-2.5 !cursor-pointer"
                       >
                         <Icon className={cn("h-4 w-4 shrink-0", meta.tone)} />
                         <div className="min-w-0 flex-1">
