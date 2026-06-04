@@ -1625,37 +1625,56 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
             />
             <CommandList>
               <CommandEmpty>
-                {searchQuery.trim() ? "No artifacts match." : "Start typing to search."}
+                {searchQuery.trim() ? "No artifacts match." : "No artifacts yet."}
               </CommandEmpty>
-              {searchResults.length > 0 && (
-                <CommandGroup heading={`${searchResults.length} result${searchResults.length === 1 ? "" : "s"}`}>
-                  {searchResults.slice(0, 50).map((artifact) => {
-                    const meta = TYPE_META[artifact.type] ?? TYPE_META.FILE;
-                    const Icon = meta.icon;
-                    return (
-                      <CommandItem
-                        key={artifact.id}
-                        value={artifact.id}
-                        keywords={[artifact.title, artifact.short_id, artifact.type]}
-                        onSelect={() => selectSearchResult(artifact)}
-                        onClick={() => selectSearchResult(artifact)}
-                        className="gap-2.5 !cursor-pointer"
-                      >
-                        <Icon className={cn("h-4 w-4 shrink-0", meta.tone)} />
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-[13px] font-medium">{artifact.title}</div>
-                          <div className="mt-0.5 flex items-center gap-2 font-mono text-[10px] text-muted-foreground transition-colors group-hover:text-accent-foreground group-data-[selected=true]:text-accent-foreground">
-                            <span className="uppercase tracking-wider">{meta.label}</span>
-                            <span>·</span>
-                            <span>{artifact.short_id}</span>
+              {(() => {
+                const hasQuery = searchQuery.trim().length > 0;
+                const items = hasQuery
+                  ? searchResults.slice(0, 50)
+                  : browseAllArtifacts.slice(0, browseVisibleCount);
+                if (items.length === 0) return null;
+                const heading = hasQuery
+                  ? `${searchResults.length} result${searchResults.length === 1 ? "" : "s"}`
+                  : `All artifacts · ${browseAllArtifacts.length}`;
+                return (
+                  <CommandGroup heading={heading}>
+                    {items.map((artifact) => {
+                      const meta = TYPE_META[artifact.type] ?? TYPE_META.FILE;
+                      const Icon = meta.icon;
+                      return (
+                        <CommandItem
+                          key={artifact.id}
+                          value={artifact.id}
+                          keywords={[artifact.title, artifact.short_id, artifact.type]}
+                          onSelect={() => selectSearchResult(artifact)}
+                          onClick={() => selectSearchResult(artifact)}
+                          className="gap-2.5 !cursor-pointer"
+                        >
+                          <Icon className={cn("h-4 w-4 shrink-0", meta.tone)} />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-[13px] font-medium">{artifact.title}</div>
+                            <div className="mt-0.5 flex items-center gap-2 font-mono text-[10px] text-muted-foreground transition-colors group-hover:text-accent-foreground group-data-[selected=true]:text-accent-foreground">
+                              <span className="uppercase tracking-wider">{meta.label}</span>
+                              <span>·</span>
+                              <span>{artifact.short_id}</span>
+                            </div>
                           </div>
-                        </div>
-                      </CommandItem>
-                    );
-                  })}
-                </CommandGroup>
-              )}
+                        </CommandItem>
+                      );
+                    })}
+                    {!hasQuery && browseVisibleCount < browseAllArtifacts.length && (
+                      <div
+                        ref={browseSentinelRef}
+                        className="py-3 text-center text-[11px] text-muted-foreground"
+                      >
+                        Loading more…
+                      </div>
+                    )}
+                  </CommandGroup>
+                );
+              })()}
             </CommandList>
+
           </CommandDialog>
 
           {/* Edge Type Selection Dialog */}
