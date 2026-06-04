@@ -596,7 +596,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
       const isSelected = impactAnalysisMode && selectedNodeId === artifact.id;
       const isHighlighted = impactAnalysisMode && downstreamArtifactIds.has(artifact.id);
       const isUpstream = impactAnalysisMode && upstreamArtifactIds.has(artifact.id);
-      const isSearchMatch = searchMatchIds.has(artifact.id);
+      const isSearchMatch = searchMatchIds.has(artifact.id) || focusedNodeId === artifact.id;
       const isLensMatch = lensMatchIds ? lensMatchIds.has(artifact.id) : false;
       const impactDim = impactAnalysisMode && selectedNodeId && !isSelected && !isHighlighted && !isUpstream;
       const lensDim = lensActive && !isLensMatch;
@@ -649,7 +649,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     });
 
     return nodes;
-  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds, searchMatchIds, coverageByArtifact, driftByArtifact, showOverlays, lensMatchIds, lensActive, lensOverlaysOn]);
+  }, [artifacts, artifactTypeFilter, impactAnalysisMode, selectedNodeId, downstreamArtifactIds, upstreamArtifactIds, searchMatchIds, focusedNodeId, coverageByArtifact, driftByArtifact, showOverlays, lensMatchIds, lensActive, lensOverlaysOn]);
 
   // Edge type colors for different relationship types
   const edgeTypeStyles: Record<string, { stroke: string; label: string }> = {
