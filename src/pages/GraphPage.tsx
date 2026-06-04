@@ -317,7 +317,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const focusId = searchParams.get("focus");
   const lensParam = (searchParams.get("lens") ?? "none") as
     | "none" | "orphans" | "coverage-gaps" | "drift" | "recent";
-  const { setCenter, fitBounds, fitView } = useReactFlow();
+  const { setCenter, fitBounds, fitView, getViewport, setViewport } = useReactFlow();
   
   const { currentProjectId, currentWorkspaceId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
   const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(currentProjectId || undefined);
