@@ -799,27 +799,21 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
         : NODE_H * 1.5;
       const matchesWithCenters = matched.map((node) => ({
         node,
+        centerX: node.position.x + NODE_W / 2,
         centerY: node.position.y + NODE_H / 2,
       }));
-      let cameraMatches = matchesWithCenters.filter(
+      const visibleMatches = matchesWithCenters.filter(
         ({ centerY }) => Math.abs(centerY - fallbackAnchor.y) <= visibleHalfHeight + NODE_H,
       );
+      const candidates = visibleMatches.length > 0 ? visibleMatches : matchesWithCenters;
+      const target = candidates.reduce((best, current) => {
+        const currentScore = Math.abs(current.centerY - fallbackAnchor.y) * 4 + Math.abs(current.centerX - fallbackAnchor.x);
+        const bestScore = Math.abs(best.centerY - fallbackAnchor.y) * 4 + Math.abs(best.centerX - fallbackAnchor.x);
+        return currentScore < bestScore ? current : best;
+      });
 
-      if (cameraMatches.length === 0) {
-        const nearestDistance = Math.min(
-          ...matchesWithCenters.map(({ centerY }) => Math.abs(centerY - fallbackAnchor.y)),
-        );
-        cameraMatches = matchesWithCenters.filter(
-          ({ centerY }) => Math.abs(centerY - fallbackAnchor.y) <= nearestDistance + NODE_H / 2,
-        );
-      }
-
-      const bounds = getNodesBounds(
-        cameraMatches.map(({ node }) => ({ ...node, width: NODE_W, height: NODE_H })),
-      );
-      const targetCenterFlowX = bounds.x + bounds.width / 2;
-      setCenter(targetCenterFlowX, fallbackAnchor.y, {
-        zoom: Math.max(fallbackAnchor.zoom, 1.15),
+      setCenter(target.centerX, target.centerY, {
+        zoom: 1.45,
         duration: 500,
       });
     }, 80);
