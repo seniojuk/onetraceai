@@ -16,6 +16,7 @@ import {
   Panel,
   useReactFlow,
   ReactFlowProvider,
+  useStore,
   getNodesBounds,
   Handle,
   Position,
@@ -317,6 +318,9 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const lensParam = (searchParams.get("lens") ?? "none") as
     | "none" | "orphans" | "coverage-gaps" | "drift" | "recent";
   const { setCenter, fitView } = useReactFlow();
+  const isInteractive = useStore(
+    (s) => s.nodesDraggable || s.nodesConnectable || s.elementsSelectable,
+  );
   
   const { currentProjectId, currentWorkspaceId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
   const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(currentProjectId || undefined);
@@ -1105,7 +1109,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   return (
     <AuthGuard>
       <AppLayout>
-        <div ref={graphShellRef} className="h-full w-full">
+        <div ref={graphShellRef} className={`h-full w-full ${!isInteractive ? "graph-locked" : ""}`}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
