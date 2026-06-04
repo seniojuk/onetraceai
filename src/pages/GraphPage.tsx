@@ -159,7 +159,7 @@ function layoutWithDagre(
 }
 
 // ── Per-type visual language, matched to HeroFlow ─────────────────────────────
-const TYPE_META: Record<ArtifactType, { icon: LucideIcon; label: string; tone: string }> = {
+const TYPE_META: Record<string, { icon: LucideIcon; label: string; tone: string }> = {
   IDEA:                 { icon: Lightbulb,     label: "IDEA",    tone: "text-yellow-500" },
   PRD:                  { icon: FileText,      label: "PRD",     tone: "text-violet-500" },
   EPIC:                 { icon: Layers,        label: "EPIC",    tone: "text-blue-500" },
@@ -175,6 +175,7 @@ const TYPE_META: Record<ArtifactType, { icon: LucideIcon; label: string; tone: s
   RELEASE:              { icon: Rocket,        label: "RELEASE", tone: "text-emerald-600" },
   DEPLOYMENT:           { icon: Cloud,         label: "DEPLOY",  tone: "text-violet-600" },
   FILE:                 { icon: FileIcon,      label: "FILE",    tone: "text-stone-500" },
+  PIPELINE:             { icon: GitBranch,     label: "PIPELINE",tone: "text-accent" },
 };
 
 // Editorial artifact node — same DNA as the marketing HeroFlow card.
