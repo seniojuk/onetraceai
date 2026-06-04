@@ -453,7 +453,6 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const [searchOpen, setSearchOpen] = useState(false);
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [pendingFocusNodeId, setPendingFocusNodeId] = useState<string | null>(null);
-  const graphShellRef = useRef<HTMLDivElement | null>(null);
 
   // ⌘K / Ctrl+K opens the search palette
   useEffect(() => {
@@ -772,9 +771,9 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     });
   }, [pendingFocusNodeId, nodes, setCenter]);
 
-  // Auto-zoom to lens matches — same delightful "the canvas knows where to
-  // look" feeling as the search palette. When the lens clears, gently
-  // refit the whole graph.
+  // Auto-focus to lens matches with the same setCenter camera move used by
+  // search. The key difference: lenses pick matches from the vertical slice
+  // the user was already viewing, then pan horizontally to those matches.
   useEffect(() => {
     if (nodes.length === 0) return;
     if (!lensActive) {
@@ -786,27 +785,46 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     if (!lensMatchIds || lensMatchIds.size === 0) return;
     const matched = nodes.filter(n => lensMatchIds.has(n.id));
     if (matched.length === 0) return;
-    const bounds = getNodesBounds(
-      matched.map(n => ({ ...n, width: NODE_W, height: NODE_H })),
-    );
     const t = window.setTimeout(() => {
-      // Mirror the search-select behavior: call setCenter on the cluster's
-      // center X, but keep the user's current vertical center and zoom so
-      // the row they're inspecting doesn't shift up or down.
-      const pane = document.querySelector(".react-flow") as HTMLElement | null;
+      const anchor = lensAnchorCenterRef.current ?? getCurrentFlowCenter();
+      const fallbackAnchor = anchor ?? {
+        x: matched[0].position.x + NODE_W / 2,
+        y: matched[0].position.y + NODE_H / 2,
+        zoom: 1,
+      };
+      const pane = graphShellRef.current?.querySelector(".react-flow") as HTMLElement | null;
       const paneRect = pane?.getBoundingClientRect();
-      const vp = getViewport();
+      const visibleHalfHeight = paneRect
+        ? paneRect.height / Math.max(fallbackAnchor.zoom, 0.1) / 2
+        : NODE_H * 1.5;
+      const matchesWithCenters = matched.map((node) => ({
+        node,
+        centerY: node.position.y + NODE_H / 2,
+      }));
+      let cameraMatches = matchesWithCenters.filter(
+        ({ centerY }) => Math.abs(centerY - fallbackAnchor.y) <= visibleHalfHeight + NODE_H,
+      );
+
+      if (cameraMatches.length === 0) {
+        const nearestDistance = Math.min(
+          ...matchesWithCenters.map(({ centerY }) => Math.abs(centerY - fallbackAnchor.y)),
+        );
+        cameraMatches = matchesWithCenters.filter(
+          ({ centerY }) => Math.abs(centerY - fallbackAnchor.y) <= nearestDistance + NODE_H / 2,
+        );
+      }
+
+      const bounds = getNodesBounds(
+        cameraMatches.map(({ node }) => ({ ...node, width: NODE_W, height: NODE_H })),
+      );
       const targetCenterFlowX = bounds.x + bounds.width / 2;
-      const currentCenterFlowY = paneRect
-        ? (paneRect.height / 2 - vp.y) / vp.zoom
-        : bounds.y + bounds.height / 2;
-      setCenter(targetCenterFlowX, currentCenterFlowY, {
-        zoom: vp.zoom,
+      setCenter(targetCenterFlowX, fallbackAnchor.y, {
+        zoom: Math.max(fallbackAnchor.zoom, 1.15),
         duration: 500,
       });
     }, 80);
     return () => window.clearTimeout(t);
-  }, [lensParam, lensActive, lensMatchIds, nodes, fitView, getViewport, setCenter]);
+  }, [lensParam, lensActive, lensMatchIds, nodes, fitView, getCurrentFlowCenter, setCenter]);
 
 
 
