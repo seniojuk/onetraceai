@@ -100,6 +100,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ArtifactLineageView } from "@/components/lineage/ArtifactLineageView";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 import {
   CommandDialog,
   CommandInput,
