@@ -180,85 +180,109 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
   const [showPipelineRuns, setShowPipelineRuns] = useState(true);
   const [showLinkedArtifactsOnly, setShowLinkedArtifactsOnly] = useState(false);
 
-  // Filter and create nodes
+  // Filter and create nodes — proper lane-per-run layout so each pipeline
+  // run owns a vertical band and its artifacts stack neatly to the right.
   const { initialNodes, initialEdges } = useMemo(() => {
     if (!lineageData) return { initialNodes: [], initialEdges: [] };
 
     const nodes: Node[] = [];
     const edges: Edge[] = [];
-    
-    // Track pipeline runs for positioning
-    const runPositions = new Map<string, { x: number; y: number }>();
-    let runIndex = 0;
-    
-    // Filter pipeline runs and artifacts
+
+    // Layout constants
+    const COL_RUN_X = 40;
+    const COL_ART_X = 360;
+    const COL_ORPHAN_X = 720;
+    const RUN_NODE_H = 116;
+    const ART_NODE_H = 92;
+    const LANE_GAP = 28;       // gap between pipeline lanes
+    const ART_GAP = 14;        // gap between artifacts inside a lane
+    const TOP_PAD = 32;
+
     const pipelineRunIds = new Set(
-      lineageData.artifacts
-        .filter(a => a.pipelineRunId)
-        .map(a => a.pipelineRunId!)
+      lineageData.artifacts.filter(a => a.pipelineRunId).map(a => a.pipelineRunId!),
     );
-
-    // Add pipeline run nodes
-    if (showPipelineRuns) {
-      lineageData.nodes
-        .filter(n => n.type === "pipeline_run")
-        .filter(n => !showLinkedArtifactsOnly || pipelineRunIds.has(n.data.pipelineRun!.id))
-        .forEach((node, index) => {
-          const x = 50;
-          const y = index * 200 + 50;
-          runPositions.set(node.id, { x, y });
-          
-          nodes.push({
-            id: node.id,
-            type: "pipelineRun",
-            position: { x, y },
-            data: {
-              pipelineRun: node.data.pipelineRun,
-              isSelected: selectedNode?.id === node.id,
-            },
-          });
-          runIndex++;
-        });
-    }
-
-    // Add artifact nodes
     const linkedArtifactIds = new Set(lineageData.edges.map(e => e.target));
-    let artifactIndex = 0;
-    
+
+    // Group artifacts by pipeline run
+    const artifactsByRun = new Map<string, typeof lineageData.nodes>();
+    const orphanArtifacts: typeof lineageData.nodes = [];
+
     lineageData.nodes
       .filter(n => n.type === "artifact")
       .filter(n => !showLinkedArtifactsOnly || linkedArtifactIds.has(n.id))
       .forEach((node) => {
-        const artifact = node.data.artifact!;
-        
-        // Position artifact next to its source pipeline run
-        let x = 400;
-        let y = artifactIndex * 120 + 50;
-        
-        if (artifact.pipelineRunId && showPipelineRuns) {
-          const runPos = runPositions.get(`run-${artifact.pipelineRunId}`);
-          if (runPos) {
-            x = runPos.x + 350;
-            y = runPos.y;
-          }
-        }
-        
-        nodes.push({
-          id: node.id,
-          type: "artifactNode",
-          position: { x, y },
-          data: {
-            artifact: node.data.artifact,
-            isSelected: selectedNode?.id === node.id,
-          },
-        });
-        
-        if (!artifact.pipelineRunId || !showPipelineRuns) {
-          artifactIndex++;
+        const a = node.data.artifact!;
+        if (a.pipelineRunId && showPipelineRuns) {
+          const key = `run-${a.pipelineRunId}`;
+          const arr = artifactsByRun.get(key) ?? [];
+          arr.push(node);
+          artifactsByRun.set(key, arr);
+        } else {
+          orphanArtifacts.push(node);
         }
       });
 
-    // Add edges
+    const runNodes = showPipelineRuns
+      ? lineageData.nodes
+          .filter(n => n.type === "pipeline_run")
+          .filter(n => !showLinkedArtifactsOnly || pipelineRunIds.has(n.data.pipelineRun!.id))
+      : [];
+
+    // Place pipeline run lanes
+    let cursorY = TOP_PAD;
+    runNodes.forEach((node) => {
+      const childArts = artifactsByRun.get(node.id) ?? [];
+      const childrenHeight = childArts.length > 0
+        ? childArts.length * ART_NODE_H + (childArts.length - 1) * ART_GAP
+        : RUN_NODE_H;
+      const laneHeight = Math.max(RUN_NODE_H, childrenHeight);
+
+      // Center the run node vertically within its lane
+      const runY = cursorY + (laneHeight - RUN_NODE_H) / 2;
+      nodes.push({
+        id: node.id,
+        type: "pipelineRun",
+        position: { x: COL_RUN_X, y: runY },
+        data: {
+          pipelineRun: node.data.pipelineRun,
+          isSelected: selectedNode?.id === node.id,
+        },
+      });
+
+      // Stack artifacts in this lane
+      childArts.forEach((child, ci) => {
+        const y = cursorY + ci * (ART_NODE_H + ART_GAP);
+        nodes.push({
+          id: child.id,
+          type: "artifactNode",
+          position: { x: COL_ART_X, y },
+          data: {
+            artifact: child.data.artifact,
+            isSelected: selectedNode?.id === child.id,
+          },
+        });
+      });
+
+      cursorY += laneHeight + LANE_GAP;
+    });
+
+    // Place orphan / unlinked artifacts in their own column
+    orphanArtifacts.forEach((node, i) => {
+      nodes.push({
+        id: node.id,
+        type: "artifactNode",
+        position: {
+          x: runNodes.length > 0 ? COL_ORPHAN_X : COL_RUN_X,
+          y: (runNodes.length > 0 ? TOP_PAD : TOP_PAD) + i * (ART_NODE_H + ART_GAP),
+        },
+        data: {
+          artifact: node.data.artifact,
+          isSelected: selectedNode?.id === node.id,
+        },
+      });
+    });
+
+    // Edges — thin, calm, accent-tinted
     if (showPipelineRuns) {
       lineageData.edges.forEach(edge => {
         edges.push({
@@ -266,23 +290,25 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
           source: edge.source,
           target: edge.target,
           type: "smoothstep",
-          animated: true,
-          label: edge.label,
-          labelStyle: { fontSize: 10, fill: "hsl(var(--accent))" },
-          labelBgStyle: { fill: "hsl(var(--card))", fillOpacity: 0.9 },
+          animated: false,
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            width: 15,
-            height: 15,
+            width: 12,
+            height: 12,
             color: "hsl(var(--accent))",
           },
-          style: { stroke: "hsl(var(--accent))", strokeWidth: 2 },
+          style: {
+            stroke: "hsl(var(--accent))",
+            strokeWidth: 1.25,
+            strokeOpacity: 0.55,
+          },
         });
       });
     }
 
     return { initialNodes: nodes, initialEdges: edges };
   }, [lineageData, showPipelineRuns, showLinkedArtifactsOnly, selectedNode]);
+
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
