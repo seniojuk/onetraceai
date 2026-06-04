@@ -218,7 +218,7 @@ function InnerLayout({ children }: AppLayoutProps) {
   );
 
   return (
-    <div className="min-h-screen flex w-full bg-background">
+    <div className="h-dvh flex w-full bg-background overflow-hidden">
       <Sidebar collapsible="icon" className="border-r border-sidebar-border">
         <SidebarHeader className="border-b border-sidebar-border px-3 h-14 flex-row items-center">
           <Link to="/dashboard" className="flex items-center gap-2.5 w-full overflow-hidden">
