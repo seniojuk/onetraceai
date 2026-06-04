@@ -435,8 +435,16 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Artifact[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [browseVisibleCount, setBrowseVisibleCount] = useState(50);
+  const browseSentinelRef = useRef<HTMLDivElement | null>(null);
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [pendingFocusNodeId, setPendingFocusNodeId] = useState<string | null>(null);
+
+  // Reset pagination whenever the palette opens or the query changes
+  useEffect(() => {
+    setBrowseVisibleCount(50);
+  }, [searchOpen, searchQuery]);
+
 
   // ⌘K / Ctrl+K opens the search palette
   useEffect(() => {
