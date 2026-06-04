@@ -1119,18 +1119,23 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
-                      {artifactTypes.map((type) => (
-                        <DropdownMenuCheckboxItem
-                          key={type.value}
-                          checked={artifactTypeFilter.includes(type.value)}
-                          onCheckedChange={(checked) => {
-                            if (checked) setArtifactTypeFilter([...artifactTypeFilter, type.value]);
-                            else setArtifactTypeFilter(artifactTypeFilter.filter(t => t !== type.value));
-                          }}
-                        >
-                          {type.label}
-                        </DropdownMenuCheckboxItem>
-                      ))}
+                      {artifactTypes.map((type) => {
+                        const meta = TYPE_META[type.value];
+                        const Icon = meta.icon;
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={type.value}
+                            checked={artifactTypeFilter.includes(type.value)}
+                            onCheckedChange={(checked) => {
+                              if (checked) setArtifactTypeFilter([...artifactTypeFilter, type.value]);
+                              else setArtifactTypeFilter(artifactTypeFilter.filter(t => t !== type.value));
+                            }}
+                          >
+                            <Icon className={cn("mr-2 h-3.5 w-3.5 shrink-0", meta.tone)} />
+                            {type.label}
+                          </DropdownMenuCheckboxItem>
+                        );
+                      })}
                     </DropdownMenuContent>
                   </DropdownMenu>
 
