@@ -488,9 +488,17 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const focusOnNode = useCallback((nodeId: string) => {
     const node = nodes.find(n => n.id === nodeId);
     if (node) {
+      setSelectedNodeId(nodeId);
       setCenter(node.position.x + 125, node.position.y + 50, { zoom: 1.5, duration: 500 });
+    } else {
+      // Node may be filtered out — clear filter and retry next frame
+      setArtifactTypeFilter("ALL");
+      setSelectedNodeId(nodeId);
+      requestAnimationFrame(() => {
+        fitView({ nodes: [{ id: nodeId }], duration: 500, maxZoom: 1.5, padding: 0.3 });
+      });
     }
-  }, [setCenter]);
+  }, [setCenter, nodes, fitView]);
 
   // Get search match IDs for highlighting
   const searchMatchIds = useMemo(() => {
