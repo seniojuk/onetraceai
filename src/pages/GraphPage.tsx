@@ -757,6 +757,38 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     });
   }, [pendingFocusNodeId, nodes, setCenter]);
 
+  // Auto-zoom to lens matches — same delightful "the canvas knows where to
+  // look" feeling as the search palette. When the lens clears, gently
+  // refit the whole graph.
+  useEffect(() => {
+    if (nodes.length === 0) return;
+    if (!lensActive) {
+      const t = window.setTimeout(() => {
+        fitView({ padding: 0.2, duration: 500, maxZoom: 1.2 });
+      }, 60);
+      return () => window.clearTimeout(t);
+    }
+    if (!lensMatchIds || lensMatchIds.size === 0) return;
+    const matched = nodes.filter(n => lensMatchIds.has(n.id));
+    if (matched.length === 0) return;
+    const bounds = getNodesBounds(
+      matched.map(n => ({ ...n, width: NODE_W, height: NODE_H })),
+    );
+    const t = window.setTimeout(() => {
+      fitBounds(
+        {
+          x: bounds.x - 80,
+          y: bounds.y - 80,
+          width: bounds.width + 160,
+          height: bounds.height + 160,
+        },
+        { duration: 600 },
+      );
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [lensParam, lensActive, lensMatchIds, nodes, fitBounds, fitView]);
+
+
 
   const onConnect = useCallback(
     (connection: Connection) => {
