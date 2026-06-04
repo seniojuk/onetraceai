@@ -726,22 +726,30 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   // Keep focusOnNode implementation in sync with latest nodes/filters
   useEffect(() => {
     focusOnNodeRef.current = (nodeId: string) => {
+      graphShellRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      setFocusedNodeId(nodeId);
       const node = nodes.find(n => n.id === nodeId);
       if (node) {
         setSelectedNodeId(nodeId);
-        setCenter(node.position.x + 125, node.position.y + 50, { zoom: 1.5, duration: 500 });
+        setCenter(node.position.x + NODE_W / 2, node.position.y + NODE_H / 2, { zoom: 1.45, duration: 500 });
         return;
       }
       // Node likely filtered out — clear filter, then center next frame
+      setPendingFocusNodeId(nodeId);
       setArtifactTypeFilter([]);
       setSelectedNodeId(nodeId);
-      setTimeout(() => {
-        try {
-          fitView({ nodes: [{ id: nodeId }], duration: 500, maxZoom: 1.5, padding: 0.3 });
-        } catch {}
-      }, 80);
     };
-  }, [nodes, setCenter, fitView, setArtifactTypeFilter]);
+  }, [nodes, setCenter, setArtifactTypeFilter]);
+
+  useEffect(() => {
+    if (!pendingFocusNodeId) return;
+    const node = nodes.find(n => n.id === pendingFocusNodeId);
+    if (!node) return;
+    setPendingFocusNodeId(null);
+    window.requestAnimationFrame(() => {
+      setCenter(node.position.x + NODE_W / 2, node.position.y + NODE_H / 2, { zoom: 1.45, duration: 500 });
+    });
+  }, [pendingFocusNodeId, nodes, setCenter]);
 
 
   const onConnect = useCallback(
