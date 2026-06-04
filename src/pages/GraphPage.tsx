@@ -310,7 +310,8 @@ const nodeTypes = {
   artifact: ArtifactNode,
 };
 
-const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: string) => void; currentView: string }) => {
+const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: string) => void; currentView: "graph" | "lineage" }) => {
+  const mode = currentView;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const focusId = searchParams.get("focus");
