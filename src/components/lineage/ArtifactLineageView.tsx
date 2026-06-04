@@ -471,8 +471,9 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
               </Button>
             )}
           </div>
-          <ScrollArea className="flex-1">
-            <div className="p-5">
+          <ScrollArea className="flex-1 w-full">
+            <div className="p-5 w-80 max-w-full">
+
               {selectedNode ? (
                 <div className="space-y-4">
                   {selectedNode.type === "pipeline_run" && selectedNode.data.pipelineRun && (
