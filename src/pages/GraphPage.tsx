@@ -992,223 +992,209 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
             />
 
 
-            {/* Custom Panel */}
-            <Panel position="top-left" className="m-4">
-              <Card className="shadow-lg">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-lg font-semibold text-foreground">Artifact Graph</h2>
-                    <Tabs value={currentView} onValueChange={onViewChange}>
-                      <TabsList className="h-7">
-                        <TabsTrigger value="graph" className="text-xs px-2 py-0.5">Graph</TabsTrigger>
-                        <TabsTrigger value="lineage" className="text-xs px-2 py-0.5">Lineage</TabsTrigger>
-                      </TabsList>
-                    </Tabs>
+            {/* Header / toolbar panel */}
+            <Panel position="top-left" className="!m-4">
+              <div className="w-[360px] overflow-hidden rounded-xl border border-border bg-card/90 shadow-[0_12px_32px_-16px_hsl(var(--foreground)/0.22)] backdrop-blur">
+                {/* Title row */}
+                <div className="flex items-center justify-between gap-2 border-b border-border/60 px-3.5 py-2.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-md bg-accent/12 text-accent">
+                      <GitBranch className="h-3 w-3" />
+                    </span>
+                    <h2 className="truncate text-[13px] font-semibold tracking-tight text-foreground">
+                      Artifact graph
+                    </h2>
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      {nodes.length}n · {edges.length}e
+                    </span>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {nodes.length} artifacts • {edges.length} connections
-                  </p>
+                  <Tabs value={currentView} onValueChange={onViewChange}>
+                    <TabsList className="h-6 bg-muted/60 p-0.5">
+                      <TabsTrigger value="graph" className="h-5 px-2 text-[10px] font-medium">Graph</TabsTrigger>
+                      <TabsTrigger value="lineage" className="h-5 px-2 text-[10px] font-medium">Lineage</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                </div>
 
-                  {/* Search */}
-                  <div className="relative mb-3">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search artifacts..."
-                      value={searchQuery}
-                      onChange={(e) => handleSearch(e.target.value)}
-                      onKeyDown={handleSearchKeyDown}
-                      className="pl-9 h-9"
-                    />
-                    {searchResults.length > 0 && (
-                      <Card className="absolute top-full left-0 right-0 mt-1 z-50 shadow-lg">
-                        <ScrollArea className="max-h-48">
-                          <div className="p-1">
-                            {searchResults.map((artifact, index) => (
-                              <div
-                                key={artifact.id}
-                                className={cn(
-                                  "px-3 py-2 rounded cursor-pointer flex items-center justify-between",
-                                  index === focusedSearchIndex ? "bg-accent" : "hover:bg-accent/50"
-                                )}
-                                onClick={() => {
-                                  focusOnNode(artifact.id);
-                                  setSearchQuery("");
-                                  setSearchResults([]);
-                                }}
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate">{artifact.title}</p>
-                                  <div className="flex items-center gap-2 mt-0.5">
-                                    <Badge variant="secondary" className="text-xs">{artifact.type}</Badge>
-                                    <span className="text-xs text-muted-foreground font-mono">{artifact.short_id}</span>
-                                  </div>
+                {/* Search */}
+                <div className="relative border-b border-border/60 px-3 py-2.5">
+                  <Search className="absolute left-5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search artifacts…"
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    onKeyDown={handleSearchKeyDown}
+                    className="h-8 border-border/60 bg-background/60 pl-8 text-[12px] placeholder:text-muted-foreground/70 focus-visible:ring-1 focus-visible:ring-accent/40"
+                  />
+                  {searchResults.length > 0 && (
+                    <div className="absolute left-3 right-3 top-full z-50 mt-1 overflow-hidden rounded-lg border border-border bg-popover shadow-xl">
+                      <ScrollArea className="max-h-56">
+                        <div className="p-1">
+                          {searchResults.map((artifact, index) => (
+                            <div
+                              key={artifact.id}
+                              className={cn(
+                                "flex cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5",
+                                index === focusedSearchIndex ? "bg-accent/10" : "hover:bg-muted",
+                              )}
+                              onClick={() => {
+                                focusOnNode(artifact.id);
+                                setSearchQuery("");
+                                setSearchResults([]);
+                              }}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-[12px] font-medium">{artifact.title}</p>
+                                <div className="mt-0.5 flex items-center gap-2">
+                                  <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{artifact.type}</span>
+                                  <span className="font-mono text-[10px] text-muted-foreground/70">{artifact.short_id}</span>
                                 </div>
                               </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                      </Card>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  )}
+                </div>
+
+                {/* Toolbar — single dense row */}
+                <div className="flex flex-wrap items-center gap-1 px-2 py-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setImpactAnalysisMode(!impactAnalysisMode);
+                      if (impactAnalysisMode) setSelectedNodeId(null);
+                    }}
+                    className={cn(
+                      "h-7 gap-1.5 px-2 text-[11px] font-medium",
+                      impactAnalysisMode && "bg-accent/12 text-accent hover:bg-accent/18 hover:text-accent",
                     )}
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {/* Impact Analysis Toggle */}
-                    <Button 
-                      variant={impactAnalysisMode ? "default" : "outline"} 
-                      size="sm"
-                      onClick={() => {
-                        setImpactAnalysisMode(!impactAnalysisMode);
-                        if (impactAnalysisMode) setSelectedNodeId(null);
-                      }}
-                    >
-                      <GitBranch className="w-4 h-4 mr-2" />
-                      Impact
-                    </Button>
+                  >
+                    <GitBranch className="h-3 w-3" />
+                    Impact
+                  </Button>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Filter className="w-4 h-4 mr-2" />
-                          Filter
-                          {artifactTypeFilter.length > 0 && (
-                            <Badge variant="secondary" className="ml-2">{artifactTypeFilter.length}</Badge>
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {artifactTypes.map((type) => (
-                          <DropdownMenuCheckboxItem
-                            key={type.value}
-                            checked={artifactTypeFilter.includes(type.value)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setArtifactTypeFilter([...artifactTypeFilter, type.value]);
-                              } else {
-                                setArtifactTypeFilter(artifactTypeFilter.filter(t => t !== type.value));
-                              }
-                            }}
-                          >
-                            {type.label}
-                          </DropdownMenuCheckboxItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    {/* Edge Type Filter */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Link2 className="w-4 h-4 mr-2" />
-                          Edges
-                          {edgeTypeFilter.length > 0 && (
-                            <Badge variant="secondary" className="ml-2">{edgeTypeFilter.length}</Badge>
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {Object.entries(EdgeType).map(([key, value]) => (
-                          <DropdownMenuCheckboxItem
-                            key={value}
-                            checked={edgeTypeFilter.includes(value)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setEdgeTypeFilter([...edgeTypeFilter, value]);
-                              } else {
-                                setEdgeTypeFilter(edgeTypeFilter.filter(t => t !== value));
-                              }
-                            }}
-                          >
-                            <span
-                              className="w-2 h-2 rounded-full mr-2 inline-block"
-                              style={{ backgroundColor: edgeTypeStyles[value]?.stroke || '#6b7280' }}
-                            />
-                            {edgeTypeStyles[value]?.label || key.toLowerCase()}
-                          </DropdownMenuCheckboxItem>
-                        ))}
-                        {edgeTypeFilter.length > 0 && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setEdgeTypeFilter([])}>
-                              Clear all
-                            </DropdownMenuItem>
-                          </>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[11px] font-medium">
+                        <Filter className="h-3 w-3" />
+                        Types
+                        {artifactTypeFilter.length > 0 && (
+                          <span className="ml-0.5 rounded-sm bg-accent/15 px-1 font-mono text-[9px] text-accent">{artifactTypeFilter.length}</span>
                         )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {artifactTypes.map((type) => (
+                        <DropdownMenuCheckboxItem
+                          key={type.value}
+                          checked={artifactTypeFilter.includes(type.value)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setArtifactTypeFilter([...artifactTypeFilter, type.value]);
+                            else setArtifactTypeFilter(artifactTypeFilter.filter(t => t !== type.value));
+                          }}
+                        >
+                          {type.label}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[11px] font-medium">
+                        <Link2 className="h-3 w-3" />
+                        Edges
+                        {edgeTypeFilter.length > 0 && (
+                          <span className="ml-0.5 rounded-sm bg-accent/15 px-1 font-mono text-[9px] text-accent">{edgeTypeFilter.length}</span>
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {Object.entries(EdgeType).map(([key, value]) => (
+                        <DropdownMenuCheckboxItem
+                          key={value}
+                          checked={edgeTypeFilter.includes(value)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setEdgeTypeFilter([...edgeTypeFilter, value]);
+                            else setEdgeTypeFilter(edgeTypeFilter.filter(t => t !== value));
+                          }}
+                        >
+                          <span
+                            className="mr-2 inline-block h-2 w-2 rounded-full"
+                            style={{ backgroundColor: edgeTypeStyles[value]?.stroke || 'hsl(var(--muted-foreground))' }}
+                          />
+                          {edgeTypeStyles[value]?.label || key.toLowerCase()}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                      {edgeTypeFilter.length > 0 && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setEdgeTypeFilter([])}>Clear all</DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[11px] font-medium">
+                        <LayoutGrid className="h-3 w-3" />
+                        Layout
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuCheckboxItem checked={graphViewMode === "hierarchy"} onCheckedChange={() => setGraphViewMode("hierarchy")}>Hierarchy</DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem checked={graphViewMode === "force"} onCheckedChange={() => setGraphViewMode("force")}>Force-Directed</DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem checked={graphViewMode === "radial"} onCheckedChange={() => setGraphViewMode("radial")}>Radial</DropdownMenuCheckboxItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowOverlays(!showOverlays)}
+                    className={cn(
+                      "h-7 gap-1.5 px-2 text-[11px] font-medium",
+                      showOverlays && "bg-accent/12 text-accent hover:bg-accent/18 hover:text-accent",
+                    )}
+                  >
+                    <ShieldAlert className="h-3 w-3" />
+                    Overlays
+                  </Button>
+
+                  <div className="ml-auto">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <LayoutGrid className="w-4 h-4 mr-2" />
-                          Layout
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                          <Download className="h-3 w-3" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuCheckboxItem
-                          checked={graphViewMode === "hierarchy"}
-                          onCheckedChange={() => setGraphViewMode("hierarchy")}
-                        >
-                          Hierarchy
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                          checked={graphViewMode === "force"}
-                          onCheckedChange={() => setGraphViewMode("force")}
-                        >
-                          Force-Directed
-                        </DropdownMenuCheckboxItem>
-                        <DropdownMenuCheckboxItem
-                          checked={graphViewMode === "radial"}
-                          onCheckedChange={() => setGraphViewMode("radial")}
-                        >
-                          Radial
-                        </DropdownMenuCheckboxItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    {/* Coverage & Drift Overlay Toggle */}
-                    <Button
-                      variant={showOverlays ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setShowOverlays(!showOverlays)}
-                    >
-                      <ShieldAlert className="w-4 h-4 mr-2" />
-                      Overlays
-                    </Button>
-
-                    {/* Export Dropdown */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Download className="w-4 h-4 mr-2" />
-                          Export
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
+                      <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => exportAsImage('png')}>
-                          <Image className="w-4 h-4 mr-2" />
-                          Export as PNG
+                          <Image className="mr-2 h-3.5 w-3.5" /> Export as PNG
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => exportAsImage('svg')}>
-                          <FileCode className="w-4 h-4 mr-2" />
-                          Export as SVG
+                          <FileCode className="mr-2 h-3.5 w-3.5" /> Export as SVG
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={exportAsPdf}>
-                          <Download className="w-4 h-4 mr-2" />
-                          Export as PDF
+                          <Download className="mr-2 h-3.5 w-3.5" /> Export as PDF
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
+                </div>
 
-                  {/* Impact Analysis Mode Hint */}
-                  {impactAnalysisMode && !selectedNodeId && (
-                    <p className="text-xs text-muted-foreground mt-3 flex items-center gap-1">
-                      <MousePointer className="w-3 h-3" />
-                      Click a node to see its downstream impact
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+                {impactAnalysisMode && !selectedNodeId && (
+                  <div className="flex items-center gap-1.5 border-t border-border/60 bg-accent/[0.04] px-3.5 py-2 text-[11px] text-muted-foreground">
+                    <MousePointer className="h-3 w-3" />
+                    Click a node to see its downstream impact
+                  </div>
+                )}
+              </div>
             </Panel>
 
             {/* Lens Rail — apply a question as an overlay on the canvas */}
