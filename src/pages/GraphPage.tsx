@@ -181,7 +181,7 @@ const TYPE_META: Record<string, { icon: LucideIcon; label: string; tone: string 
 // Editorial artifact node — same DNA as the marketing HeroFlow card.
 function ArtifactNode({ data }: { data: {
   label: string;
-  type: ArtifactType;
+  type: ArtifactType | "PIPELINE";
   shortId: string;
   status: string;
   isHighlighted?: boolean;
