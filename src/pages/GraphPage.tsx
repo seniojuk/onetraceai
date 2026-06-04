@@ -953,33 +953,42 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
               color="hsl(var(--border))"
             />
             <Controls
-              className="!bg-card !border !border-border !rounded-md !shadow-[0_4px_14px_-6px_hsl(var(--foreground)/0.12)] [&>button]:!border-border [&>button]:!bg-card [&>button]:!text-muted-foreground [&>button:hover]:!bg-muted [&>button:hover]:!text-foreground"
+              position="bottom-right"
+              className="!flex !flex-col !gap-0 !overflow-hidden !rounded-lg !border !border-border !bg-card/90 !shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.18)] !backdrop-blur [&>button]:!h-8 [&>button]:!w-8 [&>button]:!border-0 [&>button]:!border-b [&>button]:!border-border/60 [&>button:last-child]:!border-b-0 [&>button]:!bg-transparent [&>button]:!text-muted-foreground [&>button:hover]:!bg-muted [&>button:hover]:!text-foreground [&>button>svg]:!fill-current"
               showInteractive={false}
             />
             <MiniMap
+              position="bottom-right"
+              pannable
+              zoomable
               nodeColor={(node) => {
                 const type = node.data?.type as ArtifactType;
                 const colors: Record<ArtifactType, string> = {
-                  PRD: "#9333ea",
-                  EPIC: "#3b82f6",
-                  STORY: "#14b8a6",
-                  ACCEPTANCE_CRITERION: "#22c55e",
-                  TEST_CASE: "#f59e0b",
-                  TEST_SUITE: "#f97316",
-                  CODE_MODULE: "#64748b",
-                  COMMIT: "#6b7280",
-                  PULL_REQUEST: "#6366f1",
-                  BUG: "#ef4444",
-                  IDEA: "#eab308",
-                  DECISION: "#06b6d4",
-                  RELEASE: "#10b981",
-                  DEPLOYMENT: "#8b5cf6",
-                  FILE: "#78716c",
+                  PRD: "hsl(262 70% 60%)",
+                  EPIC: "hsl(222 78% 58%)",
+                  STORY: "hsl(173 80% 42%)",
+                  ACCEPTANCE_CRITERION: "hsl(152 65% 45%)",
+                  TEST_CASE: "hsl(38 92% 52%)",
+                  TEST_SUITE: "hsl(25 90% 55%)",
+                  CODE_MODULE: "hsl(220 9% 55%)",
+                  COMMIT: "hsl(220 9% 50%)",
+                  PULL_REQUEST: "hsl(243 75% 62%)",
+                  BUG: "hsl(0 72% 55%)",
+                  IDEA: "hsl(45 93% 55%)",
+                  DECISION: "hsl(189 80% 48%)",
+                  RELEASE: "hsl(152 65% 42%)",
+                  DEPLOYMENT: "hsl(262 70% 58%)",
+                  FILE: "hsl(30 10% 50%)",
                 };
-                return colors[type] || "#64748b";
+                return colors[type] || "hsl(var(--muted-foreground))";
               }}
-              maskColor="hsl(var(--background) / 0.6)"
-              className="!bg-card border border-border rounded-md shadow-[0_4px_14px_-6px_hsl(var(--foreground)/0.12)]"
+              nodeStrokeWidth={0}
+              nodeBorderRadius={3}
+              maskColor="hsl(var(--background) / 0.7)"
+              maskStrokeColor="hsl(var(--border))"
+              maskStrokeWidth={1}
+              style={{ marginBottom: 148 }}
+              className="!h-[120px] !w-[180px] !overflow-hidden !rounded-lg !border !border-border !bg-card/90 !shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.18)] !backdrop-blur"
             />
 
 
