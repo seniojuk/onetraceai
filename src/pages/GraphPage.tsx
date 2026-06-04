@@ -1383,7 +1383,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
           </ReactFlow>
 
           {/* ⌘K Search palette — portaled, so never clipped by canvas chrome */}
-          <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+          <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} shouldFilter={false}>
             <CommandInput
               placeholder="Search artifacts by title, ID, or type…"
               value={searchQuery}
