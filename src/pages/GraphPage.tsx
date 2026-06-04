@@ -1808,7 +1808,7 @@ import { GraphFocusedShell } from "@/components/graph/GraphFocusedShell";
 import { OrphansView } from "@/components/graph/questions/OrphansView";
 import { CoverageGapsView } from "@/components/graph/questions/CoverageGapsView";
 import { DriftView } from "@/components/graph/questions/DriftView";
-import { RecentlyChangedView } from "@/components/graph/questions/RecentlyChangedView";
+import { LineageWalkView } from "@/components/graph/questions/LineageWalkView";
 import { LineageWalkView } from "@/components/graph/questions/LineageWalkView";
 import {
   isGraphQuestionId,
