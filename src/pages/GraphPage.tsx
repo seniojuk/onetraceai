@@ -315,7 +315,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const focusId = searchParams.get("focus");
   const lensParam = (searchParams.get("lens") ?? "none") as
     | "none" | "orphans" | "coverage-gaps" | "drift" | "recent";
-  const { fitView, setCenter } = useReactFlow();
+  const { setCenter } = useReactFlow();
   
   const { currentProjectId, currentWorkspaceId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
   const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(currentProjectId || undefined);
@@ -982,7 +982,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   return (
     <AuthGuard>
       <AppLayout>
-        <div className="h-[calc(100vh-0px)] w-full">
+        <div ref={graphShellRef} className="h-[calc(100vh-0px)] w-full">
           <ReactFlow
             nodes={nodes}
             edges={edges}
