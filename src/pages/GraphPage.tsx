@@ -485,12 +485,10 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   }, [currentProjectId, artifacts]);
 
   // Focus on a specific node
+  const focusOnNodeRef = useRef<(nodeId: string) => void>(() => {});
   const focusOnNode = useCallback((nodeId: string) => {
-    const node = nodes.find(n => n.id === nodeId);
-    if (node) {
-      setCenter(node.position.x + 125, node.position.y + 50, { zoom: 1.5, duration: 500 });
-    }
-  }, [setCenter]);
+    focusOnNodeRef.current(nodeId);
+  }, []);
 
   // Get search match IDs for highlighting
   const searchMatchIds = useMemo(() => {
@@ -714,6 +712,27 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+
+  // Keep focusOnNode implementation in sync with latest nodes/filters
+  useEffect(() => {
+    focusOnNodeRef.current = (nodeId: string) => {
+      const node = nodes.find(n => n.id === nodeId);
+      if (node) {
+        setSelectedNodeId(nodeId);
+        setCenter(node.position.x + 125, node.position.y + 50, { zoom: 1.5, duration: 500 });
+        return;
+      }
+      // Node likely filtered out — clear filter, then center next frame
+      setArtifactTypeFilter([]);
+      setSelectedNodeId(nodeId);
+      setTimeout(() => {
+        try {
+          fitView({ nodes: [{ id: nodeId }], duration: 500, maxZoom: 1.5, padding: 0.3 });
+        } catch {}
+      }, 80);
+    };
+  }, [nodes, setCenter, fitView, setArtifactTypeFilter]);
+
 
   const onConnect = useCallback(
     (connection: Connection) => {
