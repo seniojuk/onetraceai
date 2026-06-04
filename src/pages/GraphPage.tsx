@@ -445,7 +445,6 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const searchAbortRef = useRef<number | null>(null);
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    setFocusedSearchIndex(0);
     if (searchAbortRef.current) {
       window.clearTimeout(searchAbortRef.current);
       searchAbortRef.current = null;
