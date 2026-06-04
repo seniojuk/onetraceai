@@ -430,6 +430,8 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Artifact[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
+  const [pendingFocusNodeId, setPendingPendingFocusNodeId] = useState<string | null>(null);
 
   // ⌘K / Ctrl+K opens the search palette
   useEffect(() => {
@@ -489,6 +491,13 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const focusOnNode = useCallback((nodeId: string) => {
     focusOnNodeRef.current(nodeId);
   }, []);
+
+  const selectSearchResult = useCallback((artifact: Artifact) => {
+    focusOnNode(artifact.id);
+    setSearchOpen(false);
+    setSearchQuery("");
+    setSearchResults([]);
+  }, [focusOnNode]);
 
   // Get search match IDs for highlighting
   const searchMatchIds = useMemo(() => {
