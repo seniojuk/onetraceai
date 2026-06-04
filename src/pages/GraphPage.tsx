@@ -1024,6 +1024,18 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={() => setSearchOpen(true)}
+                    className="h-7 gap-1.5 px-2 text-[11px] font-medium"
+                  >
+                    <Search className="h-3 w-3" />
+                    Search
+                    <kbd className="ml-1 hidden rounded border border-border bg-muted px-1 font-mono text-[9px] text-muted-foreground sm:inline-block">
+                      ⌘K
+                    </kbd>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       setImpactAnalysisMode(!impactAnalysisMode);
                       if (impactAnalysisMode) setSelectedNodeId(null);
