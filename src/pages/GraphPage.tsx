@@ -17,7 +17,6 @@ import {
   useReactFlow,
   ReactFlowProvider,
   getNodesBounds,
-  getViewportForBounds,
   Handle,
   Position,
 } from "@xyflow/react";
@@ -317,7 +316,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const focusId = searchParams.get("focus");
   const lensParam = (searchParams.get("lens") ?? "none") as
     | "none" | "orphans" | "coverage-gaps" | "drift" | "recent";
-  const { setCenter, fitBounds, fitView, getViewport, setViewport } = useReactFlow();
+  const { setCenter, fitView, getViewport } = useReactFlow();
   
   const { currentProjectId, currentWorkspaceId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
   const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(currentProjectId || undefined);
@@ -333,12 +332,28 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
 
   const isLoading = artifactsLoading || edgesLoading;
 
+  const graphShellRef = useRef<HTMLDivElement | null>(null);
+  const lensAnchorCenterRef = useRef<{ x: number; y: number; zoom: number } | null>(null);
+
+  const getCurrentFlowCenter = useCallback(() => {
+    const pane = graphShellRef.current?.querySelector(".react-flow") as HTMLElement | null;
+    const paneRect = pane?.getBoundingClientRect();
+    const vp = getViewport();
+    if (!paneRect || !Number.isFinite(vp.zoom) || vp.zoom === 0) return null;
+    return {
+      x: (paneRect.width / 2 - vp.x) / vp.zoom,
+      y: (paneRect.height / 2 - vp.y) / vp.zoom,
+      zoom: vp.zoom,
+    };
+  }, [getViewport]);
+
   const setLens = useCallback((next: typeof lensParam) => {
+    lensAnchorCenterRef.current = getCurrentFlowCenter();
     const params = new URLSearchParams(searchParams);
     if (next === "none") params.delete("lens");
     else params.set("lens", next);
     setSearchParams(params, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [getCurrentFlowCenter, searchParams, setSearchParams]);
 
   // Impact analysis state
   const [impactAnalysisMode, setImpactAnalysisMode] = useState(false);
