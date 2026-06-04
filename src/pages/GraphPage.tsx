@@ -17,7 +17,6 @@ import {
   useReactFlow,
   ReactFlowProvider,
   getNodesBounds,
-  getViewportForBounds,
   Handle,
   Position,
 } from "@xyflow/react";
@@ -317,7 +316,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const focusId = searchParams.get("focus");
   const lensParam = (searchParams.get("lens") ?? "none") as
     | "none" | "orphans" | "coverage-gaps" | "drift" | "recent";
-  const { setCenter, fitBounds, fitView, getViewport, setViewport } = useReactFlow();
+  const { setCenter, fitView } = useReactFlow();
   
   const { currentProjectId, currentWorkspaceId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
   const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(currentProjectId || undefined);
@@ -332,6 +331,8 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   );
 
   const isLoading = artifactsLoading || edgesLoading;
+
+  const graphShellRef = useRef<HTMLDivElement | null>(null);
 
   const setLens = useCallback((next: typeof lensParam) => {
     const params = new URLSearchParams(searchParams);
@@ -438,7 +439,6 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const [searchOpen, setSearchOpen] = useState(false);
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [pendingFocusNodeId, setPendingFocusNodeId] = useState<string | null>(null);
-  const graphShellRef = useRef<HTMLDivElement | null>(null);
 
   // ⌘K / Ctrl+K opens the search palette
   useEffect(() => {
@@ -757,9 +757,9 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     });
   }, [pendingFocusNodeId, nodes, setCenter]);
 
-  // Auto-zoom to lens matches — same delightful "the canvas knows where to
-  // look" feeling as the search palette. When the lens clears, gently
-  // refit the whole graph.
+  // Auto-focus to lens matches with the same setCenter camera move used by
+  // search. The key difference: lenses pick matches from the vertical slice
+  // the user was already viewing, then pan horizontally to those matches.
   useEffect(() => {
     if (nodes.length === 0) return;
     if (!lensActive) {
@@ -771,27 +771,45 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     if (!lensMatchIds || lensMatchIds.size === 0) return;
     const matched = nodes.filter(n => lensMatchIds.has(n.id));
     if (matched.length === 0) return;
-    const bounds = getNodesBounds(
-      matched.map(n => ({ ...n, width: NODE_W, height: NODE_H })),
-    );
     const t = window.setTimeout(() => {
-      // Mirror the search-select behavior: call setCenter on the cluster's
-      // center X, but keep the user's current vertical center and zoom so
-      // the row they're inspecting doesn't shift up or down.
-      const pane = document.querySelector(".react-flow") as HTMLElement | null;
+      const pane = graphShellRef.current?.querySelector(".react-flow") as HTMLElement | null;
       const paneRect = pane?.getBoundingClientRect();
-      const vp = getViewport();
-      const targetCenterFlowX = bounds.x + bounds.width / 2;
-      const currentCenterFlowY = paneRect
-        ? (paneRect.height / 2 - vp.y) / vp.zoom
-        : bounds.y + bounds.height / 2;
-      setCenter(targetCenterFlowX, currentCenterFlowY, {
-        zoom: vp.zoom,
+      const matchesWithCenters = matched.map((node) => ({
+        node,
+        centerX: node.position.x + NODE_W / 2,
+        centerY: node.position.y + NODE_H / 2,
+        screenCenterY: (() => {
+          const element = graphShellRef.current?.querySelector(`[data-id="${node.id}"]`) as HTMLElement | null;
+          const rect = element?.getBoundingClientRect();
+          return rect ? rect.top + rect.height / 2 : null;
+        })(),
+      }));
+      const visibleMatches = paneRect
+        ? matchesWithCenters.filter(({ screenCenterY }) => (
+            screenCenterY != null &&
+            screenCenterY >= paneRect.top &&
+            screenCenterY <= paneRect.bottom
+          ))
+        : [];
+      const candidates = visibleMatches.length > 0 ? visibleMatches : matchesWithCenters;
+      const paneCenterY = paneRect ? paneRect.top + paneRect.height / 2 : null;
+      const target = candidates.reduce((best, current) => {
+        const currentScore = paneCenterY != null && current.screenCenterY != null
+          ? Math.abs(current.screenCenterY - paneCenterY)
+          : Math.abs(current.centerY - matched[0].position.y);
+        const bestScore = paneCenterY != null && best.screenCenterY != null
+          ? Math.abs(best.screenCenterY - paneCenterY)
+          : Math.abs(best.centerY - matched[0].position.y);
+        return currentScore < bestScore ? current : best;
+      });
+
+      setCenter(target.centerX, target.centerY, {
+        zoom: 1.45,
         duration: 500,
       });
     }, 80);
     return () => window.clearTimeout(t);
-  }, [lensParam, lensActive, lensMatchIds, nodes, fitView, getViewport, setCenter]);
+  }, [lensParam, lensActive, lensMatchIds, nodes, fitView, setCenter]);
 
 
 
