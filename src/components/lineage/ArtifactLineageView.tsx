@@ -306,6 +306,52 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
     };
   }, [lineageData]);
 
+  // Recent activity feed for the inspector idle state
+  const recentActivity = useMemo(() => {
+    if (!lineageData) return [];
+    const items: Array<{
+      id: string;
+      title: string;
+      meta: string;
+      tone: "accent" | "success" | "danger" | "muted";
+    }> = [];
+
+    lineageData.pipelineRuns
+      .slice()
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 3)
+      .forEach((r) => {
+        items.push({
+          id: `run-${r.id}`,
+          title: `${r.pipeline?.name || "Pipeline"} ${r.status}`,
+          meta: format(new Date(r.created_at), "MMM d, HH:mm"),
+          tone:
+            r.status === "completed"
+              ? "success"
+              : r.status === "failed"
+              ? "danger"
+              : r.status === "running"
+              ? "accent"
+              : "muted",
+        });
+      });
+
+    lineageData.artifacts
+      .slice()
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, 2)
+      .forEach((a) => {
+        items.push({
+          id: `art-${a.id}`,
+          title: `${a.short_id} • ${a.title}`,
+          meta: format(new Date(a.created_at), "MMM d, HH:mm"),
+          tone: a.pipelineRunId ? "accent" : "muted",
+        });
+      });
+
+    return items.slice(0, 5);
+  }, [lineageData]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[600px]">
@@ -317,7 +363,7 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
   return (
     <div className="h-[calc(100vh-200px)] min-h-[600px] flex gap-4">
       {/* Main Graph */}
-      <div className="flex-1 border rounded-lg overflow-hidden bg-background/50">
+      <div className="flex-1 rounded-xl border bg-card overflow-hidden shadow-sm">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -326,34 +372,41 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
           onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
           fitView
-          className="bg-background"
+          className="bg-muted/20"
         >
-          <Background color="hsl(var(--muted-foreground))" gap={16} size={1} />
-          <Controls className="bg-card border rounded-lg" />
+          <Background color="hsl(var(--muted-foreground))" gap={24} size={1} />
+          <Controls className="!bg-card/90 !backdrop-blur-sm !border !rounded-lg !shadow-sm overflow-hidden" />
           <MiniMap
-            className="bg-card border rounded-lg"
+            className="!bg-card/90 !backdrop-blur-sm !border !rounded-lg !shadow-sm"
+            maskColor="hsl(var(--muted) / 0.6)"
             nodeColor={(node) =>
               node.type === "pipelineRun"
                 ? "hsl(var(--accent))"
                 : "hsl(var(--primary))"
             }
           />
-          
-          <Panel position="top-left" className="flex items-center gap-2">
-            <div className="bg-card border rounded-lg p-2 shadow-md">
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-accent" />
-                  <span className="text-muted-foreground">Pipeline Runs ({stats.totalRuns})</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-primary" />
-                  <span className="text-muted-foreground">Artifacts ({stats.totalArtifacts})</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <GitBranch className="w-3 h-3 text-accent" />
-                  <span className="text-muted-foreground">Linked ({stats.linkedArtifacts})</span>
-                </div>
+
+          <Panel position="top-left">
+            <div className="flex items-center gap-0 bg-card/90 backdrop-blur-sm border rounded-lg shadow-sm p-1.5">
+              <div className="flex items-center gap-2 px-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-accent" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  Pipeline Runs ({stats.totalRuns})
+                </span>
+              </div>
+              <div className="w-px h-4 bg-border" />
+              <div className="flex items-center gap-2 px-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  Artifacts ({stats.totalArtifacts})
+                </span>
+              </div>
+              <div className="w-px h-4 bg-border" />
+              <div className="flex items-center gap-2 px-2.5">
+                <GitBranch className="w-3 h-3 text-accent" />
+                <span className="text-xs font-medium text-muted-foreground">
+                  Linked ({stats.linkedArtifacts})
+                </span>
               </div>
             </div>
           </Panel>
@@ -361,8 +414,12 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
           <Panel position="top-right" className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Filter className="w-4 h-4 mr-2" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="bg-card/90 backdrop-blur-sm shadow-sm h-8"
+                >
+                  <Filter className="w-3.5 h-3.5 mr-2" />
                   Filter
                 </Button>
               </DropdownMenuTrigger>
@@ -381,8 +438,13 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
                 </DropdownMenuCheckboxItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
-              <RefreshCw className="w-4 h-4" />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => refetch()}
+              className="bg-card/90 backdrop-blur-sm shadow-sm h-8 w-8"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
             </Button>
           </Panel>
         </ReactFlow>
@@ -390,39 +452,118 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
 
       {/* Side Panel */}
       <div className="w-80 shrink-0">
-        <Card className="h-full">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Info className="w-5 h-5 text-accent" />
-              Node Details
-            </CardTitle>
-            <CardDescription>
-              Click on a node to see details
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[calc(100vh-350px)]">
+        <div className="h-full rounded-xl border bg-card shadow-sm flex flex-col overflow-hidden">
+          <div className="px-5 py-4 border-b flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Info className="w-4 h-4 text-accent" />
+              <h3 className="text-sm font-semibold text-foreground">
+                {selectedNode ? "Node Details" : "Lineage Overview"}
+              </h3>
+            </div>
+            {selectedNode && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setSelectedNode(null)}
+              >
+                <XCircle className="w-4 h-4 text-muted-foreground" />
+              </Button>
+            )}
+          </div>
+          <ScrollArea className="flex-1 w-full">
+            <div className="p-5 w-80 max-w-full">
+
               {selectedNode ? (
                 <div className="space-y-4">
                   {selectedNode.type === "pipeline_run" && selectedNode.data.pipelineRun && (
                     <PipelineRunDetails run={selectedNode.data.pipelineRun} />
                   )}
                   {selectedNode.type === "artifact" && selectedNode.data.artifact && (
-                    <ArtifactDetails 
-                      artifact={selectedNode.data.artifact} 
+                    <ArtifactDetails
+                      artifact={selectedNode.data.artifact}
                       onNavigate={handleNavigate}
                     />
                   )}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <GitBranch className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p>Select a node to view its details and lineage information</p>
+                <div className="space-y-6">
+                  <div className="flex flex-col items-center text-center py-2">
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                      <GitBranch className="w-5 h-5 text-muted-foreground/60" />
+                    </div>
+                    <p className="text-xs text-muted-foreground max-w-[220px] leading-relaxed">
+                      Select a pipeline run or artifact to inspect its lineage.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+                      At a glance
+                    </h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="rounded-lg border bg-muted/30 p-3">
+                        <div className="text-lg font-bold text-foreground tabular-nums">
+                          {stats.totalRuns}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground font-medium mt-0.5">
+                          Runs
+                        </div>
+                      </div>
+                      <div className="rounded-lg border bg-muted/30 p-3">
+                        <div className="text-lg font-bold text-foreground tabular-nums">
+                          {stats.totalArtifacts}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground font-medium mt-0.5">
+                          Artifacts
+                        </div>
+                      </div>
+                      <div className="rounded-lg border bg-muted/30 p-3">
+                        <div className="text-lg font-bold text-accent tabular-nums">
+                          {stats.linkedArtifacts}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground font-medium mt-0.5">
+                          Linked
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {recentActivity.length > 0 && (
+                    <div>
+                      <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+                        Recent activity
+                      </h4>
+                      <div className="space-y-2.5">
+                        {recentActivity.map((item) => (
+                          <div key={item.id} className="flex gap-3">
+                            <div
+                              className={cn(
+                                "w-0.5 rounded-full shrink-0",
+                                item.tone === "success" && "bg-green-500",
+                                item.tone === "danger" && "bg-red-500",
+                                item.tone === "accent" && "bg-accent",
+                                item.tone === "muted" && "bg-border",
+                              )}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-medium text-foreground truncate">
+                                {item.title}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                {item.meta}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
+            </div>
+          </ScrollArea>
+        </div>
       </div>
     </div>
   );
