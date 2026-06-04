@@ -517,6 +517,34 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     return new Set(searchResults.map(a => a.id));
   }, [searchResults]);
 
+  // Sorted full list for the "browse all" empty-query state
+  const browseAllArtifacts = useMemo(() => {
+    if (!artifacts) return [];
+    return [...artifacts].sort((a, b) =>
+      a.title.localeCompare(b.title, undefined, { sensitivity: "base" })
+    );
+  }, [artifacts]);
+
+  // Infinite-scroll observer for the browse list
+  useEffect(() => {
+    if (!searchOpen || searchQuery.trim()) return;
+    const node = browseSentinelRef.current;
+    if (!node) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setBrowseVisibleCount((c) =>
+            Math.min(c + 50, browseAllArtifacts.length),
+          );
+        }
+      },
+      { root: node.parentElement, rootMargin: "200px" },
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, [searchOpen, searchQuery, browseAllArtifacts.length, browseVisibleCount]);
+
+
   // Find all downstream artifacts (artifacts that depend on the selected one)
   const getDownstreamArtifacts = useCallback((nodeId: string, edges: ArtifactEdge[]): Set<string> => {
     const downstream = new Set<string>();
