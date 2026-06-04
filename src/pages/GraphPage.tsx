@@ -426,7 +426,6 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Artifact[]>([]);
-  const [focusedSearchIndex, setFocusedSearchIndex] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
 
   // ⌘K / Ctrl+K opens the search palette
