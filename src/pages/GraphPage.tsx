@@ -431,7 +431,8 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const [searchResults, setSearchResults] = useState<Artifact[]>([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
-  const [pendingFocusNodeId, setPendingPendingFocusNodeId] = useState<string | null>(null);
+  const [pendingFocusNodeId, setPendingFocusNodeId] = useState<string | null>(null);
+  const graphShellRef = useRef<HTMLDivElement | null>(null);
 
   // ⌘K / Ctrl+K opens the search palette
   useEffect(() => {
