@@ -982,7 +982,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   return (
     <AuthGuard>
       <AppLayout>
-        <div ref={graphShellRef} className="h-[calc(100vh-0px)] w-full">
+        <div ref={graphShellRef} className="h-full w-full">
           <ReactFlow
             nodes={nodes}
             edges={edges}
