@@ -316,7 +316,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const focusId = searchParams.get("focus");
   const lensParam = (searchParams.get("lens") ?? "none") as
     | "none" | "orphans" | "coverage-gaps" | "drift" | "recent";
-  const { setCenter, fitView, getViewport } = useReactFlow();
+  const { setCenter, fitView } = useReactFlow();
   
   const { currentProjectId, currentWorkspaceId, graphViewMode, setGraphViewMode, artifactTypeFilter, setArtifactTypeFilter } = useUIStore();
   const { data: artifacts, isLoading: artifactsLoading } = useArtifacts(currentProjectId || undefined);
@@ -333,27 +333,13 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const isLoading = artifactsLoading || edgesLoading;
 
   const graphShellRef = useRef<HTMLDivElement | null>(null);
-  const lensAnchorCenterRef = useRef<{ x: number; y: number; zoom: number } | null>(null);
-
-  const getCurrentFlowCenter = useCallback(() => {
-    const pane = graphShellRef.current?.querySelector(".react-flow") as HTMLElement | null;
-    const paneRect = pane?.getBoundingClientRect();
-    const vp = getViewport();
-    if (!paneRect || !Number.isFinite(vp.zoom) || vp.zoom === 0) return null;
-    return {
-      x: (paneRect.width / 2 - vp.x) / vp.zoom,
-      y: (paneRect.height / 2 - vp.y) / vp.zoom,
-      zoom: vp.zoom,
-    };
-  }, [getViewport]);
 
   const setLens = useCallback((next: typeof lensParam) => {
-    lensAnchorCenterRef.current = getCurrentFlowCenter();
     const params = new URLSearchParams(searchParams);
     if (next === "none") params.delete("lens");
     else params.set("lens", next);
     setSearchParams(params, { replace: true });
-  }, [getCurrentFlowCenter, searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams]);
 
   // Impact analysis state
   const [impactAnalysisMode, setImpactAnalysisMode] = useState(false);
@@ -786,29 +772,34 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
     const matched = nodes.filter(n => lensMatchIds.has(n.id));
     if (matched.length === 0) return;
     const t = window.setTimeout(() => {
-      const anchor = lensAnchorCenterRef.current ?? getCurrentFlowCenter();
-      const fallbackAnchor = anchor ?? {
-        x: matched[0].position.x + NODE_W / 2,
-        y: matched[0].position.y + NODE_H / 2,
-        zoom: 1,
-      };
       const pane = graphShellRef.current?.querySelector(".react-flow") as HTMLElement | null;
       const paneRect = pane?.getBoundingClientRect();
-      const visibleHalfHeight = paneRect
-        ? paneRect.height / Math.max(fallbackAnchor.zoom, 0.1) / 2
-        : NODE_H * 1.5;
       const matchesWithCenters = matched.map((node) => ({
         node,
         centerX: node.position.x + NODE_W / 2,
         centerY: node.position.y + NODE_H / 2,
+        screenCenterY: (() => {
+          const element = graphShellRef.current?.querySelector(`[data-id="${node.id}"]`) as HTMLElement | null;
+          const rect = element?.getBoundingClientRect();
+          return rect ? rect.top + rect.height / 2 : null;
+        })(),
       }));
-      const visibleMatches = matchesWithCenters.filter(
-        ({ centerY }) => Math.abs(centerY - fallbackAnchor.y) <= visibleHalfHeight + NODE_H,
-      );
+      const visibleMatches = paneRect
+        ? matchesWithCenters.filter(({ screenCenterY }) => (
+            screenCenterY != null &&
+            screenCenterY >= paneRect.top &&
+            screenCenterY <= paneRect.bottom
+          ))
+        : [];
       const candidates = visibleMatches.length > 0 ? visibleMatches : matchesWithCenters;
+      const paneCenterY = paneRect ? paneRect.top + paneRect.height / 2 : null;
       const target = candidates.reduce((best, current) => {
-        const currentScore = Math.abs(current.centerY - fallbackAnchor.y) * 4 + Math.abs(current.centerX - fallbackAnchor.x);
-        const bestScore = Math.abs(best.centerY - fallbackAnchor.y) * 4 + Math.abs(best.centerX - fallbackAnchor.x);
+        const currentScore = paneCenterY != null && current.screenCenterY != null
+          ? Math.abs(current.screenCenterY - paneCenterY)
+          : Math.abs(current.centerY - matched[0].position.y);
+        const bestScore = paneCenterY != null && best.screenCenterY != null
+          ? Math.abs(best.screenCenterY - paneCenterY)
+          : Math.abs(best.centerY - matched[0].position.y);
         return currentScore < bestScore ? current : best;
       });
 
@@ -818,7 +809,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
       });
     }, 80);
     return () => window.clearTimeout(t);
-  }, [lensParam, lensActive, lensMatchIds, nodes, fitView, getCurrentFlowCenter, setCenter]);
+  }, [lensParam, lensActive, lensMatchIds, nodes, fitView, setCenter]);
 
 
 
