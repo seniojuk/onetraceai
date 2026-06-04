@@ -101,7 +101,6 @@ import { Label } from "@/components/ui/label";
 import { useUIStore } from "@/store/uiStore";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { ArtifactLineageView } from "@/components/lineage/ArtifactLineageView";
 import { useArtifactLineage } from "@/hooks/useArtifactLineage";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
