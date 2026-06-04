@@ -326,6 +326,10 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   const deleteEdgeMutation = useDeleteArtifactEdge();
   const { data: coverageSnapshots } = useCoverageSnapshots(currentProjectId || undefined);
   const { data: driftFindings } = useDriftFindings(currentProjectId || undefined);
+  const { data: lineageData } = useArtifactLineage(
+    mode === "lineage" ? (currentProjectId || undefined) : undefined,
+    mode === "lineage" ? (currentWorkspaceId || undefined) : undefined,
+  );
 
   const isLoading = artifactsLoading || edgesLoading;
 
