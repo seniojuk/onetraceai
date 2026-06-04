@@ -775,18 +775,25 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
       matched.map(n => ({ ...n, width: NODE_W, height: NODE_H })),
     );
     const t = window.setTimeout(() => {
-      fitBounds(
-        {
-          x: bounds.x - 80,
-          y: bounds.y - 80,
-          width: bounds.width + 160,
-          height: bounds.height + 160,
-        },
-        { duration: 600 },
-      );
+      // Pan horizontally to the lens cluster, but preserve the user's
+      // current vertical scroll position so the canvas doesn't jump rows.
+      const pane = document.querySelector(".react-flow__viewport")?.parentElement as HTMLElement | null;
+      const paneRect = pane?.getBoundingClientRect();
+      const vp = getViewport();
+      const targetCenterFlowX = bounds.x + bounds.width / 2;
+      if (paneRect) {
+        const newX = paneRect.width / 2 - targetCenterFlowX * vp.zoom;
+        setViewport({ x: newX, y: vp.y, zoom: vp.zoom }, { duration: 600 });
+      } else {
+        // Fallback if pane isn't measurable yet
+        fitBounds(
+          { x: bounds.x - 80, y: bounds.y - 80, width: bounds.width + 160, height: bounds.height + 160 },
+          { duration: 600 },
+        );
+      }
     }, 80);
     return () => window.clearTimeout(t);
-  }, [lensParam, lensActive, lensMatchIds, nodes, fitBounds, fitView]);
+  }, [lensParam, lensActive, lensMatchIds, nodes, fitBounds, fitView, getViewport, setViewport]);
 
 
 
