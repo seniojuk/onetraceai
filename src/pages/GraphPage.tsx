@@ -16,6 +16,7 @@ import {
   Panel,
   useReactFlow,
   ReactFlowProvider,
+  useStore,
   getNodesBounds,
   Handle,
   Position,
