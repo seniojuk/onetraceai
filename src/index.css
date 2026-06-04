@@ -783,3 +783,8 @@
 
 
 
+
+/* When React Flow interactivity is locked, signal clickability on nodes */
+.graph-locked .react-flow__pane { cursor: default; }
+.graph-locked .react-flow__node { cursor: pointer !important; }
+.graph-locked .react-flow__edge-interaction { cursor: pointer; }
