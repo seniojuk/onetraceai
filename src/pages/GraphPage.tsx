@@ -1109,7 +1109,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   return (
     <AuthGuard>
       <AppLayout>
-        <div ref={graphShellRef} className="h-full w-full">
+        <div ref={graphShellRef} className={`h-full w-full ${!isInteractive ? "graph-locked" : ""}`}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
