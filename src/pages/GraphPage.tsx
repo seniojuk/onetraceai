@@ -1082,7 +1082,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
             <Controls
               position="bottom-right"
               className="!flex !flex-col !gap-0 !overflow-hidden !rounded-lg !border !border-border !bg-card/90 !shadow-[0_8px_24px_-12px_hsl(var(--foreground)/0.18)] !backdrop-blur [&>button]:!h-8 [&>button]:!w-8 [&>button]:!border-0 [&>button]:!border-b [&>button]:!border-border/60 [&>button:last-child]:!border-b-0 [&>button]:!bg-transparent [&>button]:!text-muted-foreground [&>button:hover]:!bg-muted [&>button:hover]:!text-foreground [&>button>svg]:!fill-current"
-              showInteractive={false}
+              showInteractive={true}
             />
             <MiniMap
               position="bottom-right"
