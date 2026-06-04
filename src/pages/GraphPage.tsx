@@ -1820,41 +1820,5 @@ function QuestionRouter({ questionId }: { questionId: GraphQuestionId }) {
   }
 }
 
-/**
- * Preserves the original "Pipeline Lineage" tab view. Wrapped here so the
- * new router stays clean. AppLayout is provided by the parent route now,
- * so we don't re-wrap it.
- */
-function LegacyPipelineLineageView({
-  onViewChange,
-  currentView,
-}: {
-  onViewChange: (value: string) => void;
-  currentView: string;
-}) {
-  const { currentProjectId, currentWorkspaceId } = useUIStore();
-  return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Graph & Lineage</h1>
-          <p className="text-muted-foreground text-sm">
-            Visual traceability of artifacts and pipeline runs
-          </p>
-        </div>
-        <Tabs value={currentView} onValueChange={onViewChange}>
-          <TabsList>
-            <TabsTrigger value="graph">Artifact Graph</TabsTrigger>
-            <TabsTrigger value="lineage">Pipeline Lineage</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-      <ArtifactLineageView
-        projectId={currentProjectId || undefined}
-        workspaceId={currentWorkspaceId || undefined}
-      />
-    </div>
-  );
-}
 
 export default GraphPage;
