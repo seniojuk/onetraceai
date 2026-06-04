@@ -1483,7 +1483,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
                         <Icon className={cn("h-4 w-4 shrink-0", meta.tone)} />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[13px] font-medium">{artifact.title}</div>
-                          <div className="mt-0.5 flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
+                          <div className="mt-0.5 flex items-center gap-2 font-mono text-[10px] text-muted-foreground transition-colors group-hover:text-accent-foreground group-data-[selected=true]:text-accent-foreground">
                             <span className="uppercase tracking-wider">{meta.label}</span>
                             <span>·</span>
                             <span>{artifact.short_id}</span>
