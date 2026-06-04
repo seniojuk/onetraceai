@@ -1809,7 +1809,6 @@ import { OrphansView } from "@/components/graph/questions/OrphansView";
 import { CoverageGapsView } from "@/components/graph/questions/CoverageGapsView";
 import { DriftView } from "@/components/graph/questions/DriftView";
 import { LineageWalkView } from "@/components/graph/questions/LineageWalkView";
-import { LineageWalkView } from "@/components/graph/questions/LineageWalkView";
 import {
   isGraphQuestionId,
   QUESTION_BY_ID,
