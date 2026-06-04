@@ -52,60 +52,64 @@ import { format } from "date-fns";
 // Custom node for pipeline runs
 function PipelineRunNode({ data }: { data: { pipelineRun: PipelineRun; isSelected?: boolean } }) {
   const run = data.pipelineRun;
-  const statusColors = {
-    completed: "border-l-green-500 bg-green-500/5",
-    failed: "border-l-red-500 bg-red-500/5",
-    running: "border-l-amber-500 bg-amber-500/5",
-    pending: "border-l-slate-500 bg-slate-500/5",
-    cancelled: "border-l-gray-500 bg-gray-500/5",
+  const statusTone: Record<string, { dot: string; text: string }> = {
+    completed: { dot: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
+    failed:    { dot: "bg-rose-500",    text: "text-rose-600 dark:text-rose-400" },
+    running:   { dot: "bg-amber-500",   text: "text-amber-600 dark:text-amber-400" },
+    pending:   { dot: "bg-slate-400",   text: "text-muted-foreground" },
+    cancelled: { dot: "bg-slate-400",   text: "text-muted-foreground" },
   };
-
-  const statusIcons = {
-    completed: <CheckCircle2 className="w-4 h-4 text-green-500" />,
-    failed: <XCircle className="w-4 h-4 text-red-500" />,
-    running: <Loader2 className="w-4 h-4 text-amber-500 animate-spin" />,
-    pending: <Clock className="w-4 h-4 text-slate-500" />,
-    cancelled: <XCircle className="w-4 h-4 text-gray-500" />,
-  };
+  const tone = statusTone[run.status] || statusTone.pending;
+  const isRunning = run.status === "running";
 
   return (
     <div
       className={cn(
-        "px-4 py-3 bg-card border-2 rounded-lg shadow-md border-l-4 min-w-[200px] max-w-[280px] cursor-pointer transition-all",
-        statusColors[run.status as keyof typeof statusColors] || statusColors.pending,
-        data.isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+        "group relative w-[240px] cursor-pointer rounded-xl bg-card/95 backdrop-blur-sm overflow-hidden",
+        "border border-border/70 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_12px_-4px_rgba(0,0,0,0.08)]",
+        "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_2px_4px_rgba(0,0,0,0.06),0_10px_24px_-8px_rgba(0,0,0,0.14)] hover:border-border",
+        data.isSelected && "ring-2 ring-accent/40 border-accent/60",
       )}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <div className="p-1.5 rounded-md bg-accent/10">
-          <Play className="w-4 h-4 text-accent" />
+      <div className={cn("absolute left-0 top-3 bottom-3 w-[3px] rounded-full", tone.dot)} />
+      <div className="px-4 py-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
+              Pipeline
+            </span>
+            <span className="text-muted-foreground/40">·</span>
+            <span className={cn("text-[9px] font-semibold uppercase tracking-[0.14em]", tone.text)}>
+              {run.status}
+            </span>
+          </div>
+          {isRunning && <Loader2 className="w-3 h-3 text-amber-500 animate-spin" />}
         </div>
-        <span className="text-xs text-muted-foreground font-medium">Pipeline Run</span>
-        {statusIcons[run.status as keyof typeof statusIcons]}
-      </div>
-      <p className="text-sm font-semibold text-foreground line-clamp-1">
-        {run.pipeline?.name || "Unknown Pipeline"}
-      </p>
-      <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-        <Clock className="w-3 h-3" />
-        {format(new Date(run.created_at), "MMM d, HH:mm")}
-      </div>
-      {run.step_results.length > 0 && (
-        <div className="mt-2 flex gap-1">
-          {run.step_results.map((step, idx) => (
-            <div
-              key={idx}
-              className={cn(
-                "w-2 h-2 rounded-full",
-                step.status === "completed" ? "bg-green-500" :
-                step.status === "failed" ? "bg-red-500" :
-                step.status === "running" ? "bg-amber-500" :
-                "bg-slate-400"
-              )}
-            />
-          ))}
+        <p className="text-[13px] font-semibold text-foreground leading-snug line-clamp-2">
+          {run.pipeline?.name || "Unknown pipeline"}
+        </p>
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-[10px] text-muted-foreground tabular-nums">
+            {format(new Date(run.created_at), "MMM d · HH:mm")}
+          </span>
+          {run.step_results.length > 0 && (
+            <div className="flex items-center gap-[3px]">
+              {run.step_results.map((step, idx) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "h-1 w-3 rounded-full",
+                    step.status === "completed" ? "bg-emerald-500" :
+                    step.status === "failed" ? "bg-rose-500" :
+                    step.status === "running" ? "bg-amber-500" :
+                    "bg-border",
+                  )}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -113,39 +117,47 @@ function PipelineRunNode({ data }: { data: { pipelineRun: PipelineRun; isSelecte
 // Custom node for artifacts
 function ArtifactLineageNode({ data }: { data: { artifact: ArtifactWithLineage; isSelected?: boolean } }) {
   const artifact = data.artifact;
-  const typeColors: Record<string, string> = {
-    IDEA: "border-l-yellow-500",
-    PRD: "border-l-purple-500",
-    EPIC: "border-l-blue-500",
-    STORY: "border-l-teal-500",
-    ACCEPTANCE_CRITERION: "border-l-green-500",
-    TEST_CASE: "border-l-amber-500",
-    DECISION: "border-l-cyan-500",
+  const typeDot: Record<string, string> = {
+    IDEA: "bg-yellow-500",
+    PRD: "bg-purple-500",
+    EPIC: "bg-blue-500",
+    STORY: "bg-teal-500",
+    ACCEPTANCE_CRITERION: "bg-emerald-500",
+    TEST_CASE: "bg-amber-500",
+    DECISION: "bg-cyan-500",
   };
-
+  const dot = typeDot[artifact.type] || "bg-slate-400";
   const isPipelineGenerated = !!artifact.pipelineRunId;
 
   return (
     <div
       className={cn(
-        "px-4 py-3 bg-card border-2 rounded-lg shadow-md border-l-4 min-w-[180px] max-w-[250px] cursor-pointer transition-all hover:shadow-lg",
-        typeColors[artifact.type] || "border-l-slate-500",
-        data.isSelected && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+        "group relative w-[220px] cursor-pointer rounded-xl bg-card/95 backdrop-blur-sm",
+        "border border-border/70 shadow-[0_1px_2px_rgba(0,0,0,0.04)]",
+        "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_2px_4px_rgba(0,0,0,0.06),0_10px_24px_-8px_rgba(0,0,0,0.14)] hover:border-border",
+        data.isSelected && "ring-2 ring-accent/40 border-accent/60",
       )}
     >
-      <div className="flex items-center gap-2 mb-1">
-        <Badge variant="secondary" className="text-xs">
-          {artifact.type.replace("_", " ")}
-        </Badge>
-        <span className="text-xs text-muted-foreground font-mono">{artifact.short_id}</span>
-      </div>
-      <p className="text-sm font-medium text-foreground line-clamp-2">{artifact.title}</p>
-      {isPipelineGenerated && (
-        <div className="flex items-center gap-1 mt-2 text-xs text-accent">
-          <GitBranch className="w-3 h-3" />
-          <span>Pipeline generated</span>
+      <div className="px-3.5 py-2.5">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", dot)} />
+          <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
+            {artifact.type.replace("_", " ")}
+          </span>
+          <span className="ml-auto text-[9px] font-mono text-muted-foreground/70 tabular-nums">
+            {artifact.short_id}
+          </span>
         </div>
-      )}
+        <p className="text-[12.5px] font-medium text-foreground leading-snug line-clamp-2">
+          {artifact.title}
+        </p>
+        {isPipelineGenerated && (
+          <div className="mt-2 flex items-center gap-1 text-[10px] text-accent/90">
+            <GitBranch className="w-2.5 h-2.5" />
+            <span className="font-medium">Pipeline generated</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -168,85 +180,109 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
   const [showPipelineRuns, setShowPipelineRuns] = useState(true);
   const [showLinkedArtifactsOnly, setShowLinkedArtifactsOnly] = useState(false);
 
-  // Filter and create nodes
+  // Filter and create nodes — proper lane-per-run layout so each pipeline
+  // run owns a vertical band and its artifacts stack neatly to the right.
   const { initialNodes, initialEdges } = useMemo(() => {
     if (!lineageData) return { initialNodes: [], initialEdges: [] };
 
     const nodes: Node[] = [];
     const edges: Edge[] = [];
-    
-    // Track pipeline runs for positioning
-    const runPositions = new Map<string, { x: number; y: number }>();
-    let runIndex = 0;
-    
-    // Filter pipeline runs and artifacts
+
+    // Layout constants
+    const COL_RUN_X = 40;
+    const COL_ART_X = 360;
+    const COL_ORPHAN_X = 720;
+    const RUN_NODE_H = 116;
+    const ART_NODE_H = 92;
+    const LANE_GAP = 28;       // gap between pipeline lanes
+    const ART_GAP = 14;        // gap between artifacts inside a lane
+    const TOP_PAD = 32;
+
     const pipelineRunIds = new Set(
-      lineageData.artifacts
-        .filter(a => a.pipelineRunId)
-        .map(a => a.pipelineRunId!)
+      lineageData.artifacts.filter(a => a.pipelineRunId).map(a => a.pipelineRunId!),
     );
-
-    // Add pipeline run nodes
-    if (showPipelineRuns) {
-      lineageData.nodes
-        .filter(n => n.type === "pipeline_run")
-        .filter(n => !showLinkedArtifactsOnly || pipelineRunIds.has(n.data.pipelineRun!.id))
-        .forEach((node, index) => {
-          const x = 50;
-          const y = index * 200 + 50;
-          runPositions.set(node.id, { x, y });
-          
-          nodes.push({
-            id: node.id,
-            type: "pipelineRun",
-            position: { x, y },
-            data: {
-              pipelineRun: node.data.pipelineRun,
-              isSelected: selectedNode?.id === node.id,
-            },
-          });
-          runIndex++;
-        });
-    }
-
-    // Add artifact nodes
     const linkedArtifactIds = new Set(lineageData.edges.map(e => e.target));
-    let artifactIndex = 0;
-    
+
+    // Group artifacts by pipeline run
+    const artifactsByRun = new Map<string, typeof lineageData.nodes>();
+    const orphanArtifacts: typeof lineageData.nodes = [];
+
     lineageData.nodes
       .filter(n => n.type === "artifact")
       .filter(n => !showLinkedArtifactsOnly || linkedArtifactIds.has(n.id))
       .forEach((node) => {
-        const artifact = node.data.artifact!;
-        
-        // Position artifact next to its source pipeline run
-        let x = 400;
-        let y = artifactIndex * 120 + 50;
-        
-        if (artifact.pipelineRunId && showPipelineRuns) {
-          const runPos = runPositions.get(`run-${artifact.pipelineRunId}`);
-          if (runPos) {
-            x = runPos.x + 350;
-            y = runPos.y;
-          }
-        }
-        
-        nodes.push({
-          id: node.id,
-          type: "artifactNode",
-          position: { x, y },
-          data: {
-            artifact: node.data.artifact,
-            isSelected: selectedNode?.id === node.id,
-          },
-        });
-        
-        if (!artifact.pipelineRunId || !showPipelineRuns) {
-          artifactIndex++;
+        const a = node.data.artifact!;
+        if (a.pipelineRunId && showPipelineRuns) {
+          const key = `run-${a.pipelineRunId}`;
+          const arr = artifactsByRun.get(key) ?? [];
+          arr.push(node);
+          artifactsByRun.set(key, arr);
+        } else {
+          orphanArtifacts.push(node);
         }
       });
 
-    // Add edges
+    const runNodes = showPipelineRuns
+      ? lineageData.nodes
+          .filter(n => n.type === "pipeline_run")
+          .filter(n => !showLinkedArtifactsOnly || pipelineRunIds.has(n.data.pipelineRun!.id))
+      : [];
+
+    // Place pipeline run lanes
+    let cursorY = TOP_PAD;
+    runNodes.forEach((node) => {
+      const childArts = artifactsByRun.get(node.id) ?? [];
+      const childrenHeight = childArts.length > 0
+        ? childArts.length * ART_NODE_H + (childArts.length - 1) * ART_GAP
+        : RUN_NODE_H;
+      const laneHeight = Math.max(RUN_NODE_H, childrenHeight);
+
+      // Center the run node vertically within its lane
+      const runY = cursorY + (laneHeight - RUN_NODE_H) / 2;
+      nodes.push({
+        id: node.id,
+        type: "pipelineRun",
+        position: { x: COL_RUN_X, y: runY },
+        data: {
+          pipelineRun: node.data.pipelineRun,
+          isSelected: selectedNode?.id === node.id,
+        },
+      });
+
+      // Stack artifacts in this lane
+      childArts.forEach((child, ci) => {
+        const y = cursorY + ci * (ART_NODE_H + ART_GAP);
+        nodes.push({
+          id: child.id,
+          type: "artifactNode",
+          position: { x: COL_ART_X, y },
+          data: {
+            artifact: child.data.artifact,
+            isSelected: selectedNode?.id === child.id,
+          },
+        });
+      });
+
+      cursorY += laneHeight + LANE_GAP;
+    });
+
+    // Place orphan / unlinked artifacts in their own column
+    orphanArtifacts.forEach((node, i) => {
+      nodes.push({
+        id: node.id,
+        type: "artifactNode",
+        position: {
+          x: runNodes.length > 0 ? COL_ORPHAN_X : COL_RUN_X,
+          y: (runNodes.length > 0 ? TOP_PAD : TOP_PAD) + i * (ART_NODE_H + ART_GAP),
+        },
+        data: {
+          artifact: node.data.artifact,
+          isSelected: selectedNode?.id === node.id,
+        },
+      });
+    });
+
+    // Edges — thin, calm, accent-tinted
     if (showPipelineRuns) {
       lineageData.edges.forEach(edge => {
         edges.push({
@@ -254,23 +290,25 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
           source: edge.source,
           target: edge.target,
           type: "smoothstep",
-          animated: true,
-          label: edge.label,
-          labelStyle: { fontSize: 10, fill: "hsl(var(--accent))" },
-          labelBgStyle: { fill: "hsl(var(--card))", fillOpacity: 0.9 },
+          animated: false,
           markerEnd: {
             type: MarkerType.ArrowClosed,
-            width: 15,
-            height: 15,
+            width: 12,
+            height: 12,
             color: "hsl(var(--accent))",
           },
-          style: { stroke: "hsl(var(--accent))", strokeWidth: 2 },
+          style: {
+            stroke: "hsl(var(--accent))",
+            strokeWidth: 1.25,
+            strokeOpacity: 0.55,
+          },
         });
       });
     }
 
     return { initialNodes: nodes, initialEdges: edges };
   }, [lineageData, showPipelineRuns, showLinkedArtifactsOnly, selectedNode]);
+
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -372,9 +410,12 @@ function ArtifactLineageViewInner({ projectId, workspaceId }: ArtifactLineageVie
           onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
           fitView
-          className="bg-muted/20"
+          fitViewOptions={{ padding: 0.2, minZoom: 0.4, maxZoom: 1.2 }}
+          proOptions={{ hideAttribution: true }}
+          className="bg-gradient-to-br from-muted/10 via-background to-muted/20"
         >
-          <Background color="hsl(var(--muted-foreground))" gap={24} size={1} />
+          <Background color="hsl(var(--muted-foreground) / 0.35)" gap={22} size={1} />
+
           <Controls className="!bg-card/90 !backdrop-blur-sm !border !rounded-lg !shadow-sm overflow-hidden" />
           <MiniMap
             className="!bg-card/90 !backdrop-blur-sm !border !rounded-lg !shadow-sm"
