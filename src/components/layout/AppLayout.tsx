@@ -434,7 +434,7 @@ function InnerLayout({ children }: AppLayoutProps) {
           </div>
         </header>
 
-        <div className="flex-1 animate-fade-in">{children}</div>
+        <div className="flex-1 min-h-0 overflow-auto animate-fade-in">{children}</div>
       </main>
 
       <SessionRecoveryDialog
