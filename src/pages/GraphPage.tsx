@@ -1017,46 +1017,7 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
                 </div>
 
                 {/* Search */}
-                <div className="relative border-b border-border/60 px-3 py-2.5">
-                  <Search className="absolute left-5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search artifacts…"
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    onKeyDown={handleSearchKeyDown}
-                    className="h-8 border-border/60 bg-background/60 pl-8 text-[12px] placeholder:text-muted-foreground/70 focus-visible:ring-1 focus-visible:ring-accent/40"
-                  />
-                  {searchResults.length > 0 && (
-                    <div className="absolute left-3 right-3 top-full z-50 mt-1 overflow-hidden rounded-lg border border-border bg-popover shadow-xl">
-                      <ScrollArea className="max-h-56">
-                        <div className="p-1">
-                          {searchResults.map((artifact, index) => (
-                            <div
-                              key={artifact.id}
-                              className={cn(
-                                "flex cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5",
-                                index === focusedSearchIndex ? "bg-accent/10" : "hover:bg-muted",
-                              )}
-                              onClick={() => {
-                                focusOnNode(artifact.id);
-                                setSearchQuery("");
-                                setSearchResults([]);
-                              }}
-                            >
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-[12px] font-medium">{artifact.title}</p>
-                                <div className="mt-0.5 flex items-center gap-2">
-                                  <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{artifact.type}</span>
-                                  <span className="font-mono text-[10px] text-muted-foreground/70">{artifact.short_id}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  )}
-                </div>
+                {/* Search moved to ⌘K command palette (see CommandDialog below) */}
 
                 {/* Toolbar — single dense row */}
                 <div className="flex flex-wrap items-center gap-1 px-2 py-2">
