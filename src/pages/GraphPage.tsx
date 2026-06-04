@@ -1384,6 +1384,54 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
             )}
           </ReactFlow>
 
+          {/* ⌘K Search palette — portaled, so never clipped by canvas chrome */}
+          <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+            <CommandInput
+              placeholder="Search artifacts by title, ID, or type…"
+              value={searchQuery}
+              onValueChange={(v) => {
+                setSearchQuery(v);
+                handleSearch(v);
+              }}
+            />
+            <CommandList>
+              <CommandEmpty>
+                {searchQuery.trim() ? "No artifacts match." : "Start typing to search."}
+              </CommandEmpty>
+              {searchResults.length > 0 && (
+                <CommandGroup heading={`${searchResults.length} result${searchResults.length === 1 ? "" : "s"}`}>
+                  {searchResults.slice(0, 50).map((artifact) => {
+                    const meta = TYPE_META[artifact.type] ?? TYPE_META.FILE;
+                    const Icon = meta.icon;
+                    return (
+                      <CommandItem
+                        key={artifact.id}
+                        value={`${artifact.title} ${artifact.short_id} ${artifact.type}`}
+                        onSelect={() => {
+                          focusOnNode(artifact.id);
+                          setSearchOpen(false);
+                          setSearchQuery("");
+                          setSearchResults([]);
+                        }}
+                        className="gap-2.5"
+                      >
+                        <Icon className={cn("h-4 w-4 shrink-0", meta.tone)} />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[13px] font-medium">{artifact.title}</div>
+                          <div className="mt-0.5 flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
+                            <span className="uppercase tracking-wider">{meta.label}</span>
+                            <span>·</span>
+                            <span>{artifact.short_id}</span>
+                          </div>
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
+            </CommandList>
+          </CommandDialog>
+
           {/* Edge Type Selection Dialog */}
           <Dialog open={!!pendingConnection} onOpenChange={(open) => !open && handleCancelConnection()}>
             <DialogContent className="sm:max-w-md">
