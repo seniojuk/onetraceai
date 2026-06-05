@@ -53,6 +53,7 @@ import { SessionRecoveryDialog } from "@/components/auth/SessionRecoveryDialog";
 import { DeleteConfirmDialog } from "@/components/layout/DeleteConfirmDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AppLayoutProps {
   children: ReactNode;
