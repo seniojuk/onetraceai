@@ -284,179 +284,145 @@ const ArtifactDetailPage = () => {
 
   const hasLinkedArtifacts = linkedArtifacts.parents.length > 0 || linkedArtifacts.children.length > 0;
 
+  // Resolve a single primary action per artifact type — everything else
+  // lives in the overflow menu to keep the action bar uncluttered.
+  const TypeIcon = typeIcons[artifact.type] || FileText;
+  type PrimaryAction = { label: string; icon: typeof FileText; onClick: () => void } | null;
+  const primaryAction: PrimaryAction = canGeneratePRD
+    ? { label: "Generate PRD", icon: Sparkles, onClick: () => navigate(`/artifacts/new?type=PRD&fromIdea=${artifact.id}`) }
+    : canGenerateEpics
+      ? { label: "Generate Epics", icon: Sparkles, onClick: () => navigate(`/artifacts/new?type=EPIC&fromPRD=${artifact.id}`) }
+      : canGenerateStoriesFromEpic
+        ? { label: "Generate Stories", icon: Sparkles, onClick: () => navigate(`/artifacts/new?type=STORY&fromEpic=${artifact.id}`) }
+        : null;
+
   return (
     <AuthGuard>
       <AppLayout>
-        <div className="p-8 max-w-5xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center gap-4 mb-6">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/artifacts")}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <span className="font-mono text-sm text-muted-foreground">{artifact.short_id}</span>
-            <Badge className={cn(statusColor[artifact.status as ArtifactStatus])}>
-              {artifact.status}
-            </Badge>
-            {jiraMapping && (
-              <JiraIssueBadge mapping={jiraMapping} />
-            )}
+        <div className="px-8 py-8 max-w-[1400px] mx-auto">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
+            <button
+              type="button"
+              onClick={() => navigate("/artifacts")}
+              className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Artifacts
+            </button>
+            <span className="text-muted-foreground/50">/</span>
+            <span className="font-mono text-foreground/70">{artifact.short_id}</span>
           </div>
 
-          {/* Title & Actions */}
-          <div className="flex items-start justify-between mb-8">
-            <div className="flex-1">
+          {/* Header */}
+          <div className="flex items-start justify-between gap-6 pb-6 mb-8 border-b border-border">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  <TypeIcon className="w-3.5 h-3.5" />
+                  {artifact.type.replace("_", " ")}
+                </span>
+                <span className={cn(
+                  "inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                  statusColor[artifact.status as ArtifactStatus],
+                )}>
+                  {artifact.status.replace("_", " ")}
+                </span>
+                {jiraMapping && <JiraIssueBadge mapping={jiraMapping} />}
+              </div>
+
               {isEditing ? (
                 <Input
                   value={editedTitle}
                   onChange={(e) => setEditedTitle(e.target.value)}
-                  className="text-2xl font-bold h-auto py-2"
+                  className="font-display text-3xl font-semibold tracking-tight h-auto py-2 border-dashed"
                   placeholder="Artifact title"
                 />
               ) : (
-                <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">{artifact.title}</h1>
+                <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground leading-tight">
+                  {artifact.title}
+                </h1>
               )}
-              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
+
+              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
                   Updated {new Date(artifact.updated_at).toLocaleDateString()}
                 </span>
                 {artifact.created_by && (
-                  <span className="flex items-center gap-1">
-                    <User className="w-4 h-4" />
+                  <span className="inline-flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5" />
                     Created by you
                   </span>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {isEditing ? (
                 <>
-                  <Button variant="outline" onClick={() => setIsEditing(false)}>
+                  <Button variant="outline" onClick={() => setIsEditing(false)} className="rounded-[0.625rem]">
                     <X className="w-4 h-4 mr-2" />
                     Cancel
                   </Button>
-                  <Button onClick={handleSave} disabled={updateArtifact.isPending} className="bg-accent hover:bg-accent/90">
+                  <Button
+                    onClick={handleSave}
+                    disabled={updateArtifact.isPending}
+                    className="bg-accent hover:bg-accent/90 rounded-[0.625rem]"
+                  >
                     {updateArtifact.isPending ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
                       <Save className="w-4 h-4 mr-2" />
                     )}
-                    Save
+                    Save changes
                   </Button>
                 </>
               ) : (
                 <>
-                  {canGeneratePRD && (
-                    <Button 
-                      onClick={() => navigate(`/artifacts/new?type=PRD&fromIdea=${artifact.id}`)}
-                      className="bg-accent hover:bg-accent/90"
+                  {primaryAction && (
+                    <Button
+                      onClick={primaryAction.onClick}
+                      className="bg-accent hover:bg-accent/90 rounded-[0.625rem]"
                     >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Generate PRD
+                      <primaryAction.icon className="w-4 h-4 mr-2" />
+                      {primaryAction.label}
                     </Button>
                   )}
-                  {canEnhanceIdea && (
-                    <Button 
-                      onClick={() => setIsEnhancing(true)}
-                      variant="outline"
-                    >
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Enhance Idea
-                    </Button>
-                  )}
-                  {canGenerateEpics && (
-                    <Button 
-                      onClick={() => navigate(`/artifacts/new?type=EPIC&fromPRD=${artifact.id}`)}
-                      className="bg-accent hover:bg-accent/90"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Generate Epics
-                    </Button>
-                  )}
-                  {canGenerateStories && (
-                    <Button 
-                      onClick={() => navigate(`/artifacts/new?type=STORY&fromPRD=${artifact.id}`)}
-                      variant="outline"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Generate Stories
-                    </Button>
-                  )}
-                  {canEnhancePRD && (
-                    <Button 
-                      onClick={() => setIsEnhancing(true)}
-                      variant="outline"
-                    >
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Enhance PRD
-                    </Button>
-                  )}
-                  {canGenerateStoriesFromEpic && (
-                    <Button 
-                      onClick={() => navigate(`/artifacts/new?type=STORY&fromEpic=${artifact.id}`)}
-                      className="bg-accent hover:bg-accent/90"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Generate Stories
-                    </Button>
-                  )}
-                  {linkRules[artifact.type] && (
-                    <Button variant="outline" onClick={() => setIsLinkOpen(true)}>
-                      <Link2 className="w-4 h-4 mr-2" />
-                      Link
-                    </Button>
-                  )}
-                  <Button variant="outline" onClick={handleEdit}>
+                  <Button variant="outline" onClick={handleEdit} className="rounded-[0.625rem]">
                     <Edit2 className="w-4 h-4 mr-2" />
                     Edit
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon">
+                      <Button variant="outline" size="icon" className="rounded-[0.625rem]">
                         <MoreVertical className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {canGeneratePRD && (
-                        <>
-                          <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=PRD&fromIdea=${artifact.id}`)}>
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Generate PRD from Idea
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setIsEnhancing(true)}>
-                            <Wand2 className="w-4 h-4 mr-2" />
-                            Enhance Idea
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                        </>
+                    <DropdownMenuContent align="end" className="w-56">
+                      {canEnhanceIdea && (
+                        <DropdownMenuItem onClick={() => setIsEnhancing(true)}>
+                          <Wand2 className="w-4 h-4 mr-2" />
+                          Enhance Idea
+                        </DropdownMenuItem>
                       )}
-                      {canGenerateEpics && (
-                        <>
-                          <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=EPIC&fromPRD=${artifact.id}`)}>
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Generate Epics from PRD
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=STORY&fromPRD=${artifact.id}`)}>
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Generate Stories from PRD
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setIsEnhancing(true)}>
-                            <Wand2 className="w-4 h-4 mr-2" />
-                            Enhance PRD
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                        </>
+                      {canEnhancePRD && (
+                        <DropdownMenuItem onClick={() => setIsEnhancing(true)}>
+                          <Wand2 className="w-4 h-4 mr-2" />
+                          Enhance PRD
+                        </DropdownMenuItem>
                       )}
-                      {canGenerateStoriesFromEpic && (
-                        <>
-                          <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=STORY&fromEpic=${artifact.id}`)}>
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Generate Stories from Epic
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                        </>
+                      {canGenerateStories && (
+                        <DropdownMenuItem onClick={() => navigate(`/artifacts/new?type=STORY&fromPRD=${artifact.id}`)}>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Generate Stories from PRD
+                        </DropdownMenuItem>
+                      )}
+                      {linkRules[artifact.type] && (
+                        <DropdownMenuItem onClick={() => setIsLinkOpen(true)}>
+                          <Link2 className="w-4 h-4 mr-2" />
+                          Link artifact
+                        </DropdownMenuItem>
                       )}
                       <DropdownMenuItem onClick={() => navigate(`/graph?focus=${artifact.id}`)}>
                         <GitBranch className="w-4 h-4 mr-2" />
@@ -466,14 +432,19 @@ const ArtifactDetailPage = () => {
                         <Wand2 className="w-4 h-4 mr-2" />
                         Generate Code Prompt
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          navigator.clipboard.writeText(window.location.href);
+                          sonner.success("Link copied");
+                        }}
+                      >
                         <Link2 className="w-4 h-4 mr-2" />
                         Copy Link
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive">
                             <Trash2 className="w-4 h-4 mr-2" />
                             Archive
                           </DropdownMenuItem>
@@ -498,10 +469,11 @@ const ArtifactDetailPage = () => {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Main Content */}
+          {/* Editor + Inspector grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Editor column */}
             <div className="lg:col-span-2 space-y-6">
-              {/* PRD Enhancer */}
+              {/* Enhancers */}
               {isEnhancing && artifact.type === "PRD" && (
                 <PRDEnhancer
                   artifact={artifact}
@@ -509,7 +481,6 @@ const ArtifactDetailPage = () => {
                   onCancel={() => setIsEnhancing(false)}
                 />
               )}
-              {/* Idea Enhancer */}
               {isEnhancing && artifact.type === "IDEA" && (
                 <IdeaEnhancer
                   artifact={artifact}
@@ -517,29 +488,51 @@ const ArtifactDetailPage = () => {
                   onCancel={() => setIsEnhancing(false)}
                 />
               )}
+
               {/* Content */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Content</CardTitle>
-                  <CardDescription>Artifact description and details</CardDescription>
-                </CardHeader>
-                <CardContent>
+              <section className="bg-card rounded-[0.625rem] border border-border overflow-hidden">
+                <header className="px-5 py-3 border-b border-border flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                    <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Content
+                    </h2>
+                  </div>
+                  {!isEditing && artifact.content_markdown && (
+                    <span className="text-[11px] text-muted-foreground tabular-nums">
+                      {artifact.content_markdown.length.toLocaleString()} chars
+                    </span>
+                  )}
+                </header>
+                <div className="p-5">
                   {isEditing ? (
                     <Textarea
                       value={editedContent}
                       onChange={(e) => setEditedContent(e.target.value)}
-                      placeholder="Write your artifact content here... (Markdown supported)"
-                      className="min-h-[300px] font-mono text-sm"
+                      placeholder="Write your artifact content here… (Markdown supported)"
+                      className="min-h-[360px] font-mono text-sm bg-background"
                     />
                   ) : artifact.content_markdown ? (
-                    <div className="prose prose-sm max-w-none">
-                      <pre className="whitespace-pre-wrap font-sans">{artifact.content_markdown}</pre>
-                    </div>
+                    <pre className="whitespace-pre-wrap font-sans text-[15px] leading-relaxed text-foreground/90">
+                      {artifact.content_markdown}
+                    </pre>
                   ) : (
-                    <p className="text-muted-foreground italic">No content yet. Click Edit to add content.</p>
+                    <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+                      <div className="w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center">
+                        <FileText className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-foreground">No content yet</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Add a description so collaborators have context.</p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={handleEdit} className="rounded-[0.625rem]">
+                        <Edit2 className="w-3.5 h-3.5 mr-1.5" />
+                        Add content
+                      </Button>
+                    </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </section>
 
               {/* Attached Files */}
               <AttachedFiles
@@ -550,72 +543,84 @@ const ArtifactDetailPage = () => {
               />
 
               {/* Related Artifacts */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Related Artifacts</CardTitle>
-                    <CardDescription>Connected through the artifact graph</CardDescription>
-                  </div>
+              <section className="bg-card rounded-[0.625rem] border border-border overflow-hidden">
+                <header className="px-5 py-3 border-b border-border flex items-center justify-between">
                   <div className="flex items-center gap-2">
+                    <GitBranch className="w-3.5 h-3.5 text-muted-foreground" />
+                    <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Related artifacts
+                    </h2>
+                    {hasLinkedArtifacts && (
+                      <span className="text-[11px] text-muted-foreground tabular-nums">
+                        · {linkedArtifacts.parents.length + linkedArtifacts.children.length}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
                     {linkRules[artifact.type] && (
-                      <Button variant="outline" size="sm" onClick={() => setIsLinkOpen(true)}>
-                        <Link2 className="w-4 h-4 mr-2" />
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => setIsLinkOpen(true)}>
+                        <Link2 className="w-3.5 h-3.5 mr-1" />
                         Link
                       </Button>
                     )}
-                    <Button variant="ghost" size="sm" onClick={() => navigate(`/graph?focus=${artifact.id}`)}>
-                      <GitBranch className="w-4 h-4 mr-2" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => navigate(`/graph?focus=${artifact.id}`)}
+                    >
+                      <GitBranch className="w-3.5 h-3.5 mr-1" />
                       Graph
                     </Button>
                   </div>
-                </CardHeader>
-                <CardContent>
+                </header>
+                <div className="p-5">
                   {edgesLoading ? (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <Skeleton className="h-12 w-full" />
                       <Skeleton className="h-12 w-full" />
                     </div>
                   ) : !hasLinkedArtifacts ? (
-                    <div className="flex flex-col items-center gap-3 py-8">
-                      <p className="text-muted-foreground text-sm">No related artifacts yet</p>
+                    <div className="flex flex-col items-center gap-3 py-8 text-center">
+                      <p className="text-sm text-muted-foreground">Nothing linked yet</p>
                       {linkRules[artifact.type] && (
-                        <Button variant="outline" size="sm" onClick={() => setIsLinkOpen(true)}>
-                          <Link2 className="w-4 h-4 mr-2" />
+                        <Button variant="outline" size="sm" className="rounded-[0.625rem]" onClick={() => setIsLinkOpen(true)}>
+                          <Link2 className="w-3.5 h-3.5 mr-1.5" />
                           Link a parent
                         </Button>
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-6">
-                      {/* Parent Artifacts (derived from) */}
+                    <div className="space-y-5">
                       {linkedArtifacts.parents.length > 0 && (
                         <div>
-                          <div className="flex items-center gap-2 mb-3">
-                            <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm font-medium text-muted-foreground">Derived From</span>
+                          <div className="flex items-center gap-2 mb-2">
+                            <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              Derived from
+                            </span>
                           </div>
-                          <div className="space-y-2">
+                          <div className="space-y-1.5">
                             {linkedArtifacts.parents.map(({ artifact: parent, edgeId, edgeType, source, fromId, toId }) => {
                               const Icon = typeIcons[parent.type] || FileText;
                               return (
                                 <div
                                   key={edgeId}
-                                  className="group relative flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
+                                  className="group flex items-center gap-3 px-3 py-2 rounded-md border border-border bg-background hover:bg-muted/40 cursor-pointer transition-colors"
                                   onClick={() => navigate(`/artifacts/${parent.id}`)}
                                 >
-                                  <div className="w-8 h-8 rounded-md bg-accent/10 flex items-center justify-center">
-                                    <Icon className="w-4 h-4 text-accent" />
+                                  <div className="w-7 h-7 rounded-md bg-accent/10 flex items-center justify-center shrink-0">
+                                    <Icon className="w-3.5 h-3.5 text-accent" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm text-foreground truncate">{parent.title}</p>
+                                    <p className="text-sm text-foreground truncate">{parent.title}</p>
                                     <div className="flex items-center gap-2 mt-0.5">
-                                      <span className="text-xs font-mono text-muted-foreground">{parent.short_id}</span>
-                                      <Badge variant="outline" className="text-xs">{parent.type.replace("_", " ")}</Badge>
-                                      <Badge variant="secondary" className="text-xs">
+                                      <span className="text-[10px] font-mono text-muted-foreground">{parent.short_id}</span>
+                                      <span className="text-[10px] text-muted-foreground">
                                         {edgeTypeLabels[edgeType] || edgeType.replace("_", " ").toLowerCase()}
-                                      </Badge>
+                                      </span>
                                       {source === "AI_GENERATED" && (
-                                        <Badge variant="secondary" className="text-xs">AI</Badge>
+                                        <span className="text-[10px] font-medium text-accent">AI</span>
                                       )}
                                     </div>
                                   </div>
@@ -637,35 +642,35 @@ const ArtifactDetailPage = () => {
                         </div>
                       )}
 
-                      {/* Child Artifacts (generates) */}
                       {linkedArtifacts.children.length > 0 && (
                         <div>
-                          <div className="flex items-center gap-2 mb-3">
-                            <ArrowDownRight className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm font-medium text-muted-foreground">Generated Artifacts</span>
+                          <div className="flex items-center gap-2 mb-2">
+                            <ArrowDownRight className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              Generated artifacts
+                            </span>
                           </div>
-                          <div className="space-y-2">
+                          <div className="space-y-1.5">
                             {linkedArtifacts.children.map(({ artifact: child, edgeId, edgeType, source, fromId, toId }) => {
                               const Icon = typeIcons[child.type] || FileText;
                               return (
                                 <div
                                   key={edgeId}
-                                  className="group relative flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
+                                  className="group flex items-center gap-3 px-3 py-2 rounded-md border border-border bg-background hover:bg-muted/40 cursor-pointer transition-colors"
                                   onClick={() => navigate(`/artifacts/${child.id}`)}
                                 >
-                                  <div className="w-8 h-8 rounded-md bg-accent/10 flex items-center justify-center">
-                                    <Icon className="w-4 h-4 text-accent" />
+                                  <div className="w-7 h-7 rounded-md bg-accent/10 flex items-center justify-center shrink-0">
+                                    <Icon className="w-3.5 h-3.5 text-accent" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-sm text-foreground truncate">{child.title}</p>
+                                    <p className="text-sm text-foreground truncate">{child.title}</p>
                                     <div className="flex items-center gap-2 mt-0.5">
-                                      <span className="text-xs font-mono text-muted-foreground">{child.short_id}</span>
-                                      <Badge variant="outline" className="text-xs">{child.type.replace("_", " ")}</Badge>
-                                      <Badge variant="secondary" className="text-xs">
+                                      <span className="text-[10px] font-mono text-muted-foreground">{child.short_id}</span>
+                                      <span className="text-[10px] text-muted-foreground">
                                         {edgeTypeLabels[edgeType] || edgeType.replace("_", " ").toLowerCase()}
-                                      </Badge>
+                                      </span>
                                       {source === "AI_GENERATED" && (
-                                        <Badge variant="secondary" className="text-xs">AI</Badge>
+                                        <span className="text-[10px] font-medium text-accent">AI</span>
                                       )}
                                     </div>
                                   </div>
@@ -688,27 +693,32 @@ const ArtifactDetailPage = () => {
                       )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </section>
+
               {/* Version History */}
               {(artifact.type === "PRD" || artifact.type === "IDEA") && (
                 <PRDVersionHistory artifactId={artifact.id} />
               )}
             </div>
 
-            {/* Sidebar */}
-            <div className="space-y-6">
+            {/* Inspector column */}
+            <aside className="space-y-6 lg:sticky lg:top-6 lg:self-start">
               {/* Properties */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Properties</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+              <section className="bg-card rounded-[0.625rem] border border-border overflow-hidden">
+                <header className="px-5 py-3 border-b border-border">
+                  <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Properties
+                  </h2>
+                </header>
+                <div className="p-5 space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Status</label>
+                    <label className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5 block">
+                      Status
+                    </label>
                     {isEditing ? (
                       <Select value={editedStatus} onValueChange={(v) => setEditedStatus(v as ArtifactStatus)}>
-                        <SelectTrigger>
+                        <SelectTrigger className="rounded-[0.5rem]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -720,85 +730,96 @@ const ArtifactDetailPage = () => {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <Badge className={cn(statusColor[artifact.status as ArtifactStatus])}>
-                        {artifact.status}
-                      </Badge>
+                      <span className={cn(
+                        "inline-flex items-center text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                        statusColor[artifact.status as ArtifactStatus],
+                      )}>
+                        {artifact.status.replace("_", " ")}
+                      </span>
                     )}
                   </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Type</label>
-                    <p className="text-foreground">{artifact.type}</p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-1 block">ID</label>
-                    <p className="font-mono text-sm text-foreground">{artifact.short_id}</p>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Created</label>
-                    <p className="text-sm text-foreground">{new Date(artifact.created_at).toLocaleString()}</p>
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground mb-1 block">Last Updated</label>
-                    <p className="text-sm text-foreground">{new Date(artifact.updated_at).toLocaleString()}</p>
+
+                  <div className="grid grid-cols-2 gap-4 pt-3 border-t border-border">
+                    <div>
+                      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Type</div>
+                      <div className="text-sm text-foreground mt-0.5">{artifact.type.replace("_", " ")}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">ID</div>
+                      <div className="text-sm font-mono text-foreground mt-0.5 truncate">{artifact.short_id}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Parents</div>
+                      <div className="text-sm text-foreground mt-0.5 tabular-nums">{linkedArtifacts.parents.length}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Children</div>
+                      <div className="text-sm text-foreground mt-0.5 tabular-nums">{linkedArtifacts.children.length}</div>
+                    </div>
                   </div>
 
-                  {/* Pipeline Source */}
+                  <div className="pt-3 border-t border-border space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Created</span>
+                      <span className="text-foreground tabular-nums">{new Date(artifact.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Updated</span>
+                      <span className="text-foreground tabular-nums">{new Date(artifact.updated_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
                   {pipelineRun && (
-                    <>
-                      <Separator />
-                      <div className="p-3 rounded-lg bg-accent/10 border border-accent/20">
-                        <div className="flex items-center gap-2 text-sm font-medium text-accent mb-2">
-                          <GitBranch className="w-4 h-4" />
-                          Pipeline Generated
+                    <div className="pt-3 border-t border-border">
+                      <div className="rounded-md bg-accent/5 border border-accent/20 p-3">
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-accent mb-2">
+                          <GitBranch className="w-3.5 h-3.5" />
+                          Pipeline generated
                         </div>
-                        <p className="text-xs text-muted-foreground mb-1">
-                          <span className="font-medium">Pipeline:</span> {pipelineRun.pipeline?.name || "Unknown"}
+                        <p className="text-xs text-foreground/80 mb-0.5 truncate">
+                          {pipelineRun.pipeline?.name || "Unknown"}
                         </p>
-                        <p className="text-xs text-muted-foreground mb-2">
-                          <span className="font-medium">Run:</span> {new Date(pipelineRun.created_at).toLocaleString()}
+                        <p className="text-[11px] text-muted-foreground mb-2">
+                          {new Date(pipelineRun.created_at).toLocaleString()}
                         </p>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full text-xs"
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs h-7 rounded-[0.5rem]"
                           onClick={() => navigate("/lineage")}
                         >
                           View Lineage
                         </Button>
                       </div>
-                    </>
+                    </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </section>
 
               {/* Tags */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Tags</CardTitle>
-                  <Button variant="ghost" size="sm">
-                    <Plus className="w-4 h-4" />
+              <section className="bg-card rounded-[0.625rem] border border-border overflow-hidden">
+                <header className="px-5 py-3 border-b border-border flex items-center justify-between">
+                  <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Tags
+                  </h2>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                    <Plus className="w-3.5 h-3.5" />
                   </Button>
-                </CardHeader>
-                <CardContent>
+                </header>
+                <div className="p-5">
                   {artifact.tags && artifact.tags.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1.5">
                       {artifact.tags.map((tag, i) => (
-                        <Badge key={i} variant="secondary">{tag}</Badge>
+                        <Badge key={i} variant="secondary" className="text-[11px] font-normal">
+                          {tag}
+                        </Badge>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground text-sm">No tags</p>
+                    <p className="text-xs text-muted-foreground">No tags</p>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </section>
 
               {/* Jira Integration */}
               {jiraMapping && (
@@ -808,25 +829,28 @@ const ArtifactDetailPage = () => {
                 />
               )}
 
-              {/* Generate Code Prompt Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Code Generation</CardTitle>
-                </CardHeader>
-                <CardContent>
+              {/* Code Generation */}
+              <section className="bg-card rounded-[0.625rem] border border-border overflow-hidden">
+                <header className="px-5 py-3 border-b border-border flex items-center gap-2">
+                  <Wand2 className="w-3.5 h-3.5 text-muted-foreground" />
+                  <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Code generation
+                  </h2>
+                </header>
+                <div className="p-5">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="w-full"
+                    className="w-full rounded-[0.5rem]"
                     onClick={() => setIsPromptGenOpen(true)}
                   >
-                    <Wand2 className="w-4 h-4 mr-2" />
-                    Generate Prompt
+                    <Wand2 className="w-3.5 h-3.5 mr-2" />
+                    Generate prompt
                   </Button>
                   <PromptHistorySection artifactId={artifact.id} />
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </section>
+            </aside>
           </div>
         </div>
 
@@ -843,6 +867,7 @@ const ArtifactDetailPage = () => {
           onOpenChange={setIsLinkOpen}
           artifact={artifact}
         />
+
       </AppLayout>
     </AuthGuard>
   );
