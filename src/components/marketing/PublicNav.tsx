@@ -31,6 +31,7 @@ export function PublicNav() {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const { pathname } = useLocation();
+  const { user } = useAuth();
   const onHome = pathname === "/";
 
   useEffect(() => {
