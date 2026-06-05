@@ -1,31 +1,32 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Home, Sparkles } from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
 
 /**
  * 404 — "Off the graph"
- * Hidden easter egg: connect the 4 trace-nodes in order. Reward: a burst of
- * sparks + a one-of-a-kind "Trace Restorer" badge.
+ * Hidden easter egg: tap the 4 faint trace-nodes in order.
+ * Reward: a full-screen accent ripple + the headline briefly morphs.
  */
 const NotFound = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [next, setNext] = useState(1);
   const [solved, setSolved] = useState(false);
-  const [burst, setBurst] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
 
   useEffect(() => {
     console.error("404: route not in graph →", location.pathname);
   }, [location.pathname]);
 
+  // Positions tuned to stay clear of the centered text on all viewports
   const nodes = useMemo(
-    () =>
-      [1, 2, 3, 4].map((n, i) => ({
-        n,
-        x: [12, 72, 26, 84][i],
-        y: [20, 28, 76, 70][i],
-      })),
+    () => [
+      { n: 1, x: 8, y: 12 },
+      { n: 2, x: 92, y: 18 },
+      { n: 3, x: 10, y: 88 },
+      { n: 4, x: 90, y: 82 },
+    ],
     []
   );
 
@@ -34,8 +35,8 @@ const NotFound = () => {
     if (n === next) {
       if (next === 4) {
         setSolved(true);
-        setBurst(true);
-        setTimeout(() => setBurst(false), 1400);
+        setCelebrating(true);
+        setTimeout(() => setCelebrating(false), 2200);
       }
       setNext(next + 1);
     } else {
@@ -74,14 +75,14 @@ const NotFound = () => {
               stroke="hsl(var(--accent))"
               strokeWidth={1.5}
               strokeDasharray="4 4"
-              className="animate-in fade-in duration-500"
+              className="animate-fade-in"
             />
           );
         })}
       </svg>
 
-      {/* hidden trace-nodes (no instructions) */}
-      <div aria-hidden className="absolute inset-0 hidden sm:block">
+      {/* trace-nodes — visible on every viewport, larger tap target on mobile */}
+      <div aria-hidden className="absolute inset-0">
         {nodes.map((node) => {
           const done = node.n < next || solved;
           return (
@@ -91,44 +92,72 @@ const NotFound = () => {
               tabIndex={-1}
               style={{ left: `${node.x}%`, top: `${node.y}%` }}
               className={[
-                "absolute -translate-x-1/2 -translate-y-1/2 h-3 w-3 rounded-full",
-                "transition-all duration-300 outline-none",
-                done
-                  ? "bg-accent shadow-[0_0_20px_hsl(var(--accent)/0.6)] scale-125"
-                  : "bg-foreground/15 hover:bg-foreground/40",
+                "absolute -translate-x-1/2 -translate-y-1/2 grid place-items-center",
+                "h-11 w-11 rounded-full transition-all duration-300 outline-none",
               ].join(" ")}
-            />
+            >
+              <span
+                className={[
+                  "block rounded-full transition-all duration-300",
+                  done
+                    ? "h-3.5 w-3.5 bg-accent shadow-[0_0_24px_hsl(var(--accent)/0.7)] scale-110"
+                    : "h-2.5 w-2.5 bg-foreground/20",
+                ].join(" ")}
+              />
+            </button>
           );
         })}
       </div>
 
-      {/* reward burst */}
-      {burst && (
+      {/* reward ripple */}
+      {celebrating && (
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 z-20 grid place-items-center"
         >
-          {Array.from({ length: 14 }).map((_, i) => (
-            <span
-              key={i}
-              className="absolute h-1.5 w-1.5 rounded-full bg-accent animate-in fade-in zoom-in duration-1000"
-              style={{
-                transform: `rotate(${i * 26}deg) translateY(-${60 + (i % 3) * 24}px)`,
-              }}
-            />
-          ))}
+          <span
+            className="block h-32 w-32 rounded-full border-2 border-accent/60 animate-[ripple_1.8s_ease-out_forwards]"
+            style={{
+              animation:
+                "ripple 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+            }}
+          />
+          <style>{`@keyframes ripple {
+            0% { transform: scale(0.2); opacity: 0.9; }
+            100% { transform: scale(28); opacity: 0; }
+          }`}</style>
         </div>
       )}
 
       <div className="relative z-10 mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-6 text-center">
-        <h1 className="font-display text-[44px] sm:text-[64px] leading-[1.05] font-semibold tracking-tight text-foreground">
-          You've wandered off
-          <br />
-          the graph.
+        <h1
+          className={[
+            "font-display font-semibold tracking-tight text-foreground",
+            "text-[38px] leading-[1.05] sm:text-[56px] md:text-[64px]",
+            "transition-colors duration-500",
+            celebrating && "text-accent",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          aria-live="polite"
+        >
+          {solved ? (
+            <>
+              Nicely done.
+              <br />
+              <span className="text-foreground/80">Trace restored.</span>
+            </>
+          ) : (
+            <>
+              You've wandered off
+              <br />
+              the graph.
+            </>
+          )}
         </h1>
 
-        <p className="mt-5 max-w-sm text-[15px] text-muted-foreground">
-          We couldn't find this page.
+        <p className="mt-5 max-w-xs sm:max-w-sm text-[15px] text-muted-foreground">
+          {solved ? "Now let's get you somewhere useful." : "We couldn't find this page."}
         </p>
 
         <div className="mt-7 flex w-full flex-col sm:flex-row sm:w-auto items-stretch sm:items-center justify-center gap-2">
@@ -141,18 +170,6 @@ const NotFound = () => {
             Go back
           </Button>
         </div>
-
-        {solved && (
-          <div
-            role="status"
-            aria-live="polite"
-            className="mt-10 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-4 py-2 text-sm text-accent animate-in fade-in slide-in-from-bottom-2 duration-700"
-          >
-            <Sparkles className="h-4 w-4" aria-hidden />
-            <span className="font-medium">Trace Restorer</span>
-            <span className="text-accent/70">— badge unlocked</span>
-          </div>
-        )}
       </div>
     </main>
   );
