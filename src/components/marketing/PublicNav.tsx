@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowUpRight, Menu, AlertTriangle, Sparkles, Workflow } from "lucide-react";
+import { ArrowUpRight, Menu, AlertTriangle, Sparkles, Workflow, LayoutDashboard } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
+import { useAuth } from "@/hooks/useAuth";
 
 const PRODUCT_ITEMS = [
   {
