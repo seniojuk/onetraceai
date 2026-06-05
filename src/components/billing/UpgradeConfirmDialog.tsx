@@ -115,7 +115,7 @@ export function UpgradeConfirmDialog({
               onConfirm();
             }}
             disabled={isLoading}
-            className="bg-accent hover:bg-accent/90"
+            className={buttonVariants({ variant: "accent" })}
           >
             {isLoading ? (
               <>
