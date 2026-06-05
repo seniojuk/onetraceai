@@ -290,10 +290,6 @@ const ArtifactsPage = () => {
           {/* Hero */}
           <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
-              <p className="mb-2 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                <span className={cn("h-1.5 w-1.5 rounded-full", heroState.dotClass, heroState.pulse && "animate-pulse")} />
-                {heroState.pillLabel}
-              </p>
               <h1 className="font-display text-[40px] font-semibold leading-[1.05] tracking-tight text-foreground sm:text-[56px]">
                 Artifacts
               </h1>
