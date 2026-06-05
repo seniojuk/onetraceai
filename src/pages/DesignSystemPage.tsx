@@ -112,7 +112,7 @@ export default function DesignSystemPage() {
                 Every artifact has an owner.
               </span>
             </TypeRow>
-            <TypeRow label="Body / 14" meta="Geist · 400 · 1.6">
+            <TypeRow label="Body / 14" meta="Geist Sans · 400 · 1.6">
               <span className="text-[14px] leading-[1.6] text-muted-foreground">
                 OneTrace connects PRDs, stories, Jira, Git, and tests into one Artifact Graph —
                 so every commit has intent, and every release has proof.
