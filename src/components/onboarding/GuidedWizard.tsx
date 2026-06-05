@@ -215,7 +215,7 @@ export function GuidedWizard({ workspaceId, seed, onExit }: GuidedWizardProps) {
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-      <StepProgress current={step} total={5} label={`Setup · ${STEP_LABELS[step]}`} />
+      <StepProgress current={step} total={5} label="Let's get you started" />
 
       <div key={step} className="mt-10 animate-rise-in">
         {step === 1 && (
