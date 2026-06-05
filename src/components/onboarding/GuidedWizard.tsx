@@ -374,10 +374,6 @@ function Step4({ epics, generating, onGenerate, onBack, onContinue, saving }: an
           <div className="bg-card p-10 text-center">
             <Sparkles className="mx-auto h-5 w-5 text-accent" />
             <p className="mt-3 text-[13px] text-muted-foreground">No epics yet. Generate to see them.</p>
-            <Button variant="accent" onClick={onGenerate} className="mt-5 animate-eye-pull">
-              Generate Epics
-              <Sparkles className="ml-2 h-3.5 w-3.5" />
-            </Button>
           </div>
         )}
         {generating && (
