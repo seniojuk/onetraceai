@@ -16,7 +16,7 @@ export default function LineagePage() {
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <GitBranch className="w-6 h-6 text-accent" />
-                <h1 className="text-2xl font-bold text-foreground">Artifact Lineage</h1>
+                <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Artifact Lineage</h1>
               </div>
               <p className="text-muted-foreground">
                 Visual traceability showing which pipeline runs generated which artifacts
