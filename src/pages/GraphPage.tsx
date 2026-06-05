@@ -112,6 +112,7 @@ import {
   CommandGroup,
   CommandItem,
 } from "@/components/ui/command";
+import { GraphMomentOverlay } from "@/components/onboarding/GraphMomentOverlay";
 
 // ── Layered DAG layout (Dagre) ────────────────────────────────────────────────
 // Replaces "type-bucketed horizontal rows" with a proper left-to-right
@@ -1906,6 +1907,7 @@ const GraphPage = () => {
   return (
     <ReactFlowProvider>
       <GraphPageInner onViewChange={handleViewChange} currentView={currentView} />
+      <GraphMomentOverlay />
     </ReactFlowProvider>
   );
 };

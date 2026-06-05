@@ -172,12 +172,34 @@ export default {
           "50%": { transform: "scale(1)", opacity: "0.5" },
           "100%": { transform: "scale(0.95)", opacity: "1" },
         },
+        "node-pop": {
+          "0%": { transform: "scale(0.6)", opacity: "0" },
+          "70%": { transform: "scale(1.04)", opacity: "1" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "edge-draw": {
+          "0%": { strokeDashoffset: "120", opacity: "0" },
+          "30%": { opacity: "1" },
+          "100%": { strokeDashoffset: "0", opacity: "1" },
+        },
+        "eye-pull": {
+          "0%, 100%": { transform: "translateY(0)", boxShadow: "0 0 0 0 hsl(var(--accent) / 0.0)" },
+          "50%": { transform: "translateY(-1px)", boxShadow: "0 0 0 6px hsl(var(--accent) / 0.10)" },
+        },
+        "rise-in": {
+          "0%": { opacity: "0", transform: "translateY(14px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 2s infinite",
         "pulse-ring": "pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "node-pop": "node-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both",
+        "edge-draw": "edge-draw 600ms ease-out both",
+        "eye-pull": "eye-pull 1.8s ease-in-out infinite",
+        "rise-in": "rise-in 500ms cubic-bezier(0.16, 1, 0.3, 1) both",
       },
       boxShadow: {
         glow: "0 0 20px hsl(var(--accent) / 0.3)",
