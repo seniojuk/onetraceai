@@ -321,7 +321,7 @@ const IntegrationsPage = () => {
       <AppLayout>
         <div className="p-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground">Integrations</h1>
+            <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">Integrations</h1>
             <p className="text-muted-foreground">
               Connect your tools to sync data with OneTrace
             </p>
