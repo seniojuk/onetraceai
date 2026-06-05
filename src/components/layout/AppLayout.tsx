@@ -145,9 +145,16 @@ function InnerLayout({ children }: AppLayoutProps) {
   const currentProject = projects?.find((p) => p.id === currentProjectId);
 
   const handleSignOut = async () => {
-    await signOut();
+    const { error } = await signOut();
+    if (error) {
+      toast.error("Failed to sign out");
+      return;
+    }
+    resetUserScopedState();
+    queryClient.clear();
     navigate("/");
   };
+
 
   const handleDeleteConfirm = async () => {
     if (!deleteDialog) return;
