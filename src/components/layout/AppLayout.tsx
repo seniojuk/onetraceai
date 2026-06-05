@@ -146,7 +146,12 @@ function InnerLayout({ children }: AppLayoutProps) {
 
   const handleSignOut = async () => {
     const { error } = await signOut();
-    if (error) {
+    // `session_not_found` (403) means the server already considers us signed out
+    // — proceed with local cleanup instead of stranding the user.
+    const alreadySignedOut =
+      error?.status === 403 ||
+      (error as { code?: string } | null)?.code === "session_not_found";
+    if (error && !alreadySignedOut) {
       toast.error("Failed to sign out");
       return;
     }
@@ -154,6 +159,7 @@ function InnerLayout({ children }: AppLayoutProps) {
     queryClient.clear();
     navigate("/");
   };
+
 
 
   const handleDeleteConfirm = async () => {
