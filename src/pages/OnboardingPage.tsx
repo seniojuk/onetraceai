@@ -86,10 +86,13 @@ const OnboardingPage = () => {
     setSeedingDemo(true);
     setPathLoading("demo");
     try {
+      // Unique key per demo load — workspace+project_key has a UNIQUE constraint,
+      // so we suffix with a short random token to avoid 409 on repeat loads.
+      const uniqueSuffix = Math.random().toString(36).slice(2, 6).toUpperCase();
       const project = await createProject.mutateAsync({
         workspaceId: activeWorkspaceId,
         name: ACME_NOTES_DEMO.projectName,
-        projectKey: ACME_NOTES_DEMO.projectKey,
+        projectKey: `${ACME_NOTES_DEMO.projectKey}${uniqueSuffix}`,
         description: ACME_NOTES_DEMO.description,
       });
       setCurrentProject(project.id);
@@ -112,7 +115,8 @@ const OnboardingPage = () => {
             fromArtifactId: idByKey[seed.parentKey],
             toArtifactId: created.id,
             edgeType: EdgeType.CONTAINS,
-            source: "ONBOARDING_DEMO",
+            // Must match artifact_edges_source_check allowed values
+            source: "IMPORT",
           });
         }
       }
