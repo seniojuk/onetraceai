@@ -55,123 +55,121 @@ const agentIcon: Record<AgentType, React.ElementType> = {
 
 const typeLabel = (t: AgentType) => t.replace("_AGENT", "").replace("_", " ");
 
-export function AgentCard({ agent, onConfigure, onInvoke, onToggle, onDelete }: AgentCardProps) {
+export function AgentCard({
+  agent,
+  onConfigure,
+  onInvoke,
+  onToggle,
+  onDelete,
+}: AgentCardProps) {
   const Icon = agentIcon[agent.agent_type] || Bot;
   const enabled = agent.enabled ?? true;
 
   return (
     <div
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors",
-        enabled ? "hover:border-foreground/20" : "opacity-60"
+        "group relative overflow-hidden rounded-xl border border-border bg-card p-6 transition hover:border-border/80",
+        !enabled && "opacity-60"
       )}
     >
-      {/* Accent rail */}
-      <span
-        className={cn(
-          "absolute left-0 top-0 h-full w-[2px]",
-          enabled ? "bg-accent/70" : "bg-border"
-        )}
-      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-foreground/[0.02] to-transparent opacity-0 transition group-hover:opacity-100" />
 
-      <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
-        <div className="min-w-0 flex-1">
-          <div className="mb-2 flex items-center gap-2">
+      <div className="relative">
+        {/* Eyebrow + controls */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
             <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
               {typeLabel(agent.agent_type)}
             </span>
           </div>
-          <h3 className="truncate font-display text-lg font-semibold text-foreground">
-            {agent.name}
-          </h3>
+
+          <div className="flex items-center gap-1">
+            <Switch
+              checked={enabled}
+              onCheckedChange={(checked) => onToggle(agent, checked)}
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onInvoke(agent)} disabled={!enabled}>
+                  <Play className="mr-2 h-4 w-4" />
+                  Run
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onConfigure(agent)}>
+                  <Settings2 className="mr-2 h-4 w-4" />
+                  Configure
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onDelete(agent)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
-        <div className="flex items-center gap-1">
-          <Switch
-            checked={enabled}
-            onCheckedChange={(checked) => onToggle(agent, checked)}
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onInvoke(agent)} disabled={!enabled}>
-                <Play className="mr-2 h-4 w-4" />
-                Run
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onConfigure(agent)}>
-                <Settings2 className="mr-2 h-4 w-4" />
-                Configure
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => onDelete(agent)}
-                className="text-destructive focus:text-destructive"
-              >
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      <div className="flex-1 px-5 pb-4">
+        {/* Title + description */}
+        <h3 className="mt-4 text-[16px] font-medium tracking-tight text-foreground">
+          {agent.name}
+        </h3>
         {agent.description && (
-          <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">
             {agent.description}
           </p>
         )}
-      </div>
 
-      {/* Meta footer */}
-      <div className="flex items-center gap-3 border-t border-border px-5 py-3 text-xs text-muted-foreground">
-        <span className="flex min-w-0 items-center gap-1.5">
-          <Brain className="h-3 w-3 shrink-0" />
-          <span className="truncate">
-            {agent.default_model?.display_name || "No model"}
+        {/* Meta */}
+        <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-4 text-[12px] text-muted-foreground">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <Brain className="h-3 w-3 shrink-0" />
+            <span className="truncate">
+              {agent.default_model?.display_name || "No model"}
+            </span>
           </span>
-        </span>
-        {agent.autonomous_enabled && (
-          <span className="flex items-center gap-1 text-accent">
-            <Zap className="h-3 w-3" />
-            Auto
-          </span>
-        )}
-        {agent.guardrails && (
-          <span className="flex items-center gap-1">
-            <Shield className="h-3 w-3" />
-            Guarded
-          </span>
-        )}
-        {agent.routing_mode === "LOCKED" && (
-          <span className="flex items-center gap-1">
-            <Lock className="h-3 w-3" />
-            Locked
-          </span>
-        )}
-      </div>
+          {agent.autonomous_enabled && (
+            <span className="flex items-center gap-1 text-accent">
+              <Zap className="h-3 w-3" />
+              Auto
+            </span>
+          )}
+          {agent.guardrails && (
+            <span className="flex items-center gap-1">
+              <Shield className="h-3 w-3" />
+              Guarded
+            </span>
+          )}
+          {agent.routing_mode === "LOCKED" && (
+            <span className="flex items-center gap-1">
+              <Lock className="h-3 w-3" />
+              Locked
+            </span>
+          )}
+        </div>
 
-      {/* Actions */}
-      <div className="grid grid-cols-2 border-t border-border">
-        <button
-          onClick={() => onConfigure(agent)}
-          className="flex items-center justify-center gap-2 border-r border-border py-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
-        >
-          <Settings2 className="h-3.5 w-3.5" />
-          Configure
-        </button>
-        <button
-          onClick={() => onInvoke(agent)}
-          disabled={!enabled}
-          className="flex items-center justify-center gap-2 py-3 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground"
-        >
-          <Play className="h-3.5 w-3.5" />
-          Run
-        </button>
+        {/* Actions */}
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={() => onConfigure(agent)}>
+            <Settings2 className="mr-1.5 h-3.5 w-3.5" />
+            Configure
+          </Button>
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={() => onInvoke(agent)}
+            disabled={!enabled}
+          >
+            <Play className="mr-1.5 h-3.5 w-3.5" />
+            Run
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -450,89 +450,88 @@ export function AgentMarketplace({
             <div
               key={template.id}
               className={cn(
-                "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors",
-                alreadyAdded ? "opacity-70" : "hover:border-foreground/20"
+                "group relative overflow-hidden rounded-xl border border-border bg-card p-6 transition hover:border-border/80",
+                alreadyAdded && "opacity-70"
               )}
             >
-              <span className="absolute left-0 top-0 h-full w-[2px] bg-border" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-foreground/[0.02] to-transparent opacity-0 transition group-hover:opacity-100" />
 
-              <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
-                <div className="min-w-0 flex-1">
-                  <div className="mb-2 flex items-center gap-2">
+              <div className="relative">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2">
                     <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                    <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                    <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
                       {template.category}
                     </span>
                     {template.isNew && (
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-accent">
+                      <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-accent">
                         · New
                       </span>
                     )}
                   </div>
-                  <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-foreground">
-                    {template.name}
-                    {alreadyAdded && (
-                      <CheckCircle2 className="h-4 w-4 text-accent" />
-                    )}
-                  </h3>
+                  <div className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+                    <Star className="h-3 w-3 fill-current text-muted-foreground/60" />
+                    <span className="tabular-nums">{template.popularity}%</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex-1 px-5 pb-4">
-                <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                <h3 className="mt-4 flex items-center gap-2 text-[16px] font-medium tracking-tight text-foreground">
+                  {template.name}
+                  {alreadyAdded && <CheckCircle2 className="h-4 w-4 text-accent" />}
+                </h3>
+                <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">
                   {template.description}
                 </p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
+
+                <div className="mt-5 flex flex-wrap gap-1.5 border-t border-border pt-4">
                   {template.capabilities.slice(0, 3).map((cap) => (
                     <span
                       key={cap}
-                      className="inline-flex items-center rounded-md border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground"
+                      className="inline-flex items-center rounded-md border border-border bg-background px-2 py-0.5 font-mono text-[11px] text-muted-foreground"
                     >
                       {cap}
                     </span>
                   ))}
                   {template.capabilities.length > 3 && (
-                    <span className="inline-flex items-center text-xs text-muted-foreground">
+                    <span className="inline-flex items-center font-mono text-[11px] text-muted-foreground">
                       +{template.capabilities.length - 3}
                     </span>
                   )}
                 </div>
-              </div>
 
-              <div className="flex items-center gap-3 border-t border-border px-5 py-3 text-xs text-muted-foreground">
-                <Star className="h-3 w-3 fill-current text-muted-foreground/60" />
-                <span className="tabular-nums">{template.popularity}% popular</span>
-              </div>
-
-              <div className="grid grid-cols-2 border-t border-border">
-                <button
-                  onClick={() => setPreviewTemplate(template)}
-                  className="flex items-center justify-center gap-2 border-r border-border py-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
-                >
-                  Preview
-                </button>
-                <button
-                  onClick={() => onCloneTemplate(template)}
-                  disabled={isLoading || alreadyAdded}
-                  className="flex items-center justify-center gap-2 py-3 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground"
-                >
-                  {alreadyAdded ? (
-                    <>
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Added
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-3.5 w-3.5" />
-                      Clone
-                    </>
-                  )}
-                </button>
+                <div className="mt-4 flex items-center justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPreviewTemplate(template)}
+                  >
+                    Preview
+                  </Button>
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    onClick={() => onCloneTemplate(template)}
+                    disabled={isLoading || alreadyAdded}
+                  >
+                    {alreadyAdded ? (
+                      <>
+                        <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+                        Added
+                      </>
+                    ) : (
+                      <>
+                        <Download className="mr-1.5 h-3.5 w-3.5" />
+                        Clone
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           );
         })}
       </div>
+
 
       {filteredTemplates.length === 0 && (
         <div className="rounded-xl border border-border bg-card px-6 py-16 text-center">
