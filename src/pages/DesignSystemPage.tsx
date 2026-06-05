@@ -206,7 +206,7 @@ export default function DesignSystemPage() {
             <Card>
               <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Coverage</span>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">94.2%</span>
+                <span className="font-display text-[40px] font-medium tracking-[-0.03em] text-foreground">94.2%</span>
                 <span className="text-[12px] text-accent">+2.1%</span>
               </div>
               <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-muted">
