@@ -162,7 +162,7 @@ export const ACME_NOTES_DEMO: DemoTemplate = {
       key: "test-editor-2",
       type: "TEST_CASE",
       title: "Block insertion writes to document",
-      status: "BLOCKED" as any,
+      status: "BLOCKED",
       parentKey: "ac-editor-2",
     },
 
