@@ -97,7 +97,7 @@ const ErrorPage = ({ error, onReset }: ErrorPageProps) => {
         </p>
 
         {/* faint chain — visible on every viewport, larger tap target on mobile */}
-        <div aria-hidden className="mt-8 flex items-center gap-3">
+        <div aria-hidden className="pointer-events-auto mt-8 flex items-center gap-3">
           {Array.from({ length: total }).map((_, i) => {
             const fixed = i < snapped || solved;
             return (
@@ -132,7 +132,7 @@ const ErrorPage = ({ error, onReset }: ErrorPageProps) => {
         </div>
 
         {error?.message && (
-          <details className="mt-8 w-full max-w-md text-left">
+          <details className="pointer-events-auto mt-8 w-full max-w-md text-left">
             <summary className="cursor-pointer text-xs text-muted-foreground/80 font-mono inline-flex items-center gap-1.5 hover:text-foreground rounded">
               <Bug className="h-3 w-3" aria-hidden />
               Technical details
