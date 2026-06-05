@@ -95,7 +95,7 @@ export default function DesignSystemPage() {
         </Section>
 
         {/* Typography */}
-        <Section eyebrow="02 — Typography" title="Geist Sans · Instrument Serif · Geist Mono">
+        <Section eyebrow="02 — Typography" title="Aleo · Geist Sans · Geist Mono">
           <div className="space-y-px overflow-hidden rounded-xl border border-border">
             <TypeRow label="Display / 64" meta="Geist · -0.04em · 1.02">
               <span className="font-geist text-[56px] leading-none tracking-[-0.04em] text-foreground">
