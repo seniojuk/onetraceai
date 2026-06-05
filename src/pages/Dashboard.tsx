@@ -85,6 +85,34 @@ const Dashboard = () => {
     };
   }, [artifacts, snapshots, driftFindings]);
 
+  const heroState = useMemo(() => {
+    if (!currentProject) {
+      return { pillLabel: "No project", dotClass: "bg-muted-foreground/40", pulse: false, subline: "Create a project to start tracing what gets built." };
+    }
+    if (stats.openDrift.length > 0) {
+      return {
+        pillLabel: "Drift detected",
+        dotClass: "bg-drift",
+        pulse: true,
+        subline: `${stats.openDrift.length} drift finding${stats.openDrift.length === 1 ? "" : "s"} to triage${stats.inProgressCount ? `, ${stats.inProgressCount} in flight` : ""}.`,
+      };
+    }
+    if (stats.inProgressCount > 0) {
+      return {
+        pillLabel: "In flight",
+        dotClass: "bg-coverage-partial",
+        pulse: true,
+        subline: `${stats.inProgressCount} stor${stats.inProgressCount === 1 ? "y" : "ies"} in progress. Coverage at ${stats.coveragePercent}%.`,
+      };
+    }
+    return {
+      pillLabel: "All clear",
+      dotClass: "bg-accent",
+      pulse: false,
+      subline: `Coverage at ${stats.coveragePercent}%. Nothing pressing — pick what to build next.`,
+    };
+  }, [currentProject, stats]);
+
   if (loadingWorkspaces || loadingProjects) {
     return (
       <AuthGuard>
