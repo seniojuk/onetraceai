@@ -455,10 +455,7 @@ export function AgentMarketplace({
           return (
             <div
               key={template.id}
-              className={cn(
-                "group relative overflow-hidden rounded-xl border border-border bg-card p-6 transition hover:border-border/80",
-                alreadyAdded && "opacity-70"
-              )}
+              className="group relative overflow-hidden rounded-xl border border-border bg-card p-6 transition hover:border-border/80"
             >
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-foreground/[0.02] to-transparent opacity-0 transition group-hover:opacity-100" />
 
