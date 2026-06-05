@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session, AuthError } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useUIStore } from "@/store/uiStore";
 
 type AuthResult<T = unknown> = { data: T; error: AuthError | null };
 
