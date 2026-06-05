@@ -25,7 +25,7 @@ export function SetupChecklist() {
       <header className="flex items-center justify-between border-b border-border px-5 py-3.5">
         <div className="flex items-center gap-2">
           <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            Your setup
+            Complete Your setup
           </span>
           <span className="font-mono text-[11px] tabular-nums text-foreground">
             {completed} / {total}
