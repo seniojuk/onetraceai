@@ -109,7 +109,9 @@ function InnerLayout({ children }: AppLayoutProps) {
     currentProjectId,
     setCurrentWorkspace,
     setCurrentProject,
+    resetUserScopedState,
   } = useUIStore();
+  const queryClient = useQueryClient();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
