@@ -247,13 +247,13 @@ const ArtifactDetailPage = () => {
     );
   }
 
-  const statusColor = {
-    DRAFT: "bg-slate-100 text-slate-700",
-    ACTIVE: "bg-blue-100 text-blue-700",
-    IN_PROGRESS: "bg-amber-100 text-amber-700",
-    BLOCKED: "bg-red-100 text-red-700",
-    DONE: "bg-green-100 text-green-700",
-    ARCHIVED: "bg-gray-100 text-gray-700",
+  const statusColor: Record<ArtifactStatus, string> = {
+    DRAFT: "bg-muted text-muted-foreground border-border",
+    ACTIVE: "bg-accent/10 text-accent border-accent/20",
+    IN_PROGRESS: "bg-warning/10 text-warning border-warning/20",
+    BLOCKED: "bg-destructive/10 text-destructive border-destructive/20",
+    DONE: "bg-success/10 text-success border-success/20",
+    ARCHIVED: "bg-muted text-muted-foreground border-border",
   };
 
   const typeIcons: Record<string, typeof FileText> = {
