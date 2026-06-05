@@ -107,7 +107,7 @@ export default function DesignSystemPage() {
                 traceable by design
               </span>
             </TypeRow>
-            <TypeRow label="Heading / 24" meta="Geist · 500 · -0.02em">
+            <TypeRow label="Heading / 24" meta="Geist Sans · 500 · -0.02em">
               <span className="text-[22px] font-medium tracking-[-0.02em] text-foreground">
                 Every artifact has an owner.
               </span>
