@@ -65,7 +65,7 @@ const ErrorPage = ({ error, onReset }: ErrorPageProps) => {
         </div>
       )}
 
-      <div className="relative z-10 mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-6 text-center">
+      <div className="pointer-events-none relative z-10 mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-6 text-center">
         <h1
           className={[
             "font-display font-semibold tracking-tight text-foreground",
@@ -120,7 +120,7 @@ const ErrorPage = ({ error, onReset }: ErrorPageProps) => {
           })}
         </div>
 
-        <div className="mt-7 flex w-full flex-col sm:flex-row sm:w-auto items-stretch sm:items-center justify-center gap-2">
+        <div className="pointer-events-auto mt-7 flex w-full flex-col sm:flex-row sm:w-auto items-stretch sm:items-center justify-center gap-2">
           <Button variant="accent" onClick={handleReset}>
             <RotateCcw className="mr-1.5 h-4 w-4" aria-hidden />
             Try again
