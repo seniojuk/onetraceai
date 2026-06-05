@@ -96,13 +96,6 @@ const DriftPage = () => {
     return c;
   }, [openFindings]);
 
-  const lastDetected = useMemo(() => {
-    const dates = findings
-      .map((f) => f.detected_at)
-      .filter(Boolean) as string[];
-    if (!dates.length) return null;
-    return dates.sort().reverse()[0];
-  }, [findings]);
 
   const visible = useMemo(() => {
     const base = findings.filter((f) => f.status === tab);
