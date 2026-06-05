@@ -268,7 +268,7 @@ export default function DesignSystemPage() {
               <div key={t.k} className="rounded-xl border border-border bg-card p-5">
                 <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{t.k}</div>
                 <div className="mt-2 flex items-baseline gap-2">
-                  <span className="font-geist text-[22px] font-medium tracking-tight text-foreground">{t.v}</span>
+                  <span className="font-display text-[22px] font-medium tracking-tight text-foreground">{t.v}</span>
                   <span className="font-mono text-[11px] text-accent">{t.curve}</span>
                 </div>
                 <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">{t.d}</p>
