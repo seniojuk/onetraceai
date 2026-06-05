@@ -87,31 +87,26 @@ const Dashboard = () => {
 
   const heroState = useMemo(() => {
     if (!currentProject) {
-      return { pillLabel: "No project", dotClass: "bg-muted-foreground/40", pulse: false, subline: "Create a project to start tracing what gets built." };
+      return { subline: "Create a project to start tracing what gets built." };
+    }
+    const artifactCount = artifacts?.length || 0;
+    if (artifactCount === 0) {
+      return { subline: "No artifacts yet. Start with a PRD or generate stories from an idea." };
     }
     if (stats.openDrift.length > 0) {
       return {
-        pillLabel: "Drift detected",
-        dotClass: "bg-drift",
-        pulse: true,
         subline: `${stats.openDrift.length} drift finding${stats.openDrift.length === 1 ? "" : "s"} to triage${stats.inProgressCount ? `, ${stats.inProgressCount} in flight` : ""}.`,
       };
     }
     if (stats.inProgressCount > 0) {
       return {
-        pillLabel: "In flight",
-        dotClass: "bg-coverage-partial",
-        pulse: true,
-        subline: `${stats.inProgressCount} stor${stats.inProgressCount === 1 ? "y" : "ies"} in progress. Coverage at ${stats.coveragePercent}%.`,
+        subline: `${stats.inProgressCount} stor${stats.inProgressCount === 1 ? "y" : "ies"} in progress across ${stats.storyCount} total.`,
       };
     }
     return {
-      pillLabel: "All clear",
-      dotClass: "bg-accent",
-      pulse: false,
-      subline: `Coverage at ${stats.coveragePercent}%. Nothing pressing right now.`,
+      subline: `${stats.storyCount} stor${stats.storyCount === 1 ? "y" : "ies"}, ${stats.acCount} acceptance criteria tracked.`,
     };
-  }, [currentProject, stats]);
+  }, [currentProject, stats, artifacts]);
 
   if (loadingWorkspaces || loadingProjects) {
     return (
