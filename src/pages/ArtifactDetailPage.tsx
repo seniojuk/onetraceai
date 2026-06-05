@@ -314,7 +314,7 @@ const ArtifactDetailPage = () => {
                   placeholder="Artifact title"
                 />
               ) : (
-                <h1 className="text-3xl font-bold text-foreground">{artifact.title}</h1>
+                <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">{artifact.title}</h1>
               )}
               <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
