@@ -109,7 +109,7 @@ const Dashboard = () => {
       pillLabel: "All clear",
       dotClass: "bg-accent",
       pulse: false,
-      subline: `Coverage at ${stats.coveragePercent}%. Nothing pressing — pick what to build next.`,
+      subline: `Coverage at ${stats.coveragePercent}%. Nothing pressing right now.`,
     };
   }, [currentProject, stats]);
 

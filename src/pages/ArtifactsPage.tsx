@@ -153,7 +153,7 @@ const ArtifactsPage = () => {
     if (pulse.inProgress > 0) {
       return { pillLabel: "In flight", dotClass: "bg-coverage-partial", pulse: true, subline: `${pulse.inProgress} in flight, ${pulse.done} done across ${pulse.total} artifacts.` };
     }
-    return { pillLabel: "Healthy", dotClass: "bg-accent", pulse: false, subline: `${pulse.total} artifacts. ${pulse.done} done — pick what to build next.` };
+    return { pillLabel: "Healthy", dotClass: "bg-accent", pulse: false, subline: `${pulse.total} artifacts. ${pulse.done} done.` };
   }, [pulse]);
 
   // ── Hierarchy tree ──────────────────────────────────────────────────────
