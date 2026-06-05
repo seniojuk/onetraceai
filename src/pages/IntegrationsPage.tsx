@@ -447,10 +447,7 @@ const IntegrationsPage = () => {
                                       size="sm"
                                       onClick={() => handleConnect(integration)}
                                       disabled={integration.status === "coming_soon" || connectingId === integration.id || isLoadingConnection}
-                                      className={cn(
-                                        integration.status !== "coming_soon" && !needsUpgrade && "bg-accent hover:bg-accent/90"
-                                      )}
-                                      variant={needsUpgrade ? "outline" : "default"}
+                                      variant={needsUpgrade ? "outline" : "accent"}
                                     >
                                       {connectingId === integration.id || isLoadingConnection ? (
                                         <Loader2 className="w-4 h-4 mr-1 animate-spin" />
