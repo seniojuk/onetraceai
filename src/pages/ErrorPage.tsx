@@ -76,14 +76,6 @@ const ErrorPage = ({ error, onReset }: ErrorPageProps) => {
       <div className="pointer-events-none relative z-10 mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-6 text-center">
         {solved ? (
           <>
-            <div
-              role="status"
-              aria-live="polite"
-              className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-mono text-accent animate-fade-in"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-pulse" />
-              rare find
-            </div>
             <h1 className="mt-4 font-display font-semibold tracking-tight text-foreground text-[38px] leading-[1.05] sm:text-[56px] md:text-[64px] animate-fade-in">
               Amazing.
             </h1>
