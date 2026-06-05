@@ -161,18 +161,29 @@ export function PublicNav() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link
-            to="/auth?mode=login"
-            className="hidden text-[13px] text-muted-foreground hover:text-foreground sm:inline"
-          >
-            Sign in
-          </Link>
-          <Link
-            to="/auth?mode=signup"
-            className="btn-3d btn-3d-primary inline-flex h-8 items-center gap-1 px-3 text-[12.5px] font-medium"
-          >
-            Start free <ArrowUpRight className="h-3 w-3" />
-          </Link>
+          {user ? (
+            <Link
+              to="/dashboard"
+              className="btn-3d btn-3d-primary inline-flex h-8 items-center gap-1 px-3 text-[12.5px] font-medium"
+            >
+              Dashboard <LayoutDashboard className="h-3 w-3" />
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/auth?mode=login"
+                className="hidden text-[13px] text-muted-foreground hover:text-foreground sm:inline"
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/auth?mode=signup"
+                className="btn-3d btn-3d-primary inline-flex h-8 items-center gap-1 px-3 text-[12.5px] font-medium"
+              >
+                Start free <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            </>
+          )}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <button className="md:hidden" aria-label="Open menu">
