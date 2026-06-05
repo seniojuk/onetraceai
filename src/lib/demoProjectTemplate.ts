@@ -11,7 +11,7 @@ export interface DemoArtifactSeed {
     | "ACCEPTANCE_CRITERION"
     | "TEST_CASE";
   title: string;
-  status: "DRAFT" | "ACTIVE" | "IN_PROGRESS" | "DONE";
+  status: "DRAFT" | "ACTIVE" | "IN_PROGRESS" | "BLOCKED" | "DONE";
   parentKey?: string; // CONTAINS edge will be created from parent → child
   markdown?: string;
 }
