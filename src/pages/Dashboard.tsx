@@ -399,31 +399,40 @@ function PulseMetric({
   value,
   sub,
   tone,
+  onClick,
 }: {
   label: string;
   value: string;
   sub: string;
   tone: "good" | "warn" | "bad" | "neutral";
+  onClick?: () => void;
 }) {
-  const toneClass = {
-    good: "text-coverage-full",
-    warn: "text-coverage-partial",
-    bad: "text-coverage-none",
-    neutral: "text-foreground",
+  const dotClass = {
+    good: "bg-coverage-full",
+    warn: "bg-coverage-partial",
+    bad: "bg-drift",
+    neutral: "bg-muted-foreground/40",
   }[tone];
 
   return (
-    <div className="px-5 py-4">
-      <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70 font-medium mb-1.5">
-        {label}
+    <button
+      onClick={onClick}
+      className="group flex flex-col items-start gap-1 bg-card px-5 py-4 text-left transition-colors hover:bg-muted/50"
+    >
+      <div className="flex items-center gap-2">
+        <span className={cn("h-2 w-2 rounded-full", dotClass, tone === "bad" && "animate-pulse")} />
+        <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
       </div>
-      <div className={cn("text-[28px] font-semibold tracking-tight leading-none tabular-nums", toneClass)}>
+      <span className="font-display text-2xl font-semibold tabular-nums text-foreground">
         {value}
-      </div>
-      <div className="text-[11px] text-muted-foreground mt-1.5">{sub}</div>
-    </div>
+      </span>
+      <span className="text-[11px] text-muted-foreground">{sub}</span>
+    </button>
   );
 }
+
 
 function QuickAction({
   icon: Icon,
