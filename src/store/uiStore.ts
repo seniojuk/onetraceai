@@ -20,6 +20,7 @@ interface UIState {
   setOnboardingSeed: (seed: string) => void;
   dismissedSetupChecklist: boolean;
   setDismissedSetupChecklist: (dismissed: boolean) => void;
+  resetUserScopedState: () => void;
 
   // Graph view settings
   graphViewMode: "hierarchy" | "force" | "radial";
