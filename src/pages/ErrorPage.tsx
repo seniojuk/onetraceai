@@ -65,7 +65,7 @@ const ErrorPage = ({ error, onReset }: ErrorPageProps) => {
         </div>
       )}
 
-      <div className="relative z-10 mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-6 text-center">
+      <div className="pointer-events-none relative z-10 mx-auto flex min-h-dvh max-w-xl flex-col items-center justify-center px-6 text-center">
         <h1
           className={[
             "font-display font-semibold tracking-tight text-foreground",
@@ -97,7 +97,7 @@ const ErrorPage = ({ error, onReset }: ErrorPageProps) => {
         </p>
 
         {/* faint chain — visible on every viewport, larger tap target on mobile */}
-        <div aria-hidden className="mt-8 flex items-center gap-3">
+        <div aria-hidden className="pointer-events-auto mt-8 flex items-center gap-3">
           {Array.from({ length: total }).map((_, i) => {
             const fixed = i < snapped || solved;
             return (
@@ -120,7 +120,7 @@ const ErrorPage = ({ error, onReset }: ErrorPageProps) => {
           })}
         </div>
 
-        <div className="mt-7 flex w-full flex-col sm:flex-row sm:w-auto items-stretch sm:items-center justify-center gap-2">
+        <div className="pointer-events-auto mt-7 flex w-full flex-col sm:flex-row sm:w-auto items-stretch sm:items-center justify-center gap-2">
           <Button variant="accent" onClick={handleReset}>
             <RotateCcw className="mr-1.5 h-4 w-4" aria-hidden />
             Try again
@@ -132,7 +132,7 @@ const ErrorPage = ({ error, onReset }: ErrorPageProps) => {
         </div>
 
         {error?.message && (
-          <details className="mt-8 w-full max-w-md text-left">
+          <details className="pointer-events-auto mt-8 w-full max-w-md text-left">
             <summary className="cursor-pointer text-xs text-muted-foreground/80 font-mono inline-flex items-center gap-1.5 hover:text-foreground rounded">
               <Bug className="h-3 w-3" aria-hidden />
               Technical details
