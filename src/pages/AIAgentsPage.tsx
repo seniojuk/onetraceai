@@ -361,14 +361,6 @@ const AIAgentsPage = () => {
           {/* Hero */}
           <header className="mb-10 flex flex-col gap-6 sm:mb-12 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
-              <p className="mb-2 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                {statusDot}
-                {activity.running > 0
-                  ? "Working"
-                  : enabledCount > 0
-                    ? "Ready"
-                    : "Idle"}
-              </p>
               <h1 className="font-display text-[40px] font-semibold leading-[1.05] tracking-tight text-foreground sm:text-[56px]">
                 Agents
               </h1>
