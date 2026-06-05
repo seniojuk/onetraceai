@@ -25,7 +25,7 @@ export default function DesignSystemPage() {
     <div
       className={`${
         isLight ? "" : "dark"
-      } min-h-screen bg-background text-foreground font-geist antialiased`}
+      } min-h-screen bg-background text-foreground font-sans antialiased`}
     >
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
