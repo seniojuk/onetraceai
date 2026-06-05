@@ -203,6 +203,9 @@ const Dashboard = () => {
             />
           ) : (
             <>
+              {/* Setup checklist — auto-hides once complete or dismissed */}
+              <SetupChecklist />
+
               {/* Pulse strip */}
               <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border/60 md:grid-cols-4">
                 <PulseMetric
