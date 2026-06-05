@@ -1,20 +1,12 @@
-import { useState } from "react";
-import { 
-  Zap, 
-  MoreHorizontal, 
-  Play, 
-  Settings, 
-  Trash2, 
+import {
+  Zap,
+  MoreHorizontal,
+  Play,
+  Settings2,
+  Trash2,
   ArrowRight,
-  Clock,
-  CheckCircle2,
-  Bot,
-  Power,
-  PowerOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import type { AgentPipeline } from "@/hooks/useAgentPipelines";
+import { cn } from "@/lib/utils";
 
 interface PipelineCardProps {
   pipeline: AgentPipeline;
@@ -40,120 +33,109 @@ export function PipelineCard({
   onEdit,
   onToggle,
   onDelete,
-  lastRunStatus,
 }: PipelineCardProps) {
-  const getAgentTypeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      PRODUCT_AGENT: "bg-blue-500/10 text-blue-500 border-blue-500/30",
-      STORY_AGENT: "bg-green-500/10 text-green-500 border-green-500/30",
-      QA_AGENT: "bg-purple-500/10 text-purple-500 border-purple-500/30",
-      ARCHITECTURE_AGENT: "bg-orange-500/10 text-orange-500 border-orange-500/30",
-      UX_AGENT: "bg-pink-500/10 text-pink-500 border-pink-500/30",
-      SECURITY_AGENT: "bg-red-500/10 text-red-500 border-red-500/30",
-      DOCS_AGENT: "bg-cyan-500/10 text-cyan-500 border-cyan-500/30",
-    };
-    return colors[type] || "bg-muted text-muted-foreground";
-  };
+  const active = pipeline.is_active;
 
   return (
-    <Card className={`relative transition-all hover:shadow-md ${!pipeline.is_active ? "opacity-60" : ""}`}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-accent/10">
-              <Zap className="w-5 h-5 text-accent" />
-            </div>
-            <div>
-              <CardTitle className="text-lg">{pipeline.name}</CardTitle>
-              <CardDescription className="line-clamp-1">
-                {pipeline.description || `${pipeline.steps.length} step workflow`}
-              </CardDescription>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={pipeline.is_active}
-              onCheckedChange={(checked) => onToggle(pipeline, checked)}
-            />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onRun(pipeline)}>
-                  <Play className="w-4 h-4 mr-2" />
-                  Run Pipeline
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEdit(pipeline)}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => onDelete(pipeline)}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </CardHeader>
+    <div
+      className={cn(
+        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors",
+        active ? "hover:border-foreground/20" : "opacity-60"
+      )}
+    >
+      <span
+        className={cn(
+          "absolute left-0 top-0 h-full w-[2px]",
+          active ? "bg-accent/70" : "bg-border"
+        )}
+      />
 
-      <CardContent className="space-y-4">
-        {/* Pipeline flow visualization */}
-        <div className="flex items-center gap-1 flex-wrap py-2">
-          {pipeline.steps.map((step, index) => (
-            <div key={step.id} className="flex items-center gap-1">
-              {index > 0 && <ArrowRight className="w-3 h-3 text-muted-foreground" />}
-              <Badge 
-                variant="outline" 
-                className={`text-xs ${getAgentTypeColor(step.agentType)}`}
+      <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex items-center gap-2">
+            <Zap className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              Pipeline · {pipeline.steps.length} step{pipeline.steps.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <h3 className="truncate font-display text-lg font-semibold text-foreground">
+            {pipeline.name}
+          </h3>
+          {pipeline.description && (
+            <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
+              {pipeline.description}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Switch
+            checked={active}
+            onCheckedChange={(checked) => onToggle(pipeline, checked)}
+          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onRun(pipeline)} disabled={!active}>
+                <Play className="mr-2 h-4 w-4" />
+                Run
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onEdit(pipeline)}>
+                <Settings2 className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => onDelete(pipeline)}
+                className="text-destructive focus:text-destructive"
               >
-                <Bot className="w-3 h-3 mr-1" />
-                {step.agentName.length > 15 ? step.agentName.slice(0, 15) + "..." : step.agentName}
-              </Badge>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* Flow */}
+      <div className="px-5 pb-4">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {pipeline.steps.map((step, index) => (
+            <div key={step.id} className="flex items-center gap-1.5">
+              {index > 0 && (
+                <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
+              )}
+              <span className="inline-flex items-center rounded-md border border-border bg-background px-2 py-0.5 text-xs text-foreground">
+                {step.agentName.length > 18
+                  ? step.agentName.slice(0, 18) + "…"
+                  : step.agentName}
+              </span>
             </div>
           ))}
         </div>
+      </div>
 
-        {/* Stats and actions */}
-        <div className="flex items-center justify-between pt-2 border-t">
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Bot className="w-4 h-4" />
-              {pipeline.steps.length} agents
-            </span>
-            {lastRunStatus && (
-              <span className="flex items-center gap-1">
-                {lastRunStatus === "completed" ? (
-                  <CheckCircle2 className="w-4 h-4 text-green-500" />
-                ) : lastRunStatus === "running" ? (
-                  <Clock className="w-4 h-4 text-yellow-500 animate-pulse" />
-                ) : (
-                  <Clock className="w-4 h-4 text-red-500" />
-                )}
-                Last: {lastRunStatus}
-              </span>
-            )}
-          </div>
-          
-          <Button 
-            size="sm"
-            variant="accent"
-            onClick={() => onRun(pipeline)}
-            disabled={!pipeline.is_active}
-          >
-            <Play className="w-4 h-4 mr-1" />
-            Run
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="grid grid-cols-2 border-t border-border">
+        <button
+          onClick={() => onEdit(pipeline)}
+          className="flex items-center justify-center gap-2 border-r border-border py-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+        >
+          <Settings2 className="h-3.5 w-3.5" />
+          Edit
+        </button>
+        <button
+          onClick={() => onRun(pipeline)}
+          disabled={!active}
+          className="flex items-center justify-center gap-2 py-3 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground"
+        >
+          <Play className="h-3.5 w-3.5" />
+          Run
+        </button>
+      </div>
+    </div>
   );
 }
