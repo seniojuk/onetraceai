@@ -144,10 +144,10 @@ export function PipelineCard({
           </div>
           
           <Button 
-            size="sm" 
+            size="sm"
+            variant="accent"
             onClick={() => onRun(pipeline)}
             disabled={!pipeline.is_active}
-            className="bg-accent hover:bg-accent/90"
           >
             <Play className="w-4 h-4 mr-1" />
             Run

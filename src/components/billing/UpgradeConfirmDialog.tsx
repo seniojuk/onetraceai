@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { PlanLimit } from "@/hooks/useBilling";
 
 interface UpgradeConfirmDialogProps {
@@ -114,7 +115,7 @@ export function UpgradeConfirmDialog({
               onConfirm();
             }}
             disabled={isLoading}
-            className="bg-accent hover:bg-accent/90"
+            className={buttonVariants({ variant: "accent" })}
           >
             {isLoading ? (
               <>

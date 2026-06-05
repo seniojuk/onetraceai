@@ -463,10 +463,9 @@ export function PipelineRunner({
               Stop
             </Button>
           ) : runState.status === "idle" && (
-            <Button 
+            <Button variant="accent" 
               onClick={runPipeline}
               disabled={!inputContent.trim()}
-              className="bg-accent hover:bg-accent/90"
             >
               <Play className="w-4 h-4 mr-2" />
               Run Pipeline

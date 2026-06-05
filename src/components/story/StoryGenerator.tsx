@@ -1144,10 +1144,10 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
               </div>
             )}
 
-            <Button
+            <Button variant="accent"
               onClick={handleSubmitPrd}
               disabled={isLoading || !canSubmitPrd || isAtLimit}
-              className="w-full bg-accent hover:bg-accent/90"
+              className="w-full"
             >
               {isLoading ? (
                 <>
@@ -1242,10 +1242,10 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
 
             {/* Actions */}
             <div className="flex items-center gap-3">
-              <Button
+              <Button variant="accent"
                 onClick={handleSubmitAnswers}
                 disabled={isLoading}
-                className="flex-1 bg-accent hover:bg-accent/90"
+                className="flex-1"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1635,10 +1635,9 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
               <RefreshCw className="w-4 h-4 mr-2" />
               Start Over
             </Button>
-            <Button
+            <Button variant="accent"
               onClick={handleSaveStories}
               disabled={isSaving || savedStoryIndices.size === generatedStories.length}
-              className="bg-accent hover:bg-accent/90"
             >
               {isSaving ? (
                 <>
@@ -1793,10 +1792,9 @@ Examples:
             <Button variant="outline" onClick={handleCloseRefineDialog} disabled={isRefining}>
               Cancel
             </Button>
-            <Button 
+            <Button variant="accent" 
               onClick={handleRefineStory} 
               disabled={isRefining || !refineFeedback.trim()}
-              className="bg-accent hover:bg-accent/90"
             >
               {isRefining ? (
                 <>

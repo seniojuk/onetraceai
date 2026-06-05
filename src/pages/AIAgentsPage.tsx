@@ -334,8 +334,7 @@ const AIAgentsPage = () => {
                   Add Default Agents
                 </Button>
               )}
-              <Button 
-                className="bg-accent hover:bg-accent/90"
+              <Button variant="accent"
                 onClick={handleCreateAgent}
               >
                 <Plus className="w-4 h-4 mr-2" />

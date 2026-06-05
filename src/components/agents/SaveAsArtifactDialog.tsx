@@ -235,10 +235,9 @@ export function SaveAsArtifactDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
+          <Button variant="accent"
             onClick={handleSave}
             disabled={isSaving || !title.trim() || artifactAtLimit}
-            className="bg-accent hover:bg-accent/90"
           >
             {isSaving ? (
               <>

@@ -4,30 +4,38 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Single source of truth for buttons across the app.
+ *
+ * Variants map 1:1 to the `.btn-3d-*` styles documented on the Design System
+ * page (src/index.css → "btn-3d variants"). The base `btn-3d` class supplies
+ * the press feedback, focus ring, disabled state, and motion tokens; the
+ * variant class supplies the colour scheme, and the size class supplies the
+ * height/padding. Adding `btn-3d` everywhere keeps every Button — old or new —
+ * visually consistent with the design system.
+ */
 const buttonVariants = cva(
-  // Base: design-system motion tokens — press feedback (scale + translate) on every button,
-  // hover lift on color/shadow, custom ease + duration from index.css (--dur-press, --ease-out-strong).
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background " +
-    "transition-[background-color,box-shadow,transform,color,border-color] duration-[180ms] [transition-timing-function:var(--ease-out-strong,cubic-bezier(0.23,1,0.32,1))] " +
-    "will-change-transform active:scale-[0.98] active:duration-[140ms] motion-reduce:active:scale-100 motion-reduce:transition-none " +
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 " +
-    "disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 " +
-    "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "btn-3d inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium " +
+    "[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 " +
+    "motion-reduce:transition-none",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground active:scale-[0.97]",
-        link: "text-primary underline-offset-4 hover:underline active:scale-100",
+        default: "btn-3d-primary",
+        primary: "btn-3d-primary",
+        secondary: "btn-3d-secondary",
+        outline: "btn-3d-outline",
+        ghost: "btn-3d-ghost",
+        accent: "btn-3d-accent",
+        destructive: "btn-3d-destructive",
+        // Link keeps a typographic style — opt out of the 3d chrome on purpose.
+        link: "!bg-transparent !shadow-none text-primary underline-offset-4 hover:underline active:scale-100",
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        sm: "h-9 px-3",
+        lg: "h-11 px-8 text-[14px]",
+        icon: "h-10 w-10 px-0",
       },
     },
     defaultVariants: {

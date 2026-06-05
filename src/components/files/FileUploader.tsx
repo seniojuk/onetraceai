@@ -299,10 +299,10 @@ export function FileUploader({
             </Alert>
           )}
           
-          <Button
+          <Button variant="accent"
             onClick={handleUpload}
             disabled={uploadFile.isPending || storageAtLimit || wouldExceedLimit()}
-            className="w-full bg-accent hover:bg-accent/90"
+            className="w-full"
           >
             {uploadFile.isPending ? (
               <>

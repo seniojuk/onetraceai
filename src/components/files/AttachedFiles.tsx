@@ -222,10 +222,9 @@ export function AttachedFiles({
                           >
                             Cancel
                           </Button>
-                          <Button
+                          <Button variant="accent"
                             onClick={handleAssociateSelected}
                             disabled={selectedFileIds.size === 0 || associateFile.isPending}
-                            className="bg-accent hover:bg-accent/90"
                           >
                             {associateFile.isPending ? (
                               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

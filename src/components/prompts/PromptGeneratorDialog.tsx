@@ -350,10 +350,9 @@ export function PromptGeneratorDialog({
             Close
           </Button>
           {activeTab === "generate" && !generatedPrompt && (
-            <Button
+            <Button variant="accent"
               onClick={handleGenerate}
               disabled={!selectedTool || generatePrompt.isPending}
-              className="bg-accent hover:bg-accent/90"
             >
               {generatePrompt.isPending ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -628,10 +628,9 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
             )}
 
             <div className="flex justify-end">
-              <Button
+              <Button variant="accent"
                 onClick={handleSubmitIdea}
                 disabled={!canSubmitIdea || isLoading || isAtLimit}
-                className="bg-accent hover:bg-accent/90"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -735,12 +734,11 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
                 <Button variant="outline" onClick={handleGenerateNow} disabled={isLoading}>
                   Skip & Generate PRD
                 </Button>
-                <Button
+                <Button variant="accent"
                   onClick={handleSubmitAnswers}
                   disabled={
                     isLoading || Object.keys(answers).length < currentQuestions.length / 2
                   }
-                  className="bg-accent hover:bg-accent/90"
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -866,10 +864,9 @@ export const PRDGenerator = ({ onComplete, initialIdea, sourceArtifact }: PRDGen
               <RefreshCw className="w-4 h-4 mr-2" />
               Start Over
             </Button>
-            <Button
+            <Button variant="accent"
               onClick={handleSavePRD}
               disabled={isSaving}
-              className="bg-accent hover:bg-accent/90"
             >
               {isSaving ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
