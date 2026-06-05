@@ -19,7 +19,7 @@ const TeamPage = () => {
         <div className="p-8">
           <div className="mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Team</h1>
+              <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">Team</h1>
               <p className="text-muted-foreground">
                 Manage members of {currentWorkspace?.name || "your workspace"}
               </p>
