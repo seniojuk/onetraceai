@@ -142,7 +142,7 @@ const BillingPage = () => {
         <div className="p-8 max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Billing</h1>
+              <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">Billing</h1>
               <p className="text-muted-foreground">
                 Manage your subscription and billing
               </p>
