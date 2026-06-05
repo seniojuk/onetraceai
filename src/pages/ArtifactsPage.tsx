@@ -795,31 +795,45 @@ function PulseCount({
   accent: "prd" | "epic" | "story" | "ac" | "test" | "bug";
   active?: boolean;
 }) {
-  const accentText = {
-    prd: "text-status-prd-fg",
-    epic: "text-status-epic-fg",
-    story: "text-status-story-fg",
-    ac: "text-status-ac-fg",
-    test: "text-status-test-fg",
-    bug: "text-destructive",
+  const dotClass = {
+    prd: "bg-status-prd",
+    epic: "bg-status-epic",
+    story: "bg-status-story",
+    ac: "bg-status-ac",
+    test: "bg-status-test",
+    bug: "bg-destructive",
   }[accent];
 
   return (
     <button
       onClick={onClick}
       className={cn(
-        "px-4 py-3.5 text-left transition-colors hover:bg-muted/40",
-        active && "bg-muted/50"
+        "group flex flex-col items-start gap-1 bg-card px-5 py-4 text-left transition-colors hover:bg-muted/50",
+        active && "bg-muted/70"
       )}
     >
-      <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70 font-medium mb-1">
-        {label}
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "h-2 w-2 rounded-full",
+            value > 0 ? dotClass : "bg-muted-foreground/30"
+          )}
+        />
+        <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
       </div>
-      <div className={cn("text-[22px] font-semibold tracking-tight leading-none tabular-nums", value > 0 ? accentText : "text-muted-foreground/40")}>
+      <span
+        className={cn(
+          "font-display text-2xl font-semibold tabular-nums",
+          value > 0 ? "text-foreground" : "text-muted-foreground/40"
+        )}
+      >
         {value}
-      </div>
+      </span>
     </button>
   );
 }
+
 
 export default ArtifactsPage;
