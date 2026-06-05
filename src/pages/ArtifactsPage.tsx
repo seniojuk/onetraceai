@@ -143,6 +143,19 @@ const ArtifactsPage = () => {
     };
   }, [artifacts]);
 
+  const heroState = useMemo(() => {
+    if (pulse.total === 0) {
+      return { pillLabel: "Empty", dotClass: "bg-muted-foreground/40", pulse: false, subline: "No artifacts yet. Start with a PRD or generate stories from an idea." };
+    }
+    if (pulse.blocked > 0) {
+      return { pillLabel: "Blocked", dotClass: "bg-destructive", pulse: true, subline: `${pulse.blocked} blocked, ${pulse.inProgress} in flight across ${pulse.total} artifacts.` };
+    }
+    if (pulse.inProgress > 0) {
+      return { pillLabel: "In flight", dotClass: "bg-coverage-partial", pulse: true, subline: `${pulse.inProgress} in flight, ${pulse.done} done across ${pulse.total} artifacts.` };
+    }
+    return { pillLabel: "Healthy", dotClass: "bg-accent", pulse: false, subline: `${pulse.total} artifacts. ${pulse.done} done — pick what to build next.` };
+  }, [pulse]);
+
   // ── Hierarchy tree ──────────────────────────────────────────────────────
   const treeData = useMemo(() => {
     if (!hierarchyMode || !artifacts || !projectEdges) return null;
@@ -271,28 +284,29 @@ const ArtifactsPage = () => {
   return (
     <AuthGuard>
       <AppLayout>
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-8">
+        <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-12 space-y-8 sm:space-y-10">
           <UsageLimitBanner showFor={["artifact"]} />
 
-          {/* Header */}
-          <div className="flex items-start sm:items-end justify-between flex-wrap gap-3">
+          {/* Hero */}
+          <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
-              <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/70 font-medium mb-1">
-                Workspace
-              </div>
-              <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
+              <p className="mb-2 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                <span className={cn("h-1.5 w-1.5 rounded-full", heroState.dotClass, heroState.pulse && "animate-pulse")} />
+                {heroState.pillLabel}
+              </p>
+              <h1 className="font-display text-[40px] font-semibold leading-[1.05] tracking-tight text-foreground sm:text-[56px]">
                 Artifacts
               </h1>
-              <p className="text-[13px] text-muted-foreground mt-1">
-                {pulse.total} {pulse.total === 1 ? "artifact" : "artifacts"} across this project
+              <p className="mt-3 max-w-md text-[15px] text-muted-foreground">
+                {heroState.subline}
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="h-8 text-[12px]">
-                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                  <Button variant="accent">
+                    <Plus className="mr-2 h-4 w-4" />
                     New artifact
                   </Button>
                 </DropdownMenuTrigger>
@@ -316,33 +330,43 @@ const ArtifactsPage = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          </div>
+          </header>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={(value) => setSearchParams({ tab: value })} className="space-y-5 sm:space-y-6">
-            <TabsList className="h-9 bg-muted/40">
-              <TabsTrigger value="artifacts" className="text-[12px] gap-1.5 h-7">
-                <FileText className="w-3.5 h-3.5" /> Artifacts
-              </TabsTrigger>
-              <TabsTrigger value="hierarchy" className="text-[12px] gap-1.5 h-7">
-                <Layers className="w-3.5 h-3.5" /> Hierarchy
-              </TabsTrigger>
-              <TabsTrigger value="files" className="text-[12px] gap-1.5 h-7">
-                <Paperclip className="w-3.5 h-3.5" /> Files
-              </TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={(value) => setSearchParams({ tab: value })} className="space-y-6">
+            <div className="border-b border-border">
+              <TabsList className="h-auto w-full justify-start gap-0 rounded-none border-0 bg-transparent p-0">
+                <TabsTrigger
+                  value="artifacts"
+                  className="relative -mb-px gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                >
+                  <FileText className="h-4 w-4" /> Artifacts
+                  <span className="font-mono text-xs text-muted-foreground/70 tabular-nums">{pulse.total}</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="hierarchy"
+                  className="relative -mb-px gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                >
+                  <Layers className="h-4 w-4" /> Hierarchy
+                </TabsTrigger>
+                <TabsTrigger
+                  value="files"
+                  className="relative -mb-px gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                >
+                  <Paperclip className="h-4 w-4" /> Files
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="artifacts" className="space-y-5 sm:space-y-6 mt-0">
               {/* Pulse strip — type breakdown */}
-              <section className="border border-border rounded-xl bg-card overflow-hidden">
-                <div className="grid grid-cols-3 md:grid-cols-6 divide-x divide-y md:divide-y-0 divide-border">
-                  <PulseCount label="PRDs"    value={pulse.prd}    onClick={() => setArtifactTypeFilter(["PRD"])}    accent="prd"  active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "PRD"} />
-                  <PulseCount label="Epics"   value={pulse.epic}   onClick={() => setArtifactTypeFilter(["EPIC"])}   accent="epic" active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "EPIC"} />
-                  <PulseCount label="Stories" value={pulse.story}  onClick={() => setArtifactTypeFilter(["STORY"])}  accent="story" active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "STORY"} />
-                  <PulseCount label="ACs"     value={pulse.ac}     onClick={() => setArtifactTypeFilter(["ACCEPTANCE_CRITERION"])} accent="ac" active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "ACCEPTANCE_CRITERION"} />
-                  <PulseCount label="Tests"   value={pulse.test}   onClick={() => setArtifactTypeFilter(["TEST_CASE", "TEST_SUITE"])} accent="test" />
-                  <PulseCount label="Bugs"    value={pulse.bug}    onClick={() => setArtifactTypeFilter(["BUG"])}    accent="bug"  active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "BUG"} />
-                </div>
+              <section className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border/60 md:grid-cols-6">
+                <PulseCount label="PRDs"    value={pulse.prd}    onClick={() => setArtifactTypeFilter(["PRD"])}    accent="prd"  active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "PRD"} />
+                <PulseCount label="Epics"   value={pulse.epic}   onClick={() => setArtifactTypeFilter(["EPIC"])}   accent="epic" active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "EPIC"} />
+                <PulseCount label="Stories" value={pulse.story}  onClick={() => setArtifactTypeFilter(["STORY"])}  accent="story" active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "STORY"} />
+                <PulseCount label="ACs"     value={pulse.ac}     onClick={() => setArtifactTypeFilter(["ACCEPTANCE_CRITERION"])} accent="ac" active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "ACCEPTANCE_CRITERION"} />
+                <PulseCount label="Tests"   value={pulse.test}   onClick={() => setArtifactTypeFilter(["TEST_CASE", "TEST_SUITE"])} accent="test" />
+                <PulseCount label="Bugs"    value={pulse.bug}    onClick={() => setArtifactTypeFilter(["BUG"])}    accent="bug"  active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "BUG"} />
               </section>
 
               {/* Toolbar */}
@@ -771,31 +795,45 @@ function PulseCount({
   accent: "prd" | "epic" | "story" | "ac" | "test" | "bug";
   active?: boolean;
 }) {
-  const accentText = {
-    prd: "text-status-prd-fg",
-    epic: "text-status-epic-fg",
-    story: "text-status-story-fg",
-    ac: "text-status-ac-fg",
-    test: "text-status-test-fg",
-    bug: "text-destructive",
+  const dotClass = {
+    prd: "bg-status-prd",
+    epic: "bg-status-epic",
+    story: "bg-status-story",
+    ac: "bg-status-ac",
+    test: "bg-status-test",
+    bug: "bg-destructive",
   }[accent];
 
   return (
     <button
       onClick={onClick}
       className={cn(
-        "px-4 py-3.5 text-left transition-colors hover:bg-muted/40",
-        active && "bg-muted/50"
+        "group flex flex-col items-start gap-1 bg-card px-5 py-4 text-left transition-colors hover:bg-muted/50",
+        active && "bg-muted/70"
       )}
     >
-      <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70 font-medium mb-1">
-        {label}
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "h-2 w-2 rounded-full",
+            value > 0 ? dotClass : "bg-muted-foreground/30"
+          )}
+        />
+        <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
       </div>
-      <div className={cn("text-[22px] font-semibold tracking-tight leading-none tabular-nums", value > 0 ? accentText : "text-muted-foreground/40")}>
+      <span
+        className={cn(
+          "font-display text-2xl font-semibold tabular-nums",
+          value > 0 ? "text-foreground" : "text-muted-foreground/40"
+        )}
+      >
         {value}
-      </div>
+      </span>
     </button>
   );
 }
+
 
 export default ArtifactsPage;

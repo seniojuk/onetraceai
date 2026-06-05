@@ -85,6 +85,34 @@ const Dashboard = () => {
     };
   }, [artifacts, snapshots, driftFindings]);
 
+  const heroState = useMemo(() => {
+    if (!currentProject) {
+      return { pillLabel: "No project", dotClass: "bg-muted-foreground/40", pulse: false, subline: "Create a project to start tracing what gets built." };
+    }
+    if (stats.openDrift.length > 0) {
+      return {
+        pillLabel: "Drift detected",
+        dotClass: "bg-drift",
+        pulse: true,
+        subline: `${stats.openDrift.length} drift finding${stats.openDrift.length === 1 ? "" : "s"} to triage${stats.inProgressCount ? `, ${stats.inProgressCount} in flight` : ""}.`,
+      };
+    }
+    if (stats.inProgressCount > 0) {
+      return {
+        pillLabel: "In flight",
+        dotClass: "bg-coverage-partial",
+        pulse: true,
+        subline: `${stats.inProgressCount} stor${stats.inProgressCount === 1 ? "y" : "ies"} in progress. Coverage at ${stats.coveragePercent}%.`,
+      };
+    }
+    return {
+      pillLabel: "All clear",
+      dotClass: "bg-accent",
+      pulse: false,
+      subline: `Coverage at ${stats.coveragePercent}%. Nothing pressing — pick what to build next.`,
+    };
+  }, [currentProject, stats]);
+
   if (loadingWorkspaces || loadingProjects) {
     return (
       <AuthGuard>
@@ -136,27 +164,41 @@ const Dashboard = () => {
   return (
     <AuthGuard>
       <AppLayout>
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-8">
-          {/* Header */}
-          <div className="flex items-start sm:items-end justify-between flex-wrap gap-3">
+        <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-12 space-y-8 sm:space-y-10">
+          {/* Hero */}
+          <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
-              <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/70 font-medium mb-1">
-                {currentProject ? `Project · ${currentProject.project_key}` : "Dashboard"}
-              </div>
-              <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground truncate">
+              <p className="mb-2 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                <span className={cn("h-1.5 w-1.5 rounded-full", heroState.dotClass, heroState.pulse && "animate-pulse")} />
+                {heroState.pillLabel}
+              </p>
+              <h1 className="font-display text-[40px] font-semibold leading-[1.05] tracking-tight text-foreground sm:text-[56px]">
                 {currentProject?.name || "Dashboard"}
               </h1>
+              <p className="mt-3 max-w-md text-[15px] text-muted-foreground">
+                {heroState.subline}
+              </p>
+              {currentProject && (
+                <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                  {currentProject.project_key}
+                </p>
+              )}
             </div>
 
             {currentProject && (
-              <div className="flex items-center gap-1 -mx-1 px-1 overflow-x-auto sm:overflow-visible scrollbar-none max-w-full">
-                <QuickAction icon={FileText} label="New PRD" onClick={() => navigate("/artifacts/new?type=PRD")} />
-                <QuickAction icon={Sparkles} label="Generate stories" onClick={() => navigate("/ai-runs/new?type=story")} />
-                <QuickAction icon={Wand2} label="Prompt gen" onClick={() => navigate("/prompt-generator")} />
-                <QuickAction icon={GitBranch} label="Graph" onClick={() => navigate("/graph")} />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button variant="ghost" size="sm" className="h-9 text-[12px] text-muted-foreground hover:text-foreground" onClick={() => navigate("/graph")}>
+                  <GitBranch className="mr-1.5 h-3.5 w-3.5" /> Graph
+                </Button>
+                <Button variant="ghost" size="sm" className="h-9 text-[12px] text-muted-foreground hover:text-foreground" onClick={() => navigate("/prompt-generator")}>
+                  <Wand2 className="mr-1.5 h-3.5 w-3.5" /> Prompt gen
+                </Button>
+                <Button variant="accent" onClick={() => navigate("/artifacts/new?type=PRD")}>
+                  <Plus className="mr-2 h-4 w-4" /> New PRD
+                </Button>
               </div>
             )}
-          </div>
+          </header>
 
 
           {!currentProject ? (
@@ -170,33 +212,35 @@ const Dashboard = () => {
           ) : (
             <>
               {/* Pulse strip */}
-              <section className="border border-border rounded-xl bg-card overflow-hidden">
-                <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 divide-border">
-                  <PulseMetric
-                    label="Coverage"
-                    value={`${stats.coveragePercent}%`}
-                    sub={`${stats.satisfiedACs}/${stats.totalACs} ACs satisfied`}
-                    tone={stats.coveragePercent >= 80 ? "good" : stats.coveragePercent >= 50 ? "warn" : "bad"}
-                  />
-                  <PulseMetric
-                    label="Open drift"
-                    value={stats.openDrift.length.toString()}
-                    sub={stats.openDrift.length === 0 ? "Nothing to review" : "Findings to triage"}
-                    tone={stats.openDrift.length === 0 ? "good" : "warn"}
-                  />
-                  <PulseMetric
-                    label="In flight"
-                    value={stats.inProgressCount.toString()}
-                    sub={`of ${stats.storyCount} stories`}
-                    tone="neutral"
-                  />
-                  <PulseMetric
-                    label="Acceptance criteria"
-                    value={stats.acCount.toString()}
-                    sub={`${stats.doneCount} completed`}
-                    tone="neutral"
-                  />
-                </div>
+              <section className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border/60 md:grid-cols-4">
+                <PulseMetric
+                  label="Coverage"
+                  value={`${stats.coveragePercent}%`}
+                  sub={`${stats.satisfiedACs}/${stats.totalACs} ACs satisfied`}
+                  tone={stats.coveragePercent >= 80 ? "good" : stats.coveragePercent >= 50 ? "warn" : "bad"}
+                  onClick={() => navigate("/coverage")}
+                />
+                <PulseMetric
+                  label="Open drift"
+                  value={stats.openDrift.length.toString()}
+                  sub={stats.openDrift.length === 0 ? "Nothing to review" : "Findings to triage"}
+                  tone={stats.openDrift.length === 0 ? "good" : "warn"}
+                  onClick={() => navigate("/drift")}
+                />
+                <PulseMetric
+                  label="In flight"
+                  value={stats.inProgressCount.toString()}
+                  sub={`of ${stats.storyCount} stories`}
+                  tone="neutral"
+                  onClick={() => navigate("/artifacts")}
+                />
+                <PulseMetric
+                  label="Acceptance criteria"
+                  value={stats.acCount.toString()}
+                  sub={`${stats.doneCount} completed`}
+                  tone="neutral"
+                  onClick={() => navigate("/artifacts?type=ACCEPTANCE_CRITERION")}
+                />
               </section>
 
               {/* What needs you + Momentum */}
@@ -355,31 +399,40 @@ function PulseMetric({
   value,
   sub,
   tone,
+  onClick,
 }: {
   label: string;
   value: string;
   sub: string;
   tone: "good" | "warn" | "bad" | "neutral";
+  onClick?: () => void;
 }) {
-  const toneClass = {
-    good: "text-coverage-full",
-    warn: "text-coverage-partial",
-    bad: "text-coverage-none",
-    neutral: "text-foreground",
+  const dotClass = {
+    good: "bg-coverage-full",
+    warn: "bg-coverage-partial",
+    bad: "bg-drift",
+    neutral: "bg-muted-foreground/40",
   }[tone];
 
   return (
-    <div className="px-5 py-4">
-      <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70 font-medium mb-1.5">
-        {label}
+    <button
+      onClick={onClick}
+      className="group flex flex-col items-start gap-1 bg-card px-5 py-4 text-left transition-colors hover:bg-muted/50"
+    >
+      <div className="flex items-center gap-2">
+        <span className={cn("h-2 w-2 rounded-full", dotClass, tone === "bad" && "animate-pulse")} />
+        <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
       </div>
-      <div className={cn("text-[28px] font-semibold tracking-tight leading-none tabular-nums", toneClass)}>
+      <span className="font-display text-2xl font-semibold tabular-nums text-foreground">
         {value}
-      </div>
-      <div className="text-[11px] text-muted-foreground mt-1.5">{sub}</div>
-    </div>
+      </span>
+      <span className="text-[11px] text-muted-foreground">{sub}</span>
+    </button>
   );
 }
+
 
 function QuickAction({
   icon: Icon,
