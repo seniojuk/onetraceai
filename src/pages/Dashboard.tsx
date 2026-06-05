@@ -27,6 +27,7 @@ import { useUsageLimits } from "@/hooks/useUsageLimits";
 import { useCoverageSnapshots } from "@/hooks/useCoverage";
 import { useDriftFindings } from "@/hooks/useDriftFindings";
 import { cn } from "@/lib/utils";
+import { SetupChecklist } from "@/components/onboarding/SetupChecklist";
 
 const Dashboard = () => {
   const navigate = useNavigate();
