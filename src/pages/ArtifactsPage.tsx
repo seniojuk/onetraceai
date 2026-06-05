@@ -333,30 +333,40 @@ const ArtifactsPage = () => {
           </header>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={(value) => setSearchParams({ tab: value })} className="space-y-5 sm:space-y-6">
-            <TabsList className="h-9 bg-muted/40">
-              <TabsTrigger value="artifacts" className="text-[12px] gap-1.5 h-7">
-                <FileText className="w-3.5 h-3.5" /> Artifacts
-              </TabsTrigger>
-              <TabsTrigger value="hierarchy" className="text-[12px] gap-1.5 h-7">
-                <Layers className="w-3.5 h-3.5" /> Hierarchy
-              </TabsTrigger>
-              <TabsTrigger value="files" className="text-[12px] gap-1.5 h-7">
-                <Paperclip className="w-3.5 h-3.5" /> Files
-              </TabsTrigger>
-            </TabsList>
+          <Tabs value={activeTab} onValueChange={(value) => setSearchParams({ tab: value })} className="space-y-6">
+            <div className="border-b border-border">
+              <TabsList className="h-auto w-full justify-start gap-0 rounded-none border-0 bg-transparent p-0">
+                <TabsTrigger
+                  value="artifacts"
+                  className="relative -mb-px gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                >
+                  <FileText className="h-4 w-4" /> Artifacts
+                  <span className="font-mono text-xs text-muted-foreground/70 tabular-nums">{pulse.total}</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="hierarchy"
+                  className="relative -mb-px gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                >
+                  <Layers className="h-4 w-4" /> Hierarchy
+                </TabsTrigger>
+                <TabsTrigger
+                  value="files"
+                  className="relative -mb-px gap-2 rounded-none border-b-2 border-transparent bg-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                >
+                  <Paperclip className="h-4 w-4" /> Files
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="artifacts" className="space-y-5 sm:space-y-6 mt-0">
               {/* Pulse strip — type breakdown */}
-              <section className="border border-border rounded-xl bg-card overflow-hidden">
-                <div className="grid grid-cols-3 md:grid-cols-6 divide-x divide-y md:divide-y-0 divide-border">
-                  <PulseCount label="PRDs"    value={pulse.prd}    onClick={() => setArtifactTypeFilter(["PRD"])}    accent="prd"  active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "PRD"} />
-                  <PulseCount label="Epics"   value={pulse.epic}   onClick={() => setArtifactTypeFilter(["EPIC"])}   accent="epic" active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "EPIC"} />
-                  <PulseCount label="Stories" value={pulse.story}  onClick={() => setArtifactTypeFilter(["STORY"])}  accent="story" active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "STORY"} />
-                  <PulseCount label="ACs"     value={pulse.ac}     onClick={() => setArtifactTypeFilter(["ACCEPTANCE_CRITERION"])} accent="ac" active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "ACCEPTANCE_CRITERION"} />
-                  <PulseCount label="Tests"   value={pulse.test}   onClick={() => setArtifactTypeFilter(["TEST_CASE", "TEST_SUITE"])} accent="test" />
-                  <PulseCount label="Bugs"    value={pulse.bug}    onClick={() => setArtifactTypeFilter(["BUG"])}    accent="bug"  active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "BUG"} />
-                </div>
+              <section className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border/60 md:grid-cols-6">
+                <PulseCount label="PRDs"    value={pulse.prd}    onClick={() => setArtifactTypeFilter(["PRD"])}    accent="prd"  active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "PRD"} />
+                <PulseCount label="Epics"   value={pulse.epic}   onClick={() => setArtifactTypeFilter(["EPIC"])}   accent="epic" active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "EPIC"} />
+                <PulseCount label="Stories" value={pulse.story}  onClick={() => setArtifactTypeFilter(["STORY"])}  accent="story" active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "STORY"} />
+                <PulseCount label="ACs"     value={pulse.ac}     onClick={() => setArtifactTypeFilter(["ACCEPTANCE_CRITERION"])} accent="ac" active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "ACCEPTANCE_CRITERION"} />
+                <PulseCount label="Tests"   value={pulse.test}   onClick={() => setArtifactTypeFilter(["TEST_CASE", "TEST_SUITE"])} accent="test" />
+                <PulseCount label="Bugs"    value={pulse.bug}    onClick={() => setArtifactTypeFilter(["BUG"])}    accent="bug"  active={artifactTypeFilter.length === 1 && artifactTypeFilter[0] === "BUG"} />
               </section>
 
               {/* Toolbar */}
