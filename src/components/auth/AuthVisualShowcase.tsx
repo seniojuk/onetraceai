@@ -1189,11 +1189,11 @@ export const AuthVisualSingle = ({
         </div>
       </div>
       <div>
-        <h2 className="font-geist text-[28px] leading-[1.1] tracking-[-0.02em] text-foreground">
+        <h2 className="font-display text-[28px] leading-[1.1] tracking-[-0.02em] text-foreground">
           {headline ?? meta.caption}
         </h2>
         {subline && (
-          <p className="mt-3 max-w-[34ch] font-geist text-[14px] leading-[1.5] text-muted-foreground">
+          <p className="mt-3 max-w-[34ch] font-sans text-[14px] leading-[1.5] text-muted-foreground">
             {subline}
           </p>
         )}
@@ -1216,7 +1216,7 @@ export const AuthVisualShowcase = () => {
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
           Traceability, visualized
         </span>
-        <h2 className="mt-4 font-geist text-[28px] leading-[1.1] tracking-[-0.02em] text-foreground">
+        <h2 className="mt-4 font-display text-[28px] leading-[1.1] tracking-[-0.02em] text-foreground">
           {current.caption}
         </h2>
       </div>

@@ -45,7 +45,7 @@ function Spotlight() {
       }}
       onMouseEnter={() => setActive(true)}
       onMouseLeave={() => setActive(false)}
-      className="relative w-full select-none whitespace-nowrap font-geist font-medium leading-[0.85] tracking-[-0.06em]"
+      className="relative w-full select-none whitespace-nowrap font-display font-medium leading-[0.85] tracking-[-0.06em]"
       style={{ fontSize: `${fontSize}px` }}
     >
       {/* hidden measurement layer */}

@@ -13,7 +13,7 @@ interface LegalLayoutProps {
 
 export function LegalLayout({ eyebrow, title, flourish, updated, sections, children }: LegalLayoutProps) {
   return (
-    <div className="min-h-screen bg-background text-foreground font-geist antialiased selection:bg-accent/20">
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-accent/20">
       <PublicNav />
 
       {/* Hero */}
@@ -21,7 +21,7 @@ export function LegalLayout({ eyebrow, title, flourish, updated, sections, child
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
           {eyebrow}
         </span>
-        <h1 className="mt-4 max-w-3xl font-geist text-[36px] leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[52px] md:text-[64px]">
+        <h1 className="mt-4 max-w-3xl font-display text-[36px] leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[52px] md:text-[64px]">
           {title}{" "}
           {flourish && <AccentWord>{flourish}</AccentWord>}
         </h1>
@@ -85,7 +85,7 @@ export function LegalSection({
         <span className="font-mono text-[11px] tracking-[0.18em] text-accent">
           {String(index).padStart(2, "0")}
         </span>
-        <h2 className="font-geist text-[22px] font-medium tracking-[-0.01em] text-foreground sm:text-[26px]">
+        <h2 className="font-display text-[22px] font-medium tracking-[-0.01em] text-foreground sm:text-[26px]">
           {title}
         </h2>
       </div>
@@ -98,7 +98,7 @@ export function LegalSection({
 
 export function LegalSubheading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mt-6 font-geist text-[15px] font-medium tracking-[-0.01em] text-foreground">
+    <h3 className="mt-6 font-display text-[15px] font-medium tracking-[-0.01em] text-foreground">
       {children}
     </h3>
   );
