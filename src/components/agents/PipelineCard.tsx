@@ -39,77 +39,72 @@ export function PipelineCard({
   return (
     <div
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors",
-        active ? "hover:border-foreground/20" : "opacity-60"
+        "group relative overflow-hidden rounded-xl border border-border bg-card p-6 transition hover:border-border/80",
+        !active && "opacity-60"
       )}
     >
-      <span
-        className={cn(
-          "absolute left-0 top-0 h-full w-[2px]",
-          active ? "bg-accent/70" : "bg-border"
-        )}
-      />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-foreground/[0.02] to-transparent opacity-0 transition group-hover:opacity-100" />
 
-      <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
-        <div className="min-w-0 flex-1">
-          <div className="mb-2 flex items-center gap-2">
+      <div className="relative">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2">
             <Zap className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              Pipeline · {pipeline.steps.length} step{pipeline.steps.length === 1 ? "" : "s"}
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+              Pipeline · {pipeline.steps.length} step
+              {pipeline.steps.length === 1 ? "" : "s"}
             </span>
           </div>
-          <h3 className="truncate font-display text-lg font-semibold text-foreground">
-            {pipeline.name}
-          </h3>
-          {pipeline.description && (
-            <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
-              {pipeline.description}
-            </p>
-          )}
+
+          <div className="flex items-center gap-1">
+            <Switch
+              checked={active}
+              onCheckedChange={(checked) => onToggle(pipeline, checked)}
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onRun(pipeline)} disabled={!active}>
+                  <Play className="mr-2 h-4 w-4" />
+                  Run
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onEdit(pipeline)}>
+                  <Settings2 className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onDelete(pipeline)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
-        <div className="flex items-center gap-1">
-          <Switch
-            checked={active}
-            onCheckedChange={(checked) => onToggle(pipeline, checked)}
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onRun(pipeline)} disabled={!active}>
-                <Play className="mr-2 h-4 w-4" />
-                Run
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onEdit(pipeline)}>
-                <Settings2 className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => onDelete(pipeline)}
-                className="text-destructive focus:text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+        <h3 className="mt-4 text-[16px] font-medium tracking-tight text-foreground">
+          {pipeline.name}
+        </h3>
+        {pipeline.description && (
+          <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">
+            {pipeline.description}
+          </p>
+        )}
 
-      {/* Flow */}
-      <div className="px-5 pb-4">
-        <div className="flex flex-wrap items-center gap-1.5">
+        {/* Flow */}
+        <div className="mt-5 flex flex-wrap items-center gap-1.5 border-t border-border pt-4">
           {pipeline.steps.map((step, index) => (
             <div key={step.id} className="flex items-center gap-1.5">
               {index > 0 && (
                 <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
               )}
-              <span className="inline-flex items-center rounded-md border border-border bg-background px-2 py-0.5 text-xs text-foreground">
+              <span className="inline-flex items-center rounded-md border border-border bg-background px-2 py-0.5 font-mono text-[11px] text-foreground">
                 {step.agentName.length > 18
                   ? step.agentName.slice(0, 18) + "…"
                   : step.agentName}
@@ -117,24 +112,23 @@ export function PipelineCard({
             </div>
           ))}
         </div>
-      </div>
 
-      <div className="grid grid-cols-2 border-t border-border">
-        <button
-          onClick={() => onEdit(pipeline)}
-          className="flex items-center justify-center gap-2 border-r border-border py-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
-        >
-          <Settings2 className="h-3.5 w-3.5" />
-          Edit
-        </button>
-        <button
-          onClick={() => onRun(pipeline)}
-          disabled={!active}
-          className="flex items-center justify-center gap-2 py-3 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground"
-        >
-          <Play className="h-3.5 w-3.5" />
-          Run
-        </button>
+        {/* Actions */}
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={() => onEdit(pipeline)}>
+            <Settings2 className="mr-1.5 h-3.5 w-3.5" />
+            Edit
+          </Button>
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={() => onRun(pipeline)}
+            disabled={!active}
+          >
+            <Play className="mr-1.5 h-3.5 w-3.5" />
+            Run
+          </Button>
+        </div>
       </div>
     </div>
   );
