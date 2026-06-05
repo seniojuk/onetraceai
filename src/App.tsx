@@ -36,6 +36,7 @@ import DesignSystemPage from "./pages/DesignSystemPage";
 import PricingPage from "./pages/PricingPage";
 import { ProtectedLayout } from "./components/layout/ProtectedLayout";
 import { AuthProvider } from "./hooks/useAuth";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,6 +57,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ErrorBoundary>
         <AuthProvider>
         <ScrollToTop />
         <Routes>
@@ -97,6 +99,7 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
         </AuthProvider>
+        </ErrorBoundary>
       </BrowserRouter>
     </TooltipProvider>
     </ThemeProvider>
