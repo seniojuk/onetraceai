@@ -211,7 +211,7 @@ const CoveragePage = () => {
           <div className="flex items-end justify-between gap-4 pb-6 mb-8 border-b border-border">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-semibold tracking-tight text-foreground">Coverage</h1>
+                <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Coverage</h1>
                 {hasSnapshots && (
                   <span className={cn("text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border", healthTone)}>
                     {healthLabel}
