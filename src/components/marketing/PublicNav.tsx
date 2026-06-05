@@ -220,6 +220,18 @@ export function PublicNav() {
                 >
                   Contact
                 </Link>
+                {user && (
+                  <>
+                    <div className="my-2 border-t border-border" />
+                    <Link
+                      to="/dashboard"
+                      onClick={() => setOpen(false)}
+                      className="rounded-md px-2 py-2 text-base font-medium text-foreground/90 hover:bg-muted/50"
+                    >
+                      Dashboard
+                    </Link>
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>
