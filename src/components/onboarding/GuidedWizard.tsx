@@ -200,7 +200,7 @@ export function GuidedWizard({ workspaceId, seed, onExit }: GuidedWizardProps) {
           fromArtifactId: prdId,
           toArtifactId: epicArtifact.id,
           edgeType: EdgeType.CONTAINS,
-          source: "ONBOARDING",
+          source: "IMPORT",
         });
       }
       setStep(5);
