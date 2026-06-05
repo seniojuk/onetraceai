@@ -794,14 +794,29 @@ const GraphPageInner = ({ onViewChange, currentView }: { onViewChange: (value: s
   // Auto-focus to lens matches with the same setCenter camera move used by
   // search. The key difference: lenses pick matches from the vertical slice
   // the user was already viewing, then pan horizontally to those matches.
+  const prevLensActiveRef = useRef(false);
+  const didInitialFitRef = useRef(false);
   useEffect(() => {
     if (nodes.length === 0) return;
+
+    const wasActive = prevLensActiveRef.current;
+    prevLensActiveRef.current = lensActive;
+
     if (!lensActive) {
-      const t = window.setTimeout(() => {
-        fitView({ padding: 0.2, duration: 500, maxZoom: 1.2 });
-      }, 60);
-      return () => window.clearTimeout(t);
+      // Only auto-fit when lens just turned off, or on the very first render
+      // with nodes. Otherwise, every node mutation (e.g. from a search
+      // changing filters) would re-fit and undo the search zoom.
+      if (wasActive || !didInitialFitRef.current) {
+        didInitialFitRef.current = true;
+        const t = window.setTimeout(() => {
+          fitView({ padding: 0.2, duration: 500, maxZoom: 1.2 });
+        }, 60);
+        return () => window.clearTimeout(t);
+      }
+      return;
     }
+
+    didInitialFitRef.current = true;
     if (!lensMatchIds || lensMatchIds.size === 0) return;
     const matched = nodes.filter(n => lensMatchIds.has(n.id));
     if (matched.length === 0) return;
