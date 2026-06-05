@@ -143,7 +143,7 @@ const Dashboard = () => {
               <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/70 font-medium mb-1">
                 {currentProject ? `Project · ${currentProject.project_key}` : "Dashboard"}
               </div>
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground truncate">
+              <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground truncate">
                 {currentProject?.name || "Dashboard"}
               </h1>
             </div>

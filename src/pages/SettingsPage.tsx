@@ -81,7 +81,7 @@ const SettingsPage = () => {
       <AppLayout>
         <div className="p-8 max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+            <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground">Settings</h1>
             <p className="text-muted-foreground">
               Manage your account and preferences
             </p>

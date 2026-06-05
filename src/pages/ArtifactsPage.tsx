@@ -280,7 +280,7 @@ const ArtifactsPage = () => {
               <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/70 font-medium mb-1">
                 Workspace
               </div>
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
+              <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
                 Artifacts
               </h1>
               <p className="text-[13px] text-muted-foreground mt-1">

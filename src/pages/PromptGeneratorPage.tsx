@@ -40,7 +40,7 @@ const PromptGeneratorPage = () => {
       <AppLayout>
         <div className="p-8 max-w-4xl mx-auto space-y-6">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+            <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground flex items-center gap-3">
               <Wand2 className="w-8 h-8 text-accent" />
               Prompt Generator
             </h1>

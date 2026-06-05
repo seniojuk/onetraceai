@@ -311,7 +311,7 @@ const AIAgentsPage = () => {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+              <h1 className="font-display text-3xl font-semibold tracking-tight text-foreground flex items-center gap-2">
                 <Bot className="w-8 h-8 text-accent" />
                 AI Agents
               </h1>
