@@ -588,10 +588,9 @@ const IntegrationsPage = () => {
                   Cancel
                 </Button>
                 {selectedIntegration?.id !== "openai" && selectedIntegration?.id !== "github" && (
-                  <Button 
+                  <Button variant="accent" 
                     onClick={handleSaveConnection}
                     disabled={connectingId !== null}
-                    className="bg-accent hover:bg-accent/90"
                   >
                     {connectingId ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -521,10 +521,9 @@ export const IdeaEnhancer = ({ artifact, onComplete, onCancel }: IdeaEnhancerPro
             </div>
 
             <div className="flex items-center gap-3">
-              <Button
+              <Button variant="accent"
                 onClick={handleSubmitEnhancement}
                 disabled={isLoading || isLoadingFiles || !enhancementDetails.trim()}
-                className="bg-accent hover:bg-accent/90"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -641,10 +640,9 @@ export const IdeaEnhancer = ({ artifact, onComplete, onCancel }: IdeaEnhancerPro
               ))}
 
               <div className="flex items-center gap-3 pt-4">
-                <Button
+                <Button variant="accent"
                   onClick={handleSubmitAnswers}
                   disabled={isLoading}
-                  className="bg-accent hover:bg-accent/90"
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -804,10 +802,9 @@ export const IdeaEnhancer = ({ artifact, onComplete, onCancel }: IdeaEnhancerPro
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            <Button
+            <Button variant="accent"
               onClick={handleSaveEnhancedIdea}
               disabled={isSaving}
-              className="bg-accent hover:bg-accent/90"
             >
               {isSaving ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

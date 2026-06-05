@@ -778,10 +778,10 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
               </div>
             )}
 
-            <Button
+            <Button variant="accent"
               onClick={handleSubmitPrd}
               disabled={isLoading || !canSubmitPrd || isAtLimit}
-              className="w-full bg-accent hover:bg-accent/90"
+              className="w-full"
             >
               {isLoading ? (
                 <>
@@ -877,10 +877,9 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Generate Now
               </Button>
-              <Button
+              <Button variant="accent"
                 onClick={handleSubmitAnswers}
                 disabled={isLoading}
-                className="bg-accent hover:bg-accent/90"
               >
                 {isLoading ? (
                   <>
@@ -917,11 +916,10 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
                     {selectedEpics.size > 0 ? "Deselect All" : "Select All"}
                   </Button>
                   {selectedUnsavedCount > 0 && (
-                    <Button
+                    <Button variant="accent"
                       size="sm"
                       onClick={handleBulkSave}
                       disabled={isBulkSaving}
-                      className="bg-accent hover:bg-accent/90"
                     >
                       {isBulkSaving ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -1027,7 +1025,7 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
                                 <X className="w-4 h-4 mr-1" />
                                 Cancel
                               </Button>
-                              <Button size="sm" onClick={handleSaveEdit} className="bg-accent hover:bg-accent/90">
+                              <Button variant="accent" size="sm" onClick={handleSaveEdit}>
                                 <Save className="w-4 h-4 mr-1" />
                                 Apply Changes
                               </Button>

@@ -137,8 +137,7 @@ export function PipelinesTab({ workspaceId, projectId, agents }: PipelinesTabPro
           <History className="w-4 h-4 mr-2" />
           Run History
         </Button>
-        <Button 
-          className="bg-accent hover:bg-accent/90"
+        <Button variant="accent"
           onClick={() => {
             setSelectedPipeline(null);
             setIsBuilderOpen(true);

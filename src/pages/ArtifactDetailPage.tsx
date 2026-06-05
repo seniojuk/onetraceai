@@ -365,10 +365,10 @@ const ArtifactDetailPage = () => {
                     <X className="w-4 h-4 mr-2" />
                     Cancel
                   </Button>
-                  <Button
+                  <Button variant="accent"
                     onClick={handleSave}
                     disabled={updateArtifact.isPending}
-                    className="bg-accent hover:bg-accent/90 rounded-[0.625rem]"
+                    className="rounded-[0.625rem]"
                   >
                     {updateArtifact.isPending ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -381,9 +381,9 @@ const ArtifactDetailPage = () => {
               ) : (
                 <>
                   {primaryAction && (
-                    <Button
+                    <Button variant="accent"
                       onClick={primaryAction.onClick}
-                      className="bg-accent hover:bg-accent/90 rounded-[0.625rem]"
+                      className="rounded-[0.625rem]"
                     >
                       <primaryAction.icon className="w-4 h-4 mr-2" />
                       {primaryAction.label}

@@ -154,9 +154,9 @@ export function AgentCard({ agent, onConfigure, onInvoke, onToggle, onDelete }: 
             <Settings2 className="w-4 h-4 mr-2" />
             Configure
           </Button>
-          <Button 
+          <Button variant="accent" 
             size="sm" 
-            className="flex-1 bg-accent hover:bg-accent/90"
+            className="flex-1"
             onClick={() => onInvoke(agent)}
             disabled={!agent.enabled}
           >

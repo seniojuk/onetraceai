@@ -300,10 +300,9 @@ export function InvokeAgentDialog({
               Stop
             </Button>
           ) : !hasResult && (
-            <Button 
+            <Button variant="accent" 
               onClick={handleInvoke} 
               disabled={!canInvoke || isRunning}
-              className="bg-accent hover:bg-accent/90"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -504,10 +504,9 @@ export const PRDEnhancer = ({ artifact, onComplete, onCancel }: PRDEnhancerProps
             </div>
 
             <div className="flex items-center gap-3">
-              <Button
+              <Button variant="accent"
                 onClick={handleSubmitEnhancement}
                 disabled={isLoading || !enhancementDetails.trim()}
-                className="bg-accent hover:bg-accent/90"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -621,10 +620,9 @@ export const PRDEnhancer = ({ artifact, onComplete, onCancel }: PRDEnhancerProps
               ))}
 
               <div className="flex items-center gap-3 pt-4">
-                <Button
+                <Button variant="accent"
                   onClick={handleSubmitAnswers}
                   disabled={isLoading}
-                  className="bg-accent hover:bg-accent/90"
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -666,10 +664,9 @@ export const PRDEnhancer = ({ artifact, onComplete, onCancel }: PRDEnhancerProps
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Start Over
                   </Button>
-                  <Button
+                  <Button variant="accent"
                     onClick={handleSaveEnhancedPRD}
                     disabled={isSaving}
-                    className="bg-accent hover:bg-accent/90"
                   >
                     {isSaving ? (
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />

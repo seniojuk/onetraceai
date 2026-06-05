@@ -137,8 +137,8 @@ function PlanCard({ plan, currentPlanId, isCurrentPlan, isPopular, isUpgrading, 
             Downgrade
           </Button>
         ) : (
-          <Button
-            className={cn("w-full", isPopular && "bg-accent hover:bg-accent/90")}
+          <Button variant="accent"
+            className={cn("w-full", isPopular &&"")}
             onClick={() => onPlanAction(plan, "upgrade")}
             disabled={isUpgrading}
           >

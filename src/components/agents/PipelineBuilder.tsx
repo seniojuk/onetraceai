@@ -357,10 +357,9 @@ export function PipelineBuilder({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button 
+          <Button variant="accent" 
             onClick={handleSave} 
             disabled={!canSave || isLoading}
-            className="bg-accent hover:bg-accent/90"
           >
             {isLoading ? "Saving..." : existingPipeline ? "Update Pipeline" : "Create Pipeline"}
           </Button>

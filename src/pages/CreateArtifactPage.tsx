@@ -442,10 +442,9 @@ const CreateArtifactPage = () => {
                     <Button type="button" variant="outline" onClick={() => navigate("/artifacts")}>
                       Cancel
                     </Button>
-                    <Button 
+                    <Button variant="accent" 
                       type="submit" 
                       disabled={createArtifact.isPending || !title.trim() || artifactAtLimit}
-                      className="bg-accent hover:bg-accent/90"
                     >
                       {createArtifact.isPending ? (
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
