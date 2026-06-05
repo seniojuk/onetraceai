@@ -442,7 +442,13 @@ export function AgentMarketplace({
 
       {/* Template grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredTemplates.map((template) => {
+        {filteredTemplates
+          .sort((a, b) => {
+            const aAdded = hasAgent(a.agentType) ? 1 : 0;
+            const bAdded = hasAgent(b.agentType) ? 1 : 0;
+            return aAdded - bAdded;
+          })
+          .map((template) => {
           const Icon = agentTypeIcons[template.agentType];
           const alreadyAdded = hasAgent(template.agentType);
 
