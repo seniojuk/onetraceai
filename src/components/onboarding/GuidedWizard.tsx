@@ -70,13 +70,39 @@ export function GuidedWizard({ workspaceId, seed, onExit }: GuidedWizardProps) {
       toast.error("Name and key required");
       return;
     }
+    const baseKey = projectKey.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6) || "PROJ";
+    const baseName = projectName.trim();
+    const candidates = [
+      { key: baseKey, name: baseName },
+      ...Array.from({ length: 5 }).map(() => {
+        const suffix = Math.random().toString(36).slice(2, 5).toUpperCase();
+        return { key: `${baseKey.slice(0, 6)}${suffix}`.slice(0, 10), name: `${baseName} ${suffix}` };
+      }),
+    ];
     try {
-      const project = await createProject.mutateAsync({
-        workspaceId,
-        name: projectName.trim(),
-        projectKey: projectKey.trim(),
-        description: seed,
-      });
+      let project: any = null;
+      let lastErr: any = null;
+      for (const c of candidates) {
+        try {
+          project = await createProject.mutateAsync({
+            workspaceId,
+            name: c.name,
+            projectKey: c.key,
+            description: seed,
+          });
+          if (project) {
+            setProjectKey(c.key);
+            setProjectName(c.name);
+            break;
+          }
+        } catch (err: any) {
+          lastErr = err;
+          const msg = `${err?.message || ""} ${err?.code || ""} ${err?.details || ""}`;
+          const isDup = msg.includes("duplicate key") || msg.includes("23505") || msg.includes("projects_workspace_id_project_key_key") || msg.includes("projects_workspace_id_name_key");
+          if (!isDup) throw err;
+        }
+      }
+      if (!project) throw lastErr || new Error("Could not create a unique project");
       setProjectId(project.id);
       setCurrentProject(project.id);
       setStep(2);
