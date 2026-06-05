@@ -284,28 +284,29 @@ const ArtifactsPage = () => {
   return (
     <AuthGuard>
       <AppLayout>
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 sm:space-y-8">
+        <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-12 space-y-8 sm:space-y-10">
           <UsageLimitBanner showFor={["artifact"]} />
 
-          {/* Header */}
-          <div className="flex items-start sm:items-end justify-between flex-wrap gap-3">
+          {/* Hero */}
+          <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div className="min-w-0">
-              <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground/70 font-medium mb-1">
-                Workspace
-              </div>
-              <h1 className="font-display text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
+              <p className="mb-2 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                <span className={cn("h-1.5 w-1.5 rounded-full", heroState.dotClass, heroState.pulse && "animate-pulse")} />
+                {heroState.pillLabel}
+              </p>
+              <h1 className="font-display text-[40px] font-semibold leading-[1.05] tracking-tight text-foreground sm:text-[56px]">
                 Artifacts
               </h1>
-              <p className="text-[13px] text-muted-foreground mt-1">
-                {pulse.total} {pulse.total === 1 ? "artifact" : "artifacts"} across this project
+              <p className="mt-3 max-w-md text-[15px] text-muted-foreground">
+                {heroState.subline}
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="h-8 text-[12px]">
-                    <Plus className="w-3.5 h-3.5 mr-1.5" />
+                  <Button variant="accent">
+                    <Plus className="mr-2 h-4 w-4" />
                     New artifact
                   </Button>
                 </DropdownMenuTrigger>
@@ -329,7 +330,7 @@ const ArtifactsPage = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          </div>
+          </header>
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(value) => setSearchParams({ tab: value })} className="space-y-5 sm:space-y-6">
