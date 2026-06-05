@@ -53,6 +53,7 @@ import { SessionRecoveryDialog } from "@/components/auth/SessionRecoveryDialog";
 import { DeleteConfirmDialog } from "@/components/layout/DeleteConfirmDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -109,7 +110,9 @@ function InnerLayout({ children }: AppLayoutProps) {
     currentProjectId,
     setCurrentWorkspace,
     setCurrentProject,
+    resetUserScopedState,
   } = useUIStore();
+  const queryClient = useQueryClient();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
@@ -142,9 +145,16 @@ function InnerLayout({ children }: AppLayoutProps) {
   const currentProject = projects?.find((p) => p.id === currentProjectId);
 
   const handleSignOut = async () => {
-    await signOut();
+    const { error } = await signOut();
+    if (error) {
+      toast.error("Failed to sign out");
+      return;
+    }
+    resetUserScopedState();
+    queryClient.clear();
     navigate("/");
   };
+
 
   const handleDeleteConfirm = async () => {
     if (!deleteDialog) return;

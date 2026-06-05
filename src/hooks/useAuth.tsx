@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session, AuthError } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useUIStore } from "@/store/uiStore";
 
 type AuthResult<T = unknown> = { data: T; error: AuthError | null };
 
@@ -29,15 +31,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
       setLoading(false);
+
+      // Safety net: clear cached data + persisted user-scoped UI state on sign-out,
+      // regardless of which code path triggered it.
+      if (event === "SIGNED_OUT") {
+        queryClient.clear();
+        useUIStore.getState().resetUserScopedState();
+      }
     });
 
     // THEN check for existing session
