@@ -1074,7 +1074,7 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
 
           {allSaved && (
             <div className="flex justify-center pt-4">
-              <Button onClick={() => navigate("/artifacts")} className="bg-accent hover:bg-accent/90">
+              <Button variant="accent" onClick={() => navigate("/artifacts")}>
                 <CheckCircle2 className="w-4 h-4 mr-2" />
                 View All Artifacts
               </Button>
