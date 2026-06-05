@@ -24,7 +24,7 @@ export function ChoosePathStep({ onDemo, onReal, isLoading, loadingPath }: Choos
       <div className="mt-10 grid gap-px overflow-hidden rounded-2xl border border-border bg-border/60 md:grid-cols-2">
         <PathCard
           icon={Sparkles}
-          accent="status-prd"
+          accentClass="bg-status-prd/10 text-status-prd-fg"
           eyebrow="60 seconds"
           title="Show me what OneTrace can do"
           body="Load a pre-built demo project. You see a fully populated graph with PRD, Epics, Stories, and tests immediately."
@@ -36,7 +36,7 @@ export function ChoosePathStep({ onDemo, onReal, isLoading, loadingPath }: Choos
         />
         <PathCard
           icon={PenLine}
-          accent="status-epic"
+          accentClass="bg-status-epic/10 text-status-epic-fg"
           eyebrow="About 5 minutes"
           title="Start with my real project"
           body="A guided 5-step flow turns what you are building into a real PRD, Epics, and an Artifact Graph you can keep."
@@ -52,7 +52,7 @@ export function ChoosePathStep({ onDemo, onReal, isLoading, loadingPath }: Choos
 
 interface PathCardProps {
   icon: React.ElementType;
-  accent: string;
+  accentClass: string;
   eyebrow: string;
   title: string;
   body: string;
@@ -65,7 +65,7 @@ interface PathCardProps {
 
 function PathCard({
   icon: Icon,
-  accent,
+  accentClass,
   eyebrow,
   title,
   body,
@@ -99,7 +99,7 @@ function PathCard({
         <span
           className={cn(
             "inline-flex h-9 w-9 items-center justify-center rounded-lg",
-            `bg-${accent}/10 text-${accent}-fg`,
+            accentClass,
           )}
         >
           <Icon className="h-4 w-4" />
