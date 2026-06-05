@@ -1,26 +1,19 @@
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { 
-  Clock, 
-  CheckCircle2, 
-  XCircle, 
-  Loader2, 
-  Bot,
-  Brain,
-  Coins,
-  FileText,
-  ChevronRight
+import {
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Clock,
+  ChevronRight,
+  History,
 } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Skeleton } from "@/components/ui/skeleton";
 import type { AIRun, AIRunStatus } from "@/hooks/useAIRuns";
 import { cn } from "@/lib/utils";
 import { AgentRunResultsDialog } from "./AgentRunResultsDialog";
 
 interface AgentRunHistoryProps {
-  runs: (AIRun & { 
+  runs: (AIRun & {
     agent_config: { id: string; name: string; agent_type: string } | null;
     model: { id: string; model_name: string; display_name: string } | null;
   })[];
@@ -30,153 +23,175 @@ interface AgentRunHistoryProps {
   projectId?: string;
 }
 
-const statusConfig: Record<AIRunStatus, { icon: React.ElementType; color: string; bgColor: string }> = {
-  PENDING: { icon: Clock, color: "text-slate-600", bgColor: "bg-slate-100" },
-  RUNNING: { icon: Loader2, color: "text-blue-600", bgColor: "bg-blue-100" },
-  COMPLETED: { icon: CheckCircle2, color: "text-green-600", bgColor: "bg-green-100" },
-  FAILED: { icon: XCircle, color: "text-red-600", bgColor: "bg-red-100" },
-  CANCELLED: { icon: XCircle, color: "text-amber-600", bgColor: "bg-amber-100" },
-};
+type Filter = "ALL" | "RUNNING" | "COMPLETED" | "FAILED";
 
-export function AgentRunHistory({ runs, isLoading, onViewRun, workspaceId, projectId }: AgentRunHistoryProps) {
-  const [selectedRun, setSelectedRun] = useState<typeof runs[number] | null>(null);
+function StatusIcon({ status }: { status: AIRunStatus }) {
+  if (status === "RUNNING")
+    return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent" />;
+  if (status === "COMPLETED")
+    return <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" />;
+  if (status === "FAILED" || status === "CANCELLED")
+    return <XCircle className="h-4 w-4 shrink-0 text-drift" />;
+  return <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />;
+}
+
+export function AgentRunHistory({
+  runs,
+  isLoading,
+  onViewRun,
+  workspaceId,
+  projectId,
+}: AgentRunHistoryProps) {
+  const [selectedRun, setSelectedRun] = useState<(typeof runs)[number] | null>(null);
   const [resultsDialogOpen, setResultsDialogOpen] = useState(false);
+  const [filter, setFilter] = useState<Filter>("ALL");
 
-  const handleViewRun = (run: typeof runs[number]) => {
+  const counts = {
+    ALL: runs.length,
+    RUNNING: runs.filter((r) => r.status === "RUNNING").length,
+    COMPLETED: runs.filter((r) => r.status === "COMPLETED").length,
+    FAILED: runs.filter((r) => r.status === "FAILED" || r.status === "CANCELLED").length,
+  };
+
+  const visible =
+    filter === "ALL"
+      ? runs
+      : filter === "FAILED"
+        ? runs.filter((r) => r.status === "FAILED" || r.status === "CANCELLED")
+        : runs.filter((r) => r.status === filter);
+
+  const handleViewRun = (run: (typeof runs)[number]) => {
     setSelectedRun(run);
     setResultsDialogOpen(true);
     onViewRun?.(run);
   };
+
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Recent Runs</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-lg border">
-                <Skeleton className="w-10 h-10 rounded-lg" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-32" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
-                <Skeleton className="h-6 w-20 rounded-full" />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-2">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-14 animate-pulse rounded-lg bg-muted/40" />
+        ))}
+      </div>
     );
   }
 
   if (!runs.length) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Recent Runs</CardTitle>
-          <CardDescription>No runs yet. Invoke an agent to get started.</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="rounded-xl border border-border bg-card px-6 py-16 text-center">
+        <div className="mx-auto mb-5 grid h-12 w-12 place-items-center rounded-full bg-muted text-muted-foreground">
+          <History className="h-5 w-5" />
+        </div>
+        <h3 className="font-display text-xl font-semibold text-foreground">
+          No runs yet.
+        </h3>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+          Invoke an agent and the trail of what ran, what cost, and what came
+          out lives here.
+        </p>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Recent Runs</CardTitle>
-          <Badge variant="secondary">{runs.length} runs</Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[400px] pr-4">
-          <div className="space-y-2">
-            {runs.map((run) => {
-              const status = statusConfig[run.status] || statusConfig.PENDING;
-              const StatusIcon = status.icon;
-              const outputCount = Array.isArray(run.output_artifacts) 
-                ? run.output_artifacts.length 
-                : 0;
+    <div className="space-y-5">
+      {/* Inline filter strip */}
+      <div className="flex flex-wrap gap-1">
+        {(
+          [
+            { k: "ALL", label: "All" },
+            { k: "RUNNING", label: "Running" },
+            { k: "COMPLETED", label: "Completed" },
+            { k: "FAILED", label: "Failed" },
+          ] as const
+        ).map((f) => (
+          <button
+            key={f.k}
+            onClick={() => setFilter(f.k)}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+              filter === f.k
+                ? "border-foreground bg-foreground text-background"
+                : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+            )}
+          >
+            {f.label}
+            <span className="font-mono tabular-nums opacity-70">{counts[f.k]}</span>
+          </button>
+        ))}
+      </div>
 
-              return (
-                <div 
-                  key={run.id} 
-                  className="group flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer"
-                  onClick={() => handleViewRun(run)}
-                >
-                  <div className={cn("p-2 rounded-lg", status.bgColor)}>
-                    <StatusIcon className={cn(
-                      "w-4 h-4",
-                      status.color,
-                      run.status === "RUNNING" && "animate-spin"
-                    )} />
+      {visible.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card px-6 py-12 text-center text-sm text-muted-foreground">
+          No {filter.toLowerCase()} runs.
+        </div>
+      ) : (
+        <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+          {visible.map((run) => {
+            const outputCount = Array.isArray(run.output_artifacts)
+              ? run.output_artifacts.length
+              : 0;
+            const agentName =
+              run.agent_config?.name ||
+              (run.metadata &&
+              typeof run.metadata === "object" &&
+              "generationType" in run.metadata
+                ? `${(run.metadata as { generationType: string }).generationType} Generator`
+                : "Unknown agent");
+
+            return (
+              <button
+                key={run.id}
+                onClick={() => handleViewRun(run)}
+                className="group flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/40"
+              >
+                <StatusIcon status={run.status} />
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {agentName}
+                    </p>
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                      {run.run_type.toLowerCase()}
+                    </span>
                   </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <Bot className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium truncate">
-                        {run.agent_config?.name || 
-                          (run.metadata && typeof run.metadata === 'object' && 'generationType' in run.metadata 
-                            ? `${(run.metadata as { generationType: string }).generationType} Generator` 
-                            : "Unknown Agent")}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                      {run.model && (
-                        <span className="flex items-center gap-1">
-                          <Brain className="w-3 h-3" />
-                          {run.model.display_name}
-                        </span>
-                      )}
-                      {run.started_at && (
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {formatDistanceToNow(new Date(run.started_at), { addSuffix: true })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    {run.status === "COMPLETED" && (
-                      <div className="text-right">
-                        <div className="flex items-center gap-1 text-sm">
-                          <FileText className="w-3 h-3 text-muted-foreground" />
-                          <span>{outputCount} outputs</span>
-                        </div>
-                        {run.total_cost !== null && run.total_cost > 0 && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Coins className="w-3 h-3" />
-                            ${run.total_cost.toFixed(4)}
-                          </div>
-                        )}
-                      </div>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {run.model?.display_name || "—"}
+                    {run.started_at && (
+                      <>
+                        {" · "}
+                        {formatDistanceToNow(new Date(run.started_at), {
+                          addSuffix: true,
+                        })}
+                      </>
                     )}
-                    
-                    {run.status === "FAILED" && (
-                      <span className="text-xs text-red-600 max-w-32 truncate">
-                        {run.error_message || "Failed"}
-                      </span>
+                    {run.status === "FAILED" && run.error_message && (
+                      <span className="text-drift"> · {run.error_message}</span>
                     )}
-                    
-                    <Badge 
-                      variant="outline" 
-                      className={cn("capitalize", status.color)}
-                    >
-                      {run.status.toLowerCase()}
-                    </Badge>
-                    
-                    <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
+                  </p>
                 </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
-      </CardContent>
+
+                <div className="hidden items-center gap-4 text-xs text-muted-foreground tabular-nums sm:flex">
+                  {run.status === "COMPLETED" && (
+                    <span>
+                      {outputCount} output{outputCount === 1 ? "" : "s"}
+                    </span>
+                  )}
+                  {run.total_cost !== null && run.total_cost > 0 && (
+                    <span>${run.total_cost.toFixed(4)}</span>
+                  )}
+                  {run.duration_ms !== null && run.duration_ms > 0 && (
+                    <span>{(run.duration_ms / 1000).toFixed(1)}s</span>
+                  )}
+                </div>
+
+                <ChevronRight className="h-4 w-4 text-muted-foreground/60 transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <AgentRunResultsDialog
         open={resultsDialogOpen}
@@ -185,6 +200,6 @@ export function AgentRunHistory({ runs, isLoading, onViewRun, workspaceId, proje
         workspaceId={workspaceId}
         projectId={projectId}
       />
-    </Card>
+    </div>
   );
 }

@@ -446,8 +446,9 @@ const AIAgentsPage = () => {
           )}
 
           {/* Tabs */}
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border">
-            <div className="flex overflow-x-auto">
+          <div className="mb-6 border-b border-border">
+            <div className="flex flex-wrap">
+
               {(
                 [
                   { k: "AGENTS", label: "Agents", icon: Bot, n: totalAgents },

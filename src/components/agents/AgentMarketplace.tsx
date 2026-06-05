@@ -38,6 +38,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AgentType, CreateAgentConfigInput } from "@/hooks/useAgentConfigs";
+import { cn } from "@/lib/utils";
 
 export interface AgentTemplate {
   id: string;
@@ -378,147 +379,165 @@ export function AgentMarketplace({
 
   const hasAgent = (type: AgentType) => existingAgentTypes.includes(type);
 
+  const categories = [
+    { k: "all" as const, label: "All", n: MARKETPLACE_TEMPLATES.length },
+    {
+      k: "core" as const,
+      label: "Core",
+      n: MARKETPLACE_TEMPLATES.filter((t) => t.category === "core").length,
+    },
+    {
+      k: "specialized" as const,
+      label: "Specialized",
+      n: MARKETPLACE_TEMPLATES.filter((t) => t.category === "specialized").length,
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
-          <Sparkles className="w-6 h-6 text-accent" />
-          Agent Marketplace
-        </h2>
-        <p className="text-muted-foreground">
-          Browse pre-built agent templates and add them to your project
+    <div className="space-y-8">
+      {/* Section header */}
+      <header>
+        <p className="mb-2 inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <Sparkles className="h-3 w-3" />
+          Marketplace
         </p>
+        <h2 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+          Battle-tested agents, ready to clone.
+        </h2>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+          Each template ships with a persona, system prompt, and guardrails.
+          Clone one, then tune it for your project.
+        </p>
+      </header>
+
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Search by name or capability…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search agents by name, capability..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Tabs 
-          value={selectedCategory} 
-          onValueChange={(v) => setSelectedCategory(v as typeof selectedCategory)}
-          className="w-auto"
-        >
-          <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="core">Core</TabsTrigger>
-            <TabsTrigger value="specialized">Specialized</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      {/* Category chips */}
+      <div className="flex flex-wrap gap-1">
+        {categories.map((c) => (
+          <button
+            key={c.k}
+            onClick={() => setSelectedCategory(c.k)}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+              selectedCategory === c.k
+                ? "border-foreground bg-foreground text-background"
+                : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+            )}
+          >
+            {c.label}
+            <span className="font-mono tabular-nums opacity-70">{c.n}</span>
+          </button>
+        ))}
       </div>
 
-      {/* Template Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      {/* Template grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredTemplates.map((template) => {
           const Icon = agentTypeIcons[template.agentType];
           const alreadyAdded = hasAgent(template.agentType);
-          
+
           return (
-            <Card 
-              key={template.id} 
-              className={`group relative overflow-hidden transition-all hover:shadow-lg hover:border-accent/50 ${
-                alreadyAdded ? "opacity-75" : ""
-              }`}
-            >
-              {template.isNew && (
-                <Badge className="absolute top-3 right-3 bg-accent text-accent-foreground">
-                  New
-                </Badge>
+            <div
+              key={template.id}
+              className={cn(
+                "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-colors",
+                alreadyAdded ? "opacity-70" : "hover:border-foreground/20"
               )}
-              
-              <CardHeader className="pb-3">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-accent/10">
-                    <Icon className="w-5 h-5 text-accent" />
+            >
+              <span className="absolute left-0 top-0 h-full w-[2px] bg-border" />
+
+              <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                      {template.category}
+                    </span>
+                    {template.isNew && (
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-accent">
+                        · New
+                      </span>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      {template.name}
-                      {alreadyAdded && (
-                        <CheckCircle2 className="w-4 h-4 text-green-500" />
-                      )}
-                    </CardTitle>
-                    <Badge 
-                      variant="outline" 
-                      className={`text-xs mt-1 ${categoryConfig[template.category].color}`}
-                    >
-                      {categoryConfig[template.category].label}
-                    </Badge>
-                  </div>
+                  <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-foreground">
+                    {template.name}
+                    {alreadyAdded && (
+                      <CheckCircle2 className="h-4 w-4 text-accent" />
+                    )}
+                  </h3>
                 </div>
-              </CardHeader>
-              
-              <CardContent className="pb-3">
-                <CardDescription className="line-clamp-2 mb-3">
+              </div>
+
+              <div className="flex-1 px-5 pb-4">
+                <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                   {template.description}
-                </CardDescription>
-                
-                <div className="flex flex-wrap gap-1">
+                </p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
                   {template.capabilities.slice(0, 3).map((cap) => (
-                    <Badge key={cap} variant="secondary" className="text-xs font-normal">
+                    <span
+                      key={cap}
+                      className="inline-flex items-center rounded-md border border-border bg-background px-2 py-0.5 text-xs text-muted-foreground"
+                    >
                       {cap}
-                    </Badge>
+                    </span>
                   ))}
                   {template.capabilities.length > 3 && (
-                    <Badge variant="secondary" className="text-xs font-normal">
+                    <span className="inline-flex items-center text-xs text-muted-foreground">
                       +{template.capabilities.length - 3}
-                    </Badge>
+                    </span>
                   )}
                 </div>
+              </div>
 
-                <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
-                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                  <span>{template.popularity}% popular</span>
-                </div>
-              </CardContent>
-              
-              <CardFooter className="gap-2 pt-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
+              <div className="flex items-center gap-3 border-t border-border px-5 py-3 text-xs text-muted-foreground">
+                <Star className="h-3 w-3 fill-current text-muted-foreground/60" />
+                <span className="tabular-nums">{template.popularity}% popular</span>
+              </div>
+
+              <div className="grid grid-cols-2 border-t border-border">
+                <button
                   onClick={() => setPreviewTemplate(template)}
+                  className="flex items-center justify-center gap-2 border-r border-border py-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
                 >
                   Preview
-                </Button>
-                <Button
-                  size="sm"
-                  className="flex-1 gap-1"
+                </button>
+                <button
                   onClick={() => onCloneTemplate(template)}
                   disabled={isLoading || alreadyAdded}
+                  className="flex items-center justify-center gap-2 py-3 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-foreground"
                 >
                   {alreadyAdded ? (
                     <>
-                      <CheckCircle2 className="w-3 h-3" />
+                      <CheckCircle2 className="h-3.5 w-3.5" />
                       Added
                     </>
                   ) : (
                     <>
-                      <Download className="w-3 h-3" />
+                      <Download className="h-3.5 w-3.5" />
                       Clone
                     </>
                   )}
-                </Button>
-              </CardFooter>
-            </Card>
+                </button>
+              </div>
+            </div>
           );
         })}
       </div>
 
       {filteredTemplates.length === 0 && (
-        <div className="text-center py-12 border rounded-lg bg-muted/30">
-          <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No templates found</h3>
-          <p className="text-muted-foreground">
-            Try adjusting your search or category filter
+        <div className="rounded-xl border border-border bg-card px-6 py-16 text-center">
+          <p className="text-sm text-muted-foreground">
+            No templates match your search.
           </p>
         </div>
       )}
@@ -534,6 +553,7 @@ export function AgentMarketplace({
     </div>
   );
 }
+
 
 interface TemplatePreviewDialogProps {
   template: AgentTemplate | null;
