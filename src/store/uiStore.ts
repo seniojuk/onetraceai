@@ -51,6 +51,16 @@ export const useUIStore = create<UIState>()(
       setOnboardingSeed: (seed) => set({ onboardingSeed: seed }),
       dismissedSetupChecklist: false,
       setDismissedSetupChecklist: (dismissed) => set({ dismissedSetupChecklist: dismissed }),
+      resetUserScopedState: () =>
+        set({
+          currentWorkspaceId: null,
+          currentProjectId: null,
+          showOnboarding: false,
+          onboardingSeed: "",
+          dismissedSetupChecklist: false,
+          artifactTypeFilter: [],
+          statusFilter: [],
+        }),
 
       graphViewMode: "hierarchy",
       setGraphViewMode: (mode) => set({ graphViewMode: mode }),
