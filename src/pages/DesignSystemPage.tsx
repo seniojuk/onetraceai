@@ -61,7 +61,7 @@ export default function DesignSystemPage() {
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
             Design System · v1.0
           </div>
-          <h1 className="font-geist text-[64px] leading-[1.02] tracking-[-0.04em] text-foreground">
+          <h1 className="font-display text-[64px] leading-[1.02] tracking-[-0.04em] text-foreground">
             A system for shipping
             <br />
             <AccentWord>enterprise software</AccentWord> with taste.
