@@ -144,7 +144,7 @@ const AuthPage = () => {
       : "Enter your email and we'll send you a link to reset your password.";
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-geist antialiased selection:bg-accent/20">
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-accent/20">
       {/* Slim top bar */}
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
@@ -152,7 +152,7 @@ const AuthPage = () => {
             <span className="grid h-7 w-7 place-items-center rounded-md bg-accent font-mono text-[11px] font-medium text-accent-foreground">
               OT
             </span>
-            <span className="font-geist text-[15px] font-medium tracking-[-0.01em] text-foreground">
+            <span className="font-sans text-[15px] font-medium tracking-[-0.01em] text-foreground">
               OneTrace <span className="text-muted-foreground">AI</span>
             </span>
           </Link>
@@ -177,7 +177,7 @@ const AuthPage = () => {
             <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
               {eyebrow}
             </span>
-            <h1 className="mt-4 font-geist text-[40px] leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[48px]">
+            <h1 className="mt-4 font-display text-[40px] leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[48px]">
               {heading}
             </h1>
             <p className="mt-4 text-[13.5px] leading-relaxed text-muted-foreground">

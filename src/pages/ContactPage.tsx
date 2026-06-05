@@ -106,7 +106,7 @@ const ContactPage = () => {
     formData.name && formData.email && formData.category && formData.subject && formData.message;
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-geist antialiased selection:bg-accent/20">
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-accent/20">
       <PublicNav />
 
       {/* Hero */}
@@ -114,7 +114,7 @@ const ContactPage = () => {
         <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
           Get in touch
         </span>
-        <h1 className="mx-auto mt-4 max-w-2xl font-geist text-[36px] leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[48px] md:text-[60px]">
+        <h1 className="mx-auto mt-4 max-w-2xl font-display text-[36px] leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[48px] md:text-[60px]">
           Talk to a <AccentWord>human.</AccentWord>
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-[13.5px] leading-relaxed text-muted-foreground sm:mt-5 sm:text-[14.5px]">
@@ -133,7 +133,7 @@ const ContactPage = () => {
                 <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-accent/10">
                   <CheckCircle2 className="h-7 w-7 text-accent" />
                 </div>
-                <h2 className="mt-5 font-geist text-[28px] leading-tight tracking-[-0.02em] text-foreground">
+                <h2 className="mt-5 font-display text-[28px] leading-tight tracking-[-0.02em] text-foreground">
                   Message <AccentWord>received.</AccentWord>
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-[13.5px] leading-relaxed text-muted-foreground">
@@ -155,7 +155,7 @@ const ContactPage = () => {
                   <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                     Send a message
                   </div>
-                  <h2 className="mt-1 font-geist text-[22px] font-medium tracking-[-0.01em] text-foreground">
+                  <h2 className="mt-1 font-display text-[22px] font-medium tracking-[-0.01em] text-foreground">
                     Tell us what you need.
                   </h2>
                 </div>

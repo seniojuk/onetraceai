@@ -115,15 +115,18 @@ export default {
       },
       fontFamily: {
         sans: [
-          "Aleo",
-          "ui-serif",
-          "Georgia",
-          "serif",
+          "Geist",
+          "Inter",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
         ],
         geist: [
-          "Aleo",
-          "ui-serif",
-          "serif",
+          "Geist",
+          "Inter",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
         ],
         serif: [
           "Aleo",
@@ -138,10 +141,11 @@ export default {
           "serif",
         ],
         body: [
-          "Aleo",
-          "ui-serif",
-          "Georgia",
-          "serif",
+          "Geist",
+          "Inter",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
         ],
         mono: [
           "Geist Mono",

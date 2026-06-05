@@ -64,14 +64,14 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-geist antialiased">
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased">
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
           <Link to="/" className="flex items-center gap-2">
             <span className="grid h-7 w-7 place-items-center rounded-md bg-accent font-mono text-[11px] font-medium text-accent-foreground">
               OT
             </span>
-            <span className="font-geist text-[15px] font-medium tracking-[-0.01em] text-foreground">
+            <span className="font-sans text-[15px] font-medium tracking-[-0.01em] text-foreground">
               OneTrace <span className="text-muted-foreground">AI</span>
             </span>
           </Link>
@@ -93,7 +93,7 @@ const ResetPasswordPage = () => {
           <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-accent">
             Set a new password
           </span>
-          <h1 className="mt-4 font-geist text-[40px] leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[48px]">
+          <h1 className="mt-4 font-display text-[40px] leading-[1.05] tracking-[-0.03em] text-foreground sm:text-[48px]">
             Choose a new <AccentWord>password.</AccentWord>
           </h1>
 

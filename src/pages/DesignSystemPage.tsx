@@ -25,7 +25,7 @@ export default function DesignSystemPage() {
     <div
       className={`${
         isLight ? "" : "dark"
-      } min-h-screen bg-background text-foreground font-geist antialiased`}
+      } min-h-screen bg-background text-foreground font-sans antialiased`}
     >
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -61,7 +61,7 @@ export default function DesignSystemPage() {
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
             Design System · v1.0
           </div>
-          <h1 className="font-geist text-[64px] leading-[1.02] tracking-[-0.04em] text-foreground">
+          <h1 className="font-display text-[64px] leading-[1.02] tracking-[-0.04em] text-foreground">
             A system for shipping
             <br />
             <AccentWord>enterprise software</AccentWord> with taste.
@@ -95,10 +95,10 @@ export default function DesignSystemPage() {
         </Section>
 
         {/* Typography */}
-        <Section eyebrow="02 — Typography" title="Geist Sans · Instrument Serif · Geist Mono">
+        <Section eyebrow="02 — Typography" title="Aleo · Geist Sans · Geist Mono">
           <div className="space-y-px overflow-hidden rounded-xl border border-border">
-            <TypeRow label="Display / 64" meta="Geist · -0.04em · 1.02">
-              <span className="font-geist text-[56px] leading-none tracking-[-0.04em] text-foreground">
+            <TypeRow label="Display / 64" meta="Aleo · -0.04em · 1.02">
+              <span className="font-display text-[56px] leading-none tracking-[-0.04em] text-foreground">
                 Confidence, not crossed fingers.
               </span>
             </TypeRow>
@@ -107,12 +107,12 @@ export default function DesignSystemPage() {
                 traceable by design
               </span>
             </TypeRow>
-            <TypeRow label="Heading / 24" meta="Geist · 500 · -0.02em">
+            <TypeRow label="Heading / 24" meta="Geist Sans · 500 · -0.02em">
               <span className="text-[22px] font-medium tracking-[-0.02em] text-foreground">
                 Every artifact has an owner.
               </span>
             </TypeRow>
-            <TypeRow label="Body / 14" meta="Geist · 400 · 1.6">
+            <TypeRow label="Body / 14" meta="Geist Sans · 400 · 1.6">
               <span className="text-[14px] leading-[1.6] text-muted-foreground">
                 OneTrace connects PRDs, stories, Jira, Git, and tests into one Artifact Graph —
                 so every commit has intent, and every release has proof.
@@ -206,7 +206,7 @@ export default function DesignSystemPage() {
             <Card>
               <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Coverage</span>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">94.2%</span>
+                <span className="font-display text-[40px] font-medium tracking-[-0.03em] text-foreground">94.2%</span>
                 <span className="text-[12px] text-accent">+2.1%</span>
               </div>
               <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -268,7 +268,7 @@ export default function DesignSystemPage() {
               <div key={t.k} className="rounded-xl border border-border bg-card p-5">
                 <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{t.k}</div>
                 <div className="mt-2 flex items-baseline gap-2">
-                  <span className="font-geist text-[22px] font-medium tracking-tight text-foreground">{t.v}</span>
+                  <span className="font-display text-[22px] font-medium tracking-tight text-foreground">{t.v}</span>
                   <span className="font-mono text-[11px] text-accent">{t.curve}</span>
                 </div>
                 <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">{t.d}</p>

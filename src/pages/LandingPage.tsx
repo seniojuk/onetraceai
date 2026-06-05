@@ -36,7 +36,7 @@ import glass03 from "@/assets/brand/onetrace-glass-03.png.asset.json";
  */
 const LandingPage = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground font-geist antialiased selection:bg-accent/20">
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-accent/20">
       <PublicNav />
       <Hero />
       <ProblemSection />
@@ -73,7 +73,7 @@ function Hero() {
         <Reveal
           as="h1"
           y={20}
-          className="relative z-10 max-w-[18ch] font-geist text-[40px] font-medium leading-[1.06] tracking-[-0.04em] text-foreground sm:text-[52px] md:text-[64px] lg:text-[72px]"
+          className="relative z-10 max-w-[18ch] font-display text-[40px] font-medium leading-[1.06] tracking-[-0.04em] text-foreground sm:text-[52px] md:text-[64px] lg:text-[72px]"
         >
           Ship AI-built software with <span className="text-accent">confidence</span>
         </Reveal>
@@ -295,7 +295,7 @@ function SolutionSection() {
             <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               02 / The solution
             </div>
-            <h2 className="mt-3 font-geist text-[36px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[44px]">
+            <h2 className="mt-3 font-display text-[36px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[44px]">
               An AI-native <AccentWord>system of record.</AccentWord>
             </h2>
             <p className="mt-6 max-w-md text-[14px] leading-relaxed text-muted-foreground">
@@ -377,7 +377,7 @@ function CoverageShowcase() {
                   Coverage overview
                 </span>
                 <div className="mt-3 flex items-baseline gap-2">
-                  <span className="font-geist text-[56px] font-medium leading-none tracking-[-0.04em] text-foreground">
+                  <span className="font-display text-[56px] font-medium leading-none tracking-[-0.04em] text-foreground">
                     94.2%
                   </span>
                   <span className="font-mono text-[12px] text-accent">+2.1%</span>
@@ -515,7 +515,7 @@ function PricingSection() {
                 )}
                 <div className="text-[13px] text-muted-foreground">{p.name}</div>
                 <div className="mt-3 flex items-baseline gap-1">
-                  <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">
+                  <span className="font-display text-[40px] font-medium tracking-[-0.03em] text-foreground">
                     {p.price}
                   </span>
                   {p.priceSuffix && (
@@ -581,7 +581,7 @@ function FinalCTA() {
             <Sparkles className="h-3.5 w-3.5 text-accent" />
             <span className="text-[12.5px] font-medium tracking-tight text-accent">Ready when you are</span>
           </div>
-          <h2 className="max-w-3xl font-geist text-[44px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[60px]">
+          <h2 className="max-w-3xl font-display text-[44px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[60px]">
             Ready to ship with{" "}
             <AccentWord>confidence?</AccentWord>
           </h2>

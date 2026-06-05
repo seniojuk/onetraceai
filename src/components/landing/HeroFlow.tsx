@@ -325,7 +325,7 @@ function Stat({
       <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </div>
-      <div className="mt-1 font-geist text-[16px] sm:text-[18px] font-medium tracking-tight text-foreground">
+      <div className="mt-1 font-display text-[16px] sm:text-[18px] font-medium tracking-tight text-foreground">
         {value}
       </div>
       <div
