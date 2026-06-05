@@ -1,392 +1,232 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { 
-  Network, 
-  ArrowRight, 
-  ArrowLeft, 
-  CheckCircle2, 
-  Loader2,
-  FolderPlus,
-  Sparkles,
-  AlertTriangle
-} from "lucide-react";
+import { Network, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AuthGuard } from "@/components/auth/AuthGuard";
-import { useCreateWorkspace } from "@/hooks/useWorkspaces";
+import { useCreateWorkspace, useWorkspaces } from "@/hooks/useWorkspaces";
 import { useCreateProject } from "@/hooks/useProjects";
+import { useCreateArtifact } from "@/hooks/useArtifacts";
+import { useCreateArtifactEdge, EdgeType } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
-import { useToast } from "@/hooks/use-toast";
-import { useUsageLimits } from "@/hooks/useUsageLimits";
+import { toast } from "sonner";
+import { SeedPromptStep } from "@/components/onboarding/SeedPromptStep";
+import { ChoosePathStep } from "@/components/onboarding/ChoosePathStep";
+import { GuidedWizard } from "@/components/onboarding/GuidedWizard";
+import { ACME_NOTES_DEMO } from "@/lib/demoProjectTemplate";
 
-type Step = "welcome" | "create-workspace" | "create-project" | "success";
+type Stage = "seed" | "workspace" | "path" | "wizard";
 
 const OnboardingPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { toast } = useToast();
-  
-  // Check if we're adding a project to existing workspace or creating a new workspace
-  const stepParam = searchParams.get("step");
-  const isAddingProjectOnly = stepParam === "create-project";
-  const isCreatingNewWorkspace = stepParam === "create-workspace";
-  
-  const { currentWorkspaceId, setCurrentWorkspace, setCurrentProject, setShowOnboarding } = useUIStore();
-  
-  const [currentStep, setCurrentStep] = useState<Step>(
-    isAddingProjectOnly && currentWorkspaceId 
-      ? "create-project" 
-      : isCreatingNewWorkspace 
-        ? "create-workspace" 
-        : "welcome"
-  );
-  const [workspaceName, setWorkspaceName] = useState("");
-  const [projectName, setProjectName] = useState("");
-  const [projectKey, setProjectKey] = useState("");
-  const [projectDescription, setProjectDescription] = useState("");
-  
+  const {
+    currentWorkspaceId,
+    setCurrentWorkspace,
+    setCurrentProject,
+    setShowOnboarding,
+    onboardingSeed,
+    setOnboardingSeed,
+  } = useUIStore();
+
+  const { data: workspaces, isLoading: loadingWorkspaces } = useWorkspaces();
   const createWorkspace = useCreateWorkspace();
   const createProject = useCreateProject();
-  const { canCreateProject, projectAtLimit, projectWarning, usage } = useUsageLimits();
+  const createArtifact = useCreateArtifact();
+  const createEdge = useCreateArtifactEdge();
 
-  // Use existing workspace if adding project only, otherwise use newly created one
-  const [createdWorkspaceId, setCreatedWorkspaceId] = useState<string | null>(
-    isAddingProjectOnly ? currentWorkspaceId : null
+  const stepParam = searchParams.get("step");
+  const isAddingProjectOnly = stepParam === "create-project" && !!currentWorkspaceId;
+
+  const [stage, setStage] = useState<Stage>(
+    isAddingProjectOnly ? "path" : onboardingSeed ? "path" : "seed",
   );
-  
-  // Sync workspace ID if it changes
-  useEffect(() => {
-    if (isAddingProjectOnly && currentWorkspaceId) {
-      setCreatedWorkspaceId(currentWorkspaceId);
-    }
-  }, [isAddingProjectOnly, currentWorkspaceId]);
+  const [workspaceName, setWorkspaceName] = useState("");
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(currentWorkspaceId);
+  const [seedingDemo, setSeedingDemo] = useState(false);
+  const [pathLoading, setPathLoading] = useState<"demo" | "real" | null>(null);
 
-  // Check if user already has workspaces and redirect to dashboard
+  // If a workspace already exists, sync the id
   useEffect(() => {
-    // Only redirect if not explicitly adding project or creating a new workspace
-    if (!isAddingProjectOnly && !isCreatingNewWorkspace && currentWorkspaceId) {
-      // User already has a workspace selected, redirect to dashboard
-      setShowOnboarding(false);
-      navigate("/dashboard");
+    if (currentWorkspaceId && !activeWorkspaceId) {
+      setActiveWorkspaceId(currentWorkspaceId);
+    } else if (!currentWorkspaceId && workspaces && workspaces.length > 0) {
+      setActiveWorkspaceId(workspaces[0].id);
+      setCurrentWorkspace(workspaces[0].id);
     }
-  }, [isAddingProjectOnly, isCreatingNewWorkspace, currentWorkspaceId, setShowOnboarding, navigate]);
+  }, [currentWorkspaceId, workspaces, activeWorkspaceId, setCurrentWorkspace]);
+
+  const handleSeedContinue = (seed: string) => {
+    setOnboardingSeed(seed);
+    if (!activeWorkspaceId) {
+      setStage("workspace");
+    } else {
+      setStage("path");
+    }
+  };
 
   const handleCreateWorkspace = async () => {
     if (!workspaceName.trim()) {
-      toast({ title: "Workspace name required", variant: "destructive" });
+      toast.error("Workspace name required");
       return;
     }
-
     try {
-      const workspace = await createWorkspace.mutateAsync({ name: workspaceName });
-      setCreatedWorkspaceId(workspace.id);
-      setCurrentWorkspace(workspace.id);
-      setCurrentStep("create-project");
-      toast({ title: "Workspace created!" });
-    } catch (error: any) {
-      toast({ title: "Error creating workspace", description: error.message, variant: "destructive" });
+      const ws = await createWorkspace.mutateAsync({ name: workspaceName.trim() });
+      setActiveWorkspaceId(ws.id);
+      setCurrentWorkspace(ws.id);
+      setStage("path");
+    } catch (e: any) {
+      toast.error(e.message || "Could not create workspace");
     }
   };
 
-  const handleCreateProject = async () => {
-    if (!projectName.trim() || !projectKey.trim() || !createdWorkspaceId) {
-      toast({ title: "Project name and key required", variant: "destructive" });
-      return;
-    }
-
-    // Check project limit (only when adding to existing workspace)
-    if (isAddingProjectOnly && !canCreateProject) {
-      toast({ 
-        title: "Project limit reached", 
-        description: "Upgrade your plan to create more projects.",
-        variant: "destructive" 
-      });
-      navigate("/billing");
-      return;
-    }
-
+  const handleDemo = async () => {
+    if (!activeWorkspaceId) return;
+    setSeedingDemo(true);
+    setPathLoading("demo");
     try {
       const project = await createProject.mutateAsync({
-        workspaceId: createdWorkspaceId,
-        name: projectName,
-        projectKey: projectKey,
-        description: projectDescription,
+        workspaceId: activeWorkspaceId,
+        name: ACME_NOTES_DEMO.projectName,
+        projectKey: ACME_NOTES_DEMO.projectKey,
+        description: ACME_NOTES_DEMO.description,
       });
       setCurrentProject(project.id);
-      setCurrentStep("success");
-      toast({ title: "Project created!" });
-    } catch (error: any) {
-      toast({ title: "Error creating project", description: error.message, variant: "destructive" });
+
+      // Seed artifacts in dependency order so parents exist before children
+      const idByKey: Record<string, string> = {};
+      for (const seed of ACME_NOTES_DEMO.artifacts) {
+        const created = await createArtifact.mutateAsync({
+          workspaceId: activeWorkspaceId,
+          projectId: project.id,
+          type: seed.type,
+          title: seed.title,
+          contentMarkdown: seed.markdown,
+        });
+        idByKey[seed.key] = created.id;
+        if (seed.parentKey && idByKey[seed.parentKey]) {
+          await createEdge.mutateAsync({
+            workspaceId: activeWorkspaceId,
+            projectId: project.id,
+            fromArtifactId: idByKey[seed.parentKey],
+            toArtifactId: created.id,
+            edgeType: EdgeType.CONTAINS,
+            source: "ONBOARDING_DEMO",
+          });
+        }
+      }
+
+      setShowOnboarding(false);
+      navigate("/graph?welcome=1");
+    } catch (e: any) {
+      toast.error(e.message || "Could not load demo");
+      setPathLoading(null);
+      setSeedingDemo(false);
     }
   };
 
-  const handleComplete = () => {
-    setShowOnboarding(false);
-    navigate("/dashboard");
+  const handleReal = () => {
+    setPathLoading("real");
+    setStage("wizard");
   };
 
-  // Simplified steps when adding project only
-  const steps = isAddingProjectOnly 
-    ? [
-        { id: "create-project", label: "New Project" },
-        { id: "success", label: "Complete" },
-      ]
-    : [
-        { id: "welcome", label: "Welcome" },
-        { id: "create-workspace", label: "Workspace" },
-        { id: "create-project", label: "Project" },
-        { id: "success", label: "Complete" },
-      ];
-
-  const currentStepIndex = steps.findIndex(s => s.id === currentStep);
+  if (loadingWorkspaces) {
+    return (
+      <AuthGuard>
+        <div className="flex min-h-screen items-center justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </div>
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex min-h-screen flex-col bg-background">
         {/* Header */}
-        <header className="border-b border-border py-4 px-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <Network className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold">OneTrace AI</span>
+        <header className="border-b border-border px-6 py-4">
+          <div className="flex items-center justify-between">
+            <button onClick={() => navigate("/")} className="flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                <Network className="h-4 w-4" />
+              </div>
+              <span className="font-display text-base font-semibold tracking-tight">OneTrace</span>
+            </button>
+            {stage !== "seed" && stage !== "wizard" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setStage(stage === "path" ? (activeWorkspaceId ? "seed" : "workspace") : "seed")}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Back
+              </Button>
+            )}
           </div>
         </header>
 
-        {/* Progress */}
-        <div className="border-b border-border py-4 px-6">
-          <div className="max-w-2xl mx-auto flex items-center justify-between">
-            {steps.map((step, i) => (
-              <div key={step.id} className="flex items-center">
-                <div className={`flex items-center gap-2 ${i <= currentStepIndex ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 ${
-                    i < currentStepIndex 
-                      ? 'bg-success border-success text-white' 
-                      : i === currentStepIndex 
-                        ? 'border-accent bg-accent text-white' 
-                        : 'border-muted-foreground/30'
-                  }`}>
-                    {i < currentStepIndex ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
-                  </div>
-                  <span className="hidden sm:block text-sm">{step.label}</span>
-                </div>
-                {i < steps.length - 1 && (
-                  <div className={`w-12 sm:w-24 h-0.5 mx-2 ${i < currentStepIndex ? 'bg-success' : 'bg-border'}`} />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Content */}
-        <div className="flex-1 flex items-center justify-center p-6">
-          <Card className="w-full max-w-lg">
-            {currentStep === "welcome" && (
-              <>
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="w-8 h-8 text-white" />
-                  </div>
-                  <CardTitle className="text-2xl">Let's make your AI builds traceable</CardTitle>
-                  <CardDescription>
-                    Set up your workspace in minutes. Connect Jira + Git and generate your first traceable stories.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-3">
-                    {[
-                      "Create your workspace",
-                      "Set up your first project",
-                      "Connect integrations (optional)",
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                        <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-xs font-medium text-accent">
-                          {i + 1}
-                        </div>
-                        <span className="text-sm">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <Button className="w-full" onClick={() => setCurrentStep("create-workspace")}>
-                    Start Setup
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </>
-            )}
+        <main className="flex flex-1 items-center justify-center px-6 py-16">
+          {stage === "seed" && (
+            <SeedPromptStep initialValue={onboardingSeed} onContinue={handleSeedContinue} />
+          )}
 
-            {currentStep === "create-workspace" && (
-              <>
-                <CardHeader>
-                  <CardTitle>Create your workspace</CardTitle>
-                  <CardDescription>
-                    A workspace is where your team collaborates. You can invite others later.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="workspaceName">Workspace name</Label>
-                    <Input
-                      id="workspaceName"
-                      placeholder="e.g., Acme Corp"
-                      value={workspaceName}
-                      onChange={(e) => setWorkspaceName(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => setCurrentStep("welcome")}>
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      Back
-                    </Button>
-                    <Button 
-                      className="flex-1" 
-                      onClick={handleCreateWorkspace}
-                      disabled={createWorkspace.isPending}
-                    >
-                      {createWorkspace.isPending ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        <FolderPlus className="w-4 h-4 mr-2" />
-                      )}
-                      Create Workspace
-                    </Button>
-                  </div>
-                </CardContent>
-              </>
-            )}
+          {stage === "workspace" && (
+            <div className="mx-auto w-full max-w-md animate-rise-in">
+              <h1 className="font-display text-[36px] font-semibold leading-tight tracking-tight text-foreground sm:text-[44px]">
+                Name your workspace.
+              </h1>
+              <p className="mt-3 text-[14px] text-muted-foreground">
+                This is where your team will live. You can invite people later.
+              </p>
+              <div className="mt-8 space-y-3">
+                <Label htmlFor="wsname">Workspace name</Label>
+                <Input
+                  id="wsname"
+                  autoFocus
+                  value={workspaceName}
+                  onChange={(e) => setWorkspaceName(e.target.value)}
+                  placeholder="Acme Corp"
+                />
+              </div>
+              <div className="mt-8 flex justify-end">
+                <Button
+                  variant="accent"
+                  size="lg"
+                  onClick={handleCreateWorkspace}
+                  disabled={!workspaceName.trim() || createWorkspace.isPending}
+                  className="animate-eye-pull"
+                >
+                  {createWorkspace.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  Create workspace
+                </Button>
+              </div>
+            </div>
+          )}
 
-            {currentStep === "create-project" && (
-              <>
-                <CardHeader>
-                  <CardTitle>{isAddingProjectOnly ? "Create a new project" : "Create your first project"}</CardTitle>
-                  <CardDescription>
-                    {isAddingProjectOnly 
-                      ? "Add another project to your workspace."
-                      : "Projects contain your PRDs, stories, and traceability data."}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Limit Reached Warning */}
-                  {isAddingProjectOnly && projectAtLimit && (
-                    <Alert className="border-destructive/50 bg-destructive/5">
-                      <AlertTriangle className="h-4 w-4 text-destructive" />
-                      <AlertDescription className="flex items-center justify-between">
-                        <span className="text-destructive">
-                          You've reached your project limit ({usage?.projects.used}/{usage?.projects.limit}).
-                        </span>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="border-destructive/50 text-destructive hover:bg-destructive/10"
-                          onClick={() => navigate("/billing")}
-                        >
-                          Upgrade Plan
-                        </Button>
-                      </AlertDescription>
-                    </Alert>
-                  )}
+          {stage === "path" && (
+            <ChoosePathStep
+              onDemo={handleDemo}
+              onReal={handleReal}
+              isLoading={seedingDemo || pathLoading === "real"}
+              loadingPath={pathLoading}
+            />
+          )}
 
-                  {/* Approaching Limit Warning */}
-                  {isAddingProjectOnly && projectWarning && !projectAtLimit && usage?.projects && (
-                    <Alert className="border-warning/50 bg-warning/5">
-                      <Sparkles className="h-4 w-4 text-warning" />
-                      <AlertDescription className="flex items-center justify-between">
-                        <span className="text-warning">
-                          You're approaching your project limit ({usage.projects.used}/{usage.projects.limit} used).
-                        </span>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="border-warning/50 text-warning hover:bg-warning/10"
-                          onClick={() => navigate("/billing")}
-                        >
-                          Upgrade Plan
-                        </Button>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  <div className="space-y-2">
-                    <Label htmlFor="projectName">Project name</Label>
-                    <Input
-                      id="projectName"
-                      placeholder="e.g., Mobile App v2"
-                      value={projectName}
-                      onChange={(e) => setProjectName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="projectKey">Project key</Label>
-                    <Input
-                      id="projectKey"
-                      placeholder="e.g., MOBILE"
-                      value={projectKey}
-                      onChange={(e) => setProjectKey(e.target.value.toUpperCase().replace(/[^A-Z]/g, ""))}
-                      maxLength={10}
-                    />
-                    <p className="text-xs text-muted-foreground">Used in artifact IDs like MOBILE-STORY-0001</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="projectDescription">Description (optional)</Label>
-                    <Textarea
-                      id="projectDescription"
-                      placeholder="What is this project about?"
-                      value={projectDescription}
-                      onChange={(e) => setProjectDescription(e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex gap-3">
-                    {isAddingProjectOnly ? (
-                      <Button variant="outline" onClick={() => navigate(-1)}>
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Cancel
-                      </Button>
-                    ) : (
-                      <Button variant="outline" onClick={() => setCurrentStep("create-workspace")}>
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back
-                      </Button>
-                    )}
-                    <Button 
-                      className="flex-1" 
-                      onClick={handleCreateProject}
-                      disabled={createProject.isPending || (isAddingProjectOnly && projectAtLimit)}
-                    >
-                      {createProject.isPending ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : null}
-                      {isAddingProjectOnly && projectAtLimit ? "Limit Reached" : "Create Project"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </>
-            )}
-
-            {currentStep === "success" && (
-              <>
-                <CardHeader className="text-center">
-                  <div className="w-16 h-16 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle2 className="w-8 h-8 text-success" />
-                  </div>
-                  <CardTitle className="text-2xl">You're all set!</CardTitle>
-                  <CardDescription>
-                    Your workspace and project are ready. Start creating traceable artifacts.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button className="w-full" onClick={handleComplete}>
-                    Go to Dashboard
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </>
-            )}
-          </Card>
-        </div>
+          {stage === "wizard" && activeWorkspaceId && (
+            <GuidedWizard
+              workspaceId={activeWorkspaceId}
+              seed={onboardingSeed}
+              onExit={() => {
+                setPathLoading(null);
+                setStage("path");
+              }}
+            />
+          )}
+        </main>
       </div>
     </AuthGuard>
   );
