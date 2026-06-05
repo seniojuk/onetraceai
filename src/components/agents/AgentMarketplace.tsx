@@ -38,6 +38,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AgentType, CreateAgentConfigInput } from "@/hooks/useAgentConfigs";
+import { cn } from "@/lib/utils";
 
 export interface AgentTemplate {
   id: string;
