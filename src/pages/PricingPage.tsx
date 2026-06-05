@@ -214,9 +214,9 @@ function TierCard({ p }: { p: Tier }) {
       >
         {p.eyebrow}
       </div>
-      <h3 className="mt-5 font-geist text-[20px] font-medium tracking-[-0.01em] text-foreground">{p.name}</h3>
+      <h3 className="mt-5 font-display text-[20px] font-medium tracking-[-0.01em] text-foreground">{p.name}</h3>
       <div className="mt-2 flex items-baseline gap-1">
-        <span className="font-geist text-[40px] font-medium tracking-[-0.03em] text-foreground">{p.price}</span>
+        <span className="font-display text-[40px] font-medium tracking-[-0.03em] text-foreground">{p.price}</span>
         {p.priceSuffix && <span className="text-[13px] text-muted-foreground">{p.priceSuffix}</span>}
       </div>
 
@@ -393,7 +393,7 @@ function FinalCTA() {
           className="pointer-events-none absolute -bottom-1/2 -left-1/4 h-[800px] w-[800px] rounded-full bg-[radial-gradient(circle_at_center,hsl(var(--accent)/0.02)_0%,transparent_70%)] blur-2xl"
         />
         <div className="relative flex flex-col items-center">
-          <h2 className="max-w-3xl font-geist text-[44px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[60px]">
+          <h2 className="max-w-3xl font-display text-[44px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[60px]">
             Start free. <AccentWord>Upgrade anytime.</AccentWord>
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
@@ -426,12 +426,12 @@ function FinalCTA() {
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground font-geist antialiased selection:bg-accent/20">
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-accent/20">
       <PublicNav />
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pt-20 pb-16 text-center">
-        <h1 className="mx-auto mt-4 max-w-3xl font-geist text-[52px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[64px]">
+        <h1 className="mx-auto mt-4 max-w-3xl font-display text-[52px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[64px]">
           Start free. <AccentWord>Upgrade anytime.</AccentWord>
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-[14.5px] leading-relaxed text-muted-foreground">
@@ -467,7 +467,7 @@ export default function PricingPage() {
         <div className="rounded-2xl border border-border bg-muted/30 p-8 md:p-10">
           <div className="grid gap-10 md:grid-cols-[1fr_2fr]">
             <div>
-              <h2 className="font-geist text-[26px] leading-tight tracking-[-0.02em] md:text-[30px]">
+              <h2 className="font-display text-[26px] leading-tight tracking-[-0.02em] md:text-[30px]">
                 What counts as a <AccentWord>unit?</AccentWord>
               </h2>
               <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">
@@ -499,7 +499,7 @@ export default function PricingPage() {
       {/* Compare */}
       <section className="mx-auto mt-24 max-w-5xl px-6">
         <div className="mb-8 text-center">
-          <h2 className="font-geist text-[36px] leading-tight tracking-[-0.025em] md:text-[42px]">
+          <h2 className="font-display text-[36px] leading-tight tracking-[-0.025em] md:text-[42px]">
             Every feature, side by side.
           </h2>
         </div>
@@ -509,7 +509,7 @@ export default function PricingPage() {
       {/* FAQ */}
       <section className="mx-auto mt-24 max-w-3xl px-6">
         <div className="mb-8 text-center">
-          <h2 className="font-geist text-[36px] leading-tight tracking-[-0.025em]">
+          <h2 className="font-display text-[36px] leading-tight tracking-[-0.025em]">
             Common questions.
           </h2>
         </div>

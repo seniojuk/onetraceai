@@ -64,7 +64,7 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-geist antialiased">
+    <div className="min-h-screen bg-background text-foreground font-sans antialiased">
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
           <Link to="/" className="flex items-center gap-2">
