@@ -545,7 +545,7 @@ const AIAgentsPage = () => {
                         {g.items.map((agent) => (
                           <AgentCard
                             key={agent.id}
-                            agent={agent}
+                            agent={agent as Parameters<typeof AgentCard>[0]["agent"]}
                             onConfigure={handleConfigureAgent}
                             onInvoke={handleInvokeAgent}
                             onToggle={handleToggleAgent}
