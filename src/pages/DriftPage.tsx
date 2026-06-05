@@ -375,9 +375,6 @@ const DriftPage = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="hidden font-mono text-xs text-muted-foreground sm:inline">
-                Last scan {relativeTime(lastDetected)}
-              </span>
               <Button
                 variant="accent"
                 onClick={handleScan}
