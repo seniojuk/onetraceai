@@ -16,6 +16,10 @@ interface UIState {
   // Onboarding
   showOnboarding: boolean;
   setShowOnboarding: (show: boolean) => void;
+  onboardingSeed: string;
+  setOnboardingSeed: (seed: string) => void;
+  dismissedSetupChecklist: boolean;
+  setDismissedSetupChecklist: (dismissed: boolean) => void;
 
   // Graph view settings
   graphViewMode: "hierarchy" | "force" | "radial";
@@ -31,26 +35,25 @@ interface UIState {
 export const useUIStore = create<UIState>()(
   persist(
     (set) => ({
-      // Sidebar
       sidebarCollapsed: false,
       toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
-      // Current selections
       currentWorkspaceId: null,
       currentProjectId: null,
       setCurrentWorkspace: (id) => set({ currentWorkspaceId: id, currentProjectId: null }),
       setCurrentProject: (id) => set({ currentProjectId: id }),
 
-      // Onboarding
       showOnboarding: false,
       setShowOnboarding: (show) => set({ showOnboarding: show }),
+      onboardingSeed: "",
+      setOnboardingSeed: (seed) => set({ onboardingSeed: seed }),
+      dismissedSetupChecklist: false,
+      setDismissedSetupChecklist: (dismissed) => set({ dismissedSetupChecklist: dismissed }),
 
-      // Graph view
       graphViewMode: "hierarchy",
       setGraphViewMode: (mode) => set({ graphViewMode: mode }),
 
-      // Filters
       artifactTypeFilter: [],
       setArtifactTypeFilter: (types) => set({ artifactTypeFilter: types }),
       statusFilter: [],
@@ -63,6 +66,8 @@ export const useUIStore = create<UIState>()(
         currentProjectId: state.currentProjectId,
         showOnboarding: state.showOnboarding,
         sidebarCollapsed: state.sidebarCollapsed,
+        onboardingSeed: state.onboardingSeed,
+        dismissedSetupChecklist: state.dismissedSetupChecklist,
       }),
     }
   )
