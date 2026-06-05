@@ -143,6 +143,19 @@ const ArtifactsPage = () => {
     };
   }, [artifacts]);
 
+  const heroState = useMemo(() => {
+    if (pulse.total === 0) {
+      return { pillLabel: "Empty", dotClass: "bg-muted-foreground/40", pulse: false, subline: "No artifacts yet. Start with a PRD or generate stories from an idea." };
+    }
+    if (pulse.blocked > 0) {
+      return { pillLabel: "Blocked", dotClass: "bg-destructive", pulse: true, subline: `${pulse.blocked} blocked, ${pulse.inProgress} in flight across ${pulse.total} artifacts.` };
+    }
+    if (pulse.inProgress > 0) {
+      return { pillLabel: "In flight", dotClass: "bg-coverage-partial", pulse: true, subline: `${pulse.inProgress} in flight, ${pulse.done} done across ${pulse.total} artifacts.` };
+    }
+    return { pillLabel: "Healthy", dotClass: "bg-accent", pulse: false, subline: `${pulse.total} artifacts. ${pulse.done} done — pick what to build next.` };
+  }, [pulse]);
+
   // ── Hierarchy tree ──────────────────────────────────────────────────────
   const treeData = useMemo(() => {
     if (!hierarchyMode || !artifacts || !projectEdges) return null;
