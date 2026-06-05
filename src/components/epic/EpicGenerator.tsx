@@ -1040,9 +1040,9 @@ export const EpicGenerator = ({ onComplete, initialPRD, sourceArtifact }: EpicGe
                                   </Button>
                                   <Button
                                     size="sm"
+                                    variant="accent"
                                     onClick={() => handleSaveSingleEpic(index)}
                                     disabled={savingEpicIndex === index}
-                                    className="bg-accent hover:bg-accent/90"
                                   >
                                     {savingEpicIndex === index ? (
                                       <Loader2 className="w-4 h-4 mr-1 animate-spin" />
