@@ -11,12 +11,12 @@ import { useCreateArtifact } from "@/hooks/useArtifacts";
 import { useCreateArtifactEdge, EdgeType } from "@/hooks/useArtifactEdges";
 import { useUIStore } from "@/store/uiStore";
 import { toast } from "sonner";
-import { SeedPromptStep } from "@/components/onboarding/SeedPromptStep";
+
 import { ChoosePathStep } from "@/components/onboarding/ChoosePathStep";
 import { GuidedWizard } from "@/components/onboarding/GuidedWizard";
 import { ACME_NOTES_DEMO } from "@/lib/demoProjectTemplate";
 
-type Stage = "seed" | "workspace" | "path" | "wizard";
+type Stage = "workspace" | "path" | "wizard";
 
 const OnboardingPage = () => {
   const navigate = useNavigate();
@@ -26,8 +26,6 @@ const OnboardingPage = () => {
     setCurrentWorkspace,
     setCurrentProject,
     setShowOnboarding,
-    onboardingSeed,
-    setOnboardingSeed,
   } = useUIStore();
 
   const { data: workspaces, isLoading: loadingWorkspaces } = useWorkspaces();
@@ -40,7 +38,7 @@ const OnboardingPage = () => {
   const isAddingProjectOnly = stepParam === "create-project" && !!currentWorkspaceId;
 
   const [stage, setStage] = useState<Stage>(
-    isAddingProjectOnly ? "path" : onboardingSeed ? "path" : "seed",
+    isAddingProjectOnly || currentWorkspaceId ? "path" : "workspace",
   );
   const [workspaceName, setWorkspaceName] = useState("");
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(currentWorkspaceId);
@@ -57,14 +55,6 @@ const OnboardingPage = () => {
     }
   }, [currentWorkspaceId, workspaces, activeWorkspaceId, setCurrentWorkspace]);
 
-  const handleSeedContinue = (seed: string) => {
-    setOnboardingSeed(seed);
-    if (!activeWorkspaceId) {
-      setStage("workspace");
-    } else {
-      setStage("path");
-    }
-  };
 
   const handleCreateWorkspace = async () => {
     if (!workspaceName.trim()) {
@@ -157,11 +147,11 @@ const OnboardingPage = () => {
               </div>
               <span className="font-display text-base font-semibold tracking-tight">OneTrace</span>
             </button>
-            {stage !== "seed" && stage !== "wizard" && (
+            {stage === "path" && !activeWorkspaceId && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setStage(stage === "path" ? (activeWorkspaceId ? "seed" : "workspace") : "seed")}
+                onClick={() => setStage("workspace")}
                 className="text-muted-foreground hover:text-foreground"
               >
                 <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Back
@@ -172,9 +162,6 @@ const OnboardingPage = () => {
 
         {/* Content */}
         <main className="flex flex-1 items-center justify-center px-6 py-16">
-          {stage === "seed" && (
-            <SeedPromptStep initialValue={onboardingSeed} onContinue={handleSeedContinue} />
-          )}
 
           {stage === "workspace" && (
             <div className="mx-auto w-full max-w-md animate-rise-in">
@@ -223,7 +210,7 @@ const OnboardingPage = () => {
           {stage === "wizard" && activeWorkspaceId && (
             <GuidedWizard
               workspaceId={activeWorkspaceId}
-              seed={onboardingSeed}
+              seed=""
               onExit={() => {
                 setPathLoading(null);
                 setStage("path");
