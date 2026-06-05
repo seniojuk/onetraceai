@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowUpRight, Menu, AlertTriangle, Sparkles, Workflow } from "lucide-react";
+import { ArrowUpRight, Menu, AlertTriangle, Sparkles, Workflow, LayoutDashboard } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme/ThemeProvider";
+import { useAuth } from "@/hooks/useAuth";
 
 const PRODUCT_ITEMS = [
   {
@@ -30,6 +31,7 @@ export function PublicNav() {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const { pathname } = useLocation();
+  const { user } = useAuth();
   const onHome = pathname === "/";
 
   useEffect(() => {
@@ -159,18 +161,29 @@ export function PublicNav() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Link
-            to="/auth?mode=login"
-            className="hidden text-[13px] text-muted-foreground hover:text-foreground sm:inline"
-          >
-            Sign in
-          </Link>
-          <Link
-            to="/auth?mode=signup"
-            className="btn-3d btn-3d-primary inline-flex h-8 items-center gap-1 px-3 text-[12.5px] font-medium"
-          >
-            Start free <ArrowUpRight className="h-3 w-3" />
-          </Link>
+          {user ? (
+            <Link
+              to="/dashboard"
+              className="btn-3d btn-3d-primary inline-flex h-8 items-center gap-1 px-3 text-[12.5px] font-medium"
+            >
+              Dashboard <LayoutDashboard className="h-3 w-3" />
+            </Link>
+          ) : (
+            <>
+              <Link
+                to="/auth?mode=login"
+                className="hidden text-[13px] text-muted-foreground hover:text-foreground sm:inline"
+              >
+                Sign in
+              </Link>
+              <Link
+                to="/auth?mode=signup"
+                className="btn-3d btn-3d-primary inline-flex h-8 items-center gap-1 px-3 text-[12.5px] font-medium"
+              >
+                Start free <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            </>
+          )}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <button className="md:hidden" aria-label="Open menu">
@@ -207,6 +220,18 @@ export function PublicNav() {
                 >
                   Contact
                 </Link>
+                {user && (
+                  <>
+                    <div className="my-2 border-t border-border" />
+                    <Link
+                      to="/dashboard"
+                      onClick={() => setOpen(false)}
+                      className="rounded-md px-2 py-2 text-base font-medium text-foreground/90 hover:bg-muted/50"
+                    >
+                      Dashboard
+                    </Link>
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>
