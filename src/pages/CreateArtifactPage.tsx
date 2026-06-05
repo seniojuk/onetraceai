@@ -181,7 +181,7 @@ const CreateArtifactPage = () => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <h1 className="text-2xl font-bold text-foreground">Create Artifact</h1>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Create Artifact</h1>
           </div>
 
           <div className="space-y-6">
