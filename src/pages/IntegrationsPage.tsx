@@ -354,15 +354,16 @@ const IntegrationsPage = () => {
                             isDegraded && "border-warning/50 bg-warning/5"
                           )}
                         >
-                          {/* Pro Badge for premium integrations */}
+                          {/* Plan badge for premium integrations */}
                           {needsUpgrade && integration.status !== "coming_soon" && (
                             <div className="absolute top-2 right-2">
                               <Badge className="bg-primary/10 text-primary border-primary/30">
                                 <Crown className="w-3 h-3 mr-1" />
-                                Pro
+                                {getRequiredPlanName(integration.id as any)}
                               </Badge>
                             </div>
                           )}
+
                           <CardContent className="pt-6">
                             <div className="flex items-start gap-4">
                               <img 
