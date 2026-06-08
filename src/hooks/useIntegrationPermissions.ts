@@ -115,3 +115,13 @@ export function isFeatureAvailable(
   if (planId === "team" || planId === "starter") return baseFeatures.includes(feature);
   return false;
 }
+
+// Returns the minimum plan name required for a given integration feature.
+export function getRequiredPlanName(
+  feature: "jira" | "github" | "slack" | "sso" | "scim" | "audit_log" | "custom_llm"
+): string {
+  if (feature === "jira" || feature === "github") return "Starter";
+  if (feature === "slack" || feature === "audit_log") return "Growth";
+  return "Enterprise";
+}
+

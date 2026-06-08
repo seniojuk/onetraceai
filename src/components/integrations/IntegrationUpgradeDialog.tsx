@@ -21,7 +21,7 @@ export function IntegrationUpgradeDialog({
   open,
   onOpenChange,
   integrationName,
-  requiredPlan = "Pro",
+  requiredPlan = "Starter",
 }: IntegrationUpgradeDialogProps) {
   const navigate = useNavigate();
 
@@ -41,10 +41,10 @@ export function IntegrationUpgradeDialog({
             Upgrade to Connect {integrationName}
           </DialogTitle>
           <DialogDescription className="text-center">
-            {integrationName} integration is available on {requiredPlan} and
-            Enterprise plans. Upgrade to sync your {integrationName} data with
-            OneTrace.
+            {integrationName} integration is available on the {requiredPlan} plan
+            and above. Upgrade to sync your {integrationName} data with OneTrace.
           </DialogDescription>
+
         </DialogHeader>
 
         <div className="space-y-3 py-4">

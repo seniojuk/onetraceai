@@ -30,7 +30,7 @@ import { useJiraConnection, useJiraProjectLink, useJiraDisconnect } from "@/hook
 import { JiraSetupWizard, JiraConfigurationDialog, JiraConflictList } from "@/components/integrations/jira";
 import { IntegrationUpgradeDialog } from "@/components/integrations/IntegrationUpgradeDialog";
 import { useUIStore } from "@/store/uiStore";
-import { useIntegrationPermissions, isFeatureAvailable } from "@/hooks/useIntegrationPermissions";
+import { useIntegrationPermissions, isFeatureAvailable, getRequiredPlanName } from "@/hooks/useIntegrationPermissions";
 import { useGitHubConnection, useGitHubOAuthInit, useGitHubDisconnect } from "@/hooks/useGitHubConnection";
 import { GitHubSetupWizard, GitHubConfigPanel, GitHubActivityFeed, CICoveragePanel } from "@/components/integrations/github";
 import { useGitHubRepoLinks } from "@/hooks/useGitHubRepoLinks";
@@ -106,6 +106,8 @@ const IntegrationsPage = () => {
   const [showJiraConfig, setShowJiraConfig] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [upgradeIntegrationName, setUpgradeIntegrationName] = useState("");
+  const [upgradeRequiredPlan, setUpgradeRequiredPlan] = useState("Starter");
+
   const [showGitHubConfig, setShowGitHubConfig] = useState(false);
   const [showGitHubRepoPicker, setShowGitHubRepoPicker] = useState(false);
 
@@ -174,6 +176,8 @@ const IntegrationsPage = () => {
     // Check if plan upgrade is required for this integration
     if (requiresUpgrade(integration.id)) {
       setUpgradeIntegrationName(integration.name);
+      setUpgradeRequiredPlan(getRequiredPlanName(integration.id as any));
+
       setShowUpgradeDialog(true);
       return;
     }
@@ -354,15 +358,16 @@ const IntegrationsPage = () => {
                             isDegraded && "border-warning/50 bg-warning/5"
                           )}
                         >
-                          {/* Pro Badge for premium integrations */}
+                          {/* Plan badge for premium integrations */}
                           {needsUpgrade && integration.status !== "coming_soon" && (
                             <div className="absolute top-2 right-2">
                               <Badge className="bg-primary/10 text-primary border-primary/30">
                                 <Crown className="w-3 h-3 mr-1" />
-                                Pro
+                                {getRequiredPlanName(integration.id as any)}
                               </Badge>
                             </div>
                           )}
+
                           <CardContent className="pt-6">
                             <div className="flex items-start gap-4">
                               <img 
@@ -604,7 +609,7 @@ const IntegrationsPage = () => {
             open={showUpgradeDialog}
             onOpenChange={setShowUpgradeDialog}
             integrationName={upgradeIntegrationName}
-            requiredPlan="Pro"
+            requiredPlan={upgradeRequiredPlan}
           />
         </div>
       </AppLayout>
