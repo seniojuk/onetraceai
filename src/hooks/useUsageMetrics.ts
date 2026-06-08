@@ -48,7 +48,8 @@ export function useUsageMetrics(workspaceId: string | undefined, planId: string 
         const { count } = await supabase
           .from("artifacts")
           .select("*", { count: "exact", head: true })
-          .in("project_id", projectIds);
+          .in("project_id", projectIds)
+          .neq("status", "ARCHIVED");
         artifactCount = count || 0;
       }
 
