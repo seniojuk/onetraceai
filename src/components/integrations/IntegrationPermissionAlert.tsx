@@ -31,7 +31,7 @@ export function IntegrationPermissionAlert({
       <ShieldAlert className="h-4 w-4 text-primary" />
       <AlertTitle>Upgrade Required</AlertTitle>
       <AlertDescription>
-        Integrations are available on {requiredPlan} and Enterprise plans.
+        Integrations are available on the {requiredPlan} plan and above.
         Upgrade your workspace to access this feature.
       </AlertDescription>
     </Alert>
