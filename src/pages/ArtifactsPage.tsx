@@ -882,22 +882,42 @@ const ArtifactsPage = () => {
           />
         )}
 
-        <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialog open={confirmArchiveOpen} onOpenChange={setConfirmArchiveOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete {selectedCount} artifact(s)?</AlertDialogTitle>
+              <AlertDialogTitle>Archive {selectedCount} artifact(s)?</AlertDialogTitle>
               <AlertDialogDescription>
-                The selected artifacts will be archived and hidden from views. Lineage edges remain intact and child artifacts will keep their parent reference. This action can be reversed by changing the status back from Archived.
+                Archived artifacts are hidden from the default views but kept in the database. You can view and restore them from the Archived view, and they no longer count toward your plan limit.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isMutating}>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={(e) => { e.preventDefault(); handleBulkDelete(); }}
-                disabled={isDeleting}
+                onClick={(e) => { e.preventDefault(); handleBulkArchive(); }}
+                disabled={isMutating}
+              >
+                {isMutating ? "Archiving..." : "Archive"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={confirmHardDeleteOpen} onOpenChange={setConfirmHardDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Permanently delete {selectedCount} artifact(s)?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action is irreversible. The selected artifacts will be removed from the database along with their lineage edges, versions, and file associations. Child artifacts will lose their parent reference and become orphans.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isMutating}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); handleBulkHardDelete(); }}
+                disabled={isMutating}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {isDeleting ? "Deleting..." : "Delete"}
+                {isMutating ? "Deleting..." : "Delete permanently"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
