@@ -578,6 +578,22 @@ const ArtifactsPage = () => {
                     </Button>
                   )}
 
+                  {/* Archived toggle */}
+                  <Button
+                    variant={showArchived ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setShowArchived((v) => !v);
+                      setSelectedArtifacts(new Set());
+                      setHierarchyMode(false);
+                    }}
+                    className="h-9 text-[12px]"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                    {showArchived ? "Viewing archived" : "Archived"}
+                  </Button>
+
+
                   {/* View toggle */}
                   <div className="flex border border-border rounded-md overflow-hidden h-9">
                     <button
