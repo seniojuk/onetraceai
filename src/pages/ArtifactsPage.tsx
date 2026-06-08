@@ -104,7 +104,8 @@ const ArtifactsPage = () => {
   const activeTab = searchParams.get("tab") || "artifacts";
 
   const { currentProjectId, artifactTypeFilter, setArtifactTypeFilter, statusFilter, setStatusFilter } = useUIStore();
-  const { data: artifacts, isLoading } = useArtifacts(currentProjectId || undefined);
+  const [showArchived, setShowArchived] = useState(false);
+  const { data: artifacts, isLoading } = useArtifacts(currentProjectId || undefined, undefined, { archivedOnly: showArchived });
   const { data: projectEdges } = useProjectArtifactEdges(currentProjectId || undefined);
   const { canCreateArtifact, artifactAtLimit } = useUsageLimits();
 
@@ -117,8 +118,9 @@ const ArtifactsPage = () => {
   const [showLimitDialog, setShowLimitDialog] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [linkTarget, setLinkTarget] = useState<Artifact | null>(null);
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
+  const [confirmHardDeleteOpen, setConfirmHardDeleteOpen] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
   const queryClient = useQueryClient();
 
   const filteredArtifacts = useMemo(() => {
