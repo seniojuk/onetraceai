@@ -30,7 +30,7 @@ import { useJiraConnection, useJiraProjectLink, useJiraDisconnect } from "@/hook
 import { JiraSetupWizard, JiraConfigurationDialog, JiraConflictList } from "@/components/integrations/jira";
 import { IntegrationUpgradeDialog } from "@/components/integrations/IntegrationUpgradeDialog";
 import { useUIStore } from "@/store/uiStore";
-import { useIntegrationPermissions, isFeatureAvailable } from "@/hooks/useIntegrationPermissions";
+import { useIntegrationPermissions, isFeatureAvailable, getRequiredPlanName } from "@/hooks/useIntegrationPermissions";
 import { useGitHubConnection, useGitHubOAuthInit, useGitHubDisconnect } from "@/hooks/useGitHubConnection";
 import { GitHubSetupWizard, GitHubConfigPanel, GitHubActivityFeed, CICoveragePanel } from "@/components/integrations/github";
 import { useGitHubRepoLinks } from "@/hooks/useGitHubRepoLinks";
