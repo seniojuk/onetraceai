@@ -21,7 +21,7 @@ export function IntegrationUpgradeDialog({
   open,
   onOpenChange,
   integrationName,
-  requiredPlan = "Pro",
+  requiredPlan = "Starter",
 }: IntegrationUpgradeDialogProps) {
   const navigate = useNavigate();
 
