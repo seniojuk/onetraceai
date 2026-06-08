@@ -10,8 +10,9 @@ interface IntegrationPermissionAlertProps {
 export function IntegrationPermissionAlert({
   type,
   requiredRole = "Admin",
-  requiredPlan = "Pro",
+  requiredPlan = "Starter",
 }: IntegrationPermissionAlertProps) {
+
   if (type === "role") {
     return (
       <Alert variant="destructive" className="bg-destructive/10 border-destructive/30">
