@@ -584,19 +584,29 @@ const ArtifactsPage = () => {
                       <X className="w-3 h-3 mr-1" /> Clear
                     </Button>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-7 text-[12px]">
-                        <Download className="w-3 h-3 mr-1.5" /> Export
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleExport("csv")}>Export as CSV</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport("json")}>Export as JSON</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport("markdown")}>Export as Markdown</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport("pdf")}>Export as PDF</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-7 text-[12px]">
+                          <Download className="w-3 h-3 mr-1.5" /> Export
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleExport("csv")}>Export as CSV</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExport("json")}>Export as JSON</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExport("markdown")}>Export as Markdown</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExport("pdf")}>Export as PDF</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[12px] text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setConfirmDeleteOpen(true)}
+                    >
+                      <Trash2 className="w-3 h-3 mr-1.5" /> Delete
+                    </Button>
+                  </div>
                 </div>
               )}
 
