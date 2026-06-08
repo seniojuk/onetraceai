@@ -609,7 +609,7 @@ const IntegrationsPage = () => {
             open={showUpgradeDialog}
             onOpenChange={setShowUpgradeDialog}
             integrationName={upgradeIntegrationName}
-            requiredPlan="Pro"
+            requiredPlan={upgradeRequiredPlan}
           />
         </div>
       </AppLayout>
