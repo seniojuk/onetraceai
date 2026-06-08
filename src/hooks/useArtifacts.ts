@@ -45,11 +45,16 @@ export interface Artifact {
   updated_at: string;
 }
 
-export function useArtifacts(projectId: string | undefined, type?: ArtifactType) {
+export function useArtifacts(
+  projectId: string | undefined,
+  type?: ArtifactType,
+  options?: { archivedOnly?: boolean },
+) {
   const { user } = useAuth();
+  const archivedOnly = !!options?.archivedOnly;
 
   return useQuery({
-    queryKey: ["artifacts", projectId, type],
+    queryKey: ["artifacts", projectId, type, archivedOnly ? "archived" : "active"],
     queryFn: async () => {
       if (!projectId) return [];
 
@@ -57,8 +62,11 @@ export function useArtifacts(projectId: string | undefined, type?: ArtifactType)
         .from("artifacts")
         .select("*")
         .eq("project_id", projectId)
-        .neq("status", "ARCHIVED")
         .order("created_at", { ascending: false });
+
+      query = archivedOnly
+        ? query.eq("status", "ARCHIVED")
+        : query.neq("status", "ARCHIVED");
 
       if (type) {
         query = query.eq("type", type);

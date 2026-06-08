@@ -104,7 +104,8 @@ const ArtifactsPage = () => {
   const activeTab = searchParams.get("tab") || "artifacts";
 
   const { currentProjectId, artifactTypeFilter, setArtifactTypeFilter, statusFilter, setStatusFilter } = useUIStore();
-  const { data: artifacts, isLoading } = useArtifacts(currentProjectId || undefined);
+  const [showArchived, setShowArchived] = useState(false);
+  const { data: artifacts, isLoading } = useArtifacts(currentProjectId || undefined, undefined, { archivedOnly: showArchived });
   const { data: projectEdges } = useProjectArtifactEdges(currentProjectId || undefined);
   const { canCreateArtifact, artifactAtLimit } = useUsageLimits();
 
@@ -117,8 +118,9 @@ const ArtifactsPage = () => {
   const [showLimitDialog, setShowLimitDialog] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [linkTarget, setLinkTarget] = useState<Artifact | null>(null);
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
+  const [confirmHardDeleteOpen, setConfirmHardDeleteOpen] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
   const queryClient = useQueryClient();
 
   const filteredArtifacts = useMemo(() => {
@@ -274,10 +276,10 @@ const ArtifactsPage = () => {
     navigate(`/artifacts/new${params}`);
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkArchive = async () => {
     const ids = Array.from(selectedArtifacts);
     if (ids.length === 0) return;
-    setIsDeleting(true);
+    setIsMutating(true);
     try {
       const { error } = await supabase
         .from("artifacts")
@@ -286,12 +288,51 @@ const ArtifactsPage = () => {
       if (error) throw error;
       toast.success(`Archived ${ids.length} artifact(s)`);
       setSelectedArtifacts(new Set());
-      setConfirmDeleteOpen(false);
+      setConfirmArchiveOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["artifacts", currentProjectId] });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to archive artifacts");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleBulkRestore = async () => {
+    const ids = Array.from(selectedArtifacts);
+    if (ids.length === 0) return;
+    setIsMutating(true);
+    try {
+      const { error } = await supabase
+        .from("artifacts")
+        .update({ status: "DRAFT" })
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(`Restored ${ids.length} artifact(s)`);
+      setSelectedArtifacts(new Set());
+      queryClient.invalidateQueries({ queryKey: ["artifacts", currentProjectId] });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to restore artifacts");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleBulkHardDelete = async () => {
+    const ids = Array.from(selectedArtifacts);
+    if (ids.length === 0) return;
+    setIsMutating(true);
+    try {
+      // Edges cascade via FK. Versions / file associations also cascade.
+      const { error } = await supabase.from("artifacts").delete().in("id", ids);
+      if (error) throw error;
+      toast.success(`Permanently deleted ${ids.length} artifact(s)`);
+      setSelectedArtifacts(new Set());
+      setConfirmHardDeleteOpen(false);
       queryClient.invalidateQueries({ queryKey: ["artifacts", currentProjectId] });
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete artifacts");
     } finally {
-      setIsDeleting(false);
+      setIsMutating(false);
     }
   };
 
@@ -537,6 +578,22 @@ const ArtifactsPage = () => {
                     </Button>
                   )}
 
+                  {/* Archived toggle */}
+                  <Button
+                    variant={showArchived ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setShowArchived((v) => !v);
+                      setSelectedArtifacts(new Set());
+                      setHierarchyMode(false);
+                    }}
+                    className="h-9 text-[12px]"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                    {showArchived ? "Viewing archived" : "Archived"}
+                  </Button>
+
+
                   {/* View toggle */}
                   <div className="flex border border-border rounded-md overflow-hidden h-9">
                     <button
@@ -598,14 +655,36 @@ const ArtifactsPage = () => {
                         <DropdownMenuItem onClick={() => handleExport("pdf")}>Export as PDF</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-[12px] text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => setConfirmDeleteOpen(true)}
-                    >
-                      <Trash2 className="w-3 h-3 mr-1.5" /> Delete
-                    </Button>
+                    {showArchived ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[12px]"
+                          onClick={handleBulkRestore}
+                          disabled={isMutating}
+                        >
+                          Restore
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[12px] text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => setConfirmHardDeleteOpen(true)}
+                        >
+                          <Trash2 className="w-3 h-3 mr-1.5" /> Delete permanently
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-[12px]"
+                        onClick={() => setConfirmArchiveOpen(true)}
+                      >
+                        <Trash2 className="w-3 h-3 mr-1.5" /> Archive
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
@@ -819,22 +898,42 @@ const ArtifactsPage = () => {
           />
         )}
 
-        <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialog open={confirmArchiveOpen} onOpenChange={setConfirmArchiveOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete {selectedCount} artifact(s)?</AlertDialogTitle>
+              <AlertDialogTitle>Archive {selectedCount} artifact(s)?</AlertDialogTitle>
               <AlertDialogDescription>
-                The selected artifacts will be archived and hidden from views. Lineage edges remain intact and child artifacts will keep their parent reference. This action can be reversed by changing the status back from Archived.
+                Archived artifacts are hidden from the default views but kept in the database. You can view and restore them from the Archived view, and they no longer count toward your plan limit.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel disabled={isMutating}>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={(e) => { e.preventDefault(); handleBulkDelete(); }}
-                disabled={isDeleting}
+                onClick={(e) => { e.preventDefault(); handleBulkArchive(); }}
+                disabled={isMutating}
+              >
+                {isMutating ? "Archiving..." : "Archive"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={confirmHardDeleteOpen} onOpenChange={setConfirmHardDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Permanently delete {selectedCount} artifact(s)?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action is irreversible. The selected artifacts will be removed from the database along with their lineage edges, versions, and file associations. Child artifacts will lose their parent reference and become orphans.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isMutating}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); handleBulkHardDelete(); }}
+                disabled={isMutating}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {isDeleting ? "Deleting..." : "Delete"}
+                {isMutating ? "Deleting..." : "Delete permanently"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
