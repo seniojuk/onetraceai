@@ -639,14 +639,36 @@ const ArtifactsPage = () => {
                         <DropdownMenuItem onClick={() => handleExport("pdf")}>Export as PDF</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-[12px] text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => setConfirmDeleteOpen(true)}
-                    >
-                      <Trash2 className="w-3 h-3 mr-1.5" /> Delete
-                    </Button>
+                    {showArchived ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[12px]"
+                          onClick={handleBulkRestore}
+                          disabled={isMutating}
+                        >
+                          Restore
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-[12px] text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => setConfirmHardDeleteOpen(true)}
+                        >
+                          <Trash2 className="w-3 h-3 mr-1.5" /> Delete permanently
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-[12px]"
+                        onClick={() => setConfirmArchiveOpen(true)}
+                      >
+                        <Trash2 className="w-3 h-3 mr-1.5" /> Archive
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
