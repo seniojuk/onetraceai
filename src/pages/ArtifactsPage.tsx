@@ -25,7 +25,20 @@ import {
   ArrowUpRight,
   Boxes,
   Link2,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -104,6 +117,9 @@ const ArtifactsPage = () => {
   const [showLimitDialog, setShowLimitDialog] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [linkTarget, setLinkTarget] = useState<Artifact | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const queryClient = useQueryClient();
 
   const filteredArtifacts = useMemo(() => {
     return (artifacts || []).filter((artifact) => {
@@ -256,6 +272,27 @@ const ArtifactsPage = () => {
     if (!canCreateArtifact) { setShowLimitDialog(true); return; }
     const params = type ? `?type=${type}` : "";
     navigate(`/artifacts/new${params}`);
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedArtifacts);
+    if (ids.length === 0) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("artifacts")
+        .update({ status: "ARCHIVED" })
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(`Archived ${ids.length} artifact(s)`);
+      setSelectedArtifacts(new Set());
+      setConfirmDeleteOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["artifacts", currentProjectId] });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete artifacts");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleToggleSelect = (artifactId: string) => {
@@ -547,19 +584,29 @@ const ArtifactsPage = () => {
                       <X className="w-3 h-3 mr-1" /> Clear
                     </Button>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-7 text-[12px]">
-                        <Download className="w-3 h-3 mr-1.5" /> Export
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleExport("csv")}>Export as CSV</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport("json")}>Export as JSON</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport("markdown")}>Export as Markdown</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleExport("pdf")}>Export as PDF</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-7 text-[12px]">
+                          <Download className="w-3 h-3 mr-1.5" /> Export
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleExport("csv")}>Export as CSV</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExport("json")}>Export as JSON</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExport("markdown")}>Export as Markdown</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleExport("pdf")}>Export as PDF</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[12px] text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setConfirmDeleteOpen(true)}
+                    >
+                      <Trash2 className="w-3 h-3 mr-1.5" /> Delete
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -771,6 +818,27 @@ const ArtifactsPage = () => {
             artifact={linkTarget}
           />
         )}
+
+        <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {selectedCount} artifact(s)?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The selected artifacts will be archived and hidden from views. Lineage edges remain intact and child artifacts will keep their parent reference. This action can be reversed by changing the status back from Archived.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); handleBulkDelete(); }}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </AppLayout>
     </AuthGuard>
   );
