@@ -276,10 +276,10 @@ const ArtifactsPage = () => {
     navigate(`/artifacts/new${params}`);
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkArchive = async () => {
     const ids = Array.from(selectedArtifacts);
     if (ids.length === 0) return;
-    setIsDeleting(true);
+    setIsMutating(true);
     try {
       const { error } = await supabase
         .from("artifacts")
@@ -288,12 +288,51 @@ const ArtifactsPage = () => {
       if (error) throw error;
       toast.success(`Archived ${ids.length} artifact(s)`);
       setSelectedArtifacts(new Set());
-      setConfirmDeleteOpen(false);
+      setConfirmArchiveOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["artifacts", currentProjectId] });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to archive artifacts");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleBulkRestore = async () => {
+    const ids = Array.from(selectedArtifacts);
+    if (ids.length === 0) return;
+    setIsMutating(true);
+    try {
+      const { error } = await supabase
+        .from("artifacts")
+        .update({ status: "DRAFT" })
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(`Restored ${ids.length} artifact(s)`);
+      setSelectedArtifacts(new Set());
+      queryClient.invalidateQueries({ queryKey: ["artifacts", currentProjectId] });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to restore artifacts");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleBulkHardDelete = async () => {
+    const ids = Array.from(selectedArtifacts);
+    if (ids.length === 0) return;
+    setIsMutating(true);
+    try {
+      // Edges cascade via FK. Versions / file associations also cascade.
+      const { error } = await supabase.from("artifacts").delete().in("id", ids);
+      if (error) throw error;
+      toast.success(`Permanently deleted ${ids.length} artifact(s)`);
+      setSelectedArtifacts(new Set());
+      setConfirmHardDeleteOpen(false);
       queryClient.invalidateQueries({ queryKey: ["artifacts", currentProjectId] });
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete artifacts");
     } finally {
-      setIsDeleting(false);
+      setIsMutating(false);
     }
   };
 
