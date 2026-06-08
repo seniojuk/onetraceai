@@ -50,7 +50,7 @@ const integrations: Integration[] = [
     id: "github",
     name: "GitHub",
     description: "Sync commits, PRs, and code with your artifact graph",
-    icon: "https://github.githubassets.com/favicons/favicon-dark.svg",
+    icon: "https://cdn.simpleicons.org/github/24292f",
     category: "source_control",
     status: "disconnected",
   },
@@ -58,7 +58,7 @@ const integrations: Integration[] = [
     id: "gitlab",
     name: "GitLab",
     description: "Connect GitLab repositories and merge requests",
-    icon: "https://gitlab.com/favicon.ico",
+    icon: "https://cdn.simpleicons.org/gitlab/FC6D26",
     category: "source_control",
     status: "coming_soon",
   },
@@ -66,7 +66,7 @@ const integrations: Integration[] = [
     id: "jira",
     name: "Jira Cloud",
     description: "Sync epics, stories, and issues from Jira",
-    icon: "https://wac-cdn.atlassian.com/assets/img/favicons/atlassian/favicon.png",
+    icon: "https://cdn.simpleicons.org/jira/0052CC",
     category: "project_management",
     status: "disconnected",
   },
@@ -74,7 +74,7 @@ const integrations: Integration[] = [
     id: "linear",
     name: "Linear",
     description: "Import issues and projects from Linear",
-    icon: "https://linear.app/favicon.ico",
+    icon: "https://cdn.simpleicons.org/linear/5E6AD2",
     category: "project_management",
     status: "coming_soon",
   },
@@ -82,20 +82,12 @@ const integrations: Integration[] = [
     id: "github_actions",
     name: "GitHub Actions",
     description: "Trigger coverage updates from CI pipelines",
-    icon: "https://github.githubassets.com/favicons/favicon-dark.svg",
+    icon: "https://cdn.simpleicons.org/githubactions/2088FF",
     category: "ci_cd",
     status: "coming_soon",
   },
-  {
-    id: "openai",
-    name: "OpenAI",
-    description: "Power AI story generation and analysis",
-    icon: "https://openai.com/favicon.ico",
-    category: "ai",
-    status: "connected",
-    lastSync: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-  },
 ];
+
 
 const IntegrationsPage = () => {
   const { toast } = useToast();
