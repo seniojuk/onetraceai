@@ -274,6 +274,27 @@ const ArtifactsPage = () => {
     navigate(`/artifacts/new${params}`);
   };
 
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedArtifacts);
+    if (ids.length === 0) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("artifacts")
+        .update({ status: "ARCHIVED" })
+        .in("id", ids);
+      if (error) throw error;
+      toast.success(`Archived ${ids.length} artifact(s)`);
+      setSelectedArtifacts(new Set());
+      setConfirmDeleteOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["artifacts", currentProjectId] });
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete artifacts");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleToggleSelect = (artifactId: string) => {
     setSelectedArtifacts((prev) => {
       const next = new Set(prev);
