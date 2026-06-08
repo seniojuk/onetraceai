@@ -818,6 +818,27 @@ const ArtifactsPage = () => {
             artifact={linkTarget}
           />
         )}
+
+        <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {selectedCount} artifact(s)?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The selected artifacts will be archived and hidden from views. Lineage edges remain intact and child artifacts will keep their parent reference. This action can be reversed by changing the status back from Archived.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); handleBulkDelete(); }}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </AppLayout>
     </AuthGuard>
   );
