@@ -176,6 +176,8 @@ const IntegrationsPage = () => {
     // Check if plan upgrade is required for this integration
     if (requiresUpgrade(integration.id)) {
       setUpgradeIntegrationName(integration.name);
+      setUpgradeRequiredPlan(getRequiredPlanName(integration.id as any));
+
       setShowUpgradeDialog(true);
       return;
     }
