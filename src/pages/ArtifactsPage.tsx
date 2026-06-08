@@ -117,6 +117,9 @@ const ArtifactsPage = () => {
   const [showLimitDialog, setShowLimitDialog] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [linkTarget, setLinkTarget] = useState<Artifact | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const queryClient = useQueryClient();
 
   const filteredArtifacts = useMemo(() => {
     return (artifacts || []).filter((artifact) => {
