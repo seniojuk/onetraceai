@@ -106,6 +106,8 @@ const IntegrationsPage = () => {
   const [showJiraConfig, setShowJiraConfig] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [upgradeIntegrationName, setUpgradeIntegrationName] = useState("");
+  const [upgradeRequiredPlan, setUpgradeRequiredPlan] = useState("Starter");
+
   const [showGitHubConfig, setShowGitHubConfig] = useState(false);
   const [showGitHubRepoPicker, setShowGitHubRepoPicker] = useState(false);
 
