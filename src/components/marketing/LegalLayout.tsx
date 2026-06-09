@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { PublicNav } from "./PublicNav";
 import { PublicFooter } from "./PublicFooter";
 import { AccentWord } from "@/components/marketing/AccentWord";
