@@ -13,6 +13,62 @@ interface LegalLayoutProps {
 }
 
 export function LegalLayout({ eyebrow, title, flourish, updated, sections, children }: LegalLayoutProps) {
+  const listRef = useRef<HTMLOListElement>(null);
+  const itemRefs = useRef<Record<string, HTMLLIElement | null>>({});
+  const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
+  const [bar, setBar] = useState<{ top: number; height: number; opacity: number }>({
+    top: 0,
+    height: 0,
+    opacity: 0,
+  });
+
+  useEffect(() => {
+    const els = sections
+      .map((s) => document.getElementById(s.id))
+      .filter((el): el is HTMLElement => !!el);
+    if (!els.length) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        setVisibleIds((prev) => {
+          const next = new Set(prev);
+          entries.forEach((e) => {
+            if (e.isIntersecting) next.add(e.target.id);
+            else next.delete(e.target.id);
+          });
+          return next;
+        });
+      },
+      { rootMargin: "0px 0px 0px 0px", threshold: 0 },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [sections]);
+
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) {
+      setBar((b) => ({ ...b, opacity: 0 }));
+      return;
+    }
+    const visibleSections = sections.filter((s) => visibleIds.has(s.id));
+    if (!visibleSections.length) {
+      setBar((b) => ({ ...b, opacity: 0 }));
+      return;
+    }
+    const firstEl = itemRefs.current[visibleSections[0].id];
+    const lastEl = itemRefs.current[visibleSections[visibleSections.length - 1].id];
+    if (!firstEl || !lastEl) return;
+    const listRect = list.getBoundingClientRect();
+    const firstRect = firstEl.getBoundingClientRect();
+    const lastRect = lastEl.getBoundingClientRect();
+    setBar({
+      top: firstRect.top - listRect.top,
+      height: lastRect.bottom - firstRect.top,
+      opacity: 1,
+    });
+  }, [visibleIds, sections]);
+
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-accent/20">
       <PublicNav />
