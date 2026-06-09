@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { PublicNav } from "./PublicNav";
 import { PublicFooter } from "./PublicFooter";
 import { AccentWord } from "@/components/marketing/AccentWord";
@@ -12,6 +13,62 @@ interface LegalLayoutProps {
 }
 
 export function LegalLayout({ eyebrow, title, flourish, updated, sections, children }: LegalLayoutProps) {
+  const listRef = useRef<HTMLOListElement>(null);
+  const itemRefs = useRef<Record<string, HTMLLIElement | null>>({});
+  const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
+  const [bar, setBar] = useState<{ top: number; height: number; opacity: number }>({
+    top: 0,
+    height: 0,
+    opacity: 0,
+  });
+
+  useEffect(() => {
+    const els = sections
+      .map((s) => document.getElementById(s.id))
+      .filter((el): el is HTMLElement => !!el);
+    if (!els.length) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        setVisibleIds((prev) => {
+          const next = new Set(prev);
+          entries.forEach((e) => {
+            if (e.isIntersecting) next.add(e.target.id);
+            else next.delete(e.target.id);
+          });
+          return next;
+        });
+      },
+      { rootMargin: "0px 0px 0px 0px", threshold: 0 },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [sections]);
+
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) {
+      setBar((b) => ({ ...b, opacity: 0 }));
+      return;
+    }
+    const visibleSections = sections.filter((s) => visibleIds.has(s.id));
+    if (!visibleSections.length) {
+      setBar((b) => ({ ...b, opacity: 0 }));
+      return;
+    }
+    const firstEl = itemRefs.current[visibleSections[0].id];
+    const lastEl = itemRefs.current[visibleSections[visibleSections.length - 1].id];
+    if (!firstEl || !lastEl) return;
+    const listRect = list.getBoundingClientRect();
+    const firstRect = firstEl.getBoundingClientRect();
+    const lastRect = lastEl.getBoundingClientRect();
+    setBar({
+      top: firstRect.top - listRect.top,
+      height: lastRect.bottom - firstRect.top,
+      opacity: 1,
+    });
+  }, [visibleIds, sections]);
+
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-accent/20">
       <PublicNav />
@@ -38,20 +95,45 @@ export function LegalLayout({ eyebrow, title, flourish, updated, sections, child
             <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
               Contents
             </div>
-            <ol className="mt-4 space-y-2.5 border-l border-border pl-4">
-              {sections.map((s, i) => (
-                <li key={s.id}>
-                  <a
-                    href={`#${s.id}`}
-                    className="group flex items-baseline gap-2 text-[12.5px] leading-relaxed text-muted-foreground transition-colors hover:text-foreground"
+            <ol ref={listRef} className="relative mt-4 space-y-2.5 border-l border-border pl-4">
+              <span
+                aria-hidden
+                className="pointer-events-none absolute left-[-1px] w-[2px] rounded-full bg-accent"
+                style={{
+                  top: bar.top,
+                  height: bar.height,
+                  opacity: bar.opacity,
+                  transition:
+                    "top 400ms cubic-bezier(0.22, 1, 0.36, 1), height 400ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease-out",
+                }}
+              />
+              {sections.map((s, i) => {
+                const active = visibleIds.has(s.id);
+                return (
+                  <li
+                    key={s.id}
+                    ref={(el) => {
+                      itemRefs.current[s.id] = el;
+                    }}
                   >
-                    <span className="font-mono text-[10px] text-muted-foreground/60 group-hover:text-accent">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span>{s.label}</span>
-                  </a>
-                </li>
-              ))}
+                    <a
+                      href={`#${s.id}`}
+                      className={`group flex items-baseline gap-2 text-[12.5px] leading-relaxed transition-colors hover:text-foreground ${
+                        active ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      <span
+                        className={`font-mono text-[10px] transition-colors ${
+                          active ? "text-accent" : "text-muted-foreground/60 group-hover:text-accent"
+                        }`}
+                      >
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span>{s.label}</span>
+                    </a>
+                  </li>
+                );
+              })}
             </ol>
           </aside>
 
