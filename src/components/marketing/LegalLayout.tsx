@@ -95,20 +95,45 @@ export function LegalLayout({ eyebrow, title, flourish, updated, sections, child
             <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
               Contents
             </div>
-            <ol className="mt-4 space-y-2.5 border-l border-border pl-4">
-              {sections.map((s, i) => (
-                <li key={s.id}>
-                  <a
-                    href={`#${s.id}`}
-                    className="group flex items-baseline gap-2 text-[12.5px] leading-relaxed text-muted-foreground transition-colors hover:text-foreground"
+            <ol ref={listRef} className="relative mt-4 space-y-2.5 border-l border-border pl-4">
+              <span
+                aria-hidden
+                className="pointer-events-none absolute left-[-1px] w-[2px] rounded-full bg-accent"
+                style={{
+                  top: bar.top,
+                  height: bar.height,
+                  opacity: bar.opacity,
+                  transition:
+                    "top 400ms cubic-bezier(0.22, 1, 0.36, 1), height 400ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease-out",
+                }}
+              />
+              {sections.map((s, i) => {
+                const active = visibleIds.has(s.id);
+                return (
+                  <li
+                    key={s.id}
+                    ref={(el) => {
+                      itemRefs.current[s.id] = el;
+                    }}
                   >
-                    <span className="font-mono text-[10px] text-muted-foreground/60 group-hover:text-accent">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span>{s.label}</span>
-                  </a>
-                </li>
-              ))}
+                    <a
+                      href={`#${s.id}`}
+                      className={`group flex items-baseline gap-2 text-[12.5px] leading-relaxed transition-colors hover:text-foreground ${
+                        active ? "text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      <span
+                        className={`font-mono text-[10px] transition-colors ${
+                          active ? "text-accent" : "text-muted-foreground/60 group-hover:text-accent"
+                        }`}
+                      >
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span>{s.label}</span>
+                    </a>
+                  </li>
+                );
+              })}
             </ol>
           </aside>
 
