@@ -132,13 +132,13 @@ function WorkspaceItem({ workspace, userRole, onEdit, onDelete, isPlatformAdmin 
 
 export function WorkspaceManagement() {
   const { user } = useAuth();
+  const { data: isPlatformAdmin } = usePlatformAdmin();
   const { data: workspaces, isLoading } = useWorkspaces();
   const updateWorkspace = useUpdateWorkspace();
   const deleteWorkspace = useDeleteWorkspace();
 
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const [deleteWorkspaceConfirm, setDeleteWorkspaceConfirm] = useState<Workspace | null>(null);
-  const [confirmDeleteName, setConfirmDeleteName] = useState("");
   const [editForm, setEditForm] = useState({ name: "", slug: "" });
 
   // Get user's role for each workspace
@@ -177,18 +177,13 @@ export function WorkspaceManagement() {
 
   const handleDelete = async () => {
     if (!deleteWorkspaceConfirm) return;
-    if (confirmDeleteName !== deleteWorkspaceConfirm.name) {
-      toast.error("Please type the workspace name exactly to confirm");
-      return;
-    }
-    
+
     try {
       await deleteWorkspace.mutateAsync({
         workspaceId: deleteWorkspaceConfirm.id,
       });
       toast.success("Workspace deleted permanently");
       setDeleteWorkspaceConfirm(null);
-      setConfirmDeleteName("");
     } catch (error) {
       toast.error("Failed to delete workspace", {
         description: error instanceof Error ? error.message : "Unknown error",
