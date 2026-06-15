@@ -724,8 +724,12 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             metadata: { linkedVia: isSourceEpic && epicId === sourceArtifact?.id ? "epic-to-story-generation" : "epic-selector" },
           });
         }
+
+        // Persist AC artifacts + Story→Epic IMPLEMENTS edge
+        await persistAcsAndEpicLink(story, artifact.id, epicId || undefined);
       }
 
+      invalidateGraphCaches();
       toast.success(`Saved ${createdIds.length} stories successfully`);
 
       if (onComplete) {
