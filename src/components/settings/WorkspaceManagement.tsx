@@ -46,6 +46,8 @@ import {
   type WorkspaceMember,
 } from "@/hooks/useWorkspaces";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
+import { DeleteConfirmDialog } from "@/components/layout/DeleteConfirmDialog";
 import { formatDistanceToNow } from "date-fns";
 
 const roleIcons: Record<string, React.ElementType> = {
