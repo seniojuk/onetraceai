@@ -1,0 +1,16 @@
+# OneTrace AI
+
+> System of record for AI-built software. Connect PRDs, Jira, GitHub, and tests into a traceable artifact graph to ship with confidence and catch drift early.
+
+OneTrace AI links ideas, PRDs, epics, stories, acceptance criteria, code, and tests as artifacts in a single graph. Teams use it to keep documentation and code in sync, measure coverage, and detect drift across PRD → Jira → GitHub.
+
+## Pages
+
+- [Home](/): Overview of OneTrace AI, key capabilities, and how the artifact graph works.
+- [Pricing](/pricing): Subscription plans, included usage limits, and feature comparison.
+- [Contact](/contact): Get in touch with the OneTrace AI team.
+
+## Optional
+
+- [Privacy Policy](/privacy): How OneTrace AI handles user data.
+- [Terms of Service](/terms): Terms governing use of the product.
