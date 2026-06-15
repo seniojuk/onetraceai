@@ -24,16 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { DeleteConfirmDialog } from "@/components/layout/DeleteConfirmDialog";
 import {
   Select,
   SelectContent,
@@ -365,32 +356,15 @@ export function ProjectManagement({ workspaceId, userRole }: ProjectManagementPr
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteProjectConfirm} onOpenChange={(open) => !open && setDeleteProjectConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
-              Delete Project Permanently?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the project
-              <strong className="mx-1">{deleteProjectConfirm?.name}</strong>
-              and all its artifacts, versions, and associated data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90"
-              onClick={handleDelete}
-              disabled={deleteProject.isPending}
-            >
-              {deleteProject.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Delete Permanently
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={!!deleteProjectConfirm}
+        onOpenChange={(open) => !open && setDeleteProjectConfirm(null)}
+        onConfirm={handleDelete}
+        title="Delete Project Permanently?"
+        entityName={deleteProjectConfirm?.name || ""}
+        entityType="project"
+        isDeleting={deleteProject.isPending}
+      />
     </>
   );
 }

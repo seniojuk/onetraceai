@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { useAllWorkspaceMetrics, WorkspaceMetrics } from "@/hooks/useWorkspaceMetrics";
+import { useDeleteWorkspace } from "@/hooks/useWorkspaces";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -17,8 +20,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Building2, Users, FolderKanban, FileText, Sparkles, HardDrive, AlertTriangle } from "lucide-react";
+import { Building2, Users, FolderKanban, FileText, Sparkles, HardDrive, AlertTriangle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import { DeleteConfirmDialog } from "@/components/layout/DeleteConfirmDialog";
 
 function UsageBar({ 
   used, 
@@ -167,6 +172,21 @@ function getStatusBadgeVariant(status: string | null): "default" | "secondary" |
 
 export function WorkspaceMetricsPanel() {
   const { data: workspaces, isLoading, error } = useAllWorkspaceMetrics();
+  const deleteWorkspace = useDeleteWorkspace();
+  const [deleteTarget, setDeleteTarget] = useState<WorkspaceMetrics | null>(null);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteWorkspace.mutateAsync({ workspaceId: deleteTarget.id });
+      toast.success(`Workspace "${deleteTarget.name}" deleted permanently`);
+      setDeleteTarget(null);
+    } catch (err) {
+      toast.error("Failed to delete workspace", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  };
 
   // Calculate summary stats
   const totalWorkspaces = workspaces?.length || 0;
@@ -276,6 +296,7 @@ export function WorkspaceMetricsPanel() {
                     </div>
                   </TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -334,6 +355,23 @@ export function WorkspaceMetricsPanel() {
                     <TableCell className="text-muted-foreground text-sm">
                       {format(new Date(workspace.created_at), "MMM d, yyyy")}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => setDeleteTarget(workspace)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete workspace permanently</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -341,6 +379,16 @@ export function WorkspaceMetricsPanel() {
           </div>
         )}
       </CardContent>
+
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Delete Workspace Permanently?"
+        entityName={deleteTarget?.name || ""}
+        entityType="workspace"
+        isDeleting={deleteWorkspace.isPending}
+      />
     </Card>
   );
 }

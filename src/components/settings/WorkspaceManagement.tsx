@@ -46,6 +46,8 @@ import {
   type WorkspaceMember,
 } from "@/hooks/useWorkspaces";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
+import { DeleteConfirmDialog } from "@/components/layout/DeleteConfirmDialog";
 import { formatDistanceToNow } from "date-fns";
 
 const roleIcons: Record<string, React.ElementType> = {
@@ -69,11 +71,11 @@ interface WorkspaceItemProps {
   onDelete: (workspace: Workspace) => void;
 }
 
-function WorkspaceItem({ workspace, userRole, onEdit, onDelete }: WorkspaceItemProps) {
+function WorkspaceItem({ workspace, userRole, onEdit, onDelete, isPlatformAdmin }: WorkspaceItemProps & { isPlatformAdmin?: boolean }) {
   const isOwner = userRole === "OWNER";
   const isAdmin = userRole === "ADMIN";
-  const canEdit = isOwner || isAdmin;
-  const canDelete = isOwner;
+  const canEdit = isOwner || isAdmin || isPlatformAdmin;
+  const canDelete = isOwner || isPlatformAdmin;
 
   const RoleIcon = roleIcons[userRole || "VIEWER"] || User;
 
@@ -130,13 +132,13 @@ function WorkspaceItem({ workspace, userRole, onEdit, onDelete }: WorkspaceItemP
 
 export function WorkspaceManagement() {
   const { user } = useAuth();
+  const { data: isPlatformAdmin } = usePlatformAdmin();
   const { data: workspaces, isLoading } = useWorkspaces();
   const updateWorkspace = useUpdateWorkspace();
   const deleteWorkspace = useDeleteWorkspace();
 
   const [editingWorkspace, setEditingWorkspace] = useState<Workspace | null>(null);
   const [deleteWorkspaceConfirm, setDeleteWorkspaceConfirm] = useState<Workspace | null>(null);
-  const [confirmDeleteName, setConfirmDeleteName] = useState("");
   const [editForm, setEditForm] = useState({ name: "", slug: "" });
 
   // Get user's role for each workspace
@@ -175,18 +177,13 @@ export function WorkspaceManagement() {
 
   const handleDelete = async () => {
     if (!deleteWorkspaceConfirm) return;
-    if (confirmDeleteName !== deleteWorkspaceConfirm.name) {
-      toast.error("Please type the workspace name exactly to confirm");
-      return;
-    }
-    
+
     try {
       await deleteWorkspace.mutateAsync({
         workspaceId: deleteWorkspaceConfirm.id,
       });
       toast.success("Workspace deleted permanently");
       setDeleteWorkspaceConfirm(null);
-      setConfirmDeleteName("");
     } catch (error) {
       toast.error("Failed to delete workspace", {
         description: error instanceof Error ? error.message : "Unknown error",
@@ -244,6 +241,7 @@ export function WorkspaceManagement() {
                     userRole={getUserRole(workspace)}
                     onEdit={handleEdit}
                     onDelete={setDeleteWorkspaceConfirm}
+                    isPlatformAdmin={!!isPlatformAdmin}
                   />
                 ))}
               </div>
@@ -295,50 +293,15 @@ export function WorkspaceManagement() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteWorkspaceConfirm} onOpenChange={(open) => {
-        if (!open) {
-          setDeleteWorkspaceConfirm(null);
-          setConfirmDeleteName("");
-        }
-      }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
-              Delete Workspace Permanently?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>
-                This action cannot be undone. This will permanently delete the workspace
-                <strong className="mx-1">{deleteWorkspaceConfirm?.name}</strong>
-                and ALL of its projects, artifacts, and associated data.
-              </p>
-              <div className="space-y-2 pt-2">
-                <Label htmlFor="confirm-name" className="text-foreground">
-                  Type <strong>{deleteWorkspaceConfirm?.name}</strong> to confirm:
-                </Label>
-                <Input
-                  id="confirm-name"
-                  value={confirmDeleteName}
-                  onChange={(e) => setConfirmDeleteName(e.target.value)}
-                  placeholder="Enter workspace name"
-                />
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90"
-              onClick={handleDelete}
-              disabled={deleteWorkspace.isPending || confirmDeleteName !== deleteWorkspaceConfirm?.name}
-            >
-              {deleteWorkspace.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Delete Permanently
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={!!deleteWorkspaceConfirm}
+        onOpenChange={(open) => !open && setDeleteWorkspaceConfirm(null)}
+        onConfirm={handleDelete}
+        title="Delete Workspace Permanently?"
+        entityName={deleteWorkspaceConfirm?.name || ""}
+        entityType="workspace"
+        isDeleting={deleteWorkspace.isPending}
+      />
     </>
   );
 }
