@@ -207,16 +207,26 @@ serve(async (req) => {
         });
       }
 
-      // Check if user is OWNER
-      const { data: membership } = await supabaseAdmin
-        .from("workspace_members")
-        .select("role")
-        .eq("workspace_id", workspaceId)
+      // Check platform admin OR workspace OWNER
+      const { data: platformAdmin } = await supabaseAdmin
+        .from("platform_admins")
+        .select("id")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (!membership || membership.role !== "OWNER") {
-        return new Response(JSON.stringify({ error: "Only workspace owners can delete workspaces" }), {
+      let authorized = !!platformAdmin;
+      if (!authorized) {
+        const { data: membership } = await supabaseAdmin
+          .from("workspace_members")
+          .select("role")
+          .eq("workspace_id", workspaceId)
+          .eq("user_id", user.id)
+          .maybeSingle();
+        authorized = !!membership && membership.role === "OWNER";
+      }
+
+      if (!authorized) {
+        return new Response(JSON.stringify({ error: "Only workspace owners or platform admins can delete workspaces" }), {
           status: 403,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
