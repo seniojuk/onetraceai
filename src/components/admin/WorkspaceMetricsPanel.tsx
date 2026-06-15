@@ -296,6 +296,7 @@ export function WorkspaceMetricsPanel() {
                     </div>
                   </TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
