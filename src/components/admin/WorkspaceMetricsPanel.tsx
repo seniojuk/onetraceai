@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { useAllWorkspaceMetrics, WorkspaceMetrics } from "@/hooks/useWorkspaceMetrics";
+import { useDeleteWorkspace } from "@/hooks/useWorkspaces";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -17,8 +20,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Building2, Users, FolderKanban, FileText, Sparkles, HardDrive, AlertTriangle } from "lucide-react";
+import { Building2, Users, FolderKanban, FileText, Sparkles, HardDrive, AlertTriangle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import { DeleteConfirmDialog } from "@/components/layout/DeleteConfirmDialog";
 
 function UsageBar({ 
   used, 
