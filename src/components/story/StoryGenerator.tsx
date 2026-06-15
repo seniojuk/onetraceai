@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/dialog";
 import { useCreateArtifact, useArtifacts, Artifact } from "@/hooks/useArtifacts";
 import { useCreateArtifactEdge } from "@/hooks/useArtifactEdges";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUIStore } from "@/store/uiStore";
 import { useFilesForArtifact } from "@/hooks/useFileArtifacts";
 import { supabase } from "@/integrations/supabase/client";
