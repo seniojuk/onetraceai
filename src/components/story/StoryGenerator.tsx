@@ -111,6 +111,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
   const { currentWorkspaceId, currentProjectId } = useUIStore();
   const createArtifact = useCreateArtifact();
   const createEdge = useCreateArtifactEdge();
+  const queryClient = useQueryClient();
   const { data: prdArtifacts } = useArtifacts(currentProjectId || undefined, "PRD");
   const { data: epicArtifacts } = useArtifacts(currentProjectId || undefined, "EPIC");
   const { canRunAI, isAtLimit } = useAIRunLimit();
