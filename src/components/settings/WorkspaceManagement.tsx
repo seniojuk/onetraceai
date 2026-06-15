@@ -293,50 +293,15 @@ export function WorkspaceManagement() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteWorkspaceConfirm} onOpenChange={(open) => {
-        if (!open) {
-          setDeleteWorkspaceConfirm(null);
-          setConfirmDeleteName("");
-        }
-      }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-destructive" />
-              Delete Workspace Permanently?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>
-                This action cannot be undone. This will permanently delete the workspace
-                <strong className="mx-1">{deleteWorkspaceConfirm?.name}</strong>
-                and ALL of its projects, artifacts, and associated data.
-              </p>
-              <div className="space-y-2 pt-2">
-                <Label htmlFor="confirm-name" className="text-foreground">
-                  Type <strong>{deleteWorkspaceConfirm?.name}</strong> to confirm:
-                </Label>
-                <Input
-                  id="confirm-name"
-                  value={confirmDeleteName}
-                  onChange={(e) => setConfirmDeleteName(e.target.value)}
-                  placeholder="Enter workspace name"
-                />
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90"
-              onClick={handleDelete}
-              disabled={deleteWorkspace.isPending || confirmDeleteName !== deleteWorkspaceConfirm?.name}
-            >
-              {deleteWorkspace.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Delete Permanently
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmDialog
+        open={!!deleteWorkspaceConfirm}
+        onOpenChange={(open) => !open && setDeleteWorkspaceConfirm(null)}
+        onConfirm={handleDelete}
+        title="Delete Workspace Permanently?"
+        entityName={deleteWorkspaceConfirm?.name || ""}
+        entityType="workspace"
+        isDeleting={deleteWorkspace.isPending}
+      />
     </>
   );
 }
