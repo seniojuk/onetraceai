@@ -930,8 +930,8 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
           });
         }
 
-        // Create edge to Epic if assigned
-        const epicId = storyEpicAssignments[idx];
+        // Create edge to Epic if assigned (manual or auto from source Epic)
+        const epicId = storyEpicAssignments[idx] || (isSourceEpic ? sourceArtifact?.id : undefined);
         if (epicId && artifact) {
           await createEdge.mutateAsync({
             workspaceId: currentWorkspaceId,
@@ -939,16 +939,20 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             fromArtifactId: epicId,
             toArtifactId: artifact.id,
             edgeType: "CONTAINS",
-            source: "MANUAL",
+            source: isSourceEpic && epicId === sourceArtifact?.id ? "AI_INFERRED" : "MANUAL",
             sourceRef: "story-generator",
-            metadata: { linkedVia: "epic-selector" },
+            metadata: { linkedVia: isSourceEpic && epicId === sourceArtifact?.id ? "epic-to-story-generation" : "epic-selector" },
           });
         }
+
+        // Persist AC artifacts + Story→Epic IMPLEMENTS edge
+        await persistAcsAndEpicLink(story, artifact.id, epicId || undefined);
 
         setSavedStoryIndices(prev => new Set(prev).add(idx));
         savedCount++;
       }
 
+      invalidateGraphCaches();
       toast.success(`Saved ${savedCount} stories`);
       setSelectedStories(new Set());
     } catch (error) {
