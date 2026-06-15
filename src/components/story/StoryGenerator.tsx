@@ -590,7 +590,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
           content_markdown: text,
           content_json: { text },
           parent_artifact_id: storyArtifactId,
-          created_by: user?.id ?? null,
+          
         }));
 
         const { data: insertedAcs, error: acErr } = await supabase
@@ -611,7 +611,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
             source_ref: "story-generator",
             confidence: 1.0,
             metadata: { generatedFrom: "story-generator" },
-            created_by: user?.id ?? null,
+            
           }));
           const { error: edgeErr } = await supabase
             .from("artifact_edges")
@@ -636,7 +636,7 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
           source_ref: "story-generator",
           confidence: 1.0,
           metadata: { linkedVia: "story-generator" },
-          created_by: user?.id ?? null,
+          
         });
         if (implErr) console.error("Failed to insert Story→Epic IMPLEMENTS edge:", implErr);
       } catch (err) {
