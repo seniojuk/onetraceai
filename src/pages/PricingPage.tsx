@@ -429,6 +429,7 @@ export default function PricingPage() {
     <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-accent/20">
       <PublicNav />
 
+      <main>
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pt-20 pb-16 text-center">
         <h1 className="mx-auto mt-4 max-w-3xl font-display text-[52px] leading-[1.05] tracking-[-0.03em] text-foreground md:text-[64px]">
@@ -517,6 +518,7 @@ export default function PricingPage() {
       </section>
 
       <FinalCTA />
+      </main>
       <PublicFooter />
     </div>
   );

@@ -38,13 +38,15 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground font-sans antialiased selection:bg-accent/20">
       <PublicNav />
-      <Hero />
-      <ProblemSection />
-      <SolutionSection />
-      <HowItWorks />
-      <CoverageShowcase />
-      <IntegrationsRow />
-      <FinalCTA />
+      <main>
+        <Hero />
+        <ProblemSection />
+        <SolutionSection />
+        <HowItWorks />
+        <CoverageShowcase />
+        <IntegrationsRow />
+        <FinalCTA />
+      </main>
       <PublicFooter />
     </div>
   );
