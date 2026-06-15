@@ -36,24 +36,32 @@ const OnboardingPage = () => {
 
   const stepParam = searchParams.get("step");
   const isAddingProjectOnly = stepParam === "create-project" && !!currentWorkspaceId;
+  const isCreatingWorkspace = stepParam === "create-workspace";
 
   const [stage, setStage] = useState<Stage>(
-    isAddingProjectOnly || currentWorkspaceId ? "path" : "workspace",
+    isCreatingWorkspace
+      ? "workspace"
+      : isAddingProjectOnly || currentWorkspaceId
+        ? "path"
+        : "workspace",
   );
   const [workspaceName, setWorkspaceName] = useState("");
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(currentWorkspaceId);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(
+    isCreatingWorkspace ? null : currentWorkspaceId,
+  );
   const [seedingDemo, setSeedingDemo] = useState(false);
   const [pathLoading, setPathLoading] = useState<"demo" | "real" | null>(null);
 
-  // If a workspace already exists, sync the id
+  // If a workspace already exists, sync the id (skip when explicitly creating a new workspace)
   useEffect(() => {
+    if (isCreatingWorkspace) return;
     if (currentWorkspaceId && !activeWorkspaceId) {
       setActiveWorkspaceId(currentWorkspaceId);
     } else if (!currentWorkspaceId && workspaces && workspaces.length > 0) {
       setActiveWorkspaceId(workspaces[0].id);
       setCurrentWorkspace(workspaces[0].id);
     }
-  }, [currentWorkspaceId, workspaces, activeWorkspaceId, setCurrentWorkspace]);
+  }, [currentWorkspaceId, workspaces, activeWorkspaceId, setCurrentWorkspace, isCreatingWorkspace]);
 
 
   const handleCreateWorkspace = async () => {
