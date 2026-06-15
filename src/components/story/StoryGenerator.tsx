@@ -794,7 +794,11 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
           });
         }
 
+        // Persist AC artifacts + Story→Epic IMPLEMENTS edge
+        await persistAcsAndEpicLink(story, artifact.id, epicId || undefined);
+
         setSavedStoryIndices(prev => new Set(prev).add(index));
+        invalidateGraphCaches();
         toast.success(`Saved "${story.title}"`);
     } catch (error) {
       toast.error("Failed to save story");
