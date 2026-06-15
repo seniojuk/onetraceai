@@ -71,11 +71,11 @@ interface WorkspaceItemProps {
   onDelete: (workspace: Workspace) => void;
 }
 
-function WorkspaceItem({ workspace, userRole, onEdit, onDelete }: WorkspaceItemProps) {
+function WorkspaceItem({ workspace, userRole, onEdit, onDelete, isPlatformAdmin }: WorkspaceItemProps & { isPlatformAdmin?: boolean }) {
   const isOwner = userRole === "OWNER";
   const isAdmin = userRole === "ADMIN";
-  const canEdit = isOwner || isAdmin;
-  const canDelete = isOwner;
+  const canEdit = isOwner || isAdmin || isPlatformAdmin;
+  const canDelete = isOwner || isPlatformAdmin;
 
   const RoleIcon = roleIcons[userRole || "VIEWER"] || User;
 
