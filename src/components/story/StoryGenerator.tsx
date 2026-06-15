@@ -557,6 +557,102 @@ export const StoryGenerator = ({ onComplete, initialPRD, sourceArtifact }: Story
     }
   };
 
+  // Persist Acceptance Criteria as linked artifacts + create Story→Epic IMPLEMENTS edge.
+  // Failures are logged, never thrown — they must not block the story save.
+  const persistAcsAndEpicLink = async (
+    story: StoryData,
+    storyArtifactId: string,
+    epicId: string | undefined,
+  ) => {
+    if (!currentWorkspaceId || !currentProjectId) return;
+
+    // 1) Batch-create AC artifacts for this story
+    const acTexts = (story.acceptanceCriteria || [])
+      .map((t) => (typeof t === "string" ? t.trim() : ""))
+      .filter((t) => t.length > 0);
+
+    if (acTexts.length > 0) {
+      try {
+        const { count } = await supabase
+          .from("artifacts")
+          .select("*", { count: "exact", head: true })
+          .eq("project_id", currentProjectId)
+          .eq("type", "ACCEPTANCE_CRITERION");
+
+        const baseIndex = (count || 0) + 1;
+        const acRows = acTexts.map((text, i) => ({
+          workspace_id: currentWorkspaceId,
+          project_id: currentProjectId,
+          short_id: `AC-${String(baseIndex + i).padStart(4, "0")}`,
+          type: "ACCEPTANCE_CRITERION" as const,
+          title: text.length > 200 ? text.slice(0, 197) + "..." : text,
+          status: "DRAFT" as const,
+          content_markdown: text,
+          content_json: { text },
+          parent_artifact_id: storyArtifactId,
+          created_by: user?.id ?? null,
+        }));
+
+        const { data: insertedAcs, error: acErr } = await supabase
+          .from("artifacts")
+          .insert(acRows)
+          .select("id");
+
+        if (acErr) {
+          console.error("Failed to insert AC artifacts:", acErr);
+        } else if (insertedAcs && insertedAcs.length > 0) {
+          const edgeRows = insertedAcs.map((ac: { id: string }) => ({
+            workspace_id: currentWorkspaceId,
+            project_id: currentProjectId,
+            from_artifact_id: ac.id,
+            to_artifact_id: storyArtifactId,
+            edge_type: "SATISFIES",
+            source: "AI_INFERRED",
+            source_ref: "story-generator",
+            confidence: 1.0,
+            metadata: { generatedFrom: "story-generator" },
+            created_by: user?.id ?? null,
+          }));
+          const { error: edgeErr } = await supabase
+            .from("artifact_edges")
+            .insert(edgeRows);
+          if (edgeErr) console.error("Failed to insert AC→Story edges:", edgeErr);
+        }
+      } catch (err) {
+        console.error("AC persistence error:", err);
+      }
+    }
+
+    // 2) Story → Epic IMPLEMENTS edge (if an epic is available)
+    if (epicId) {
+      try {
+        const { error: implErr } = await supabase.from("artifact_edges").insert({
+          workspace_id: currentWorkspaceId,
+          project_id: currentProjectId,
+          from_artifact_id: storyArtifactId,
+          to_artifact_id: epicId,
+          edge_type: "IMPLEMENTS",
+          source: "AI_INFERRED",
+          source_ref: "story-generator",
+          confidence: 1.0,
+          metadata: { linkedVia: "story-generator" },
+          created_by: user?.id ?? null,
+        });
+        if (implErr) console.error("Failed to insert Story→Epic IMPLEMENTS edge:", implErr);
+      } catch (err) {
+        console.error("IMPLEMENTS edge error:", err);
+      }
+    }
+  };
+
+  const invalidateGraphCaches = () => {
+    if (!currentProjectId) return;
+    queryClient.invalidateQueries({ queryKey: ["artifacts", currentProjectId] });
+    queryClient.invalidateQueries({ queryKey: ["artifact-edges", currentProjectId] });
+    queryClient.invalidateQueries({ queryKey: ["project-artifact-edges", currentProjectId] });
+    queryClient.invalidateQueries({ queryKey: ["coverage-snapshots", currentProjectId] });
+  };
+
   const convertStoryToMarkdown = (story: StoryData): string => {
     let md = `## ${story.title}\n\n`;
     md += `${story.description}\n\n`;
