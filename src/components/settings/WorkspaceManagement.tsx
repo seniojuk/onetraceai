@@ -241,6 +241,7 @@ export function WorkspaceManagement() {
                     userRole={getUserRole(workspace)}
                     onEdit={handleEdit}
                     onDelete={setDeleteWorkspaceConfirm}
+                    isPlatformAdmin={!!isPlatformAdmin}
                   />
                 ))}
               </div>
