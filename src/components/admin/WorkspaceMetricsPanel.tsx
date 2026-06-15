@@ -172,6 +172,21 @@ function getStatusBadgeVariant(status: string | null): "default" | "secondary" |
 
 export function WorkspaceMetricsPanel() {
   const { data: workspaces, isLoading, error } = useAllWorkspaceMetrics();
+  const deleteWorkspace = useDeleteWorkspace();
+  const [deleteTarget, setDeleteTarget] = useState<WorkspaceMetrics | null>(null);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteWorkspace.mutateAsync({ workspaceId: deleteTarget.id });
+      toast.success(`Workspace "${deleteTarget.name}" deleted permanently`);
+      setDeleteTarget(null);
+    } catch (err) {
+      toast.error("Failed to delete workspace", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  };
 
   // Calculate summary stats
   const totalWorkspaces = workspaces?.length || 0;
