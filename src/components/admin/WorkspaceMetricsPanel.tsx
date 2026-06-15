@@ -379,6 +379,16 @@ export function WorkspaceMetricsPanel() {
           </div>
         )}
       </CardContent>
+
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Delete Workspace Permanently?"
+        entityName={deleteTarget?.name || ""}
+        entityType="workspace"
+        isDeleting={deleteWorkspace.isPending}
+      />
     </Card>
   );
 }
