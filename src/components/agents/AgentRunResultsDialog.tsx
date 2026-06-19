@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
+import { Markdown } from "@/components/ui/Markdown";
 import type { AIRun, AIRunStatus } from "@/hooks/useAIRuns";
 import type { Json } from "@/integrations/supabase/types";
 import { SaveAsArtifactDialog } from "./SaveAsArtifactDialog";
@@ -184,8 +184,8 @@ function OutputItem({ output, index, onSave }: { output: Json; index: number; on
       </div>
       <ScrollArea className="max-h-64">
         {viewMode === "rendered" && !isJson ? (
-          <div className="p-4 prose prose-sm dark:prose-invert max-w-none">
-            <ReactMarkdown>{content}</ReactMarkdown>
+          <div className="p-4">
+            <Markdown>{content}</Markdown>
           </div>
         ) : (
           <pre className="p-4 text-sm font-mono bg-background whitespace-pre-wrap break-words">

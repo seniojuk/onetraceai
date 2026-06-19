@@ -20,7 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { Markdown } from "@/components/ui/Markdown";
 import type { StreamingState } from "@/hooks/useAgentStream";
 import { downloadAsText, downloadAsPdf } from "@/utils/outputExport";
 
@@ -144,17 +144,13 @@ export function StreamingOutput({ state, className }: StreamingOutputProps) {
             <pre className="whitespace-pre-wrap font-mono text-sm text-foreground bg-transparent p-0 m-0">
               {JSON.stringify(JSON.parse(contentForExport.trim()), null, 2)}
             </pre>
+          ) : state.isStreaming ? (
+            <pre className="whitespace-pre-wrap font-mono text-sm text-foreground bg-transparent p-0 m-0">
+              {state.content}
+              <span className="inline-block w-2 h-4 bg-accent animate-pulse ml-0.5" />
+            </pre>
           ) : (
-            <div className="prose prose-sm dark:prose-invert max-w-none">
-              {state.isStreaming ? (
-                <pre className="whitespace-pre-wrap font-mono text-sm text-foreground bg-transparent p-0 m-0">
-                  {state.content}
-                  <span className="inline-block w-2 h-4 bg-accent animate-pulse ml-0.5" />
-                </pre>
-              ) : (
-                <ReactMarkdown>{contentForExport}</ReactMarkdown>
-              )}
-            </div>
+            <Markdown>{contentForExport}</Markdown>
           )}
         </div>
       </ScrollArea>
