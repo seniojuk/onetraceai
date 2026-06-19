@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import ReactMarkdown from "react-markdown";
+import { Markdown } from "@/components/ui/Markdown";
 import { 
   ArrowLeft, 
   Edit2, 
@@ -514,9 +514,7 @@ const ArtifactDetailPage = () => {
                       className="min-h-[360px] font-mono text-sm bg-background"
                     />
                   ) : artifact.content_markdown ? (
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-code:text-foreground prose-pre:bg-muted prose-a:text-primary">
-                      <ReactMarkdown>{artifact.content_markdown}</ReactMarkdown>
-                    </div>
+                    <Markdown>{artifact.content_markdown}</Markdown>
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
                       <div className="w-10 h-10 rounded-full bg-muted/60 flex items-center justify-center">
